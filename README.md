@@ -30,7 +30,7 @@
 
 ## 주요 기능
 
-- **AI와 대화로 모든 작업** — MCP 도구 33개로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
+- **AI와 대화로 모든 작업** — MCP 도구 35개로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
 - **지원 상태 8단계 관리** — `draft`(작성 중) · `planned`(지원 예정) · `applied`(지원 완료) · `document_passed`(서류 합격) · `interview`(면접 진행) · `final_passed`(최종 합격) · `rejected`(불합격) · `on_hold`(보류). `document_passed` 이상에서 면접 준비가 해금됩니다.
 - **자기소개서 버전 관리** — 공고별로 자소서 버전을 쌓고 타임라인으로 비교, 파일로 내보내기.
 - **채용공고 파싱** — 붙여넣은 공고 텍스트를 구조화해 저장.
@@ -46,7 +46,7 @@
 | 프로세스 | 실행 | 역할 |
 | --- | --- | --- |
 | **대시보드 웹 서버** | `npm start` | `http://127.0.0.1:4319` — 내 데이터를 눈으로 확인·관리. `127.0.0.1`에만 바인딩. |
-| **MCP 서버** | `npm run mcp` | stdio 기반. 보통 AI 클라이언트가 자동 실행. 도구 33개 제공. |
+| **MCP 서버** | `npm run mcp` | stdio 기반. 보통 AI 클라이언트가 자동 실행. 도구 35개 제공. |
 
 ---
 
@@ -141,7 +141,7 @@ npx -y careermate init
 
 ---
 
-## MCP 도구 한눈에 (33개)
+## MCP 도구 한눈에 (35개)
 
 | 분류 | 도구 |
 | --- | --- |
@@ -157,6 +157,7 @@ npx -y careermate init
 | 면접 준비 | `save_interview_prep` |
 | 글쓰기 | `get_writing_style_guide` (AI 티 안 나는 한국어 글쓰기 규칙) |
 | 전문가 지식 (Career-OS) | `get_playbook` (도메인 플레이북 16종) · `get_verifier` (저장 전 검증 루브릭 6종) |
+| 저장 전 점검 | `validate_cover_letter` (자소서 저장 전 미리보기) · `set_verify_mode` (점검 엄격도 기본/엄격) |
 | 대시보드/활동 | `open_dashboard` · `open_application` · `list_recent_activity` · `get_workflow_guide` |
 | 업데이트 | `check_for_update` · `update_careermate` |
 
@@ -175,7 +176,7 @@ CareerMate/
 │  ├─ shared/         # 공용 타입·zod 스키마·유틸
 │  ├─ db/             # node:sqlite DB 접근·스키마·마이그레이션
 │  ├─ core/           # 도메인 유스케이스
-│  ├─ mcp-tools/      # MCP 도구 33개 정의
+│  ├─ mcp-tools/      # MCP 도구 35개 정의
 │  ├─ knowledge/      # Career-OS 전문가 플레이북·검증 루브릭 serve
 │  ├─ exporters/      # 내보내기(자소서 등)
 │  ├─ parsers/        # 채용공고 파싱
@@ -301,7 +302,7 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 
 ## Key features
 
-- **Everything through conversation with AI** — 33 MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
+- **Everything through conversation with AI** — 35 MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
 - **8-stage application status** — `draft` · `planned` · `applied` · `document_passed` · `interview` · `final_passed` · `rejected` · `on_hold`. Interview prep unlocks at `document_passed` or later.
 - **Cover-letter versioning** — Stack versions per posting, compare on a timeline, export to a file.
 - **Job-posting parsing** — Turn pasted posting text into structured records.
@@ -317,7 +318,7 @@ Two local processes share the same database.
 | Process | Run | Role |
 | --- | --- | --- |
 | **Dashboard web server** | `npm start` | `http://127.0.0.1:4319` — view and manage your data. Binds to `127.0.0.1` only. |
-| **MCP server** | `npm run mcp` | stdio-based. Usually launched automatically by the AI client. Provides 33 tools. |
+| **MCP server** | `npm run mcp` | stdio-based. Usually launched automatically by the AI client. Provides 35 tools. |
 
 ---
 
@@ -412,7 +413,7 @@ Dark mode is supported.
 
 ---
 
-## MCP tools at a glance (33)
+## MCP tools at a glance (35)
 
 | Category | Tools |
 | --- | --- |
@@ -428,6 +429,7 @@ Dark mode is supported.
 | Interview prep | `save_interview_prep` |
 | Writing | `get_writing_style_guide` (rules for human-sounding Korean writing) |
 | Expert knowledge (Career-OS) | `get_playbook` (16 domain playbooks) · `get_verifier` (6 pre-save rubrics) |
+| Pre-save check | `validate_cover_letter` (dry-run preview before saving) · `set_verify_mode` (check strictness: default/strict) |
 | Dashboard / activity | `open_dashboard` · `open_application` · `list_recent_activity` · `get_workflow_guide` |
 | Update | `check_for_update` · `update_careermate` |
 
@@ -446,7 +448,7 @@ CareerMate/
 │  ├─ shared/         # Shared types, zod schemas, utils
 │  ├─ db/             # node:sqlite DB access, schema, migrations
 │  ├─ core/           # Domain use cases
-│  ├─ mcp-tools/      # The 33 MCP tool definitions
+│  ├─ mcp-tools/      # The 35 MCP tool definitions
 │  ├─ knowledge/      # Career-OS expert playbooks & verifier rubrics (serve)
 │  ├─ exporters/      # Exporters (cover letters, etc.)
 │  ├─ parsers/        # Job-posting parsing
