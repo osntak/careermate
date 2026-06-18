@@ -3,6 +3,13 @@
 이 프로젝트의 주요 변경 사항을 기록합니다. 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를
 따르고, 버전은 [유의적 버전(SemVer)](https://semver.org/lang/ko/)을 따릅니다.
 
+## [0.0.2] - 2026-06-18
+
+### 변경 (Changed)
+- Claude Desktop의 `.mcpb` 직접 추가 실패를 알려진 이슈로 문서화하고, `careermate.zip` 압축 해제 후 폴더 추가를 권장 우회 경로로 안내.
+- `npm run build:mcpb`가 `dist/careermate.mcpb`와 동일한 번들의 `dist/careermate.zip`을 함께 생성하도록 변경.
+- GitHub Release 워크플로우가 `careermate.mcpb`와 `careermate.zip` 두 자산을 모두 검증·업로드하도록 보강.
+
 ## [0.0.1] - 2026-06-18
 
 ### 추가 (Added)
@@ -19,4 +26,5 @@
 - 내보내기 HTML 인젝션 무력화(raw `<img>`/`<script>`, `javascript:` 링크, 링크 속성·제목 인젝션).
 - 민감 정보(이력서·자소서 본문) 로그·에러 응답 비노출.
 
+[0.0.2]: https://github.com/osntak/careermate/releases/tag/v0.0.2
 [0.0.1]: https://github.com/osntak/careermate/releases/tag/v0.0.1

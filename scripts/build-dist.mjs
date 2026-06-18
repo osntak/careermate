@@ -80,7 +80,7 @@ async function main() {
       if (base === '.omc' || base === '.omx') return false;
       // 마케팅 스크린샷·OG 이미지는 공개 사이트(careermate.life) 전용 — 번들 대시보드 /install 라우트엔 불필요.
       if (base === 'shots' || base === 'og.png') return false;
-      return base !== 'careermate.mcpb' && src !== demoDir;
+      return base !== 'careermate.mcpb' && base !== 'careermate.zip' && src !== demoDir;
     },
   });
 

@@ -12,15 +12,15 @@ CareerMate는 LLM이 없는 **로컬 MCP 도구**입니다. *내 컴퓨터에서
 |---|---|---|---|
 | **1. 에이전트가 대신 설치** | 작업 폴더에서 **한 문장** → AI가 `careermate.life/llms-install.txt`를 읽고 npm 설치 + MCP 등록 | 필요(에이전트가 winget/brew 또는 nodejs.org로 도와줌) | Claude Code(데스크톱 **"Code" 탭** / CLI)·Codex CLI·Gemini CLI·Cursor 등 *명령 실행 가능한 에이전트* |
 | **2. npm 명령 직접** | 터미널에 `npx -y careermate init` 한 줄(감지된 앱 자동 등록) | 필요 | Claude Desktop·Codex·Cursor 등(그 외는 `--print`로 수동) |
-| **3. `.mcpb`** | 파일 하나를 설정에서 추가 | **불필요**(Claude Desktop 내장) | **Claude Desktop "채팅" 앱 전용** |
+| **3. `careermate.zip`** | ZIP 압축 해제 후 폴더를 확장 설정에서 추가 (`.mcpb` 직접 추가는 known issue) | **불필요**(Claude Desktop 내장) | **Claude Desktop "채팅" 앱 전용** |
 
-**1·2는 같은 메커니즘**(Node + npm/npx + MCP 등록) — 에이전트가 치느냐 / 내가 치느냐의 차이일 뿐입니다. 그래서 1·2의 "대상" 제품군이 서로 **겹칩니다**(같은 Claude Code·Codex·Cursor 등). 어느 앱이 어느 방식을 쓰는지는 아래 **앱 × 방식** 매트릭스로 보세요. **3(`.mcpb`)만 Claude Desktop "채팅" 앱 전용**이라 성격이 다릅니다(내장 Node 사용, 단 버전<22.5면 불안정).
+**1·2는 같은 메커니즘**(Node + npm/npx + MCP 등록) — 에이전트가 치느냐 / 내가 치느냐의 차이일 뿐입니다. 그래서 1·2의 "대상" 제품군이 서로 **겹칩니다**(같은 Claude Code·Codex·Cursor 등). 어느 앱이 어느 방식을 쓰는지는 아래 **앱 × 방식** 매트릭스로 보세요. **3(`careermate.zip`)만 Claude Desktop "채팅" 앱 전용**이라 성격이 다릅니다(내장 Node 사용, 단 버전<22.5면 불안정).
 
 ### 앱 × 방식
 
-| 앱 | 1 에이전트 | 2 npm직접 | 3 .mcpb | 영구 지침 | MCP 등록 위치 |
+| 앱 | 1 에이전트 | 2 npm직접 | 3 zip | 영구 지침 | MCP 등록 위치 |
 |---|---|---|---|---|---|
-| **Claude Desktop "채팅"** | — | ✅(config 등록) | ✅ | — | `.mcpb` 또는 `claude_desktop_config.json` |
+| **Claude Desktop "채팅"** | — | ✅(config 등록) | ✅ | — | 압축 해제 폴더 또는 `claude_desktop_config.json` |
 | **Claude Code (Code 탭 / CLI)** | ✅ | ✅ | — | 루트 `CLAUDE.md` | 프로젝트 `.mcp.json` |
 | **Codex CLI** (⚠️ 데스크톱 앱 ✗) | ✅ | ✅ | — | 루트 `AGENTS.md` | `~/.codex/config.toml` |
 | **Gemini CLI / Antigravity** | ✅ | ✅ | — | — | Gemini CLI `~/.gemini/settings.json` · Antigravity `~/.gemini/.../mcp_config.json` |
@@ -37,10 +37,10 @@ CareerMate는 LLM이 없는 **로컬 MCP 도구**입니다. *내 컴퓨터에서
 
 - **Claude Code**(Code 탭/CLI): **Pro 이상**(무료 플랜 불가) 또는 `ANTHROPIC_API_KEY` 종량제.
 - **Codex**: **ChatGPT Plus 이상** 로그인으로 충분(API 키 불필요).
-- **`.mcpb`**(Claude Desktop 채팅 확장): **무료 플랜에서도 설치** 가능(안정성이 변수).
+- **`careermate.zip`**(Claude Desktop 채팅 확장): **무료 플랜에서도 설치** 가능(안정성이 변수). `.mcpb` 직접 추가는 일부 Claude Desktop 버전에서 실패하는 known issue라 ZIP 폴더 추가를 권장합니다.
 - **터미널/npx**: 무료(Node만). 연결할 앱의 구독 정책은 별개.
 
-> **런타임.** CareerMate 서버는 Node 프로그램이라 **Node.js 22.5+ 가 필요**합니다 — 위 1·2 경로 공통(없으면 에이전트가 winget/brew, 안 되면 [nodejs.org](https://nodejs.org) LTS 설치 파일). **Node가 아예 필요 없는 길은 `.mcpb` 하나뿐**인데 그건 내장 Node 버전에 의존해 불안정할 수 있습니다 — **"완전 무설치 + 안정"을 동시에 주는 길은 아직 없습니다.**
+> **런타임.** CareerMate 서버는 Node 프로그램이라 **Node.js 22.5+ 가 필요**합니다 — 위 1·2 경로 공통(없으면 에이전트가 winget/brew, 안 되면 [nodejs.org](https://nodejs.org) LTS 설치 파일). **Node가 아예 필요 없는 길은 `careermate.zip`뿐**인데 그건 Claude Desktop 내장 Node에 의존해 불안정할 수 있습니다 — **"완전 무설치 + 안정"을 동시에 주는 길은 아직 없습니다.**
 >
 > **Windows + Claude Code(Code 탭)**: [Git for Windows](https://git-scm.com/download/win) 사전 설치가 필요합니다(앱이 없으면 "Git is required" 안내). Claude Code가 **세션 격리(git worktree)와 내부 POSIX 셸 도구**에 Git을 쓰기 때문이며 CareerMate와는 무관합니다. macOS는 Git 기본 포함이라 불필요.
 

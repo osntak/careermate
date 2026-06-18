@@ -8,8 +8,9 @@
  *
  * 절차:
  *   1) node scripts/build-dist.mjs 로 dist/ 번들 생성(없거나 강제 시)
- *   2) dist/mcb-stage/ 에 manifest.json + dist/ 만 복사
+ *   2) dist/mcpb-stage/ 에 manifest.json + dist/ 만 복사
  *   3) 공식 패커(@anthropic-ai/mcpb)로 dist/careermate.mcpb 생성
+ *   4) Claude Desktop 파일 설치 UI가 막힌 버전용으로, 같은 ZIP을 dist/careermate.zip으로도 생성
  *
  * 사용: node scripts/build-mcpb.mjs
  */
@@ -22,10 +23,25 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
 const STAGE = path.join(DIST, 'mcpb-stage');
 const OUT = path.join(DIST, 'careermate.mcpb');
+const ZIP_OUT = path.join(DIST, 'careermate.zip');
 
 function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { stdio: 'inherit', shell: process.platform === 'win32', ...opts });
   return r.status === 0;
+}
+
+function assertFile(file) {
+  if (!fs.existsSync(file) || fs.statSync(file).size === 0) {
+    throw new Error(`필수 산출물이 없습니다: ${file}`);
+  }
+}
+
+function assertSameFile(a, b) {
+  const left = fs.readFileSync(a);
+  const right = fs.readFileSync(b);
+  if (!left.equals(right)) {
+    throw new Error(`${path.basename(a)}와 ${path.basename(b)} 내용이 다릅니다.`);
+  }
 }
 
 /**
@@ -100,6 +116,7 @@ function main() {
 
   console.log('\n3) .mcpb 패키징…');
   fs.rmSync(OUT, { force: true });
+  fs.rmSync(ZIP_OUT, { force: true });
   if (!run('npx', ['-y', '@anthropic-ai/mcpb', 'pack', STAGE, OUT])) {
     console.error('\n✗ @anthropic-ai/mcpb 패커 실행 실패.');
     console.error('  수동 패킹:  cd dist/mcpb-stage && npx @anthropic-ai/mcpb pack . ../careermate.mcpb');
@@ -110,16 +127,27 @@ function main() {
   const size = (fs.statSync(OUT).size / (1024 * 1024)).toFixed(1);
   console.log(`\n✅ 완성: ${OUT} (${size} MB)`);
 
-  // 랜딩 페이지(site/)가 .mcpb를 직접 서빙한다(careermate.life/careermate.mcpb).
+  // .mcpb 자체가 ZIP이므로 같은 바이트를 .zip으로도 제공한다. 일부 Claude Desktop 빌드는
+  // custom .mcpb 파일 설치 UI가 무반응이지만, 압축을 풀어 폴더로 추가하면 같은 manifest가 동작한다.
+  fs.copyFileSync(OUT, ZIP_OUT);
+  assertFile(OUT);
+  assertFile(ZIP_OUT);
+  assertSameFile(OUT, ZIP_OUT);
+  console.log(`   폴더 설치용 ZIP: ${ZIP_OUT}`);
+
+  // 랜딩 페이지(site/)가 .mcpb와 폴더 설치용 .zip을 직접 서빙할 수 있다.
   // private repo라 GitHub Release 다운로드가 막혀, 빌드 결과를 페이지로 복사해 다운로드
   // 버튼을 항상 최신으로 유지한다. site/ 는 배포 소스라 사이트와 함께 배포된다.
   console.log('\n4) 랜딩 페이지로 복사…');
   const pageDir = path.join(ROOT, 'site');
   if (fs.existsSync(pageDir)) {
     const pageCopy = path.join(pageDir, 'careermate.mcpb');
+    const zipPageCopy = path.join(pageDir, 'careermate.zip');
     fs.copyFileSync(OUT, pageCopy);
+    fs.copyFileSync(ZIP_OUT, zipPageCopy);
     console.log(`   복사 완료: ${pageCopy}`);
-    console.log('   배포: site/ 를 배포하면 유저가 페이지에서 바로 내려받아 Settings → Extensions → Install extension… 으로 설치합니다.');
+    console.log(`   복사 완료: ${zipPageCopy}`);
+    console.log('   배포: site/ 를 배포하면 유저가 .mcpb 직접 설치 또는 ZIP 압축 해제 후 폴더 설치를 선택할 수 있습니다.');
   } else {
     console.log(`   건너뜀: ${pageDir} 없음 — 페이지 호스팅 복사 생략.`);
   }

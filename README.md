@@ -115,9 +115,11 @@ npx -y careermate init
 
 그 외 클라이언트(Cursor·Cline·Windsurf 등)는 `npx -y careermate init -- --print`로 등록용 설정 블록을 출력해 수동으로 붙일 수 있습니다.
 
-#### ③ `.mcpb` (Claude Desktop "채팅" 앱 전용 · Node 불필요 폴백)
+#### ③ `careermate.zip` (Claude Desktop "채팅" 앱 전용 · Node 불필요 폴백)
 
-터미널·Node 없이 붙이는 **유일한 길**입니다. `dist/careermate.mcpb`(`npm run build:mcpb`로 생성)를 Claude Desktop의 **Settings → Extensions → Advanced settings → Install extension…** 에서 선택해 추가하고 재시작합니다. 단 Claude Desktop **내장 Node 버전에 의존해 불안정할 수 있습니다**(Node<22.5면 동작 불가). (더블클릭·드래그는 Windows에서 파일 연결이 안 잡혀 반응이 없을 수 있습니다.)
+터미널·Node 없이 붙이는 **유일한 길**입니다. `dist/careermate.zip`(`npm run build:mcpb`로 생성)을 압축 해제한 뒤, Claude Desktop의 **Settings → Extensions → Advanced settings → Install extension…** 에서 압축을 푼 폴더를 추가하고 재시작합니다. 단 Claude Desktop **내장 Node 버전에 의존해 불안정할 수 있습니다**(Node<22.5면 동작 불가).
+
+`.mcpb` 직접 추가는 일부 Claude Desktop 버전에서 실패하는 알려진 이슈가 있어, 현재는 ZIP 압축 해제 후 폴더 추가를 권장합니다. `.mcpb`와 `.zip`은 같은 번들입니다.
 
 연결 후 AI 클라이언트를 **완전히 재시작**하고, `get_onboarding_status`를 호출해 달라고 시켜 연결을 검증하세요. 자세한 절차는 AI용 런북 **[`INSTALL.md`](INSTALL.md)**, 사람용 설치 안내 **https://careermate.life**, 설치 후 사용법 **[`docs/START_WORKFLOW.md`](docs/START_WORKFLOW.md)**, 지원 앱 매트릭스 **[`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md)**를 참고하세요.
 
@@ -202,7 +204,7 @@ CareerMate/
 | `npm run doctor` | 설치/환경 점검 |
 | `npm run seed` | 예시 데이터 삽입 |
 | `npm run build` | 배포용 플레인 JS 번들(`dist/`) 생성 (esbuild) |
-| `npm run build:mcpb` | Claude Desktop용 `.mcpb` 번들 빌드 → `dist/careermate.mcpb`(+ `site/`로 복사). manifest+서버코드를 한 파일로 묶어 배포(careermate.life에 호스팅). |
+| `npm run build:mcpb` | Claude Desktop용 번들 빌드 → `dist/careermate.mcpb`와 폴더 설치용 `dist/careermate.zip` 생성(+ `site/`로 복사). manifest+서버코드를 한 파일로 묶어 배포. |
 | `npm test` | E2E 테스트 실행 |
 | `npm run test:ui` | Playwright UI 스모크 테스트 |
 | `npm run typecheck` | 타입 검사 (`tsc --noEmit`) |
@@ -240,7 +242,7 @@ CareerMate/
 
 - [`INSTALL.md`](INSTALL.md) — AI 어시스턴트가 따라가는 설치·연결 런북(소스 직접 실행 기준).
 - [`AGENTS.md`](AGENTS.md) — Codex용 영속 지침. / [`CLAUDE.md`](CLAUDE.md) — Claude Code용 영속 지침.
-- [`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md) — **설치 레퍼런스 허브**: 지원 앱 매트릭스 + 설치 3방식(에이전트/npx/.mcpb) + 클라이언트별 수동 MCP 설정 + 알려진 제약. (사람용 안내는 https://careermate.life)
+- [`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md) — **설치 레퍼런스 허브**: 지원 앱 매트릭스 + 설치 3방식(에이전트/npx/zip) + 클라이언트별 수동 MCP 설정 + 알려진 제약. (사람용 안내는 https://careermate.life)
 - [`docs/START_WORKFLOW.md`](docs/START_WORKFLOW.md) — 등록부터 면접 준비까지 단계별 작업 런북.
 - [`docs/FAQ.md`](docs/FAQ.md) — **자주 묻는 질문 / 문제 해결**: "PDF가 안 읽혀요", "분석이 안 돼요", "공고 URL은 어떻게 넣어요" 등.
 - [`docs/dev/TODO.md`](docs/dev/TODO.md) — 남은 작업과 v1 범위 밖 항목.
@@ -384,9 +386,11 @@ npx -y careermate init
 
 For other clients (Cursor, Cline, Windsurf, …), `npx -y careermate init -- --print` prints the registration config block so you can paste it in manually.
 
-#### ③ `.mcpb` (Claude Desktop "chat" app only · no-Node fallback)
+#### ③ `careermate.zip` (Claude Desktop "chat" app only · no-Node fallback)
 
-This is the **only path with no terminal and no Node**. Add `dist/careermate.mcpb` (created via `npm run build:mcpb`) through Claude Desktop's **Settings → Extensions → Advanced settings → Install extension…**, then restart. Note that it **depends on Claude Desktop's bundled Node version and can be unstable** (won't work if that Node is < 22.5). (Double-click/drag may do nothing on Windows because the file association isn't registered.)
+This is the **only path with no terminal and no Node**. Unzip `dist/careermate.zip` (created via `npm run build:mcpb`), add the extracted folder through Claude Desktop's **Settings → Extensions → Advanced settings → Install extension…**, then restart. Note that it **depends on Claude Desktop's bundled Node version** (won't work if that Node is < 22.5).
+
+Direct `.mcpb` install is a known issue in some Claude Desktop builds, so the ZIP folder path is the recommended no-terminal route. The `.mcpb` and `.zip` assets contain the same bundle.
 
 After connecting, **fully restart** the AI client and verify the connection by asking it to call `get_onboarding_status`. For details, see the AI runbook **[`INSTALL.md`](INSTALL.md)**, the human-facing install guide **https://careermate.life**, the post-install usage flow **[`docs/START_WORKFLOW.md`](docs/START_WORKFLOW.md)**, and the supported-apps matrix **[`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md)**.
 
@@ -471,7 +475,7 @@ CareerMate/
 | `npm run doctor` | Check installation/environment |
 | `npm run seed` | Insert example data |
 | `npm run build` | Build the plain-JS distribution bundle (`dist/`) via esbuild |
-| `npm run build:mcpb` | Build the `.mcpb` bundle for Claude Desktop → `dist/careermate.mcpb` (also copied to `site/`). Packs manifest + server code into one file for distribution (hosted on careermate.life). |
+| `npm run build:mcpb` | Build the Claude Desktop bundle → `dist/careermate.mcpb` plus unpacked-folder fallback `dist/careermate.zip` (also copied to `site/`). Packs manifest + server code for distribution. |
 | `npm test` | Run E2E tests |
 | `npm run test:ui` | Playwright UI smoke tests |
 | `npm run typecheck` | Type check (`tsc --noEmit`) |
@@ -509,7 +513,7 @@ CareerMate/
 
 - [`INSTALL.md`](INSTALL.md) — The install/connect runbook the AI assistant follows (based on running from source).
 - [`AGENTS.md`](AGENTS.md) — Persistent instructions for Codex. / [`CLAUDE.md`](CLAUDE.md) — Persistent instructions for Claude Code.
-- [`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md) — **Install reference hub**: supported-apps matrix + the 3 install methods (agent / npx / .mcpb) + per-client manual MCP setup + known constraints. (Human-facing guide at https://careermate.life)
+- [`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md) — **Install reference hub**: supported-apps matrix + the 3 install methods (agent / npx / zip) + per-client manual MCP setup + known constraints. (Human-facing guide at https://careermate.life)
 - [`docs/START_WORKFLOW.md`](docs/START_WORKFLOW.md) — Step-by-step runbook from registration to interview prep.
 - [`docs/FAQ.md`](docs/FAQ.md) — **FAQ / troubleshooting**: "PDF won't read," "analysis isn't working," "how do I add a posting URL," etc.
 - [`docs/dev/TODO.md`](docs/dev/TODO.md) — Remaining work and out-of-scope-for-v1 items.

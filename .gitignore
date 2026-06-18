@@ -38,6 +38,7 @@ Thumbs.db
 
 # Committed build artifact removed from the repo; the landing serves it from the GitHub Release asset
 site/careermate.mcpb
+site/careermate.zip
 
 # Local review/QA artifacts (Playwright snapshots, ad-hoc screenshots)
 .playwright-mcp/

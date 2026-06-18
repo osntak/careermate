@@ -141,11 +141,11 @@
               <li class="step"><div class="step__no">5</div><div class="step__body">
                 <h3>앱 재시작 → 확인</h3>
                 <p>Claude 앱을 완전히 껐다 켜고(처음 한 번 MCP 승인 허용), <strong>"커리어메이트 연결됐는지 확인해줘"</strong>라고 말하면 끝.</p>
-                <p class="recover"><strong>도구가 안 보이면?</strong> 앱을 트레이까지 <strong>완전히 종료</strong>했다 다시 켜고, 처음 뜬 승인 창을 허용했는지 확인하세요. 그래도 안 되면 <a href="index.html#install">파일로 설치(.mcpb)</a>나 설치 전체의 <a href="index.html#install">문제가 생겼을 때</a>를 보세요.</p>
+                <p class="recover"><strong>도구가 안 보이면?</strong> 앱을 트레이까지 <strong>완전히 종료</strong>했다 다시 켜고, 처음 뜬 승인 창을 허용했는지 확인하세요. 그래도 안 되면 <a href="index.html#install">파일로 설치(zip)</a>나 설치 전체의 <a href="index.html#install">문제가 생겼을 때</a>를 보세요.</p>
               </div></li>
             </ol>
             <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 가장 쉬운 방법은 <strong>이력서 내용을 대화창에 붙여넣기</strong>입니다. 또는 작업 폴더에 파일을 넣고 <em>"이력서.pdf 읽어서 등록해줘"</em>라고 하거나 채팅에 직접 첨부하세요. (스캔본·보안 PDF는 안 읽힐 수 있습니다 → 그땐 텍스트로 붙여넣으세요.)</div>
-            <p class="hint" style="margin-top:.8rem">터미널이 부담되면 → <a href="index.html#install">파일 하나로 설치(.mcpb)</a>하는 방법도 있습니다(Claude 무료 기능).</p>
+            <p class="hint" style="margin-top:.8rem">터미널이 부담되면 → <a href="index.html#install">파일로 설치(zip)</a>하는 방법도 있습니다(Claude 무료 기능).</p>
           </div>
 
           <!-- ===== ChatGPT 유료 → Codex CLI ===== -->
@@ -184,7 +184,7 @@
             <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 첨부 기능이 없으니, 작업 폴더에 파일을 넣고 <em>"./이력서.pdf 읽어서 등록해줘"</em>라고 하세요. PDF가 안 읽히면 내용을 <strong>텍스트로 붙여넣으세요.</strong></div>
           </div>
 
-          <!-- ===== 무료/없음 → .mcpb 1순위, Antigravity 2순위 ===== -->
+          <!-- ===== 무료/없음 → zip 1순위, Antigravity 2순위 ===== -->
           <div class="path" data-sub="free">
             <span class="path__tag">당신에겐 — 무료로 시작</span>
             <h2>유료 구독 없이 무료로</h2>
@@ -193,7 +193,7 @@
 
             <div class="subcard">
               <strong>① 1순위 — Claude 데스크톱 + 파일 설치(터미널 없이)</strong>
-              <p class="hint" style="margin:.3rem 0 .8rem">Claude 무료 계정이면 됩니다. 터미널·Node 없이 파일 하나로 끝.</p>
+              <p class="hint" style="margin:.3rem 0 .8rem">Claude 무료 계정이면 됩니다. 터미널·Node 없이 zip을 풀어 폴더로 추가합니다.</p>
               <ol class="steps">
                 <li class="step"><div class="step__no">1</div><div class="step__body">
                   <h3>Claude 데스크톱 설치 → 로그인(무료 OK)</h3>
@@ -201,11 +201,15 @@
                 </div></li>
                 <li class="step"><div class="step__no">2</div><div class="step__body">
                   <h3>설치 파일 받기</h3>
-                  <p><a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">careermate.mcpb 다운로드 (약 2&nbsp;MB)</a></p>
+                  <p>
+                    <a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.zip">.zip</a>
+                    <a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">.mcpb</a>
+                  </p>
+                  <p class="hint"><code>.zip</code> 압축을 풀어 폴더로 추가하세요. <code>.mcpb</code> 직접 추가는 일부 Claude Desktop 버전에서 실패할 수 있습니다.</p>
                 </div></li>
                 <li class="step"><div class="step__no">3</div><div class="step__body">
                   <h3>설정에서 추가</h3>
-                  <p>Claude 데스크톱 → <strong>Settings → Extensions → Advanced settings → Install extension…</strong> 에서 받은 파일을 고르세요. <span class="hint">(Windows에서 더블클릭·드래그는 반응이 없을 수 있으니 이 메뉴를 쓰세요.)</span></p>
+                  <p>Claude 데스크톱 → <strong>Settings → Extensions → Advanced settings → Install extension…</strong> 에서 압축을 푼 폴더를 추가하세요. <span class="hint">(Windows에서 더블클릭·드래그는 반응이 없을 수 있으니 이 메뉴를 쓰세요.)</span></p>
                 </div></li>
                 <li class="step"><div class="step__no">4</div><div class="step__body">
                   <h3>재시작 → 확인</h3>
@@ -264,10 +268,10 @@
             <div class="acc__body">
               <ul>
                 <li><strong>Node.js (LTS)</strong> — <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a> · 설치 파일을 받아 더블클릭(계속 '다음'). 터미널·CLI 경로에 필요.</li>
-                <li><strong>Claude 데스크톱</strong> — <a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a> · Code 탭 / .mcpb에 사용.</li>
+                <li><strong>Claude 데스크톱</strong> — <a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a> · Code 탭 / zip 폴더 설치에 사용.</li>
                 <li><strong>Git for Windows</strong> — <a href="https://git-scm.com/download/win" rel="noopener" target="_blank">git-scm.com/download/win</a> · <em>Windows에서 Claude Code 탭을 쓸 때만</em>(Mac은 불필요).</li>
                 <li><strong>Antigravity</strong>(Google·무료) — <a href="https://antigravity.google/download" rel="noopener" target="_blank">antigravity.google/download</a> · 개인 Gmail 로그인, 카드 불필요.</li>
-                <li><strong>CareerMate 설치 파일(.mcpb)</strong> — <a href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">careermate.mcpb</a> · Claude 데스크톱 "채팅" 앱용(약 2&nbsp;MB).</li>
+                <li><strong>CareerMate 설치 파일</strong> — <a href="https://github.com/osntak/careermate/releases/latest/download/careermate.zip">careermate.zip</a> / <a href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">careermate.mcpb</a> · Claude 데스크톱 "채팅" 앱용.</li>
               </ul>
               <p class="hint">받은 뒤 무엇을 하는지는 위에서 고른 "내게 맞는 길"의 단계를 따르면 됩니다.</p>
             </div>

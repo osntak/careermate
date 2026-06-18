@@ -2,7 +2,7 @@ name: Release
 
 # 버전 태그(예: v0.0.1)를 push하면:
 #   1) npm에 자동 게시 (GitHub Actions 시크릿 NPM_TOKEN 사용)
-#   2) careermate.mcpb 빌드 후 같은 태그의 GitHub Release에 첨부
+#   2) careermate.mcpb와 폴더 설치용 zip 빌드 후 같은 태그의 GitHub Release에 첨부
 #
 # 사전 1회 설정: 레포 Settings → Secrets and variables → Actions →
 #   New repository secret → 이름 NPM_TOKEN, 값은 npmjs.com에서 발급한
@@ -59,20 +59,34 @@ jobs:
             npm publish
           fi
 
-      # npm publish가 실패해도 GitHub Release와 .mcpb는 남깁니다.
+      # npm publish가 실패해도 GitHub Release와 .mcpb/zip은 남깁니다.
       - name: Build .mcpb bundle
+        id: build_mcpb
         if: always()
         run: npm run build:mcpb
 
-      - name: Attach .mcpb to GitHub Release
+      - name: Verify release artifacts
+        id: verify_artifacts
         if: always()
+        run: |
+          test -s dist/careermate.mcpb || { echo "::error::dist/careermate.mcpb 가 없습니다."; exit 1; }
+          test -s dist/careermate.zip || { echo "::error::dist/careermate.zip 이 없습니다."; exit 1; }
+          cmp -s dist/careermate.mcpb dist/careermate.zip || { echo "::error::.mcpb와 .zip 내용이 다릅니다."; exit 1; }
+          ls -lh dist/careermate.mcpb dist/careermate.zip
+
+      - name: Attach MCPB artifacts to GitHub Release
+        if: always() && steps.verify_artifacts.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/careermate.mcpb \
-            --title "CareerMate $GITHUB_REF_NAME" --generate-notes \
-          || gh release upload "$GITHUB_REF_NAME" dist/careermate.mcpb --clobber
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" \
+              --title "CareerMate $GITHUB_REF_NAME" --generate-notes
+          fi
+          gh release upload "$GITHUB_REF_NAME" \
+            dist/careermate.mcpb \
+            dist/careermate.zip \
+            --clobber
 
-      # .mcpb는 더 이상 레포에 커밋하지 않는다. 위 "Attach .mcpb to GitHub Release"가 올린
-      # Release 자산을, 랜딩(careermate.life)·INSTALL이
-      # https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb 로 직접 가리킨다.
+      # .mcpb/zip은 더 이상 레포에 커밋하지 않는다. 위 "Attach MCPB artifacts"가 올린
+      # Release 자산을, 랜딩(careermate.life)·INSTALL이 latest/download URL로 직접 가리킨다.
