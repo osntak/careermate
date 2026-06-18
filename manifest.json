@@ -36,12 +36,20 @@
   },
   "tools": [
     {
-      "name": "get_onboarding_status",
-      "description": "온보딩 상태 확인"
+      "name": "read_document",
+      "description": "문서 파일 읽기 (PDF·Word·HWP)"
     },
     {
-      "name": "start_onboarding",
-      "description": "온보딩 시작 안내"
+      "name": "open_inbox",
+      "description": "이력서 인입 폴더 열기"
+    },
+    {
+      "name": "read_inbox",
+      "description": "인입 폴더 파일 읽기"
+    },
+    {
+      "name": "get_onboarding_status",
+      "description": "온보딩 상태 확인"
     },
     {
       "name": "get_profile",
@@ -52,10 +60,6 @@
       "description": "프로필 저장"
     },
     {
-      "name": "update_profile",
-      "description": "프로필 부분 수정"
-    },
-    {
       "name": "add_resume",
       "description": "이력서/경력기술서 추가"
     },
@@ -64,8 +68,28 @@
       "description": "이력서 목록 조회"
     },
     {
-      "name": "add_cover_letter",
-      "description": "자기소개서 추가"
+      "name": "add_experience",
+      "description": "경력 추가"
+    },
+    {
+      "name": "get_experiences",
+      "description": "경력 목록 조회"
+    },
+    {
+      "name": "add_project",
+      "description": "프로젝트 추가"
+    },
+    {
+      "name": "get_projects",
+      "description": "프로젝트 목록 조회"
+    },
+    {
+      "name": "add_skill",
+      "description": "기술스택 추가"
+    },
+    {
+      "name": "get_skills",
+      "description": "기술스택 목록 조회"
     },
     {
       "name": "get_cover_letters",
@@ -86,10 +110,6 @@
     {
       "name": "list_jobs",
       "description": "저장된 공고 목록"
-    },
-    {
-      "name": "parse_job_posting",
-      "description": "공고 텍스트 정리"
     },
     {
       "name": "get_application_context",
@@ -128,8 +148,32 @@
       "description": "워크플로우 가이드"
     },
     {
+      "name": "get_playbook",
+      "description": "전문가 플레이북"
+    },
+    {
+      "name": "get_verifier",
+      "description": "검증 루브릭 (저장 전 자가검증)"
+    },
+    {
+      "name": "validate_cover_letter",
+      "description": "자기소개서 자동 점검 (저장 전 미리보기)"
+    },
+    {
+      "name": "set_verify_mode",
+      "description": "점검 모드 설정 (기본/엄격)"
+    },
+    {
       "name": "get_writing_style_guide",
       "description": "AI 티 안 나는 글쓰기 가이드"
+    },
+    {
+      "name": "check_for_update",
+      "description": "업데이트 확인"
+    },
+    {
+      "name": "update_careermate",
+      "description": "CareerMate 업데이트"
     }
   ],
   "compatibility": {
