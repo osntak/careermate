@@ -6,6 +6,7 @@
  * Korean because the primary audience is Korean job seekers; codes are stable
  * machine values that must never change once persisted.
  */
+import { conflict } from './errors.ts';
 
 /** Application lifecycle. Drives the Applications board in the dashboard. */
 export const APPLICATION_STATUSES = [
@@ -84,8 +85,12 @@ export function canTransitionStatus(from: ApplicationStatus, to: ApplicationStat
 /** Throw a clear, user-facing (Korean) error when a status transition is not allowed. */
 export function assertStatusTransition(from: ApplicationStatus, to: ApplicationStatus): void {
   if (!canTransitionStatus(from, to)) {
-    throw new Error(
-      `'${APPLICATION_STATUS_LABELS[from]}'에서 '${APPLICATION_STATUS_LABELS[to]}'(으)로는 상태를 바꿀 수 없습니다.`,
+    const suffix =
+      to === 'draft'
+        ? ` ('${APPLICATION_STATUS_LABELS[from]}' 단계의 지원은 작성 중(미추적)으로 되돌릴 수 없습니다. 초기 단계로 옮기려면 '지원 예정'을 선택하세요.)`
+        : '';
+    throw conflict(
+      `'${APPLICATION_STATUS_LABELS[from]}'에서 '${APPLICATION_STATUS_LABELS[to]}'(으)로는 상태를 바꿀 수 없습니다.${suffix}`,
     );
   }
 }

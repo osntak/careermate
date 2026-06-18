@@ -100,6 +100,13 @@ export async function render(ctx) {
       await render(ctx); // refetch + re-render so the item moves to its new group
     } catch (err) {
       toastError(err);
+      if (err && err.status === 404) {
+        // The job/application no longer exists (e.g. a stale tab after a reset).
+        // Refresh so the phantom row disappears instead of erroring on every retry.
+        await ctx.refreshNav();
+        await render(ctx);
+        return;
+      }
       selectEl.value = app.status; // revert on failure
       selectEl.disabled = false;
     }

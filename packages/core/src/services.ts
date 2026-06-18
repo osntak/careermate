@@ -28,6 +28,9 @@ import {
   type SkillRecord,
   APPLICATION_STATUS_LABELS,
   INTERVIEW_UNLOCK_STATUSES,
+  CareerMateError,
+  notFound,
+  conflict,
 } from '@careermate/shared';
 import {
   jobRepo,
@@ -199,7 +202,7 @@ export function saveJobPosting(input: JobInput, id?: string): { job: JobRecord; 
 
 export function saveFitAnalysis(input: FitAnalysisInput): FitAnalysisRecord {
   const job = jobRepo.get(input.job_id);
-  if (!job) throw new Error(`공고를 찾을 수 없습니다: ${input.job_id}. 먼저 save_job_posting으로 공고를 저장하세요.`);
+  if (!job) throw notFound(`공고를 찾을 수 없습니다: ${input.job_id}. 먼저 save_job_posting으로 공고를 저장하세요.`);
   applicationRepo.ensure(job.id, 'draft');
   const fit = fitRepo.save(input);
   const scoreText = fit.score != null ? ` (적합도 ${fit.score}점)` : '';
@@ -224,7 +227,7 @@ export function saveCoverLetterVersion(input: CoverLetterVersionInput & { force?
     const tail = strictHit
       ? `엄격 모드가 켜져 있어, 올린 이력서 본문에 없는 수치는 막힙니다. 이력서를 올리거나 엄격 모드를 끄거나, 의도한 값이면 force: true로 저장하세요.`
       : `이 수치는 저장된 경력·이력서·프로젝트에 없습니다. 원본 데이터의 실제 수치로 고치거나, 의도한 값이 맞다면 먼저 경력/프로젝트에 그 수치를 추가한 뒤 다시 저장하세요(그대로 저장하려면 force: true).`;
-    throw new Error(`저장 전 자동 점검에서 막혔습니다 — ${detail}. ${tail}`);
+    throw new CareerMateError(`저장 전 자동 점검에서 막혔습니다 — ${detail}. ${tail}`, 400, 'save_gate');
   }
   const { coverLetter, version } = coverLetterRepo.addVersion({
     cover_letter_id: input.cover_letter_id,
@@ -266,7 +269,7 @@ export function updateApplicationStatus(
   note?: string,
 ): StatusChangeResult {
   const job = jobRepo.get(jobId);
-  if (!job) throw new Error(`공고를 찾을 수 없습니다: ${jobId}`);
+  if (!job) throw notFound(`공고를 찾을 수 없습니다: ${jobId}`);
   const application = applicationRepo.setStatus(jobId, status, note);
   activityRepo.log(
     'application_status_changed',
@@ -289,13 +292,13 @@ export function updateApplicationStatus(
 
 export function saveInterviewPrep(input: InterviewPrepInput): InterviewPrepRecord {
   const job = jobRepo.get(input.job_id);
-  if (!job) throw new Error(`공고를 찾을 수 없습니다: ${input.job_id}`);
+  if (!job) throw notFound(`공고를 찾을 수 없습니다: ${input.job_id}`);
   // Spec gate: interview prep is only allowed once the application has reached
   // 서류 합격(document_passed) or beyond. Enforce it server-side, not just in prompts.
   const app = applicationRepo.getByJob(job.id);
   if (!app || !INTERVIEW_UNLOCK_STATUSES.includes(app.status)) {
     const current = app ? APPLICATION_STATUS_LABELS[app.status] : '미지원';
-    throw new Error(
+    throw conflict(
       `면접 준비는 '서류 합격' 이상 상태에서만 저장할 수 있습니다. 현재 상태: '${current}'. 먼저 update_application_status로 상태를 올린 뒤 다시 시도하세요.`,
     );
   }

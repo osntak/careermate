@@ -135,7 +135,11 @@ export async function api(method, path, body) {
   const text = await res.text();
   let data = {};
   if (text) { try { data = JSON.parse(text); } catch { /* non-JSON error page */ } }
-  if (!res.ok) throw new Error(data.error || friendlyStatus(res.status));
+  if (!res.ok) {
+    const e = new Error(data.error || friendlyStatus(res.status));
+    e.status = res.status; // lets callers self-heal (e.g. drop a stale row on 404)
+    throw e;
+  }
   return data;
 }
 // Friendly fallback when the server didn't supply a message — never show a raw status code.

@@ -4,6 +4,7 @@
  */
 export * from './enums.ts';
 export * from './schemas.ts';
+export * from './errors.ts';
 export { APP_VERSION, BUNDLED } from './build-info.ts';
 
 /** Short, URL-safe, sortable-ish id. Avoids a uuid dependency. */

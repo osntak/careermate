@@ -78,6 +78,12 @@ const apiJob = (await json('POST', '/api/jobs', { company: '라인', position: '
 await authed('PUT', `/api/jobs/${apiJob.id}/fit`, { score: 77, strengths: ['s'] });
 const statusRes = await json('PUT', `/api/applications/${apiJob.id}/status`, { status: 'document_passed' }, { 'x-careermate-token': SESSION_TOKEN });
 ok('상태 변경 + 면접 힌트', statusRes.application.status === 'document_passed' && !!statusRes.hint);
+// Domain errors must reach the dashboard with their real message + status, not an
+// opaque 500. (Regression: 면접 진행→작성 중 같은 금지 전환·없는 공고가 500으로 삼켜졌음.)
+const blockedRes = await reqRaw('PUT', `/api/applications/${apiJob.id}/status`, { status: 'draft' }, { 'x-careermate-token': SESSION_TOKEN });
+ok('금지된 전환 → 409 + 명확한 메시지(불투명 500 아님)', blockedRes.status === 409 && JSON.parse(blockedRes.text).error.includes('바꿀 수 없습니다'), `(${blockedRes.status})`);
+const missingRes = await reqRaw('PUT', '/api/applications/job_does_not_exist/status', { status: 'planned' }, { 'x-careermate-token': SESSION_TOKEN });
+ok('없는 공고 상태변경 → 404 + 명확한 메시지', missingRes.status === 404 && JSON.parse(missingRes.text).error.includes('공고를 찾을 수 없습니다'), `(${missingRes.status})`);
 const ctx = await json('GET', `/api/context?job_id=${apiJob.id}`);
 ok('get_application_context 집계', ctx.job?.id === apiJob.id && ctx.fit_analysis?.score === 77 && ctx.writing_preferences.preferred_tone === '담백');
 const cl = (await json('POST', '/api/cover-letters', { title: '라인 자소서', job_id: apiJob.id, content: 'v1' }, { 'x-careermate-token': SESSION_TOKEN })).cover_letter;
