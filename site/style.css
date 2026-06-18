@@ -167,6 +167,15 @@ code { font-family: var(--mono); }
   :root:not([data-theme='light']) .theme-toggle .i-sun { display: none; }
 }
 
+/* github icon link — mirrors .theme-toggle so the two read as siblings */
+.nav__icon {
+  width: 34px; height: 34px; display: grid; place-items: center;
+  border: 1px solid var(--border-strong); background: var(--surface); border-radius: var(--radius-sm);
+  color: var(--text-secondary); transition: background .15s, color .15s;
+}
+.nav__icon:hover { background: var(--surface-hover); color: var(--text); text-decoration: none; }
+.nav__icon svg { width: 17px; height: 17px; }
+
 /* ----------------------------------------------------------------- buttons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
