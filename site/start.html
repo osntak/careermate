@@ -117,7 +117,7 @@
           <div class="path" data-sub="claude">
             <span class="path__tag">당신에겐 — Claude 데스크톱</span>
             <h2>Claude 데스크톱으로</h2>
-            <p>두 가지 길이 있어요 — <strong>Code 탭</strong>(앱 안에서 한 문장·추천)과 <strong>파일 설치</strong>(터미널·Node 없이). 둘 다 같은 CareerMate에 연결됩니다.</p>
+            <p>세 가지 길이 있어요 — <strong>Code 탭</strong>(앱 안에서 한 문장·추천), <strong>파일 설치</strong>(터미널·Node 없이), <strong>터미널(CLI)</strong>(터미널에 익숙하다면). 셋 다 같은 CareerMate에 연결됩니다. 잘 모르겠으면 <strong>방법 1</strong>만 따라 하세요.</p>
 
             <div class="subcard">
               <strong>방법 1 — Code 탭 (추천)</strong>
@@ -151,8 +151,9 @@
               <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 가장 쉬운 방법은 <strong>이력서 내용을 대화창에 붙여넣기</strong>입니다. 또는 작업 폴더에 파일을 넣고 <em>"이력서.pdf 읽어서 등록해줘"</em>라고 하거나 채팅에 직접 첨부하세요. (스캔본·보안 PDF는 안 읽힐 수 있습니다 → 그땐 텍스트로 붙여넣으세요.)</div>
             </div>
 
-            <div class="subcard">
-              <strong>방법 2 — 파일로 설치 (터미널·Node 없이)</strong>
+            <details class="acc" style="margin-top:1rem">
+              <summary>방법 2 — 파일로 설치 (터미널·Node 없이) <span class="acc__hint">무료 플랜도 가능</span></summary>
+              <div class="acc__body">
               <p class="hint" style="margin:.3rem 0 .8rem">Claude 데스크톱 <strong>채팅</strong>에 확장으로 붙이는 방식. 터미널·Node 없이 되고 <strong>무료·유료 어느 플랜이든</strong> 됩니다. 단 Claude 내장 Node 버전에 따라 불안정할 수 있어요 — 안 되면 방법 1을 쓰세요.</p>
               <ol class="steps">
                 <li class="step"><div class="step__no">1</div><div class="step__body">
@@ -173,7 +174,43 @@
                 </div></li>
               </ol>
               <div class="filenote">📎 <strong>이력서 넣는 법:</strong> Claude 채팅창에 파일을 <strong>직접 첨부</strong>하면 됩니다(가장 쉬움).</div>
-            </div>
+              </div>
+            </details>
+
+            <details class="acc">
+              <summary>방법 3 — 터미널(CLI)로 (Claude Code) <span class="acc__hint">터미널에 익숙하다면</span></summary>
+              <div class="acc__body">
+              <p class="hint" style="margin:.3rem 0 .8rem">Code 탭과 <strong>같은 엔진</strong>을 터미널에서 씁니다. <strong>Pro 이상</strong> 구독과 <strong>Node</strong>가 필요해요. 터미널이 처음이면 방법 1을 쓰세요.</p>
+              <ol class="steps">
+                <li class="step"><div class="step__no">1</div><div class="step__body">
+                  <h3>Node.js 설치</h3>
+                  <p class="os-win">Windows: PowerShell에 붙여넣기 →</p>
+                  <div class="code os-win"><button class="copy-btn" type="button" data-copy-target="p-node-win-cl">복사</button><pre id="p-node-win-cl">winget install OpenJS.NodeJS.LTS</pre></div>
+                  <p class="os-mac">Mac: 터미널에 붙여넣기(Homebrew 없으면 nodejs.org에서 LTS 설치) →</p>
+                  <div class="code os-mac"><button class="copy-btn" type="button" data-copy-target="p-node-mac-cl">복사</button><pre id="p-node-mac-cl">brew install node</pre></div>
+                  <p class="step__tip">명령이 어려우면 <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a>에서 <strong>설치 파일을 받아 더블클릭</strong>(계속 '다음')해도 됩니다. <strong>터미널 여는 법은 아래 도움말</strong>을 참고하세요.</p>
+                </div></li>
+                <li class="step"><div class="step__no">2</div><div class="step__body">
+                  <h3>Claude Code 설치 → 로그인</h3>
+                  <div class="code"><button class="copy-btn" type="button" data-copy-target="p-cc-install">복사</button><pre id="p-cc-install">npm install -g @anthropic-ai/claude-code</pre></div>
+                  <p class="step__tip">설치 후 <code>claude</code>를 실행하면 로그인 창이 열립니다(본인 Pro·Max 계정).</p>
+                </div></li>
+                <li class="step"><div class="step__no">3</div><div class="step__body">
+                  <h3>빈 폴더에서 claude 실행 → 이 문장</h3>
+                  <p class="paste-note">💬 실행한 <strong>claude 안에</strong> 붙여넣으세요 — AI에게 보내는 메시지예요(쉘 명령이 아님). 공개 안내만 읽어 설치하며, <strong>당신의 데이터는 외부로 올라가지 않아요.</strong></p>
+                  <div class="code"><button class="copy-btn" type="button" data-copy-target="p-claude-cli">복사</button>
+                    <pre id="p-claude-cli">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 데이터도 이 폴더의 .cm/data 안에 저장하고, Node 설치처럼 시스템에 바꿀 게 있으면 실행 전에 먼저 알려줘. 설치가 끝나면 앱 재시작 방법과 이력서를 주는 법, 대시보드 주소(http://127.0.0.1:4319)도 알려줘.</pre></div>
+                  <p class="step__tip">설치 중 <strong>네트워크·허용</strong>을 물으면 한 번 허용하세요(npm 다운로드 때문).</p>
+                </div></li>
+                <li class="step"><div class="step__no">4</div><div class="step__body">
+                  <h3>확인</h3>
+                  <p>claude 안에서 <code>/mcp</code>를 입력해 <code>careermate</code>가 보이면 연결 성공.</p>
+                  <p class="recover"><strong>안 보이면?</strong> <code>node --version</code>이 v22.5 이상인지, claude를 껐다 켰는지 확인하세요. 그래도 안 되면 설치 전체의 <a href="index.html#install">문제가 생겼을 때</a>를 참고하세요.</p>
+                </div></li>
+              </ol>
+              <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 작업 폴더에 파일을 넣고 <em>"이력서.pdf 읽어서 등록해줘"</em>라고 하거나, 채팅에 직접 첨부하세요.</div>
+              </div>
+            </details>
           </div>
 
           <!-- ===== ChatGPT 유료 → Codex CLI ===== -->
@@ -216,7 +253,7 @@
             <span class="path__tag">당신에겐 — 기타 (Agent)</span>
             <h2>로컬 접근 가능한 AI 채팅에서</h2>
             <p>Claude·ChatGPT가 아니어도, <strong>내 컴퓨터에서 명령을 실행할 수 있는 AI 에이전트</strong>면 됩니다. 빈 폴더를 잡고 아래 한 문장을 그 AI의 대화창에 붙여넣으세요.</p>
-            <p class="hint" style="margin:.2rem 0 0">⚠️ <strong>무료·약한 모델은 한글 품질·사용량 한계</strong>가 있을 수 있어요(글자가 깨지거나 한도에 빨리 걸림). 제대로 쓰려면 <strong>Claude Pro·ChatGPT Plus</strong>를 권장합니다. <strong>CareerMate 자체는 계속 무료</strong> — 한계는 고른 AI 쪽 이야기예요. Claude 데스크톱을 쓴다면 <strong>맨 위 Q1에서 ‘Claude’</strong>를 고르면 나오는 ‘방법 2(파일 설치)’가 더 쉬울 수 있어요.</p>
+            <p class="hint" style="margin:.2rem 0 0">⚠️ <strong>무료·약한 모델은 한글 품질·사용량 한계</strong>가 있을 수 있어요(글자가 깨지거나 한도에 빨리 걸림). 제대로 쓰려면 <strong>Claude Pro·ChatGPT Plus</strong>를 권장합니다. <strong>CareerMate 자체는 계속 무료</strong> — 한계는 고른 AI 쪽 이야기예요.<br />Claude 데스크톱을 쓴다면 <strong>맨 위 Q1에서 ‘Claude’</strong>를 고르면 나오는 ‘방법 2(파일 설치)’가 더 쉬울 수 있어요.</p>
 
             <ol class="steps">
               <li class="step"><div class="step__no">1</div><div class="step__body">
