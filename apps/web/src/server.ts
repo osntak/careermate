@@ -16,8 +16,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // dev(tsx): apps/web/src 기준 상대경로 · prod(dist/web.mjs): dist 기준.
 const WEB_ROOT = BUNDLED ? path.resolve(__dirname, 'public') : path.resolve(__dirname, '..', 'public');
 const INSTALL_ROOT = BUNDLED
-  ? path.resolve(__dirname, 'install-page')
-  : path.resolve(__dirname, '..', '..', '..', 'install-page');
+  ? path.resolve(__dirname, 'site')
+  : path.resolve(__dirname, '..', '..', '..', 'site');
 
 const router = new Router();
 registerApiRoutes(router);

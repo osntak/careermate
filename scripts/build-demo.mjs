@@ -3,16 +3,16 @@
 // careermate.life/demo.
 //
 // What it does:
-//   1. Copy apps/web/public/*  ->  install-page/demo/
+//   1. Copy apps/web/public/*  ->  site/demo/
 //   2. Rewrite root-absolute asset paths (/lib.js, /pages/, /styles.css, ...)
 //      to /demo/... so they resolve under the subpath. (/api/* is left alone —
 //      the shim intercepts those at runtime.)
-//   3. Copy the demo overlay (demo-shim.js, seed.js, demo.css) into install-page/demo/.
+//   3. Copy the demo overlay (demo-shim.js, seed.js, demo.css) into site/demo/.
 //   4. Inject the shim + demo.css into the copied index.html, and a hint that
 //      this is a demo build.
 //
-// The generated install-page/demo/ folder is committed so Vercel (which serves
-// install-page/ statically) publishes it with no build step or config change.
+// The generated site/demo/ folder is committed so Vercel (which serves
+// site/ statically) publishes it with no build step or config change.
 //
 // Run:  node scripts/build-demo.mjs
 //
@@ -27,7 +27,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const SRC = path.join(ROOT, 'apps', 'web', 'public');
 const OVERLAY = path.join(ROOT, 'apps', 'web', 'demo');
-const OUT = path.join(ROOT, 'install-page', 'demo');
+const OUT = path.join(ROOT, 'site', 'demo');
 
 const TEXT_EXT = new Set(['.html', '.js', '.css', '.svg', '.json', '.txt', '.md']);
 
@@ -127,4 +127,4 @@ for (const f of ['demo-shim.js', 'seed.js', 'demo.css']) {
 console.log('· injecting shim + styles into index.html');
 injectDemo(path.join(OUT, 'index.html'));
 
-console.log('✓ demo built at', path.relative(ROOT, OUT), '— serve install-page/ and open /demo');
+console.log('✓ demo built at', path.relative(ROOT, OUT), '— serve site/ and open /demo');

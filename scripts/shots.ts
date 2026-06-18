@@ -3,7 +3,7 @@
  *
  * Starts the local web server against whatever data dir is configured, then uses
  * Playwright to capture home / applications / jobs in BOTH light and dark themes
- * into install-page/shots/{screen}-{theme}.png. The landing page embeds these and
+ * into site/shots/{screen}-{theme}.png. The landing page embeds these and
  * swaps light↔dark to match its own theme toggle.
  *
  * Run against the throwaway marketing data (see shots-seed.ts):
@@ -17,7 +17,7 @@ import { startServer } from '../apps/web/src/server.ts';
 import { getDataDir } from '@careermate/db';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = path.resolve(__dirname, '../install-page/shots');
+const OUT_DIR = path.resolve(__dirname, '../site/shots');
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 const SCREENS = [
@@ -79,7 +79,7 @@ async function main(): Promise<void> {
   } finally {
     await browser.close();
   }
-  console.log('완료. install-page/shots/*.png 생성됨.');
+  console.log('완료. site/shots/*.png 생성됨.');
   process.exit(0);
 }
 

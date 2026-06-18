@@ -54,4 +54,4 @@
 - **.mcpb GitHub Release(예정)** — `v0.0.1` Release에 `careermate.mcpb` 첨부 예정. careermate.life·GitHub Release에서 다운로드.
 - **공개 repo URL 확정** — git remote 기준 정본은 `osntak/careermate`. 공개 전환 시 GitHub repo 이름을 소문자 `careermate`로 변경(도메인 `careermate.life`와 일치).
 - **THIRD_PARTY_NOTICES — `im-not-ai`(MIT)** 항목의 저작권자/연도가 비어 있다. 실제 저작권자·연도로 채우기.
-- **`install-page/` 폴더명 변경** — 이제 랜딩+시작마법사+데모(`/demo`)+설치안내를 모두 담는 "공개 웹사이트" 폴더라 `install-page`는 이름이 안 맞는다. 후보: `site` / `www` / `landing`. 주의: 이 폴더는 **Vercel 프로젝트의 Root Directory 설정**이므로, 폴더명을 바꾸면 Vercel 대시보드의 Root Directory 값도 같이 바꿔야 배포가 안 깨진다. 레포 내 코드 참조(고쳐야 할 곳): `scripts/build-dist.mjs`·`scripts/build-mcpb.mjs`·`scripts/shots.ts`·`scripts/gen-og.mjs`·`apps/web/src/server.ts`. 데모 완성 후 진행하기로 합의(2026-06-16).
+- ~~**`install-page/` 폴더명 변경**~~ — **완료(2026-06-18): `install-page/` → `site/`.** 코드 참조(`apps/web/src/server.ts`·`scripts/{build-dist,build-mcpb,build-demo,gen-og,shots}`)·`.gitignore`·문서 모두 갱신. ⚠️ **남은 수동 작업: Vercel 대시보드 프로젝트 Settings → Root Directory를 `install-page` → `site`로 변경해야 다음 배포부터 반영된다(안 바꾸면 배포만 실패하고 기존 사이트는 그대로 유지).**

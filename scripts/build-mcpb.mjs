@@ -81,10 +81,10 @@ function main() {
   // dist/ 에서 런타임에 필요한 산출물만 복사한다.
   //  - mcp.mjs        : .mcpb의 entry_point(필수)
   //  - web.mjs/public : open_dashboard로 띄우는 로컬 대시보드(필수)
-  //  - install-page   : 제외. 공개 마케팅 랜딩의 사본이라 MCP 서버·대시보드 동작에 불필요하고,
+  //  - site   : 제외. 공개 마케팅 랜딩의 사본이라 MCP 서버·대시보드 동작에 불필요하고,
   //                     fonts(2MB)+shots(2MB) 때문에 .mcpb를 두 배로 불린다. 대시보드 /install/
   //                     라우트는 부재 시 serveStatic이 폴백하므로 깨지지 않는다(.mcpb 사용자는
-  //                     애초에 careermate.life를 거쳐 들어온다). npm 패키지는 dist/install-page를
+  //                     애초에 careermate.life를 거쳐 들어온다). npm 패키지는 dist/site를
   //                     그대로 포함하므로 /install/가 유지된다.
   fs.mkdirSync(path.join(STAGE, 'dist'), { recursive: true });
   for (const name of ['mcp.mjs', 'web.mjs', 'public']) {
@@ -108,16 +108,16 @@ function main() {
   const size = (fs.statSync(OUT).size / (1024 * 1024)).toFixed(1);
   console.log(`\n✅ 완성: ${OUT} (${size} MB)`);
 
-  // 랜딩 페이지(install-page/)가 .mcpb를 직접 서빙한다(careermate.life/careermate.mcpb).
+  // 랜딩 페이지(site/)가 .mcpb를 직접 서빙한다(careermate.life/careermate.mcpb).
   // private repo라 GitHub Release 다운로드가 막혀, 빌드 결과를 페이지로 복사해 다운로드
-  // 버튼을 항상 최신으로 유지한다. install-page/ 는 배포 소스라 사이트와 함께 배포된다.
+  // 버튼을 항상 최신으로 유지한다. site/ 는 배포 소스라 사이트와 함께 배포된다.
   console.log('\n4) 랜딩 페이지로 복사…');
-  const pageDir = path.join(ROOT, 'install-page');
+  const pageDir = path.join(ROOT, 'site');
   if (fs.existsSync(pageDir)) {
     const pageCopy = path.join(pageDir, 'careermate.mcpb');
     fs.copyFileSync(OUT, pageCopy);
     console.log(`   복사 완료: ${pageCopy}`);
-    console.log('   배포: install-page/ 를 배포하면 유저가 페이지에서 바로 내려받아 Settings → Extensions → Install extension… 으로 설치합니다.');
+    console.log('   배포: site/ 를 배포하면 유저가 페이지에서 바로 내려받아 Settings → Extensions → Install extension… 으로 설치합니다.');
   } else {
     console.log(`   건너뜀: ${pageDir} 없음 — 페이지 호스팅 복사 생략.`);
   }

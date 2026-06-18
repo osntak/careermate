@@ -71,7 +71,7 @@ v1의 목표는 이 정체성을 제품 표면과 문서 전반에 일관되게 
 ### 2.6 기타
 - `package.json` publish 메타데이터 보강: `author`, `keywords`, `publishConfig`.
 - `.gitignore`에 `.mcp.json` 추가(로컬 등록 산출물 커밋 방지).
-- README / install-page 재배치 — 세 가지 1급 사용 방식 구조에 맞춰 재구성.
+- README / site 재배치 — 세 가지 1급 사용 방식 구조에 맞춰 재구성.
 
 ---
 
@@ -79,7 +79,7 @@ v1의 목표는 이 정체성을 제품 표면과 문서 전반에 일관되게 
 
 ### 유지 (삭제하지 않음)
 - 패키지: `packages/{shared,db,core,mcp-tools,exporters,parsers,prompts,workflows}`
-- 앱: `apps/{web,mcp}`, 그리고 `install-page/`, `docs/`, `scripts/`
+- 앱: `apps/{web,mcp}`, 그리고 `site/`, `docs/`, `scripts/`
 - 기존 5종 워크플로우(onboarding, analyze_job, write_cover_letter,
   manage_application_status, prepare_interview) 전부.
 - `.mcpb` 빌드 경로(`npm run build:mcpb` → `dist/careermate.mcpb`).

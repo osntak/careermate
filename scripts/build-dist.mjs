@@ -10,7 +10,7 @@
  *   dist/doctor.mjs     설치/환경 점검 CLI
  *   dist/migrate.mjs    DB 마이그레이션 CLI
  *   dist/public/        대시보드 정적 자산 (apps/web/public 복사)
- *   dist/install-page/  설치 안내 페이지 복사
+ *   dist/site/  설치 안내 페이지 복사
  *
  * `define: __BUNDLED__=true` 로 런타임에서 번들 레이아웃을 인지(정적경로/대시보드 기동 분기).
  * node: 내장 모듈(node:sqlite 등)은 external로 두므로 실행에는 Node ≥22.5가 필요(런타임은 동봉 대상).
@@ -28,7 +28,7 @@ async function main() {
   // package.json을 버전 단일 출처로 삼아 번들에 주입(앱별 하드코딩 버전 드리프트 방지).
   const pkgVersion = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
   // dist를 통째로 비우고 다시 만든다. build-dist가 소유하는 산출물(mcp/web/doctor/migrate/
-  // public/install-page)만 남기기 위함. 이렇게 해야 직전 build:mcpb가 남긴 mcpb-stage/·
+  // public/site)만 남기기 위함. 이렇게 해야 직전 build:mcpb가 남긴 mcpb-stage/·
   // careermate.mcpb(수 MB)나 테스트 잔여물(mcp-smoke.err)이 npm tarball에 섞여 들어가지 않는다
   // (npm publish의 prepack은 build-dist만 실행하므로 여기서 비우면 게시본이 깨끗하다).
   // build:mcpb는 이 함수를 먼저 호출한 뒤 mcpb-stage/·careermate.mcpb를 다시 생성하므로 안전.
@@ -62,21 +62,21 @@ async function main() {
 
   // 정적 자산 복사 (번들에는 코드만 들어가므로 별도 복사).
   fs.rmSync(path.join(DIST, 'public'), { recursive: true, force: true });
-  fs.rmSync(path.join(DIST, 'install-page'), { recursive: true, force: true });
+  fs.rmSync(path.join(DIST, 'site'), { recursive: true, force: true });
   fs.cpSync(path.join(ROOT, 'apps', 'web', 'public'), path.join(DIST, 'public'), { recursive: true });
-  // install-page/careermate.mcpb 는 공개 사이트(careermate.life)의 다운로드 산출물일 뿐,
+  // site/careermate.mcpb 는 공개 사이트(careermate.life)의 다운로드 산출물일 뿐,
   // 번들 대시보드의 /install/ 라우트에는 필요 없다. 이걸 dist로 들이면 .mcpb 빌드가 직전
   // 번들(자기 자신, ~6MB)을 다시 접어 넣어 매 빌드마다 용량이 불어난다(자기참조). 제외한다.
-  // install-page/demo 는 공개 사이트(careermate.life/demo) 전용 미리보기다. 자산 경로가
+  // site/demo 는 공개 사이트(careermate.life/demo) 전용 미리보기다. 자산 경로가
   // /demo/ 로 재작성돼 있어 번들 대시보드의 /install/ 라우트에서는 동작하지 않고, 폰트까지
   // 포함해 ~2.5MB를 헛되이 키운다. dist에서 제외한다.
-  const demoDir = path.join(ROOT, 'install-page', 'demo');
-  fs.cpSync(path.join(ROOT, 'install-page'), path.join(DIST, 'install-page'), {
+  const demoDir = path.join(ROOT, 'site', 'demo');
+  fs.cpSync(path.join(ROOT, 'site'), path.join(DIST, 'site'), {
     recursive: true,
     filter: (src) => {
       const base = path.basename(src);
       // OMC/OMX 오케스트레이션 상태(세션ID·리플레이 로그)는 사용자에게 불필요하고
-      // 게시 tarball로 새면 안 된다. install-page에 남아 있어도 dist→npm에는 제외한다.
+      // 게시 tarball로 새면 안 된다. site에 남아 있어도 dist→npm에는 제외한다.
       if (base === '.omc' || base === '.omx') return false;
       // 마케팅 스크린샷·OG 이미지는 공개 사이트(careermate.life) 전용 — 번들 대시보드 /install 라우트엔 불필요.
       if (base === 'shots' || base === 'og.png') return false;
@@ -112,7 +112,7 @@ async function main() {
   }
   fs.copyFileSync(pdfWorker, path.join(DIST, 'pdf.worker.min.mjs'));
 
-  console.log('✅ dist 빌드 완료: dist/mcp.mjs, dist/web.mjs, dist/doctor.mjs, dist/migrate.mjs, dist/public, dist/install-page');
+  console.log('✅ dist 빌드 완료: dist/mcp.mjs, dist/web.mjs, dist/doctor.mjs, dist/migrate.mjs, dist/public, dist/site');
 }
 
 main().catch((err) => {

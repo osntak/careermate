@@ -38,7 +38,7 @@ CareerMate)을 지켜 주세요. 배경은 [`docs/dev/DECISIONS.md`](docs/dev/DE
 packages/   shared·db·core·mcp-tools·exporters·parsers·prompts·workflows·knowledge (코어 로직)
 apps/web    127.0.0.1 로컬 대시보드 (바닐라 Node http + 자체 라우터, public/)
 apps/mcp    MCP stdio 서버 (AI 에이전트가 호출)
-install-page careermate.life 랜딩 + 무설치 데모
+site careermate.life 랜딩 + 무설치 데모
 scripts/    init·migrate·doctor·test·ui-smoke 등
 docs/       영구 문서 (아키텍처·데이터 모델·결정·워크플로우·MCP 도구 레퍼런스)
 .claude/work 진행 중 작업 노트(working memory) — /work-log 스킬로 관리

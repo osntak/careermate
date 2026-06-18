@@ -5,10 +5,10 @@
  * 브랜드 색(에메랄드 #0f7256 · 크림 페이퍼 #faf8f4)을 랜딩/대시보드와 통일해
  * Playwright(chromium)로 다음을 렌더링한다. 한 번 만들어 두면 정적 자산으로 커밋된다.
  *
- *   install-page/favicon.svg      벡터 파비콘 (모던 브라우저)
- *   install-page/og.png           1200×630 소셜 공유 카드 (og:image / twitter:image)
- *   install-page/icon-180.png     apple-touch-icon
- *   install-page/icon-512.png     PWA/대형 폴백
+ *   site/favicon.svg      벡터 파비콘 (모던 브라우저)
+ *   site/og.png           1200×630 소셜 공유 카드 (og:image / twitter:image)
+ *   site/icon-180.png     apple-touch-icon
+ *   site/icon-512.png     PWA/대형 폴백
  *   apps/web/public/icon-180.png  대시보드 apple-touch-icon (동일 자산)
  *
  * 실행: node scripts/gen-og.mjs   (사전: npx playwright install chromium)
@@ -19,7 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const LANDING = path.join(ROOT, 'install-page');
+const LANDING = path.join(ROOT, 'site');
 const PUBLIC = path.join(ROOT, 'apps', 'web', 'public');
 
 const EMERALD = '#0f7256';

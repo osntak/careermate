@@ -1,7 +1,7 @@
 // =============================================================================
 // CareerMate marketing-site analytics — careermate.life ONLY.
 //
-// SCOPE: this file loads on the PUBLIC marketing/demo site (install-page/) that
+// SCOPE: this file loads on the PUBLIC marketing/demo site (site/) that
 // Vercel serves. It must NEVER be loaded by the local dashboard (apps/web, bound
 // to 127.0.0.1) — that would break the core promise in AGENTS.md:
 //   "절대 사용자 데이터를 외부로 업로드하지 마라."

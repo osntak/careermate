@@ -177,7 +177,7 @@ CareerMate/
 │  ├─ parsers/        # 채용공고 파싱
 │  ├─ prompts/        # 프롬프트·안내 문구
 │  └─ workflows/      # 워크플로우 5종
-├─ install-page/      # 설치 안내 페이지
+├─ site/      # 설치 안내 페이지
 ├─ docs/              # 문서
 ├─ scripts/           # migrate / seed / doctor / test 등
 └─ package.json
@@ -200,7 +200,7 @@ CareerMate/
 | `npm run doctor` | 설치/환경 점검 |
 | `npm run seed` | 예시 데이터 삽입 |
 | `npm run build` | 배포용 플레인 JS 번들(`dist/`) 생성 (esbuild) |
-| `npm run build:mcpb` | Claude Desktop용 `.mcpb` 번들 빌드 → `dist/careermate.mcpb`(+ `install-page/`로 복사). manifest+서버코드를 한 파일로 묶어 배포(careermate.life에 호스팅). |
+| `npm run build:mcpb` | Claude Desktop용 `.mcpb` 번들 빌드 → `dist/careermate.mcpb`(+ `site/`로 복사). manifest+서버코드를 한 파일로 묶어 배포(careermate.life에 호스팅). |
 | `npm test` | E2E 테스트 실행 |
 | `npm run test:ui` | Playwright UI 스모크 테스트 |
 | `npm run typecheck` | 타입 검사 (`tsc --noEmit`) |
@@ -446,7 +446,7 @@ CareerMate/
 │  ├─ parsers/        # Job-posting parsing
 │  ├─ prompts/        # Prompts and guidance copy
 │  └─ workflows/      # The 5 workflows
-├─ install-page/      # Install guide page
+├─ site/      # Install guide page
 ├─ docs/              # Documentation
 ├─ scripts/           # migrate / seed / doctor / test, etc.
 └─ package.json
@@ -469,7 +469,7 @@ CareerMate/
 | `npm run doctor` | Check installation/environment |
 | `npm run seed` | Insert example data |
 | `npm run build` | Build the plain-JS distribution bundle (`dist/`) via esbuild |
-| `npm run build:mcpb` | Build the `.mcpb` bundle for Claude Desktop → `dist/careermate.mcpb` (also copied to `install-page/`). Packs manifest + server code into one file for distribution (hosted on careermate.life). |
+| `npm run build:mcpb` | Build the `.mcpb` bundle for Claude Desktop → `dist/careermate.mcpb` (also copied to `site/`). Packs manifest + server code into one file for distribution (hosted on careermate.life). |
 | `npm test` | Run E2E tests |
 | `npm run test:ui` | Playwright UI smoke tests |
 | `npm run typecheck` | Type check (`tsc --noEmit`) |
