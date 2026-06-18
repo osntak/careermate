@@ -403,6 +403,15 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 /* ----------------------------------------------------------------- doc preview */
 .doc-preview { white-space: pre-wrap; word-break: break-word; font-size: 15px; line-height: 1.75; color: var(--text);
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; max-height: 60vh; overflow-y: auto; }
+
+/* disclosure — native <details> for collapsing long content (예: 공고 원문) */
+.disclosure__summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  list-style: none; color: var(--text-secondary); font-size: 13px; font-weight: 600; user-select: none; }
+.disclosure__summary::-webkit-details-marker { display: none; }
+.disclosure__summary:hover { color: var(--text); }
+.disclosure__summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.disclosure__chevron { width: 16px; height: 16px; flex: none; transition: transform .15s ease; }
+.disclosure[open] .disclosure__chevron { transform: rotate(90deg); }
 .kv { display: grid; grid-template-columns: 132px 1fr; gap: 8px 16px; }
 .kv dt { color: var(--text-tertiary); font-size: 13px; }
 /* min-width:0 overrides a grid item's default min-width:auto so the 1fr column
