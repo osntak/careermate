@@ -38,7 +38,8 @@
 ### 3-1. 경력·프로젝트·스킬 등록 (있는 경우) — `add_experience` · `add_project` · `add_skill`
 
 - 이력서에서 파악되는 경력·프로젝트·보유 기술은 본문 저장과 별개로 `add_experience` / `add_project` / `add_skill`로 항목 단위 저장하면 적합도 분석·자소서·면접 준비에서 정밀하게 활용됩니다.
-- 경력 `achievements`에는 가능하면 정량 지표를 넣고, 기술은 항목당 1건이라 여러 개면 `add_skill`을 반복 호출합니다.
+- 세 도구는 모두 배열을 받습니다 — 파악한 경력/프로젝트/기술을 **한 번에 모아** 넘기세요(항목마다 반복 호출하지 않습니다). 같은 항목을 다시 넣어도 중복 없이 갱신됩니다.
+- 경력 `achievements`에는 가능하면 정량 지표를 넣으세요.
 - 이 항목들은 `get_onboarding_status`의 `has_experience` / `has_skills`와 프로필 완성도(0~100)에 반영됩니다.
 
 ### 4. 자기소개서 등록 (있는 경우) — `save_cover_letter_version`

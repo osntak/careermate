@@ -150,6 +150,38 @@ section('6) 검증 엔진(verify) — 숫자 출처 게이트');
   ok('엄격 모드: 구조화 전용 수치(12→3)도 차단', lintArtifact('cover_letter', '12건에서 3건으로 줄였습니다', corpus, { strict: true }).blocking.length === 1);
 }
 
+/* ------------------ 7. 배치 입력 + 멱등 upsert (스킬/경력/프로젝트) */
+// add_skill/add_experience/add_project now take an array so the AI saves a whole
+// résumé's worth of items in ONE call. Re-extracting the same data must not create
+// duplicate rows (natural-key upsert), and within-batch dupes must collapse.
+section('7) 배치 입력 + 멱등 upsert');
+{
+  const { addSkills, addExperiences, addProjects } = await import('../packages/core/src/services.ts');
+  const { skillRepo, experienceRepo, projectRepo } = await import('../packages/db/src/index.ts');
+
+  // One call, many items; within-batch duplicate (case-insensitive) collapses to one row.
+  const r1 = addSkills([{ name: 'Python' }, { name: 'React' }, { name: 'python' }]);
+  ok('배치 스킬: 3개 입력 → 중복 합쳐 2건 저장', skillRepo.list().length === 2, `(${skillRepo.list().length})`);
+  ok('배치 스킬: created=2 (배치 내 dedupe)', r1.created === 2 && r1.updated === 1);
+
+  // Re-saving the same names must not grow the table (idempotent) and must keep
+  // existing fields while applying the newly-provided one (non-destructive merge).
+  const r2 = addSkills([{ name: 'Python', level: '상' }]);
+  ok('배치 스킬 멱등: 재저장해도 2건 유지', skillRepo.list().length === 2, `(${skillRepo.list().length})`);
+  ok('배치 스킬 멱등: updated=1 · created=0', r2.updated === 1 && r2.created === 0);
+  ok('배치 스킬 멱등: 누락 필드 보존 + 신규 필드 반영', skillRepo.list().find((s) => s.name.toLowerCase() === 'python')?.level === '상');
+
+  // Experience natural key = company + role + start_date.
+  addExperiences([{ company: '네이버', role: '백엔드', start_date: '2020-01' }]);
+  addExperiences([{ company: '네이버', role: '백엔드', start_date: '2020-01', description: '갱신본' }]);
+  const navers = experienceRepo.list().filter((e) => e.company === '네이버');
+  ok('배치 경력 멱등: 같은 회사·직무·입사일은 1건', navers.length === 1 && navers[0]?.description === '갱신본');
+
+  // Project natural key = name; within-batch dupes collapse.
+  const p = addProjects([{ name: '대시보드' }, { name: '대시보드' }]);
+  ok('배치 프로젝트: 배치 내 동명은 1건', projectRepo.list().filter((x) => x.name === '대시보드').length === 1 && p.created === 1);
+}
+
 console.log(`\n${'='.repeat(40)}`);
 console.log(`결과: ${pass} 통과 · ${fail} 실패`);
 console.log(fail === 0 ? '✅ 전체 통과' : '❌ 실패 있음');

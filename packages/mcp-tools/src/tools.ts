@@ -15,9 +15,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   ProfileInputSchema,
-  ExperienceInputSchema,
-  ProjectInputSchema,
-  SkillInputSchema,
+  ExperienceBatchInputSchema,
+  ProjectBatchInputSchema,
+  SkillBatchInputSchema,
   JobInputSchema,
   FitAnalysisInputSchema,
   CoverLetterVersionInputSchema,
@@ -50,9 +50,9 @@ import {
   getApplicationContext,
   saveProfile,
   addResume,
-  addExperience,
-  addProject,
-  addSkill,
+  addExperiences,
+  addProjects,
+  addSkills,
   saveJobPosting,
   saveFitAnalysis,
   saveCoverLetterVersion,
@@ -343,11 +343,12 @@ export const TOOLS: ToolDef[] = [
     name: 'add_experience',
     title: '경력 추가',
     description:
-      '구조화된 경력(직장 단위)을 별도 항목으로 저장합니다. 이력서 본문(add_resume)과 달리, 회사·직무·기간·성과를 필드로 나눠 저장해 적합도 분석/자소서 작성 시 정밀하게 활용됩니다. company는 필수이며, achievements에는 정량 지표가 담긴 성과를, tech에는 사용 기술을 배열로 넣으세요. 온보딩 완성도(get_onboarding_status)의 has_experience를 채우려면 이 도구로 1건 이상 추가해야 합니다.',
-    inputSchema: ExperienceInputSchema.shape,
+      '구조화된 경력(직장 단위)을 저장합니다. 이력서에서 파악한 경력을 experiences 배열에 한 번에 담아 호출하세요(한 건이어도 배열로 — 항목마다 도구를 반복 호출하지 마세요). 이력서 본문(add_resume)과 달리 회사·직무·기간·성과를 필드로 나눠 저장해 적합도 분석/자소서 작성 시 정밀하게 활용됩니다. 각 항목은 company가 필수이며, achievements에는 정량 지표가 담긴 성과를, tech에는 사용 기술을 배열로 넣으세요. 같은 회사·직무·입사일(start_date)이 일치하면 갱신되고 중복 생성되지 않으니 여러 번 저장해도 안전합니다. 온보딩 완성도(get_onboarding_status)의 has_experience를 채우려면 1건 이상 추가하세요.',
+    inputSchema: ExperienceBatchInputSchema.shape,
     handler: (args) => {
-      const exp = addExperience(args);
-      return ok(`경력 '${exp.company}${exp.role ? ` · ${exp.role}` : ''}'을(를) 추가했습니다.`, exp);
+      const { records, created, updated } = addExperiences(args.experiences);
+      const names = records.map((e) => `${e.company}${e.role ? ` · ${e.role}` : ''}`).join(', ');
+      return ok(`경력 ${records.length}건을 저장했습니다 (신규 ${created} · 갱신 ${updated}): ${names}`, records);
     },
   },
   {
@@ -367,11 +368,12 @@ export const TOOLS: ToolDef[] = [
     name: 'add_project',
     title: '프로젝트 추가',
     description:
-      '대표 프로젝트를 별도 항목으로 저장합니다. name은 필수이며, highlights(핵심 성과)와 tech(사용 기술)를 배열로 넣으면 자소서·면접 준비에서 근거로 활용됩니다. url에 결과물 링크를 넣을 수 있습니다.',
-    inputSchema: ProjectInputSchema.shape,
+      '대표 프로젝트를 저장합니다. projects 배열에 여러 개를 한 번에 담아 호출하세요(한 개여도 배열로 — 항목마다 반복 호출하지 마세요). 각 항목은 name이 필수이며, highlights(핵심 성과)와 tech(사용 기술)를 배열로 넣으면 자소서·면접 준비에서 근거로 활용됩니다. url에 결과물 링크를 넣을 수 있습니다. 같은 이름의 프로젝트는 갱신되고 중복 생성되지 않으니 여러 번 저장해도 안전합니다.',
+    inputSchema: ProjectBatchInputSchema.shape,
     handler: (args) => {
-      const prj = addProject(args);
-      return ok(`프로젝트 '${prj.name}'을(를) 추가했습니다.`, prj);
+      const { records, created, updated } = addProjects(args.projects);
+      const names = records.map((p) => p.name).join(', ');
+      return ok(`프로젝트 ${records.length}건을 저장했습니다 (신규 ${created} · 갱신 ${updated}): ${names}`, records);
     },
   },
   {
@@ -391,11 +393,12 @@ export const TOOLS: ToolDef[] = [
     name: 'add_skill',
     title: '기술스택 추가',
     description:
-      '보유 기술스택을 별도 항목으로 저장합니다. name은 필수이며, category(언어/프레임워크/툴/소프트스킬 등)·level·years로 숙련도를 함께 기록하면 공고 키워드 매칭이 정확해집니다. 온보딩 완성도의 has_skills를 채우려면 이 도구로 1건 이상 추가해야 합니다. 여러 개면 도구를 반복 호출하세요.',
-    inputSchema: SkillInputSchema.shape,
+      '보유 기술스택을 저장합니다. 여러 개를 skills 배열에 한 번에 담아 호출하세요(한 개여도 배열로 — 기술마다 도구를 반복 호출하지 마세요). 각 항목은 name이 필수이며, category(언어/프레임워크/툴/소프트스킬 등)·level·years로 숙련도를 함께 기록하면 공고 키워드 매칭이 정확해집니다. 같은 이름의 기술은 갱신되고 중복 생성되지 않으니 여러 번 저장해도 안전합니다. 온보딩 완성도의 has_skills를 채우려면 1개 이상 추가하세요.',
+    inputSchema: SkillBatchInputSchema.shape,
     handler: (args) => {
-      const skill = addSkill(args);
-      return ok(`기술 '${skill.name}'을(를) 추가했습니다.`, skill);
+      const { records, created, updated } = addSkills(args.skills);
+      const names = records.map((s) => s.name).join(', ');
+      return ok(`기술 ${records.length}개를 저장했습니다 (신규 ${created} · 갱신 ${updated}): ${names}`, records);
     },
   },
   {

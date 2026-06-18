@@ -126,6 +126,65 @@ export function addSkill(input: SkillInput): SkillRecord {
   return skill;
 }
 
+/* ---------- Batch variants: add many in one call (idempotent upsert) ---------- */
+// The MCP tools (add_experience/add_project/add_skill) accept an array so the AI
+// can save everything extracted from a résumé in a single call instead of looping
+// once per item. The repos dedupe by natural key (company+role+start / name) and
+// merge non-destructively, so re-extracting the same data doesn't create dupes.
+// One activity entry summarizes the whole batch (names only — never body text).
+
+/** Truncated, name-only summary suffix for batch activity logs (privacy-safe). */
+function batchNames(names: string[]): string {
+  const shown = names.filter(Boolean).slice(0, 8).join(', ');
+  if (!shown) return '';
+  return `: ${shown}${names.length > 8 ? ' 외' : ''}`;
+}
+
+export function addExperiences(inputs: ExperienceInput[]): {
+  records: ExperienceRecord[];
+  created: number;
+  updated: number;
+} {
+  const res = experienceRepo.addMany(inputs);
+  activityRepo.log(
+    'profile_updated',
+    `경력 ${res.records.length}건을 저장했습니다(신규 ${res.created} · 갱신 ${res.updated})${batchNames(res.records.map((e) => e.company))}.`,
+    'experience',
+    res.records[0]?.id,
+  );
+  return res;
+}
+
+export function addProjects(inputs: ProjectInput[]): {
+  records: ProjectRecord[];
+  created: number;
+  updated: number;
+} {
+  const res = projectRepo.addMany(inputs);
+  activityRepo.log(
+    'profile_updated',
+    `프로젝트 ${res.records.length}건을 저장했습니다(신규 ${res.created} · 갱신 ${res.updated})${batchNames(res.records.map((p) => p.name))}.`,
+    'project',
+    res.records[0]?.id,
+  );
+  return res;
+}
+
+export function addSkills(inputs: SkillInput[]): {
+  records: SkillRecord[];
+  created: number;
+  updated: number;
+} {
+  const res = skillRepo.addMany(inputs);
+  activityRepo.log(
+    'profile_updated',
+    `기술 ${res.records.length}개를 저장했습니다(신규 ${res.created} · 갱신 ${res.updated})${batchNames(res.records.map((s) => s.name))}.`,
+    'skill',
+    res.records[0]?.id,
+  );
+  return res;
+}
+
 /* -------------------------------------------------------------------- Jobs */
 
 /** Save (or update) a posting and make sure an application row tracks it. */

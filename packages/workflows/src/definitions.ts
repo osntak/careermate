@@ -33,7 +33,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '파일 입력 분기: ① 사용자가 "파일이 있다"고 하면 `open_inbox`로 인입 폴더를 열어 파일을 넣게 하고, "다 넣었다"고 하면 `read_inbox`로 본문을 읽는다(pdf·이미지는 read_inbox가 경로만 주므로 클라이언트의 파일 읽기로 직접 읽는다). ② 사용자가 파일 경로를 직접 알려주면 `read_document`로 읽는다. ③ "없다/직접 입력/텍스트로 붙여넣기"면 폴더를 열지 말고 받은 텍스트를 그대로 쓴다. (묻지도 않고 open_inbox로 폴더를 자동으로 열지 않는다.)',
       '수집한 정보를 구조화해 `save_profile`로 저장한다(이름·연락처·headline·summary·desired_roles·desired_conditions, 그리고 글쓰기 선호인 preferred_tone과 emphasis_points 포함). 파일 출처는 source=upload, 직접 입력은 manual.',
       '업로드한 이력서/경력기술서/포트폴리오 본문을 `add_resume`로 저장한다(kind·title 지정, 대표 문서는 is_primary=true).',
-      '경력·프로젝트·스킬이 파악되면 `add_experience`·`add_project`·`add_skill`로 각각 저장한다(완성도의 has_experience/has_skills에 반영).',
+      '경력·프로젝트·스킬이 파악되면 `add_experience`·`add_project`·`add_skill`로 저장한다 — 각 도구는 배열을 받으므로 파악한 항목을 한 번에 모아 넘긴다(항목마다 반복 호출하지 않는다). 같은 항목을 다시 넣어도 중복 없이 갱신된다(완성도의 has_experience/has_skills에 반영).',
       '기존 자기소개서가 있으면 `save_cover_letter_version`으로 저장한다(title+content면 v1로 저장, 없으면 나중에 작성 가능함을 안내).',
       '`open_dashboard`를 호출해 사용자가 자기 데이터를 확인하게 한다.',
       '다시 `get_onboarding_status`로 완성도를 확인하고, 다음 단계(공고 분석 등)를 제안한다.',

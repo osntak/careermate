@@ -151,6 +151,16 @@ export const ExperienceRecordSchema = z.object({
 });
 export type ExperienceRecord = z.infer<typeof ExperienceRecordSchema>;
 
+/** Batch input: add several experiences in one MCP call (one item → array of one). */
+export const ExperienceBatchInputSchema = z.object({
+  experiences: z
+    .array(ExperienceInputSchema)
+    .min(1)
+    .max(MAX_ITEMS)
+    .describe('추가할 경력 목록(한 건이어도 배열로). 같은 회사·직무·입사일은 갱신되고 중복 생성되지 않습니다.'),
+});
+export type ExperienceBatchInput = z.infer<typeof ExperienceBatchInputSchema>;
+
 /* ------------------------------------------------------------------ Project */
 
 export const ProjectInputSchema = z.object({
@@ -180,6 +190,16 @@ export const ProjectRecordSchema = z.object({
 });
 export type ProjectRecord = z.infer<typeof ProjectRecordSchema>;
 
+/** Batch input: add several projects in one MCP call (one item → array of one). */
+export const ProjectBatchInputSchema = z.object({
+  projects: z
+    .array(ProjectInputSchema)
+    .min(1)
+    .max(MAX_ITEMS)
+    .describe('추가할 프로젝트 목록(한 개여도 배열로). 같은 이름의 프로젝트는 갱신되고 중복 생성되지 않습니다.'),
+});
+export type ProjectBatchInput = z.infer<typeof ProjectBatchInputSchema>;
+
 /* -------------------------------------------------------------------- Skill */
 
 export const SkillInputSchema = z.object({
@@ -200,6 +220,16 @@ export const SkillRecordSchema = z.object({
   order_index: z.number(),
 });
 export type SkillRecord = z.infer<typeof SkillRecordSchema>;
+
+/** Batch input: add several skills in one MCP call (one item → array of one). */
+export const SkillBatchInputSchema = z.object({
+  skills: z
+    .array(SkillInputSchema)
+    .min(1)
+    .max(MAX_ITEMS)
+    .describe('추가할 기술스택 목록(한 개여도 배열로). 같은 이름의 기술은 갱신되고 중복 생성되지 않습니다.'),
+});
+export type SkillBatchInput = z.infer<typeof SkillBatchInputSchema>;
 
 /* ----------------------------------------------------------------- Document */
 
