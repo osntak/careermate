@@ -145,6 +145,8 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .nav__item.is-active .nav__badge { background: var(--accent); color: var(--text-on-accent); }
 .sidebar__foot { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-tertiary); }
 .sidebar__foot .dot { display:inline-block; width:7px; height:7px; border-radius:999px; background: var(--green); margin-right:6px; }
+.sidebar__foot-link { display:inline-flex; align-items:center; gap:6px; margin-top:8px; color: var(--text-tertiary); text-decoration:none; }
+.sidebar__foot-link:hover { color: var(--text-secondary); }
 
 .main { display: flex; flex-direction: column; min-width: 0; }
 .topbar {
