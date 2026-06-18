@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CareerMate — 내 커리어 흐름 관리</title>
+  <meta name="description" content="ChatGPT/Claude와 함께 쓰는 로컬 커리어 관리 도구" />
+  <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%230f7256'/><text x='12' y='17' font-size='14' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>C</text></svg>" />
+  <link rel="apple-touch-icon" href="/icon-180.png" />
+  <link rel="preload" href="/fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <button class="skip-link" id="skip-link" type="button">본문으로 건너뛰기</button>
+  <div class="app">
+    <div class="nav-scrim" id="nav-scrim"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">C</div>
+        <div>
+          <div class="sidebar__title">CareerMate</div>
+          <div class="sidebar__subtitle">내 커리어 흐름 관리</div>
+        </div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <div class="sidebar__foot">
+        <div><span class="dot"></span><span id="foot-status">로컬에서 실행 중</span></div>
+        <div id="foot-path" class="truncate" style="margin-top:4px"></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="nav-toggle" id="nav-toggle" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sidebar">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+        <div class="topbar__title" id="topbar-title">CareerMate</div>
+        <div class="topbar__spacer"></div>
+        <div id="topbar-actions" class="flex gap-2"></div>
+      </header>
+      <main id="view" class="view"></main>
+    </div>
+    <!-- Concise route announcer: speaks only the new page name, not the whole view
+         (the old aria-live on #view re-read the entire page on every navigation). -->
+    <div id="route-status" class="sr-only" role="status" aria-live="polite"></div>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

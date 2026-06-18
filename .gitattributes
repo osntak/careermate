@@ -1,0 +1,7 @@
+# Normalize line endings: keep LF in the repo, let Git handle the working tree.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
+*.sqlite binary

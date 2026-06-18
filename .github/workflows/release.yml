@@ -1,0 +1,78 @@
+name: Release
+
+# 버전 태그(예: v0.0.1)를 push하면:
+#   1) npm에 자동 게시 (GitHub Actions 시크릿 NPM_TOKEN 사용)
+#   2) careermate.mcpb 빌드 후 같은 태그의 GitHub Release에 첨부
+#
+# 사전 1회 설정: 레포 Settings → Secrets and variables → Actions →
+#   New repository secret → 이름 NPM_TOKEN, 값은 npmjs.com에서 발급한
+#   Automation 토큰(Publish 권한). 이미 등록돼 있으면 그대로 동작합니다.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # GitHub Release 생성/자산 업로드
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Tag와 package.json 버전 일치 확인
+        run: |
+          PKG="$(node -p "require('./package.json').version")"
+          TAG="${GITHUB_REF_NAME#v}"
+          echo "package.json=$PKG  tag=$TAG"
+          test "$PKG" = "$TAG" || { echo "::error::tag v$TAG != package.json $PKG — 버전을 맞춰주세요."; exit 1; }
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # NPM_TOKEN(Automation 토큰)으로 게시. setup-node가 만든 .npmrc가
+      # NODE_AUTH_TOKEN을 읽어 인증합니다. 토큰이 없거나 권한이 없으면 404가 납니다.
+      # 멱등 처리: 같은 버전이 이미 레지스트리에 있으면 건너뜁니다. (로컬에서 먼저
+      # 게시했거나 워크플로우를 재실행해도 "cannot publish over ... 0.1.x" E403으로
+      # 깨지지 않도록.)
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          PKG="$(node -p "require('./package.json').name")"
+          VER="$(node -p "require('./package.json').version")"
+          if npm view "$PKG@$VER" version >/dev/null 2>&1; then
+            echo "::notice::$PKG@$VER 가 이미 npm에 있어 게시를 건너뜁니다."
+          else
+            npm publish
+          fi
+
+      # npm publish가 실패해도 GitHub Release와 .mcpb는 남깁니다.
+      - name: Build .mcpb bundle
+        if: always()
+        run: npm run build:mcpb
+
+      - name: Attach .mcpb to GitHub Release
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/careermate.mcpb \
+            --title "CareerMate $GITHUB_REF_NAME" --generate-notes \
+          || gh release upload "$GITHUB_REF_NAME" dist/careermate.mcpb --clobber
+
+      # .mcpb는 더 이상 레포에 커밋하지 않는다. 위 "Attach .mcpb to GitHub Release"가 올린
+      # Release 자산을, 랜딩(careermate.life)·INSTALL이
+      # https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb 로 직접 가리킨다.

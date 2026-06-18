@@ -1,0 +1,82 @@
+# 사람 목소리 (Human-voice) — CareerMate 교차검증 루브릭 (Phase A)
+
+> 이 검증기는 연결된 AI가 커리어 산출물(이력서·자소서·면접 답변·LinkedIn 등)을 점검할 때 적용하는 **크리틱 루브릭**이다. CareerMate는 루브릭을 제공하고, 실제 검사는 연결된 AI가 수행한다(내부 LLM 없음).
+
+## 1. 목적
+
+이 검증기는 커리어 산출물이 **"AI가 쓴 티"가 나지 않고 사람의 목소리로 읽히는지**를 보장한다. 채용 담당자는 천편일률적인 자동 생성 글을 즉시 알아채고 신뢰를 거둔다. 구체적으로 다음 네 가지를 본다.
+
+1. **슬롭 구문 밀도** — `delve`, `leverage`, `tapestry`, "오늘날과 같은", "~에 대한 열정" 같은 LLM 상투어·필러가 과하게 깔려 있지 않은가.
+2. **문장 길이 다양성 (burstiness)** — 짧은 문장과 긴 문장이 섞여 사람처럼 들숨날숨이 있는가, 아니면 비슷한 길이로 단조롭게 흐르는가.
+3. **목소리 일관성** — 어조·인칭·격식 수준이 글 전체에서 한 사람의 것으로 유지되는가, 짜깁기처럼 튀는 구간이 있는가.
+4. **사실·숫자·고유명사 보존** — 사람 목소리로 다듬는 과정에서 원본의 수치·날짜·회사명·기술명이 누락·왜곡되지 않았는가(절대 손상 금지 항목).
+
+핵심: 이 루브릭의 검사 항목은 **LLM 없이도 세거나(개수)·존재 여부 확인·비율 계산·패턴 매칭으로 판정**할 수 있게 설계되었다. 연결된 AI는 직접 세고, CareerMate는 원본/대상 텍스트와 이 기준표를 제공한다.
+
+## 2. 검사 항목
+
+> 적용 단위: 한 산출물(자소서 1편, 이력서 1부, 면접 답변 1세트 등). "문장"은 종결부호(`.`, `!`, `?`, `다.`, `요.`) 기준으로 분할한다. 한국어/영어 혼용 글도 동일 규칙을 적용한다.
+
+| ID | 검사 | 합격 기준 | 측정 방법(셀 수 있게) |
+|----|------|-----------|------------------------|
+| C1 | 슬롭 단어 밀도 | 슬롭 사전 단어가 **100단어당 1.5개 이하**, 그리고 동일 슬롭 단어가 **3회 초과 반복 없음** | 아래 §슬롭 사전과 대조해 일치 토큰 수를 센다 → (일치 수 ÷ 전체 단어 수) × 100. 단어별 등장 횟수도 집계 |
+| C2 | 슬롭 상투 구문 존재 | 금지 상투 구문 **0건** | 아래 §상투 구문 목록을 부분 문자열로 탐색, 매칭 건수 카운트 |
+| C3 | 문장 길이 다양성 (burstiness) | 문장 길이의 **표준편차 ≥ 5단어**, 그리고 **최단 문장 ≤ 8단어**인 문장이 1개 이상 존재 | 각 문장 단어 수 배열 → 표준편차 계산, 최솟값 확인 |
+| C4 | 문장 시작어 반복 | 동일 단어로 시작하는 문장이 **전체의 30% 미만**, 같은 시작어 **연속 3문장 금지** | 각 문장 첫 단어(조사 제외)를 모아 빈도 집계, 연속 동일 여부 확인 |
+| C5 | 단락 구조 단조성 (rule-of-three 남용) | "A, B, and/그리고 C" 형태 3단 병렬이 **단락당 1회 이하**, 글 전체 **3회 이하** | 3항 병렬 패턴(쉼표 2개 + 접속사) 매칭 수를 센다 |
+| C6 | 과장 형용사·부사 밀도 | "혁신적/seamless/robust/cutting-edge/획기적" 류 과장어가 **100단어당 1개 이하** | §과장어 사전과 대조해 일치 수 카운트 → 비율 계산 |
+| C7 | 인칭·어조 일관성 | 주 인칭(1인칭/3인칭)·문체(평서 "~다" vs 경어 "~습니다") 혼용이 **전체 문장의 10% 미만**, 격식 급변 구간 0 | 종결어미 유형을 문장별 태깅해 소수 유형 비율 계산 |
+| C8 | 사실·숫자 보존 | 원본의 모든 숫자(수치·퍼센트·연도·금액)가 대상 텍스트에 **100% 존재** | 원본에서 숫자 토큰 집합 추출 → 대상에 모두 포함되는지 집합 비교(누락 0) |
+| C9 | 고유명사 보존 | 원본의 회사명·제품명·기술명·자격증명 등 고유명사가 **100% 보존**, 철자 변형 0 | 원본 고유명사 목록 추출 → 대상에서 정확 일치 확인(누락·오타 0) |
+| C10 | 빈말 채움(filler) 문장 | 정보 없는 채움 문장("~에 대한 저의 열정은 남다릅니다" 류)이 **전체 문장의 5% 미만** | §filler 패턴과 매칭되거나 숫자·고유명사·동사 목적어가 전혀 없는 문장 수를 센다 |
+| C11 | 구체 증거(수치·사례) 존재 | 본문에 **정량 근거(숫자/기간/규모/성과 지표)가 최소 2개** 이상 | 숫자+단위/퍼센트/"N배"/"N명"/"N개월" 패턴 매칭 수가 2 이상인지 확인 |
+
+### 슬롭 사전 (C1 — 부분 일치로 카운트)
+
+영어: `delve, leverage, utilize, harness, streamline, underscore, robust, seamless(ly), pivotal, comprehensive, multifaceted, holistic, tapestry, landscape, realm, synergy, testament, beacon, paradigm, embark, navigate, unlock, unleash, empower, bespoke, foster, showcase, intricate, meticulous, vibrant, furthermore, moreover, additionally`
+
+한국어: `오늘날과 같은, 급변하는, 빠르게 변화하는, ~의 세계, 핵심적인 역할, 다양한 측면, 총체적, ~을(를) 통해 ~을(를) 도모, ~에 대한 깊은 이해, 가교 역할, 등불, 여정, 발돋움, 시너지, ~을 도모하고자`
+
+### 상투 구문 목록 (C2 — 0건이어야 함)
+
+`In today's [digital] age / In the fast-paced world of / It's important to note / It's worth noting / I hope this message finds you well / Let's dive in / embark on a journey / game changer / 오늘날과 같이 급변하는 / 본 지원자는 / 귀사의 무궁한 발전을 / 지원하게 되어 영광입니다 / 위에서 언급한 바와 같이 / 결론적으로 말씀드리자면`
+
+### 과장어 사전 (C6)
+
+`혁신적, 획기적, 탁월한, 압도적, 독보적, seamless, robust, cutting-edge, innovative, transformative, groundbreaking, world-class, game-changing, 최고의, 완벽한`
+
+### filler 패턴 (C10)
+
+문장 안에 (a) 숫자, (b) 고유명사, (c) 구체적 행위 동사+목적어 가운데 **하나도 없으면** 빈말 후보로 카운트. 예: "저는 이 일에 대한 열정이 누구보다 큽니다.", "최선을 다하겠습니다.", "많은 것을 배웠습니다."
+
+## 3. 불합격 시 처리(루프 연결)
+
+연결된 AI는 위 항목을 채점해 **불합격 항목 ID + 근거(센 수치/매칭된 문자열/위치)** 를 모은다. 그다음 항목별로 아래 수정 지시를 적용해 **재작성 → 동일 루브릭 재검증**한다. 재검증 통과까지 반복하되, **C8·C9(사실·고유명사 보존)는 단 1건이라도 위반 시 즉시 하드 실패**로 처리하고 다른 어떤 개선보다 우선해 복구한다.
+
+- **C1·C2·C6 위반(슬롭/상투/과장)**: 매칭된 단어·구문을 나열하고, 각각을 그 사람의 실제 경험·맥락에서 나온 **구체 표현으로 1:1 치환**한다. 일반론을 사실로 바꾼다. 치환 후 밀도를 다시 센다.
+- **C3·C4·C5 위반(단조로움)**: 긴 문장 1~2개를 쪼개 **짧은 강조 문장(≤8단어)** 을 삽입하고, 연속으로 같은 시작어를 쓴 문장의 도입부를 바꾼다. 3단 병렬을 1개로 줄이거나 문장 형태를 비대칭으로 푼다. 표준편차·시작어 분포를 재측정한다.
+- **C7 위반(목소리 불일치)**: 다수 종결어미·인칭으로 **전체를 통일**한다. 격식이 튀는 구간을 주변 톤에 맞춰 다시 쓴다.
+- **C10·C11 위반(빈말/근거 부족)**: 빈말 문장을 삭제하거나, 원본 데이터(`get_application_context`로 받은 경력·성과·스킬)에서 **수치·사례를 끌어와** 구체화한다. 없으면 지어내지 말고 사용자에게 해당 수치를 묻는다.
+- **C8·C9 위반(사실/고유명사 손상)**: 원본에서 누락·왜곡된 숫자·고유명사를 **원문 그대로 복원**한다. 추정·대체 금지. 복원 후 집합 비교를 재수행해 100%를 확인한다.
+
+재검증 종료 조건: **C1~C7·C10·C11 전부 합격 + C8·C9 위반 0건**. 한 항목이라도 불합격이면 루프를 멈추지 않는다.
+
+## 4. 출처 (Provenance)
+
+- **Perplexity & Burstiness (AI 텍스트 탐지 프레임워크)** — 사람 글은 문장 길이·구조의 변동성(burstiness)이 크고 AI 글은 균일하다는 1차적 구분 신호. C3·C4의 근거. · https://quillbot.com/blog/ai-writing-tools/burstiness-and-perplexity/ , https://www.tryleap.ai/learn/perplexity-vs-burstiness
+- **Wikipedia: Signs of AI writing** — 셀 수 있는 AI 작성 신호 목록(과용 단어, rule of three, "not only X but also Y" 병렬, title-case, em-dash·곡선 따옴표). C1·C2·C5의 근거. · https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing
+- **ChatGPT 과용 단어 목록 (Walter Writes AI / Alston Antony)** — `delve, leverage, tapestry, robust, seamless` 등 슬롭 사전과 상투 구문의 1차 근거. C1·C2·C6. · https://walterwrites.ai/most-common-chatgpt-words-to-avoid/ , https://alstonantony.com/seo-strategy/chatgpt-overused/
+- **Harvard FAS Mignone Center for Career Success — Resume & Cover Letter Guide** — 의무가 아닌 성과, 측정 가능한 수치·구체 사례로 뒷받침하라는 권고. C10·C11의 근거. · https://careerservices.fas.harvard.edu/resources/harvard-college-guide-to-resumes-cover-letters/
+- **STAR 방법 + 정량 성과 (Resume.io / Teal 클리셰 가이드)** — "excellent communication skills" 같은 빈말을 "20% 향상" 같은 수치로 대체. C10·C11·C2. · https://resume.io/blog/star-method-resume , https://www.tealhq.com/post/resume-buzzwords-and-cliches
+
+## 5. Phase B 힌트
+
+- **MCP 도구 아이디어:**
+  - `get_verifier({ id: "human-voice" })` — 이 루브릭(검사 항목·사전·기준)을 구조화 JSON으로 연결 AI에 제공.
+  - `get_verifier_dictionaries({ lang })` — 슬롭/과장/상투 사전을 언어별로 분리 제공(한·영). 사전은 데이터로 두고 버전 관리해 신어 추가가 쉽게.
+  - (선택) `precount_human_voice({ text, original })` — LLM 없이 결정적으로 셀 수 있는 항목(C1, C3, C8, C9, C11)을 CareerMate가 로컬에서 미리 카운트해 후보 위반을 표시(연결 AI는 판단만). 단, 두뇌는 외부 AI라는 원칙상 "측정 보조"로만 한정.
+- **데이터 형태 힌트:**
+  - 검사 항목: `{ id, label, pass_rule, measure, severity: "soft"|"hard" }`. C8·C9는 `severity:"hard"`.
+  - 사전: `{ lang, category: "slop"|"hype"|"cliche"|"filler", terms: string[], match: "substring"|"regex" }`.
+  - 결과 리포트: `{ outcome: "pass"|"fail", failed_checks: [{ id, observed, threshold, evidence: string[] }], loop: "rewrite"|"done" }` — 루프 오케스트레이션이 `failed_checks`만 보고 재작성 지시를 생성.
+  - 임계값(1.5/100단어, σ≥5 등)은 코드 상수가 아니라 설정값으로 두어 산출물 유형(이력서 vs 자소서)별 프로파일을 허용.

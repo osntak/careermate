@@ -1,0 +1,364 @@
+/**
+ * @careermate/exporters — turn CareerMate records into downloadable documents.
+ *
+ * Every exporter returns an {@link ExportResult} (`{ filename, mimeType, content }`).
+ * Markdown exporters emit `text/markdown`; HTML exporters emit a standalone,
+ * print-optimized document (`text/html`) the user can "Print → Save as PDF".
+ *
+ * Filenames are slugified and ASCII-fallback safe; they carry NO timestamp —
+ * the caller is expected to add one if desired.
+ */
+import type {
+  CoverLetterRecord,
+  DocumentRecord,
+  ExperienceRecord,
+  InterviewPrepRecord,
+  JobRecord,
+  ProfileRecord,
+  ProjectRecord,
+  SkillRecord,
+} from '@careermate/shared';
+import { DOCUMENT_KIND_LABELS } from '@careermate/shared';
+
+import {
+  bulletList,
+  dateRange,
+  joinBlocks,
+  kv,
+  slugify,
+} from './markdown.ts';
+import { escapeHtml, toPrintableHtml } from './html.ts';
+
+/** The uniform shape every exporter returns. */
+export interface ExportResult {
+  /** Safe, slugified base filename including extension (no timestamp). */
+  filename: string;
+  /** MIME type, e.g. `text/markdown` or `text/html`. */
+  mimeType: string;
+  /** The document body. */
+  content: string;
+}
+
+export type ExportOptions = {
+  job?: JobRecord | null;
+  profile?: ProfileRecord | null;
+};
+
+const MD_MIME = 'text/markdown';
+const HTML_MIME = 'text/html';
+
+/* ------------------------------------------------------------- cover letters */
+
+/** Build the shared markdown body for a cover letter (used by MD + HTML). */
+function coverLetterBody(cl: CoverLetterRecord, opts?: ExportOptions): string {
+  const job = opts?.job ?? null;
+  const profile = opts?.profile ?? null;
+
+  const meta: string[] = [];
+  if (profile?.name) meta.push(kv('지원자', profile.name));
+  if (job) meta.push(kv('지원 회사', job.company), kv('지원 직무', job.position));
+
+  const content = (cl.current_content ?? '').trim() || '_(내용 없음)_';
+
+  return joinBlocks([
+    `# ${cl.title}`,
+    meta.length ? meta.filter(Boolean).join('\n\n') : '',
+    meta.length ? '---' : '',
+    content,
+  ]);
+}
+
+/** Cover letter → Markdown. */
+export function coverLetterToMarkdown(
+  cl: CoverLetterRecord,
+  opts?: ExportOptions,
+): ExportResult {
+  return {
+    filename: `${slugify(cl.title, 'cover-letter')}.md`,
+    mimeType: MD_MIME,
+    content: coverLetterBody(cl, opts),
+  };
+}
+
+/** Cover letter → standalone, print-optimized HTML (our PDF strategy). */
+export function coverLetterToHtml(
+  cl: CoverLetterRecord,
+  opts?: ExportOptions,
+): ExportResult {
+  return {
+    filename: `${slugify(cl.title, 'cover-letter')}.html`,
+    mimeType: HTML_MIME,
+    content: toPrintableHtml(cl.title, coverLetterBody(cl, opts)),
+  };
+}
+
+/* -------------------------------------------------------------------- resume */
+
+/** A stored resume/career document → Markdown. */
+export function resumeToMarkdown(
+  doc: DocumentRecord,
+  profile?: ProfileRecord | null,
+): ExportResult {
+  const kindLabel = DOCUMENT_KIND_LABELS[doc.kind] ?? doc.kind;
+
+  const header: string[] = [];
+  if (profile?.name) header.push(kv('이름', profile.name));
+  if (profile?.email) header.push(kv('이메일', profile.email));
+  if (profile?.phone) header.push(kv('연락처', profile.phone));
+
+  const body = joinBlocks([
+    `# ${doc.title}`,
+    `_${kindLabel}_`,
+    header.length ? header.filter(Boolean).join('\n\n') : '',
+    header.length ? '---' : '',
+    (doc.content ?? '').trim() || '_(내용 없음)_',
+  ]);
+
+  return {
+    filename: `${slugify(doc.title, doc.kind)}.md`,
+    mimeType: MD_MIME,
+    content: body,
+  };
+}
+
+/** A stored resume/career document → print-optimized HTML. */
+export function resumeToHtml(
+  doc: DocumentRecord,
+  profile?: ProfileRecord | null,
+): ExportResult {
+  const md = resumeToMarkdown(doc, profile);
+  return {
+    filename: `${slugify(doc.title, doc.kind)}.html`,
+    mimeType: HTML_MIME,
+    content: toPrintableHtml(doc.title, md.content),
+  };
+}
+
+/* ------------------------------------------------------------------- profile */
+
+/** Full resume-style profile export → Markdown. */
+export function profileToMarkdown(
+  profile: ProfileRecord,
+  experiences: ExperienceRecord[] = [],
+  projects: ProjectRecord[] = [],
+  skills: SkillRecord[] = [],
+): ExportResult {
+  const name = profile.name?.trim() || '이력서';
+
+  // Header block.
+  const contact: string[] = [];
+  if (profile.email) contact.push(profile.email);
+  if (profile.phone) contact.push(profile.phone);
+  if (profile.location) contact.push(profile.location);
+  const links = (profile.links ?? [])
+    .filter((l) => l.url)
+    .map((l) => `[${l.label || l.url}](${l.url})`);
+
+  const headerBlocks = joinBlocks([
+    `# ${name}`,
+    profile.headline ? `## ${profile.headline}` : '',
+    contact.length ? contact.join(' · ') : '',
+    links.length ? links.join(' · ') : '',
+  ]);
+
+  // Summary.
+  const summaryBlock = profile.summary?.trim()
+    ? joinBlocks(['## 소개', profile.summary.trim()])
+    : '';
+
+  // Desired roles / conditions.
+  const desiredLines: string[] = [];
+  if (profile.desired_roles?.length) {
+    desiredLines.push(kv('희망 직무', profile.desired_roles.join(', ')));
+  }
+  if (profile.desired_conditions?.trim()) {
+    desiredLines.push(kv('희망 조건', profile.desired_conditions));
+  }
+  const desiredBlock = desiredLines.length
+    ? joinBlocks(['## 희망 사항', desiredLines.filter(Boolean).join('\n\n')])
+    : '';
+
+  // Experience.
+  const expBlocks = experiences.length
+    ? joinBlocks([
+        '## 경력',
+        ...experiences.map((e) => {
+          const range = dateRange(e.start_date, e.end_date, e.is_current);
+          const titleParts = [e.company, e.role].filter(Boolean).join(' — ');
+          const subParts = [e.employment_type, range].filter(Boolean).join(' · ');
+          return joinBlocks([
+            `### ${titleParts}`,
+            subParts ? `_${subParts}_` : '',
+            e.description?.trim() ? e.description.trim() : '',
+            e.achievements?.length ? bulletList(e.achievements) : '',
+            e.tech?.length ? kv('기술', e.tech.join(', ')) : '',
+          ]);
+        }),
+      ])
+    : '';
+
+  // Projects.
+  const projBlocks = projects.length
+    ? joinBlocks([
+        '## 프로젝트',
+        ...projects.map((p) => {
+          const range = dateRange(p.start_date, p.end_date);
+          const subParts = [p.role, range].filter(Boolean).join(' · ');
+          return joinBlocks([
+            `### ${p.name}`,
+            subParts ? `_${subParts}_` : '',
+            p.description?.trim() ? p.description.trim() : '',
+            p.highlights?.length ? bulletList(p.highlights) : '',
+            p.tech?.length ? kv('기술', p.tech.join(', ')) : '',
+            p.url ? kv('링크', p.url) : '',
+          ]);
+        }),
+      ])
+    : '';
+
+  // Skills — grouped by category when present.
+  let skillsBlock = '';
+  if (skills.length) {
+    const groups = new Map<string, string[]>();
+    for (const s of skills) {
+      const cat = s.category?.trim() || '기타';
+      const label = s.level?.trim() ? `${s.name} (${s.level.trim()})` : s.name;
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(label);
+    }
+    const lines = [...groups.entries()].map(
+      ([cat, items]) => kv(cat, items.join(', ')),
+    );
+    skillsBlock = joinBlocks(['## 보유 기술', lines.filter(Boolean).join('\n\n')]);
+  }
+
+  const content = joinBlocks([
+    headerBlocks,
+    '---',
+    summaryBlock,
+    desiredBlock,
+    expBlocks,
+    projBlocks,
+    skillsBlock,
+  ]);
+
+  return {
+    filename: `${slugify(name, 'resume')}-resume.md`,
+    mimeType: MD_MIME,
+    content,
+  };
+}
+
+/** Full resume-style profile export → print-optimized HTML. */
+export function profileToHtml(
+  profile: ProfileRecord,
+  experiences: ExperienceRecord[] = [],
+  projects: ProjectRecord[] = [],
+  skills: SkillRecord[] = [],
+): ExportResult {
+  const md = profileToMarkdown(profile, experiences, projects, skills);
+  const title = profile.name?.trim() || '이력서';
+  return {
+    filename: `${slugify(title, 'resume')}-resume.html`,
+    mimeType: HTML_MIME,
+    content: toPrintableHtml(title, md.content),
+  };
+}
+
+/* ------------------------------------------------------------ interview prep */
+
+/** Interview prep record → Markdown study sheet. */
+export function interviewPrepToMarkdown(
+  prep: InterviewPrepRecord,
+  job?: JobRecord | null,
+): ExportResult {
+  const titleBase = job ? `${job.company} ${job.position} 면접 준비` : '면접 준비';
+
+  const meta: string[] = [];
+  if (job) {
+    meta.push(kv('회사', job.company), kv('직무', job.position));
+    if (job.deadline) meta.push(kv('마감', job.deadline));
+  }
+
+  const introBlock = prep.self_introduction?.trim()
+    ? joinBlocks(['## 1분 자기소개', prep.self_introduction.trim()])
+    : '';
+
+  const questionsBlock = prep.questions?.length
+    ? joinBlocks([
+        '## 예상 질문',
+        ...prep.questions.map((q, idx) =>
+          joinBlocks([
+            `### Q${idx + 1}. ${q.question}`,
+            q.intent?.trim() ? kv('의도', q.intent) : '',
+            q.answer_outline?.trim()
+              ? joinBlocks(['**답변 가이드**', q.answer_outline.trim()])
+              : '',
+            q.followups?.length
+              ? joinBlocks(['**예상 꼬리 질문**', bulletList(q.followups)])
+              : '',
+          ]),
+        ),
+      ])
+    : '';
+
+  const starBlock = prep.star_guides?.length
+    ? joinBlocks([
+        '## STAR 정리',
+        ...prep.star_guides.map((s) =>
+          joinBlocks([
+            `### ${s.question}`,
+            kv('Situation', s.situation),
+            kv('Task', s.task),
+            kv('Action', s.action),
+            kv('Result', s.result),
+          ]),
+        ),
+      ])
+    : '';
+
+  const notesBlock = prep.notes?.trim()
+    ? joinBlocks(['## 메모', prep.notes.trim()])
+    : '';
+
+  const content = joinBlocks([
+    `# ${titleBase}`,
+    meta.length ? meta.filter(Boolean).join('\n\n') : '',
+    meta.length ? '---' : '',
+    introBlock,
+    questionsBlock,
+    starBlock,
+    notesBlock,
+  ]);
+
+  return {
+    filename: `${slugify(titleBase, 'interview-prep')}.md`,
+    mimeType: MD_MIME,
+    content,
+  };
+}
+
+/** Interview prep record → print-optimized HTML. */
+export function interviewPrepToHtml(
+  prep: InterviewPrepRecord,
+  job?: JobRecord | null,
+): ExportResult {
+  const md = interviewPrepToMarkdown(prep, job);
+  const title = job ? `${job.company} ${job.position} 면접 준비` : '면접 준비';
+  return {
+    filename: `${slugify(title, 'interview-prep')}.html`,
+    mimeType: HTML_MIME,
+    content: toPrintableHtml(title, md.content),
+  };
+}
+
+/* ----------------------------------------------------------------- re-exports */
+
+export {
+  escapeHtml,
+  toPrintableHtml,
+} from './html.ts';
+export {
+  markdownToHtml,
+  slugify,
+} from './markdown.ts';

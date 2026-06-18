@@ -1,0 +1,75 @@
+/* Demo-only overlay: a slim TOP bar that frames the page as a no-save preview
+   and links back to the marketing site, plus a theme toggle. Uses the dashboard's
+   own theme tokens so it adapts to light/dark automatically.
+
+   The dashboard layout is a full-height grid with a sticky sidebar + sticky
+   topbar; we reserve --demo-bar-h at the top and push those sticky anchors down
+   so nothing hides behind the bar. */
+
+:root { --demo-bar-h: 46px; }
+
+#demo-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--demo-bar-h);
+  z-index: 55; /* above sidebar drawer (50), below modals (60) */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.demo-bar__brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); flex: none; }
+.demo-bar__logo {
+  width: 24px; height: 24px; border-radius: 6px; flex: none;
+  background: var(--accent); color: var(--text-on-accent);
+  display: grid; place-items: center; font-weight: 800; font-size: 13px;
+}
+.demo-bar__name { font-weight: 700; font-size: 14px; letter-spacing: -.01em; }
+.demo-bar__badge {
+  font-weight: 700; font-size: 11px; color: var(--accent);
+  background: var(--accent-soft); border: 1px solid var(--accent-border);
+  padding: 2px 7px; border-radius: 999px;
+}
+.demo-bar__text { color: var(--text-secondary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.demo-bar__spacer { flex: 1 1 auto; }
+
+.demo-bar__icon {
+  flex: none; width: 32px; height: 32px; display: grid; place-items: center;
+  border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
+  color: var(--text-secondary); cursor: pointer;
+}
+.demo-bar__icon:hover { background: var(--surface-hover); color: var(--text); }
+
+.demo-bar__link {
+  flex: none; font-weight: 600; color: var(--text-secondary); text-decoration: none;
+  padding: 6px 11px; border-radius: 8px; white-space: nowrap;
+}
+.demo-bar__link:hover { background: var(--surface-hover); color: var(--text); }
+.demo-bar__link--primary {
+  color: var(--accent); border: 1px solid var(--accent-border);
+}
+.demo-bar__link--primary:hover { background: var(--accent-soft); color: var(--accent); }
+
+/* Reserve space for the bar by pushing the app + its sticky anchors down. */
+body.has-demo-bar .app { margin-top: var(--demo-bar-h); }
+body.has-demo-bar .sidebar { top: var(--demo-bar-h); height: calc(100vh - var(--demo-bar-h)); }
+body.has-demo-bar .topbar { top: var(--demo-bar-h); }
+
+@media (max-width: 900px) {
+  /* Sidebar is an off-canvas drawer here — start it below the bar too. */
+  body.has-demo-bar .sidebar { top: var(--demo-bar-h); height: calc(100% - var(--demo-bar-h)); }
+}
+
+@media (max-width: 640px) {
+  /* Tight screens: drop the explanatory sentence, keep brand + actions. */
+  .demo-bar__text { display: none; }
+  .demo-bar__link[href="/#install"] { display: none; }
+  #demo-bar { gap: 8px; padding: 0 10px; }
+}

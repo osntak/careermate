@@ -1,0 +1,89 @@
+{
+  "name": "careermate",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "CareerMate — an MCP-first, local-first career workspace. Connect it to a local AI agent (Claude Desktop, Claude Code, Codex); CareerMate stores your career data locally on your machine and exposes it over MCP.",
+  "license": "MIT",
+  "author": "CareerMate",
+  "homepage": "https://careermate.life",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/osntak/careermate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/osntak/careermate/issues"
+  },
+  "keywords": [
+    "career",
+    "resume",
+    "cover-letter",
+    "job-application",
+    "korean",
+    "mcp",
+    "model-context-protocol",
+    "local-first",
+    "claude-code",
+    "codex"
+  ],
+  "bin": {
+    "careermate": "bin/careermate.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "packages",
+    "scripts/init.ts",
+    "tsconfig.json",
+    "README.md",
+    "INSTALL.md",
+    "THIRD_PARTY_NOTICES.md",
+    "AGENTS.md",
+    "docs/career-os/README.md",
+    "docs/career-os/eop",
+    "docs/career-os/knowledge",
+    "docs/START_WORKFLOW.md",
+    "docs/WORKFLOWS.md",
+    "docs/MCP_TOOLS.md",
+    "docs/FAQ.md",
+    "docs/SUPPORTED_AI_APPS.md"
+  ],
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "build": "node scripts/build-dist.mjs",
+    "build:mcpb": "node scripts/build-mcpb.mjs",
+    "prepack": "node scripts/build-dist.mjs",
+    "init": "node --no-warnings --import tsx scripts/init.ts",
+    "start": "node --no-warnings --experimental-sqlite --import tsx apps/web/src/index.ts",
+    "dev": "node --no-warnings --experimental-sqlite --watch --import tsx apps/web/src/index.ts",
+    "mcp": "node --no-warnings --experimental-sqlite --import tsx apps/mcp/src/index.ts",
+    "migrate": "node --no-warnings --experimental-sqlite --import tsx scripts/migrate.ts",
+    "seed": "node --no-warnings --experimental-sqlite --import tsx scripts/seed.ts",
+    "shots:seed": "node --no-warnings --experimental-sqlite --import tsx scripts/shots-seed.ts",
+    "shots": "node --no-warnings --experimental-sqlite --import tsx scripts/shots.ts",
+    "doctor": "node --no-warnings --experimental-sqlite --import tsx scripts/doctor.ts",
+    "test": "node --no-warnings scripts/run.mjs scripts/test.ts \"TEST_VERDICT PASS\"",
+    "test:ui": "node --no-warnings scripts/run.mjs scripts/ui-smoke.ts \"UI_VERDICT PASS\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "fflate": "^0.8.3",
+    "hwp.js": "^0.0.3",
+    "mammoth": "^1.12.0",
+    "pdfjs-dist": "^6.0.0",
+    "tsx": "^4.19.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.1",
+    "playwright": "^1.60.0",
+    "typescript": "^5.7.2"
+  }
+}

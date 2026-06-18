@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Local data (user career data — must never be committed)
+data/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+
+# Throwaway marketing-screenshot data dir (see scripts/shots-seed.ts)
+.shots-data/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# OMC orchestration state (local only)
+.omc/
+.omx/
+
+# Maintainer AI dev harness (work-log engine + SessionStart hook) — not part of the product
+.claude/
+
+# Committed build artifact removed from the repo; the landing serves it from the GitHub Release asset
+install-page/careermate.mcpb
+
+# Local review/QA artifacts (Playwright snapshots, ad-hoc screenshots)
+.playwright-mcp/
+*.jpeg
+
+# Env
+.env
+.env.local
+
+# Machine-specific MCP registration written by `careermate init` (absolute paths).
+# Each user regenerates this with `npm run init`; never commit it.
+.mcp.json
+
+# Career-OS 교차검증 테스트 스크래치 (재생성 가능; npm·git 모두 미포함).
+# 증거로 남기는 것: validation/runs/ledger.jsonl, validation/runs/consensus/**(reconfirm 룰링),
+# validation/{MANDATE,PROTOCOL,STATUS,README,APPLIED}.md, validation/research/**.
+docs/career-os/validation/runs/out/
+docs/career-os/validation/runs/calib/
+docs/career-os/validation/runs/calib2/
+docs/career-os/validation/runs/fixtures/
+docs/career-os/validation/runs/negatives/
+docs/career-os/validation/runs/bin/
+docs/career-os/validation/runs/prompts/
+docs/career-os/validation/runs/schema/
+# (.omc/, .omx/, *.log 는 위 전역 규칙으로 이미 무시됨)

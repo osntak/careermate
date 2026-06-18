@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    (function () {
+      try {
+        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
+        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : 'dark');
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+  </script>
+  <title>처음이세요? — CareerMate 시작하기</title>
+  <meta name="description" content="터미널이 뭔지 몰라도 괜찮아요. 쓰는 AI와 컴퓨터만 고르면, 당신에게 맞는 설치 길 하나를 처음부터 알려드립니다." />
+  <meta name="robots" content="index,follow" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)" />
+  <link rel="preload" href="fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Privacy-friendly analytics for the marketing site only (never the local 127.0.0.1 app). -->
+  <script src="/analytics.js" defer></script>
+  <style>
+    /* 선택형 위저드 — start.html 전용. style.css 토큰 재사용. */
+    .wizard { max-width: 760px; margin: 0 auto; }
+    .q { margin: 0 0 1.6rem; }
+    .q__label { font-weight: 650; margin: 0 0 .7rem; font-size: 1.02rem; }
+    .q__label .num { color: var(--accent); margin-right: .4rem; }
+    .choices { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .choice { position: relative; display: block; cursor: pointer; border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius); background: var(--surface); padding: .85rem 1rem; transition: border-color .12s, background .12s; }
+    .choice:hover { background: var(--surface-hover); }
+    .choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .choice.is-sel { border-color: var(--accent); background: var(--accent-soft); }
+    .choice__t { font-weight: 600; display: block; }
+    .choice__s { color: var(--text-tertiary); font-size: .85rem; display: block; margin-top: .15rem; }
+    .result { display: none; margin-top: 2rem; padding-top: 1.6rem; border-top: 1px solid var(--border); }
+    .result.show { display: block; }
+    .path { display: none; }
+    .path.show { display: block; }
+    .os-win, .os-mac { display: none; }
+    .result[data-os="win"] .os-win { display: revert; }
+    .result[data-os="mac"] .os-mac { display: revert; }
+    li.step.os-win, li.step.os-mac { display: none; }
+    .result[data-os="win"] li.step.os-win { display: flex; }
+    .result[data-os="mac"] li.step.os-mac { display: flex; }
+    .path__tag { display: inline-block; font-size: .78rem; font-weight: 650; color: var(--accent);
+      background: var(--accent-soft); border: 1px solid var(--accent-border); border-radius: 999px; padding: .15rem .6rem; margin-bottom: .5rem; }
+    .filenote { margin-top: .9rem; font-size: .9rem; color: var(--text-secondary);
+      background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .7rem .9rem; }
+    .subcard { border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.2rem; margin: 1rem 0; background: var(--bg-elev); }
+    .hint { color: var(--text-tertiary); font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="nav__brand" href="index.html#top">
+      <span class="nav__logo" aria-hidden="true">C</span>
+      <span class="nav__name">CareerMate</span>
+    </a>
+    <div class="nav__links">
+      <a href="index.html#how">동작 방식</a>
+      <a href="index.html#install">설치 전체</a>
+    </div>
+    <div class="nav__actions">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="다크 모드 전환" title="다크 모드 전환">
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main id="top">
+    <header class="hero hero--solo">
+      <div class="hero__main">
+        <span class="pill-badge"><span class="pill-badge__dot" aria-hidden="true"></span> 처음이세요?</span>
+        <h1 class="hero__title">터미널이 뭔지 몰라도 괜찮아요</h1>
+        <p class="hero__lede">
+          <strong>쓰는 AI</strong>와 <strong>컴퓨터</strong>만 고르면, 당신에게 맞는 설치 길 <strong>하나</strong>를 처음부터 알려드립니다.
+        </p>
+      </div>
+    </header>
+
+    <section class="section" style="padding-top:0">
+      <div class="wizard">
+        <!-- Q1 -->
+        <div class="q">
+          <p class="q__label"><span class="num">1</span>어떤 AI를 쓰고 있나요?</p>
+          <div class="choices" id="q-sub" role="radiogroup" aria-label="쓰는 AI">
+            <label class="choice"><input type="radio" name="sub" value="claude" />
+              <span class="choice__t">Claude 유료</span><span class="choice__s">Pro·Max 구독</span></label>
+            <label class="choice"><input type="radio" name="sub" value="chatgpt" />
+              <span class="choice__t">ChatGPT 유료</span><span class="choice__s">Plus 이상 구독</span></label>
+            <label class="choice"><input type="radio" name="sub" value="free" />
+              <span class="choice__t">무료 / 잘 모름</span><span class="choice__s">유료 구독 없음</span></label>
+          </div>
+        </div>
+        <!-- Q2 -->
+        <div class="q">
+          <p class="q__label"><span class="num">2</span>컴퓨터는요?</p>
+          <div class="choices" id="q-os" role="radiogroup" aria-label="운영체제" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+            <label class="choice"><input type="radio" name="os" value="win" />
+              <span class="choice__t">Windows</span></label>
+            <label class="choice"><input type="radio" name="os" value="mac" />
+              <span class="choice__t">Mac</span></label>
+          </div>
+        </div>
+
+        <p class="hint" id="prompt-pick">위 두 가지를 고르면 아래에 당신에게 맞는 길이 나타납니다.</p>
+
+        <!-- ============ 결과 ============ -->
+        <div class="result" id="result" aria-live="polite">
+
+          <!-- ===== Claude 유료 → Code 탭 ===== -->
+          <div class="path" data-sub="claude">
+            <span class="path__tag">당신에겐 — Claude "Code" 탭</span>
+            <h2>Claude 데스크톱 앱의 Code 탭으로</h2>
+            <p>이미 Claude를 구독 중이라 추가 비용 없이 가장 매끄럽습니다.<br />앱 안에서 끝나 별도 터미널이 필요 없습니다.</p>
+            <ol class="steps">
+              <li class="step"><div class="step__no">1</div><div class="step__body">
+                <h3>Claude 데스크톱 설치 → 로그인</h3>
+                <p><a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a>에서 받아 설치하고 본인 계정으로 로그인하세요.</p>
+              </div></li>
+              <li class="step os-win"><div class="step__no">2</div><div class="step__body">
+                <h3>(Windows) Git 설치</h3>
+                <p>Code 탭을 처음 열면 앱이 <strong>"Git is required"</strong>라고 안내합니다.<br /><a href="https://git-scm.com/download/win" rel="noopener" target="_blank">git-scm.com/download/win</a>에서 설치하고 앱을 다시 켜면 됩니다. (Mac은 필요 없습니다.)</p>
+              </div></li>
+              <li class="step"><div class="step__no">3</div><div class="step__body">
+                <h3>Code 탭에서 빈 폴더 선택</h3>
+                <p>상단의 <strong>Code</strong> 탭을 누르고, 새 폴더 하나(예: 문서/CareerMate)를 작업 폴더로 고르세요.<br />이 폴더가 CareerMate 작업실이 됩니다.</p>
+              </div></li>
+              <li class="step"><div class="step__no">4</div><div class="step__body">
+                <h3>이 문장 한 번 붙여넣기</h3>
+                <p class="paste-note">💬 Code 탭의 <strong>대화창에</strong> 붙여넣으세요 — 터미널 명령이 아니에요. 이 문장은 공개 안내 페이지만 읽어 설치하며, <strong>당신의 이력서·개인정보는 외부로 올라가지 않아요.</strong></p>
+                <div class="code"><button class="copy-btn" type="button" data-copy-target="p-claude">복사</button>
+                  <pre id="p-claude">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 데이터도 이 폴더의 .cm/data 안에 저장하고, Node 설치처럼 시스템에 바꿀 게 있으면 실행 전에 먼저 알려줘. 설치가 끝나면 앱 재시작 방법과 이력서를 주는 법, 대시보드 주소(http://127.0.0.1:4319)도 알려줘.</pre></div>
+                <p class="step__tip"><strong>Node가 없어도 됩니다.</strong> 필요하면 Claude가 먼저 확인하고 설치까지 도와줍니다.<br />직접 받으려면 아래 <strong>'필요한 프로그램 받기'</strong>의 Node.js를 보세요. 설치 중 뜨는 허용 창은 눌러 주세요.</p>
+              </div></li>
+              <li class="step"><div class="step__no">5</div><div class="step__body">
+                <h3>앱 재시작 → 확인</h3>
+                <p>Claude 앱을 완전히 껐다 켜고(처음 한 번 MCP 승인 허용), <strong>"커리어메이트 연결됐는지 확인해줘"</strong>라고 말하면 끝.</p>
+                <p class="recover"><strong>도구가 안 보이면?</strong> 앱을 트레이까지 <strong>완전히 종료</strong>했다 다시 켜고, 처음 뜬 승인 창을 허용했는지 확인하세요. 그래도 안 되면 <a href="index.html#install">파일로 설치(.mcpb)</a>나 설치 전체의 <a href="index.html#install">문제가 생겼을 때</a>를 보세요.</p>
+              </div></li>
+            </ol>
+            <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 가장 쉬운 방법은 <strong>이력서 내용을 대화창에 붙여넣기</strong>입니다. 또는 작업 폴더에 파일을 넣고 <em>"이력서.pdf 읽어서 등록해줘"</em>라고 하거나 채팅에 직접 첨부하세요. (스캔본·보안 PDF는 안 읽힐 수 있습니다 → 그땐 텍스트로 붙여넣으세요.)</div>
+            <p class="hint" style="margin-top:.8rem">터미널이 부담되면 → <a href="index.html#install">파일 하나로 설치(.mcpb)</a>하는 방법도 있습니다(Claude 무료 기능).</p>
+          </div>
+
+          <!-- ===== ChatGPT 유료 → Codex CLI ===== -->
+          <div class="path" data-sub="chatgpt">
+            <span class="path__tag">당신에겐 — Codex CLI</span>
+            <h2>ChatGPT 구독으로 Codex에서</h2>
+            <p>ChatGPT는 <strong>Codex를 터미널(CLI)에서</strong> 씁니다 — 명령을 몇 줄 입력합니다.<br />Codex <strong>데스크톱 앱은 등록이 사라질 수 있어</strong> 권장하지 않습니다. 터미널이 부담되면 <a href="#" data-goto-free>터미널 없이 가능한 무료 길</a>도 있습니다.</p>
+            <ol class="steps">
+              <li class="step"><div class="step__no">1</div><div class="step__body">
+                <h3>Node.js 설치</h3>
+                <p class="os-win">Windows: PowerShell에 붙여넣기 →</p>
+                <div class="code os-win"><button class="copy-btn" type="button" data-copy-target="p-node-win">복사</button><pre id="p-node-win">winget install OpenJS.NodeJS.LTS</pre></div>
+                <p class="os-mac">Mac: 터미널에 붙여넣기(Homebrew 없으면 nodejs.org에서 LTS 설치) →</p>
+                <div class="code os-mac"><button class="copy-btn" type="button" data-copy-target="p-node-mac">복사</button><pre id="p-node-mac">brew install node</pre></div>
+                <p class="step__tip">명령이 어려우면 <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a>에서 <strong>설치 파일을 받아 더블클릭</strong>(계속 '다음')해도 됩니다.<br />설치 후 터미널을 새로 열고 <code>node --version</code>이 v22.5 이상인지 확인하세요. <strong>터미널 여는 법은 아래 도움말</strong>을 참고하세요.</p>
+              </div></li>
+              <li class="step"><div class="step__no">2</div><div class="step__body">
+                <h3>Codex CLI 설치 → ChatGPT 로그인</h3>
+                <div class="code"><button class="copy-btn" type="button" data-copy-target="p-codex-install">복사</button><pre id="p-codex-install">npm install -g @openai/codex</pre></div>
+                <p class="step__tip">설치 후 <code>codex</code>를 실행하면 ChatGPT 로그인 창이 열립니다(본인 구독 계정).</p>
+              </div></li>
+              <li class="step"><div class="step__no">3</div><div class="step__body">
+                <h3>빈 폴더에서 codex 실행 → 이 문장</h3>
+                <p class="paste-note">💬 실행한 <strong>codex 안에</strong> 붙여넣으세요 — AI에게 보내는 메시지예요(쉘 명령이 아님). 공개 안내만 읽어 설치하며, <strong>당신의 데이터는 외부로 올라가지 않아요.</strong></p>
+                <div class="code"><button class="copy-btn" type="button" data-copy-target="p-codex">복사</button>
+                  <pre id="p-codex">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 데이터도 이 폴더의 .cm/data 안에 저장하고, Node 설치처럼 시스템에 바꿀 게 있으면 실행 전에 먼저 알려줘. 설치가 끝나면 앱 재시작 방법과 이력서를 주는 법, 대시보드 주소(http://127.0.0.1:4319)도 알려줘.</pre></div>
+                <p class="step__tip">설치 중 <strong>네트워크 허용</strong>을 물으면 한 번 허용하세요(npm 다운로드 때문).</p>
+              </div></li>
+              <li class="step"><div class="step__no">4</div><div class="step__body">
+                <h3>확인</h3>
+                <p>Codex 안에서 <code>/mcp</code>를 입력해 <code>careermate</code>가 보이면 연결 성공.</p>
+                <p class="recover"><strong>안 보이면?</strong> <code>node --version</code>이 v22.5 이상인지, Codex를 껐다 켰는지 확인하세요. 그래도 안 되면 설치 전체의 <a href="index.html#install">문제가 생겼을 때</a>를 참고하세요.</p>
+              </div></li>
+            </ol>
+            <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 첨부 기능이 없으니, 작업 폴더에 파일을 넣고 <em>"./이력서.pdf 읽어서 등록해줘"</em>라고 하세요. PDF가 안 읽히면 내용을 <strong>텍스트로 붙여넣으세요.</strong></div>
+          </div>
+
+          <!-- ===== 무료/없음 → .mcpb 1순위, Antigravity 2순위 ===== -->
+          <div class="path" data-sub="free">
+            <span class="path__tag">당신에겐 — 무료로 시작</span>
+            <h2>유료 구독 없이 무료로</h2>
+            <p>유료 구독이 없어도 됩니다. 터미널이 필요 없는, 가장 쉬운 길부터 안내합니다.</p>
+
+            <div class="subcard">
+              <strong>① 1순위 — Claude 데스크톱 + 파일 설치(터미널 없이)</strong>
+              <p class="hint" style="margin:.3rem 0 .8rem">Claude 무료 계정이면 됩니다. 터미널·Node 없이 파일 하나로 끝.</p>
+              <ol class="steps">
+                <li class="step"><div class="step__no">1</div><div class="step__body">
+                  <h3>Claude 데스크톱 설치 → 로그인(무료 OK)</h3>
+                  <p><a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a>에서 받아 설치하고 로그인하세요.</p>
+                </div></li>
+                <li class="step"><div class="step__no">2</div><div class="step__body">
+                  <h3>설치 파일 받기</h3>
+                  <p><a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">careermate.mcpb 다운로드 (약 2&nbsp;MB)</a></p>
+                </div></li>
+                <li class="step"><div class="step__no">3</div><div class="step__body">
+                  <h3>설정에서 추가</h3>
+                  <p>Claude 데스크톱 → <strong>Settings → Extensions → Advanced settings → Install extension…</strong> 에서 받은 파일을 고르세요. <span class="hint">(Windows에서 더블클릭·드래그는 반응이 없을 수 있으니 이 메뉴를 쓰세요.)</span></p>
+                </div></li>
+                <li class="step"><div class="step__no">4</div><div class="step__body">
+                  <h3>재시작 → 확인</h3>
+                  <p>앱을 껐다 켜고 <strong>"커리어메이트 연결됐는지 확인해줘"</strong>. 도구가 보이면 끝.</p>
+                </div></li>
+              </ol>
+              <div class="filenote">📎 <strong>이력서 넣는 법:</strong> Claude 채팅창에 파일을 <strong>직접 첨부</strong>하면 됩니다(가장 쉬움).</div>
+              <p class="hint" style="margin-top:.7rem">⚠️ <strong>도구가 안 뜨면</strong>(Claude 내장 Node 버전 문제일 수 있습니다) → 아래 ②를 쓰세요.</p>
+            </div>
+
+            <div class="subcard">
+              <strong>② 안 되거나 더 안정적으로 — Antigravity(무료)</strong>
+              <p class="hint" style="margin:.3rem 0 .8rem">Google Antigravity는 <strong>개인 Gmail로 무료</strong>(신용카드 불필요). 앱을 쓰지만 더 안정적입니다.</p>
+              <ol class="steps">
+                <li class="step"><div class="step__no">1</div><div class="step__body">
+                  <h3>Antigravity 설치 → Gmail 로그인</h3>
+                  <p><a href="https://antigravity.google/download" rel="noopener" target="_blank">antigravity.google/download</a>에서 받아 설치하고 개인 Gmail로 로그인(무료 플랜).</p>
+                </div></li>
+                <li class="step"><div class="step__no">2</div><div class="step__body">
+                  <h3>빈 폴더 열고 → 이 문장</h3>
+                  <p class="paste-note">💬 Antigravity의 <strong>대화창에</strong> 붙여넣으세요 — 터미널 명령이 아니에요. 공개 안내만 읽어 설치하며, <strong>당신의 데이터는 외부로 올라가지 않아요.</strong></p>
+                  <div class="code"><button class="copy-btn" type="button" data-copy-target="p-anti">복사</button>
+                    <pre id="p-anti">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 데이터도 이 폴더의 .cm/data 안에 저장하고, Node 설치처럼 시스템에 바꿀 게 있으면 실행 전에 먼저 알려줘. 설치가 끝나면 앱 재시작 방법과 이력서를 주는 법, 대시보드 주소(http://127.0.0.1:4319)도 알려줘.</pre></div>
+                </div></li>
+                <li class="step"><div class="step__no">3</div><div class="step__body">
+                  <h3>확인</h3>
+                  <p>연결 상태를 확인하고(보통 <code>/mcp</code> 또는 "연결됐는지 확인해줘") 끝.</p>
+                  <p class="recover"><strong>안 보이면?</strong> 앱을 완전히 껐다 켜고 다시 시도하세요. 막히면 설치 전체의 <a href="index.html#install">문제가 생겼을 때</a>를 보세요.</p>
+                </div></li>
+              </ol>
+              <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 작업 폴더에 파일을 넣고 파일명으로 지시. 안 읽히면 텍스트로 붙여넣기.</div>
+              <p class="hint" style="margin-top:.7rem">참고: 예전 <strong>Gemini CLI는 2026-06-18부터 무료 종료</strong>되어 Antigravity로 옮겨졌습니다.</p>
+            </div>
+          </div>
+
+        </div><!-- /result -->
+
+        <!-- ===== 초보자 도움말 (항상 펼쳐볼 수 있음) ===== -->
+        <div class="help" style="margin-top:2.4rem">
+          <p class="q__label" style="margin-bottom:.6rem">도움이 더 필요하면</p>
+
+          <details class="acc">
+            <summary>터미널(명령창)이 처음이세요? — 여는 법 <span class="acc__hint">Codex 등 CLI를 쓸 때</span></summary>
+            <div class="acc__body">
+              <p><strong>터미널</strong>은 명령을 한 줄씩 입력해 실행하는 창입니다. 이렇게 엽니다:</p>
+              <ul>
+                <li><strong>Windows</strong> — 시작 버튼 → <code>PowerShell</code> 검색 → <strong>Windows PowerShell</strong> 실행. 붙여넣기는 <strong>마우스 우클릭</strong> 또는 <kbd>Ctrl</kbd>+<kbd>V</kbd>, 실행은 <kbd>Enter</kbd>.</li>
+                <li><strong>Mac</strong> — <kbd>⌘</kbd>+<kbd>Space</kbd>(스포트라이트) → <code>Terminal</code> 입력 → 실행. 붙여넣기는 <kbd>⌘</kbd>+<kbd>V</kbd>, 실행은 <kbd>Return</kbd>.</li>
+              </ul>
+              <p class="hint">순서는 항상 같아요: 명령의 <strong>[복사]</strong> 버튼 → 터미널에 <strong>붙여넣기</strong> → <strong>Enter</strong>.</p>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary>필요한 프로그램 받기 (링크 모음) <span class="acc__hint">Node · 앱 · 설치 파일</span></summary>
+            <div class="acc__body">
+              <ul>
+                <li><strong>Node.js (LTS)</strong> — <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a> · 설치 파일을 받아 더블클릭(계속 '다음'). 터미널·CLI 경로에 필요.</li>
+                <li><strong>Claude 데스크톱</strong> — <a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a> · Code 탭 / .mcpb에 사용.</li>
+                <li><strong>Git for Windows</strong> — <a href="https://git-scm.com/download/win" rel="noopener" target="_blank">git-scm.com/download/win</a> · <em>Windows에서 Claude Code 탭을 쓸 때만</em>(Mac은 불필요).</li>
+                <li><strong>Antigravity</strong>(Google·무료) — <a href="https://antigravity.google/download" rel="noopener" target="_blank">antigravity.google/download</a> · 개인 Gmail 로그인, 카드 불필요.</li>
+                <li><strong>CareerMate 설치 파일(.mcpb)</strong> — <a href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">careermate.mcpb</a> · Claude 데스크톱 "채팅" 앱용(약 2&nbsp;MB).</li>
+              </ul>
+              <p class="hint">받은 뒤 무엇을 하는지는 위에서 고른 "내게 맞는 길"의 단계를 따르면 됩니다.</p>
+            </div>
+          </details>
+        </div>
+
+        <p class="hint" style="margin-top:2rem">막히거나 다른 방법이 궁금하면 → <a href="index.html#install">설치 방법 전체 보기</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__brand"><span class="nav__logo" aria-hidden="true">C</span> CareerMate</div>
+    <p>로컬에서 동작하는 MCP 기반 커리어 관리 도구. 모든 데이터는 이 컴퓨터에만 저장됩니다.</p>
+    <div class="foot__links"><a href="index.html#top">홈</a><a href="index.html#install">설치 전체</a></div>
+  </footer>
+
+  <div class="sr-only" role="status" aria-live="polite" id="copy-status"></div>
+
+  <script src="landing.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      // --- wizard ---
+      var result = document.getElementById('result');
+      var pickHint = document.getElementById('prompt-pick');
+      var sub = null, os = null;
+      function markSel(groupId) {
+        document.querySelectorAll('#' + groupId + ' .choice').forEach(function (c) {
+          c.classList.toggle('is-sel', !!c.querySelector('input').checked);
+        });
+      }
+      function render() {
+        if (!sub || !os) return;
+        if (pickHint) pickHint.style.display = 'none';
+        result.setAttribute('data-os', os);
+        result.querySelectorAll('.path').forEach(function (p) { p.classList.toggle('show', p.getAttribute('data-sub') === sub); });
+        result.classList.add('show');
+      }
+      document.querySelectorAll('input[name="sub"]').forEach(function (r) {
+        r.addEventListener('change', function () { sub = r.value; markSel('q-sub'); render(); });
+      });
+      document.querySelectorAll('input[name="os"]').forEach(function (r) {
+        r.addEventListener('change', function () { os = r.value; markSel('q-os'); render(); });
+      });
+      // "무료 길로" 점프(ChatGPT 경로에서)
+      document.querySelectorAll('[data-goto-free]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          var freeRadio = document.querySelector('input[name="sub"][value="free"]');
+          if (freeRadio) { freeRadio.checked = true; sub = 'free'; markSel('q-sub'); render(); }
+          result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

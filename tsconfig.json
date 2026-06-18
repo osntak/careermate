@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@careermate/shared": ["packages/shared/src/index.ts"],
+      "@careermate/db": ["packages/db/src/index.ts"],
+      "@careermate/core": ["packages/core/src/index.ts"],
+      "@careermate/mcp-tools": ["packages/mcp-tools/src/index.ts"],
+      "@careermate/exporters": ["packages/exporters/src/index.ts"],
+      "@careermate/parsers": ["packages/parsers/src/index.ts"],
+      "@careermate/prompts": ["packages/prompts/src/index.ts"],
+      "@careermate/workflows": ["packages/workflows/src/index.ts"],
+      "@careermate/knowledge": ["packages/knowledge/src/index.ts"]
+    }
+  },
+  "include": ["packages/**/*.ts", "apps/**/*.ts", "scripts/**/*.ts"],
+  "//exclude": "scripts/shots*.ts는 Playwright 브라우저 컨텍스트(window/document)·임시 시드용 마케팅 도구라 타입검사 제외(배포물 아님).",
+  "exclude": ["node_modules", "scripts/shots.ts", "scripts/shots-seed.ts"]
+}

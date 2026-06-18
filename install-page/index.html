@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Resolve the saved theme before first paint (default: dark) to avoid a flash. -->
+  <script>
+    (function () {
+      try {
+        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
+        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : 'dark');
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+  </script>
+  <title>CareerMate — 내 AI를 커리어 비서로</title>
+  <meta name="description" content="Claude Desktop·Claude Code·Codex 같은 로컬 AI 앱에 연결하세요. CareerMate가 이력서·자기소개서·지원 현황을 이 컴퓨터에만 저장하고 MCP로 당신의 AI에 연결합니다." />
+  <link rel="canonical" href="https://careermate.life/" />
+  <meta name="google-site-verification" content="MfU5uwl1RNXKklsJhXz2hPCRytjLpCjCXSa2ls5JQH0" />
+  <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)" />
+
+  <!-- icons -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="CareerMate" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:url" content="https://careermate.life/" />
+  <meta property="og:title" content="CareerMate — 내 AI를 커리어 비서로" />
+  <meta property="og:description" content="이력서·자기소개서·지원 현황을 이 컴퓨터 안에서 관리하세요. 분석·글쓰기는 평소 쓰던 AI가, 데이터 보관은 CareerMate가 맡습니다." />
+  <meta property="og:image" content="https://careermate.life/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="CareerMate — 로컬 전용 MCP 커리어 워크스페이스" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CareerMate — 내 AI를 커리어 비서로" />
+  <meta name="twitter:description" content="이력서·자기소개서·지원 현황을 이 컴퓨터 안에서. 데이터는 외부로 나가지 않습니다." />
+  <meta name="twitter:image" content="https://careermate.life/og.png" />
+
+  <link rel="preload" href="fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Privacy-friendly analytics for the marketing site only (never the local 127.0.0.1 app). -->
+  <script src="/analytics.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#top">본문으로 건너뛰기</a>
+  <!-- ============================================================ nav -->
+  <nav class="nav">
+    <a class="nav__brand" href="#top">
+      <span class="nav__logo" aria-hidden="true">C</span>
+      <span class="nav__name">CareerMate</span>
+    </a>
+    <div class="nav__links">
+      <a href="#how">동작 방식</a>
+      <a href="#features">기능</a>
+      <a href="#preview">화면</a>
+      <a href="#install">설치</a>
+      <a href="start.html">처음이세요?</a>
+      <a href="#privacy">개인정보</a>
+    </div>
+    <div class="nav__actions">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="다크 모드 전환" title="다크 모드 전환">
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <a class="btn btn--ghost" href="#install">설치하기</a>
+    </div>
+  </nav>
+
+  <main id="top" tabindex="-1">
+
+    <!-- ========================================================== hero -->
+    <header class="hero">
+      <div class="hero__main">
+        <span class="pill-badge">
+          <span class="pill-badge__dot" aria-hidden="true"></span>
+          로컬 전용 · 무료
+        </span>
+        <h1 class="hero__title">
+          내가 쓰던 AI를<br />
+          나만의 커리어 비서로
+        </h1>
+        <p class="hero__lede">
+          <strong>공고 분석 · 맞춤 자기소개서 · 지원 현황 추적</strong>을 평소 쓰던 AI에게 말로 시키면, 결과가 이 컴퓨터 안에 쌓입니다. 한 번 정리한 경력은 대화마다 다시 붙여넣지 않아도 돼요.
+        </p>
+
+        <ul class="trust-strip" aria-label="안심 포인트">
+          <li>내 컴퓨터에만 저장</li>
+          <li>외부 업로드 없음</li>
+          <li>계정·API 키 불필요</li>
+          <li>언제든 삭제</li>
+        </ul>
+
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="start.html">처음이세요? — 내게 맞는 설치법 찾기</a>
+          <a class="btn btn--ghost" href="#install">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            바로 설치 방법 보기
+          </a>
+        </div>
+
+        <p class="hero__note">
+          CareerMate는 <strong>내 컴퓨터에서 도는 로컬 도구</strong>예요. 그래서 <span class="nowrap">Claude&nbsp;Desktop · Claude&nbsp;Code · Codex</span>처럼 내 컴퓨터의 프로그램을 띄울 수 있는 AI에서 동작합니다. 설치를 마쳤다면 대시보드 <code>http://127.0.0.1:4319</code>에서 내 데이터를 확인하세요.
+        </p>
+      </div>
+
+      <!-- signature element: CareerMate를 설치하는 방식 자체가 "내 AI에게 한 문장" — 그 순간을 보여준다.
+           장식적 예시라 aria-hidden; 실제 복사 가능한 안내는 #install에 맥락과 함께 있다. -->
+      <aside class="hero__demo" aria-hidden="true">
+        <div class="chat">
+          <div class="chat__head">
+            <span class="chat__dot"></span>
+            내 AI 앱
+          </div>
+          <div class="chat__msg chat__msg--me">
+            <span class="chat__who">나</span>
+            <p>careermate.life/llms-install.txt 읽고, 이 폴더에 CareerMate 설치하고 연결해줘.</p>
+          </div>
+          <div class="chat__msg chat__msg--ai">
+            <span class="chat__who">AI</span>
+            <p>설치했어요. 이제 이력서를 주거나 공고를 붙여넣어 보세요.</p>
+            <ul class="chat__steps">
+              <li>Node 확인 후 이 폴더에 설치</li>
+              <li>데이터는 <code>.cm/data</code>에만 저장</li>
+              <li>대시보드 <code>127.0.0.1:4319</code> 열림</li>
+            </ul>
+          </div>
+        </div>
+        <p class="hero__demo-note">내 AI 앱 대화창에 붙여넣으면 끝 — 터미널이 없어도 돼요.</p>
+      </aside>
+    </header>
+
+    <!-- ========================================================== how -->
+    <section id="how" class="section">
+      <div class="section__head">
+        <h2>당신의 AI가 두뇌, CareerMate는 커리어 서랍장</h2>
+        <p>CareerMate 안에는 AI가 들어 있지 않습니다. 생각하는 일은 당신의 AI가, 데이터 보관은 CareerMate가 맡습니다.</p>
+      </div>
+      <div class="cards-3">
+        <article class="feature">
+          <span class="feature__no">01</span>
+          <h3>당신의 AI와 대화</h3>
+          <p>평소 쓰던 Claude에게 말로 시키면 됩니다. 분석·글쓰기 같은 “생각”은 전부 당신의 AI가 합니다.</p>
+        </article>
+        <article class="feature">
+          <span class="feature__no">02</span>
+          <h3>안전하게 연결</h3>
+          <p>표준 연결 방식(MCP)이 AI와 CareerMate를 잇는 다리가 됩니다. AI가 당신의 커리어 기록을 직접 읽고 정리해 저장합니다.</p>
+        </article>
+        <article class="feature">
+          <span class="feature__no">03</span>
+          <h3>이 컴퓨터에 저장</h3>
+          <p>모든 데이터는 로컬 SQLite(<code>~/.careermate</code>)에만 저장됩니다. 외부 서버로 전송하지 않고, 대시보드에서 눈으로 볼 수 있습니다.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ====================================================== features -->
+    <section id="features" class="section">
+      <div class="section__head">
+        <h2>지원 한 건을 끝까지 함께 처리</h2>
+        <p>프로필 정리부터 면접 준비까지, AI와 대화만으로 이어집니다.</p>
+      </div>
+      <div class="checks">
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>프로필·이력서 구조화</strong><span>업로드한 파일을 읽어 경력·프로젝트·스킬로 정리·보관.</span></div></div>
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>채용공고 파싱·저장</strong><span>붙여넣은 공고 텍스트에서 회사·직무·자격요건을 추출.</span></div></div>
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>적합도(핏) 분석</strong><span>내 경력과 공고를 비교해 강점·보완점·매칭 키워드 도출.</span></div></div>
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>맞춤 자소서 + 버전 관리</strong><span>공고별 자기소개서를 버전으로 쌓고 비교, 파일로 내보내기.</span></div></div>
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>지원 상태 8단계 관리</strong><span>작성 중 → 지원 → 서류 합격 → 면접 → 최종까지 칸반으로.</span></div></div>
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>면접 준비</strong><span>서류 합격 시 예상 질문·STAR 답변·1분 자기소개 초안 생성.</span></div></div>
+      </div>
+    </section>
+
+    <!-- ======================================================= preview -->
+    <section id="preview" class="section">
+      <div class="section__head section__head--center">
+        <h2>내 데이터를 눈으로 확인</h2>
+        <p>모든 기록은 이 컴퓨터의 대시보드(<code>127.0.0.1:4319</code>)에 모입니다.<br>아래는 실제 화면 — 설치 없이 바로 둘러볼 수 있어요.</p>
+        <div class="section__cta">
+          <a class="btn btn--primary" href="demo/">데모 둘러보기 →</a>
+          <span class="section__cta-note">샘플 데이터로 클릭해 보는 미리보기 · 설치·로그인 불필요</span>
+        </div>
+      </div>
+
+      <div class="carousel" id="dash-carousel" role="group" aria-roledescription="캐러셀" aria-label="대시보드 화면 미리보기" tabindex="0">
+        <div class="carousel__viewport">
+          <div class="carousel__track" id="carousel-track">
+            <figure class="slide">
+              <div class="browser">
+                <div class="browser__bar">
+                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="browser__url">127.0.0.1:4319</span>
+                </div>
+                <div class="browser__body">
+                  <img class="shot__img shot__img--light" src="shots/home-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 홈 대시보드 — 지원 파이프라인과 할 일, 최근 활동" />
+                  <img class="shot__img shot__img--dark" src="shots/home-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 홈 대시보드 (다크) — 지원 파이프라인과 할 일, 최근 활동" />
+                </div>
+              </div>
+              <figcaption><strong>홈</strong> — 파이프라인·할 일·활동을 한 화면에</figcaption>
+            </figure>
+
+            <figure class="slide">
+              <div class="browser">
+                <div class="browser__bar">
+                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="browser__url">127.0.0.1:4319/#/applications</span>
+                </div>
+                <div class="browser__body">
+                  <img class="shot__img shot__img--light" src="shots/applications-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 지원 현황 — 상태별로 정리된 지원 목록" />
+                  <img class="shot__img shot__img--dark" src="shots/applications-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 지원 현황 (다크) — 상태별로 정리된 지원 목록" />
+                </div>
+              </div>
+              <figcaption><strong>지원 현황</strong> — 8단계 상태별로 한눈에</figcaption>
+            </figure>
+
+            <figure class="slide">
+              <div class="browser">
+                <div class="browser__bar">
+                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="browser__url">127.0.0.1:4319/#/jobs</span>
+                </div>
+                <div class="browser__body">
+                  <img class="shot__img shot__img--light" src="shots/jobs-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 채용공고 — 적합도 점수와 진행 상태" />
+                  <img class="shot__img shot__img--dark" src="shots/jobs-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 채용공고 (다크) — 적합도 점수와 진행 상태" />
+                </div>
+              </div>
+              <figcaption><strong>채용공고</strong> — 적합도 점수와 진행 상태</figcaption>
+            </figure>
+
+            <figure class="slide">
+              <div class="browser">
+                <div class="browser__bar">
+                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="browser__url">127.0.0.1:4319/#/documents</span>
+                </div>
+                <div class="browser__body">
+                  <img class="shot__img shot__img--light" src="shots/documents-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 문서 — 자기소개서와 이력서를 버전과 함께 보관" />
+                  <img class="shot__img shot__img--dark" src="shots/documents-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 문서 (다크) — 자기소개서와 이력서를 버전과 함께 보관" />
+                </div>
+              </div>
+              <figcaption><strong>문서</strong> — 자기소개서·이력서를 버전과 함께</figcaption>
+            </figure>
+
+            <figure class="slide">
+              <div class="browser">
+                <div class="browser__bar">
+                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="browser__url">127.0.0.1:4319/#/interview</span>
+                </div>
+                <div class="browser__body">
+                  <img class="shot__img shot__img--light" src="shots/interview-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 면접 준비 — 예상 질문과 STAR, 1분 자기소개" />
+                  <img class="shot__img shot__img--dark" src="shots/interview-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 면접 준비 (다크) — 예상 질문과 STAR, 1분 자기소개" />
+                </div>
+              </div>
+              <figcaption><strong>면접 준비</strong> — 예상 질문·STAR·1분 자기소개</figcaption>
+            </figure>
+
+            <figure class="slide">
+              <div class="browser">
+                <div class="browser__bar">
+                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="browser__url">127.0.0.1:4319/#/settings</span>
+                </div>
+                <div class="browser__body">
+                  <img class="shot__img shot__img--light" src="shots/settings-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 설정 — 데이터 저장 위치와 연결 상태, 테마" />
+                  <img class="shot__img shot__img--dark" src="shots/settings-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate 설정 (다크) — 데이터 저장 위치와 연결 상태, 테마" />
+                </div>
+              </div>
+              <figcaption><strong>설정</strong> — 데이터 위치·내보내기·테마</figcaption>
+            </figure>
+          </div>
+        </div>
+
+        <button class="carousel__arrow carousel__arrow--prev" id="carousel-prev" type="button" aria-label="이전 화면">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="carousel__arrow carousel__arrow--next" id="carousel-next" type="button" aria-label="다음 화면">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="carousel__dots" id="carousel-dots" role="tablist" aria-label="화면 선택"></div>
+    </section>
+
+    <!-- ======================================================= install -->
+    <section id="install" class="section">
+      <div class="section__head section__head--center">
+        <h2>내 AI 앱에 연결하기</h2>
+        <p>빈 폴더 잡고 <strong>한 문장이면 끝.</strong><br />
+        터미널이 익숙하면 한 줄 설치, 싫으면 파일 하나로 — <strong>무료도 있습니다.</strong></p>
+      </div>
+
+      <a class="note" href="start.html" style="display:block;text-decoration:none;border-left-color:var(--accent);background:var(--accent-soft)">
+        <strong style="color:var(--text)">완전 처음이세요?</strong> 터미널·구독이 뭔지 몰라도 괜찮아요 — 쓰는 AI와 컴퓨터만 고르면 <strong>맞는 길 하나</strong>를 알려드려요. <strong style="color:var(--accent)">길 찾기 →</strong>
+      </a>
+
+      <div class="note">
+        <strong>어떤 AI에서 되나요?</strong> 내 컴퓨터에서 프로그램을 띄울 수 있는 AI에서만 됩니다.<br />
+        <strong style="color:var(--accent)">✓</strong> Claude Desktop · Claude Code · Codex · Cursor 등 &nbsp;/&nbsp; <strong style="color:var(--warn-text)">✗</strong> ChatGPT·Gemini·Claude의 <strong>웹·모바일</strong>(클라우드라 내 컴퓨터 서버에 못 닿음).
+      </div>
+
+      <!-- track 1 · 앱에서 직접 설치 (비개발자 메인) -->
+      <details class="acc" open>
+        <summary><span class="track__tag">추천 · 앱에서 한 문장</span> 내 AI 앱에서 빈 폴더 잡고 한 문장</summary>
+        <div class="acc__body">
+          <p class="track-desc"><strong>Claude 데스크톱의 “Code” 탭</strong>처럼 폴더를 잡고 작동하는 AI 앱이면 <strong>별도 터미널 없이</strong> 앱 안에서 끝납니다(Codex는 <strong>CLI</strong> 권장 — 데스크톱 앱은 등록이 사라질 수 있습니다). 작업 폴더 하나를 정하고 아래 문장만 주면, 에이전트가 공개 안내(<code>careermate.life/llms-install.txt</code>)를 읽고 <strong>그 폴더 안에</strong> 설치·연결합니다. 데이터까지 그 폴더에 모여(<code>.cm/data</code>) 백업·이동이 폴더 하나로 끝.</p>
+          <ol class="steps">
+          <li class="step">
+            <div class="step__no">1</div>
+            <div class="step__body">
+              <h3>앱 열고 빈 폴더 선택</h3>
+              <p><strong>Claude 데스크톱</strong> → <strong>Code</strong> 탭에서 빈 폴더를 작업 폴더로 선택(<strong>Pro 이상</strong> 구독, <strong>Windows는 Git 먼저</strong>). <strong>Codex</strong>는 빈 폴더에서 <code>codex</code>(CLI, <strong>ChatGPT Plus 이상</strong>)로 실행하세요 — <strong>데스크톱 앱은 등록이 사라질 수 있어</strong> 권장하지 않습니다.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step__no">2</div>
+            <div class="step__body">
+              <h3>이 문장 붙여넣기</h3>
+              <p class="paste-note">💬 위에서 연 <strong>AI 앱의 대화창에</strong> 붙여넣으세요 — 터미널 명령이 아니에요. 이 문장은 공개 안내 페이지만 읽어 설치하며, <strong>당신의 이력서·개인정보는 외부로 올라가지 않아요.</strong></p>
+              <div class="code">
+                <button class="copy-btn" type="button" data-copy-target="code-prompt-agent">복사</button>
+                <pre id="code-prompt-agent">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 데이터도 이 폴더의 .cm/data 안에 저장하고, Node 설치처럼 시스템에 바꿀 게 있으면 실행 전에 먼저 알려줘. 설치가 끝나면 앱 재시작 방법과 이력서를 주는 법, 대시보드 주소(http://127.0.0.1:4319)도 알려줘.</pre>
+              </div>
+              <p class="step__tip">준비물은 <strong>Node.js 22.5 이상</strong> 하나뿐. 없으면 에이전트가 <strong>먼저 확인하고</strong> 설치를 도와줍니다. 데이터는 작업 폴더의 <code>.cm/data</code>에만 저장됩니다. (Codex CLI는 설치 단계에서 네트워크 허용을 한 번 물을 수 있어요 — 허용하면 됩니다.)</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step__no">3</div>
+            <div class="step__body">
+              <h3>재시작 후 확인</h3>
+              <p>AI 앱을 완전히 종료했다 다시 켜고(처음 한 번 승인을 물으면 허용), <strong>“커리어메이트 연결됐는지 확인해줘”</strong>라고 말해 보세요. Codex는 <code>/mcp</code>로도 확인됩니다.</p>
+            </div>
+          </li>
+          </ol>
+        </div>
+      </details>
+
+      <!-- track 2 · npx 한 줄 -->
+      <details class="acc">
+        <summary><span class="track__tag">터미널 · 한 줄 설치</span> npx 한 줄로 자동 연결</summary>
+        <div class="acc__body">
+          <p class="track-desc">준비물은 <strong>Node.js 22.5 이상</strong> 하나. 감지된 AI 앱(Claude Desktop·Codex·Cursor)의 MCP 설정에 CareerMate를 자동 등록합니다.</p>
+          <ol class="steps">
+          <li class="step">
+            <div class="step__no">1</div>
+            <div class="step__body">
+              <h3>한 줄 실행</h3>
+              <p>터미널(Windows는 PowerShell)에 붙여넣고 실행하세요. 클론도 빌드도 필요 없습니다. <code>node --version</code>이 22.5 미만이면 <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a>에서 LTS를 먼저 설치하세요.</p>
+              <div class="code">
+                <button class="copy-btn" type="button" data-copy-target="code-npx">복사</button>
+                <pre id="code-npx">npx -y careermate init</pre>
+              </div>
+              <p class="step__tip">특정 클라이언트만 등록하려면 <code>npx -y careermate init --client cursor</code>, 설정 JSON·명령만 보고 직접 붙여넣으려면 <code>npx -y careermate init --print</code>. (클라이언트: <code>claude</code> · <code>claude-code</code> · <code>codex</code> · <code>cursor</code>)</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step__no">2</div>
+            <div class="step__body">
+              <h3>AI 앱 재시작 후 확인</h3>
+              <p>연결한 AI 앱을 <strong>완전히 종료했다 다시 켜고</strong>, <strong>“커리어메이트 연결됐는지 확인해줘”</strong>라고 말해 결과가 돌아오면 정상입니다.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step__no">3</div>
+            <div class="step__body">
+              <h3>대시보드 열기 (선택)</h3>
+              <p>내 데이터를 눈으로 보려면 <code>npx -y careermate start</code> 실행 → <code>http://127.0.0.1:4319</code>. 종료는 <kbd>Ctrl</kbd>+<kbd>C</kbd>.</p>
+            </div>
+          </li>
+          </ol>
+        </div>
+      </details>
+
+      <!-- track 3 · .mcpb (데모트) -->
+      <details class="acc">
+        <summary><span class="track__tag">Claude Desktop · <code>.mcpb</code></span> 설치 파일로 추가 (터미널 없이)</summary>
+        <div class="acc__body">
+          <p class="track-desc">터미널·Node 없이 파일 하나로 끝나지만, <strong>Claude Desktop 내장 Node 버전에 따라 불안정할 수 있습니다.</strong> 잘 안 되면 위 <strong>에이전트가 직접 설치</strong> 또는 <strong>터미널 한 줄</strong>을 쓰세요.</p>
+          <ol class="steps">
+          <li class="step">
+            <div class="step__no">1</div>
+            <div class="step__body">
+              <h3>설치 파일 받기</h3>
+              <p>아래 버튼으로 <code>careermate.mcpb</code>를 내려받으세요. (약 2&nbsp;MB)</p>
+              <a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                careermate.mcpb 다운로드
+              </a>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step__no">2</div>
+            <div class="step__body">
+              <h3>Claude Desktop 설정에서 추가</h3>
+              <p>Claude Desktop → <strong>Settings(설정) → Extensions(확장)</strong>에서 <strong>Advanced settings(고급 설정)</strong>를 누르면 나오는 <strong>Install extension…</strong>으로 내려받은 <code>careermate.mcpb</code>를 선택하세요.</p>
+              <p class="step__tip">더블클릭·드래그는 Windows에서 파일 연결이 안 잡혀 <strong>반응이 없을 수 있으니</strong>, 위 설정 메뉴 경로를 쓰세요. (확장을 처음 설치하면 <strong>Advanced settings</strong>를 먼저 눌러야 버튼이 보입니다.)</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step__no">3</div>
+            <div class="step__body">
+              <h3>재시작하고 확인</h3>
+              <p>Claude Desktop을 완전히 종료했다 다시 켜고, <strong>“커리어메이트 연결됐는지 확인해줘”</strong>라고 말해 보세요.</p>
+            </div>
+          </li>
+          </ol>
+        </div>
+      </details>
+
+      <!-- 수동 등록 · 설정 파일 위치 · 소스에서 실행 -->
+      <details class="acc" id="install-other">
+        <summary>수동 등록 · 설정 파일 위치 <span class="acc__hint">Cursor·Cline·Windsurf</span></summary>
+        <div class="acc__body">
+          <p class="step__tip"><code>npx -y careermate init --print</code>로 설정 JSON·명령만 출력해 클라이언트에 직접 추가할 수 있습니다. 클라이언트별 설정 파일 위치는 아래 탭을 참고하세요.</p>
+
+          <div class="tabs" role="tablist" aria-label="설정 파일 위치">
+            <button class="tab is-active" id="tab-claude" role="tab" aria-controls="panel-claude" aria-selected="true">Claude Desktop</button>
+            <button class="tab" id="tab-cursor" role="tab" aria-controls="panel-cursor" aria-selected="false" tabindex="-1">Cursor / 기타</button>
+          </div>
+          <div class="panel" id="panel-claude" role="tabpanel" aria-labelledby="tab-claude" data-active="true">
+            <p class="path-note">Windows: <code>%APPDATA%\Claude\claude_desktop_config.json</code> · macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code><br />(Settings → Developer → Edit Config 로도 열 수 있습니다. <code>npx -y careermate init</code>이 이 파일을 자동으로 수정합니다.)</p>
+          </div>
+          <div class="panel" id="panel-cursor" role="tabpanel" aria-labelledby="tab-cursor" data-active="false" hidden>
+            <p class="path-note">프로젝트별: <code>.cursor/mcp.json</code> · 전역: <code>~/.cursor/mcp.json</code> — Cursor·Cline·Windsurf 등 대부분 같은 형식입니다. 추가 후 클라이언트를 다시 시작하세요.</p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 트러블슈팅 -->
+      <details class="acc">
+        <summary>문제가 생겼을 때 <span class="acc__hint">포트 충돌 · MCP 연결 실패 · 데이터 위치 · 초기화</span></summary>
+        <div class="acc__body">
+          <div class="trouble">
+            <div class="trouble__item">
+              <h4>포트가 이미 사용 중</h4>
+              <p>4319가 막히면 자동으로 다음 빈 포트로 옮겨갑니다. 터미널에 출력된 실제 주소를 사용하거나, <code>CAREERMATE_PORT</code> 환경변수로 고정하세요.</p>
+            </div>
+            <div class="trouble__item">
+              <h4>AI에 MCP가 연결되지 않음</h4>
+              <p>① <code>npx -y careermate init</code>이 정상 종료됐는지 ② <code>node --version</code>이 22.5 이상인지 ③ 클라이언트를 <strong>완전히 종료 후 재시작</strong>했는지 확인하세요. 폴더를 옮기거나 이름을 바꿨다면 등록된 경로가 깨질 수 있으니 init을 다시 실행하세요.</p>
+            </div>
+            <div class="trouble__item">
+              <h4>상태 점검</h4>
+              <p>진단을 실행하면 Node 버전·데이터 폴더·DB 상태를 점검합니다.</p>
+              <div class="code">
+                <button class="copy-btn" type="button" data-copy-target="code-doctor">복사</button>
+                <pre id="code-doctor">npx -y careermate doctor</pre>
+              </div>
+            </div>
+            <div class="trouble__item">
+              <h4>데이터 위치 / 초기화</h4>
+              <p>기본 위치는 <code>~/.careermate/careermate.sqlite</code>(Windows: <code>%USERPROFILE%\.careermate</code>). <code>CAREERMATE_DATA_DIR</code>로 변경 가능. 완전 초기화는 <code>careermate.sqlite</code> 삭제 후 재실행(백업 권장)입니다.</p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ======================================================= privacy -->
+    <section id="privacy" class="section">
+      <div class="privacy-card">
+        <div class="privacy-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="privacy-card__text">
+          <h2>당신의 데이터는 당신 컴퓨터를 떠나지 않습니다</h2>
+          <p>대시보드 서버는 <code>127.0.0.1</code>(이 컴퓨터)에만 바인딩되어 외부에서 접근할 수 없습니다.<br />MCP 서버가 외부로 내보내는 것은 (끌 수 있는) <strong>최신 버전 확인</strong>뿐이며, <strong>당신의 커리어 데이터는 전송하지 않습니다.</strong> 분석·글쓰기는 당신이 직접 고른 AI가 수행합니다.</p>
+          <ul class="privacy-card__list">
+            <li><strong>저장 위치</strong> <code>~/.careermate/careermate.sqlite</code></li>
+            <li><strong>내보내기</strong> 자기소개서 등을 <code>~/.careermate/exports</code>로</li>
+            <li><strong>삭제·관리</strong> 대시보드 <strong>설정(Settings)</strong>에서 직접</li>
+          </ul>
+          <p class="privacy-card__note">
+            위 내용은 <strong>설치하는 앱</strong> 이야기예요. 지금 보고 계신 <strong>이 소개 웹사이트</strong>는 방문 통계를 보려고 쿠키 없는 익명 분석(Vercel Analytics)만 사용하며, 여기엔 어떤 커리어 데이터도 포함되지 않습니다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <div class="foot__brand"><span class="nav__logo" aria-hidden="true">C</span> CareerMate</div>
+    <p>로컬에서 동작하는 MCP 기반 커리어 관리 도구. 모든 데이터는 이 컴퓨터에만 저장됩니다.</p>
+    <div class="foot__links">
+      <a href="#top">맨 위로</a>
+      <a href="#features">기능</a>
+      <a href="#install">설치</a>
+    </div>
+  </footer>
+
+  <div class="sr-only" role="status" aria-live="polite" id="copy-status"></div>
+
+  <script src="landing.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      // --- config tabs -------------------------------------------------
+      var tablist = document.querySelector('.tabs[role="tablist"]');
+      if (tablist) {
+        var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"]'));
+        function selectTab(tab) {
+          tabs.forEach(function (t) {
+            var sel = t === tab;
+            t.setAttribute('aria-selected', sel ? 'true' : 'false');
+            t.classList.toggle('is-active', sel);
+            t.tabIndex = sel ? 0 : -1;
+            var panel = document.getElementById(t.getAttribute('aria-controls'));
+            if (panel) {
+              panel.setAttribute('data-active', sel ? 'true' : 'false');
+              if (sel) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', '');
+            }
+          });
+        }
+        tabs.forEach(function (tab, i) {
+          tab.addEventListener('click', function () { selectTab(tab); });
+          tab.addEventListener('keydown', function (e) {
+            var idx = null;
+            if (e.key === 'ArrowRight') idx = (i + 1) % tabs.length;
+            else if (e.key === 'ArrowLeft') idx = (i - 1 + tabs.length) % tabs.length;
+            else if (e.key === 'Home') idx = 0;
+            else if (e.key === 'End') idx = tabs.length - 1;
+            if (idx !== null) { e.preventDefault(); tabs[idx].focus(); selectTab(tabs[idx]); }
+          });
+        });
+      }
+
+      // --- scroll reveal (fade-up on enter) ----------------------------
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduceMotion && 'IntersectionObserver' in window) {
+        var revealEls = document.querySelectorAll('.section__head, .feature, .check, .track__head, .step, .acc, .privacy-card');
+        revealEls.forEach(function (el) { el.classList.add('reveal'); });
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -48px 0px' });
+        revealEls.forEach(function (el) { io.observe(el); });
+      }
+
+      // --- dashboard carousel (prev/next + dots + keyboard + swipe) -----
+      var carousel = document.getElementById('dash-carousel');
+      var track = document.getElementById('carousel-track');
+      if (carousel && track) {
+        var slides = Array.prototype.slice.call(track.children);
+        var prevBtn = document.getElementById('carousel-prev');
+        var nextBtn = document.getElementById('carousel-next');
+        var dotsWrap = document.getElementById('carousel-dots');
+        var idx = 0;
+        var captionOf = function (s) {
+          var f = s.querySelector('figcaption');
+          return f ? f.textContent.trim() : '';
+        };
+        var dots = slides.map(function (s, n) {
+          var b = document.createElement('button');
+          b.type = 'button'; b.className = 'carousel__dot';
+          b.setAttribute('role', 'tab');
+          b.setAttribute('aria-label', captionOf(s) || (n + 1) + '번째 화면');
+          b.addEventListener('click', function () { go(n); });
+          dotsWrap.appendChild(b);
+          return b;
+        });
+        function go(n) {
+          idx = Math.max(0, Math.min(slides.length - 1, n));
+          track.style.transform = 'translateX(' + (-idx * 100) + '%)';
+          dots.forEach(function (d, n2) {
+            var on = n2 === idx;
+            d.classList.toggle('is-active', on);
+            d.setAttribute('aria-selected', on ? 'true' : 'false');
+          });
+          slides.forEach(function (s, n2) { s.setAttribute('aria-hidden', n2 === idx ? 'false' : 'true'); });
+          if (prevBtn) prevBtn.disabled = idx === 0;
+          if (nextBtn) nextBtn.disabled = idx === slides.length - 1;
+        }
+        if (prevBtn) prevBtn.addEventListener('click', function () { go(idx - 1); });
+        if (nextBtn) nextBtn.addEventListener('click', function () { go(idx + 1); });
+        carousel.addEventListener('keydown', function (e) {
+          if (e.key === 'ArrowLeft') { e.preventDefault(); go(idx - 1); }
+          else if (e.key === 'ArrowRight') { e.preventDefault(); go(idx + 1); }
+        });
+        var x0 = null;
+        track.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+        track.addEventListener('touchend', function (e) {
+          if (x0 === null) return;
+          var dx = e.changedTouches[0].clientX - x0;
+          if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
+          x0 = null;
+        });
+        go(0);
+      }
+    })();
+  </script>
+</body>
+</html>
