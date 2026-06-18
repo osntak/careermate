@@ -27,7 +27,7 @@
 | 내가 누구인가 | MCP 등록 방식 |
 |---|---|
 | 사용자가 **Claude Desktop**을 쓰는 경우 | `careermate.zip` 압축 해제 후 폴더 추가 — **터미널 불필요** (`.mcpb` 직접 추가는 known issue) |
-| **Claude Code** | CareerMate 폴더의 프로젝트 `.mcp.json`, 또는 `claude mcp add` (첫 실행 시 1회 승인) |
+| **Claude Code** | 사용자가 여는 작업 폴더의 프로젝트 `.mcp.json`, 또는 `claude mcp add` (첫 실행 시 1회 승인) |
 | **Codex** (OpenAI Codex CLI) | `~/.codex/config.toml`의 `[mcp_servers.careermate]` 테이블, 또는 `codex mcp add` |
 
 대부분 `npm run init`(5단계)이 위 등록을 자동으로 처리합니다. 수동 등록 명령은 5단계 끝에 정리해 두었습니다.
@@ -105,7 +105,7 @@ npm run init
 `init`이 하는 일:
 - `~/.careermate` 폴더를 보장합니다.
 - **감지된** AI 클라이언트를 자동 등록합니다(설정 파일 또는 그 상위 폴더가 있으면 감지된 것으로 간주).
-- **Claude Code 프로젝트 `.mcp.json`은 항상** CareerMate 폴더에 기록합니다.
+- **Claude Code 프로젝트 `.mcp.json`은 항상** 이 명령을 실행한 작업 폴더에 기록합니다.
 - 기존 설정은 변경 전에 타임스탬프 백업을 만들고, 사용자 env와 무관한 TOML 테이블은 보존합니다.
 
 ### 클라이언트별 결과
@@ -113,7 +113,7 @@ npm run init
 | 클라이언트 | 등록 결과 |
 |---|---|
 | **Claude Desktop** | `careermate.zip` 압축 해제 후 폴더 추가(아래) — `init`과 별개. `.mcpb` 직접 추가는 known issue |
-| **Claude Code** | CareerMate 폴더에 프로젝트 `.mcp.json` 기록 → 첫 실행 시 **1회 승인** 필요 |
+| **Claude Code** | 현재 작업 폴더에 프로젝트 `.mcp.json` 기록 → 첫 실행 시 **1회 승인** 필요 |
 | **Codex** | `~/.codex/config.toml`의 `[mcp_servers.careermate]` 기록 → Codex 안에서 `/mcp`로 확인 |
 
 `.mcp.json`은 최상위 `"mcpServers"` 아래에 서버별 `{"type":"stdio","command":...,"args":[...]}` 형태로 들어갑니다.

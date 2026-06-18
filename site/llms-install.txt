@@ -141,12 +141,10 @@ CareerMate MCP 서버는 Node 프로그램입니다. 먼저 확인하세요:
   터미널 없는 경로입니다(1번 끝의 안내). 굳이 수동이면 `claude_desktop_config.json`의
   `mcpServers`에 같은 블록을 추가.
 
-단축: `node <BIN> init`을 실행하면 **감지된 Codex·Cursor·Claude Desktop·Gemini 전역 설정**을 올바른
-절대경로로 자동 등록하고 `~/.careermate`도 만듭니다(Antigravity는 후보 설정 파일이 이미 있을 때만).
-단 **Claude Code의 프로젝트 `.mcp.json`은 위처럼 사용자의 작업 폴더에 직접** 만드세요. (`init`도
-`.mcp.json`을 하나 쓰긴 하지만 그건 설치 디렉터리(`node_modules/careermate`) 안에 생겨 당신의 실제
-작업 폴더와는 무관합니다.) **Claude Code는 init과 수동 등록 중 하나만** 쓰세요 — 둘 다 하면 무용한
-등록이 하나 더 생깁니다.
+단축: 사용자의 **실제 작업 폴더에서** `node <BIN> init`을 실행하면 감지된 Codex·Cursor·Claude
+Desktop·Gemini 전역 설정을 올바른 절대경로로 자동 등록하고, Claude Code용 `.mcp.json`도 **그 작업
+폴더에** 만듭니다(Antigravity는 후보 설정 파일이 이미 있을 때만). `init`과 수동 등록 중 하나만
+쓰세요 — 둘 다 하면 같은 서버 등록이 중복될 수 있습니다.
 
 ────────────────────────────────────────────────────────
 5. 마무리 — 재시작 · 승인 · 검증

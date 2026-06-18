@@ -46,12 +46,12 @@ if (isHelp || !ENTRIES[cmd]) {
     '',
     '사용법: careermate <명령>',
     '',
-    '  init        AI 클라이언트에 CareerMate를 자동 연결(MCP 설정 등록)',
+    '  init        AI 클라이언트에 CareerMate를 자동 연결(MCP 설정 등록, Claude Code는 현재 폴더 기준)',
     '  mcp         MCP 서버 실행 (보통 AI 클라이언트가 자동 호출)',
     '  start       로컬 대시보드 실행 (http://127.0.0.1:4319)',
     '  doctor      설치/환경 점검',
     '',
-    '처음이라면:  careermate init  → AI 클라이언트 재시작',
+    '처음이라면:  사용할 작업 폴더에서 careermate init  → AI 클라이언트 재시작',
   ];
   // 명시적 도움말은 stdout+exit0, 알 수 없는 명령은 stderr+exit1
   // (stdout은 MCP 전송 채널이므로 오류 안내로 오염시키지 않는다).
