@@ -7,7 +7,7 @@
  *
  * v1이 지원하는 연결 대상(우선순위 순):
  *   - Claude Desktop  →  claude_desktop_config.json   (JSON · mcpServers)
- *   - Claude Code     →  <프로젝트>/.mcp.json          (JSON · mcpServers, project scope)
+ *   - Claude Code     →  <현재 작업 폴더>/.mcp.json    (JSON · mcpServers, project scope)
  *   - Codex CLI       →  ~/.codex/config.toml          (TOML · [mcp_servers.careermate])
  *   - Cursor          →  ~/.cursor/mcp.json            (JSON · mcpServers, 기타 MCP 클라이언트 호환)
  *
@@ -80,9 +80,15 @@ function cursorConfigPath(): string {
   return path.join(os.homedir(), '.cursor', 'mcp.json');
 }
 
-/** Claude Code project scope 설정: 사용자가 `claude`를 띄우는 CareerMate 폴더(ROOT)에 둔다. */
+/**
+ * Claude Code project scope 설정: 사용자가 지금 작업 중인 폴더에 둔다.
+ *
+ * `npx -y careermate init`은 패키지를 임시 캐시에 풀어 실행하므로 ROOT는 사용자의
+ * 프로젝트가 아니라 설치물 위치다. Claude Code는 실제로 열 폴더의 `.mcp.json`만
+ * 승인/로드하므로 cwd를 프로젝트 루트로 삼는다.
+ */
 function claudeCodeConfigPath(): string {
-  return path.join(ROOT, '.mcp.json');
+  return path.join(process.cwd(), '.mcp.json');
 }
 
 /** Codex CLI 글로벌 설정(CODEX_HOME 우선). */
@@ -306,7 +312,7 @@ function printConfigs(server: ServerEntry): void {
       2,
     ),
   );
-  console.log('\n  · Claude Code는 위 내용을 프로젝트 루트의 .mcp.json 으로 저장하면 됩니다.');
+  console.log('\n  · Claude Code는 위 내용을 실제 작업 폴더의 .mcp.json 으로 저장하면 됩니다.');
   console.log('  · Gemini CLI는 ~/.gemini/settings.json, Antigravity는 ~/.gemini/(config|antigravity|antigravity-cli)/mcp_config.json 의 mcpServers에 같은 블록을 넣으세요(type 키는 없어도 됨).');
   console.log(`  · 또는 명령으로:  ${shellJoin(['claude', 'mcp', 'add', '--scope', 'project', '--transport', 'stdio', PKG, '--', ...cmd])}`);
 
@@ -362,7 +368,7 @@ function main(): void {
   console.log('\n✅ 거의 끝났습니다. 다음만 해주세요:');
   console.log('  1) 연결한 AI 클라이언트를 완전히 종료했다가 다시 켜기');
   if (connectedIds.has('claude-code')) {
-    console.log('     (Claude Code는 프로젝트의 .mcp.json을 처음 띄울 때 1회 "승인"을 물어봅니다 — 승인해 주세요.)');
+    console.log('     (Claude Code는 이 명령을 실행한 폴더의 .mcp.json을 처음 띄울 때 1회 "승인"을 물어봅니다 — 승인해 주세요.)');
   }
   console.log('  2) AI에게: "get_onboarding_status 호출해서 연결됐는지 확인해줘"');
   console.log('  3) 내 데이터 대시보드 열기:  careermate start');
