@@ -17,9 +17,15 @@
   "무설치 번들 런타임" 전략의 성패는 전부 **"충분히 새로운 Node를 어떻게 확보하느냐"**로 수렴한다.
 - **Codex Windows 앱 + 단일 `.exe`**: 패키징(Node SEA)은 **기술적으로 성립**하나, **자가등록 지속성**과
   **샌드박스** 두 개의 (2026-05~06 기준) 외부 버그/제약 때문에 **진정한 무인 원클릭은 현재 불가**. → **보류.**
-- **Claude `.mcpb`**: 산출물(`dist/mcp.mjs`)은 **Node ≥22.5에서 정상 동작**함을 실증함. 사용자가 겪은
-  "설치는 됐는데 도구가 안 뜸/빨간 에러"는 **Claude Desktop 내장 Node가 22.5 미만**일 때의 증상으로 추정되며,
-  그 경우의 해결은 **저장 계층 rewrite(= 큰 작업)**다. → **로그로 근본 원인 확정 후 결정.**
+- **Claude `.mcpb`** — **[2026-06-18 로그로 근본 원인 확정. 위 "내장 Node <22.5" 추정은 반증됨.]**
+  Claude Desktop 1.12603.1.0의 **내장 Node는 24.16.0**(22.5 미만 아님)이고 `node:sqlite`를 **플래그 없이** 지원한다.
+  실제 원인: `.mcpb` manifest가 넘긴 **`--experimental-sqlite`를 내장 Node가 "모르는 옵션"으로 거부**해 서버가
+  시작 직후 즉사. packed `.mcpb`는 **내장 Node**로, unpacked·npm은 **시스템 Node**(플래그 수용)로 실행되므로
+  "압축 풀면 됨 / 컴마다 다름"이 설명된다. **수정(= 작은 수정): manifest `mcp_config.args`에서
+  `--experimental-sqlite` 제거 + `compatibility.runtimes.node`를 `>=22.13.0`(플래그 없이 node:sqlite 되는 최소)로.**
+  → **저장 계층 rewrite는 불필요.** (npm 경로는 22.5–22.12 하위호환을 위해 `bin/careermate.mjs`에서 플래그 유지.)
+  추가로, 그때 배포되던 `.mcpb`는 career-os 지식 배선(커밋 `9a2390a`) **이전 빌드라 EOP/knowledge md가 누락**된
+  stale 상태였다 — 재빌드로 해결(46파일). v0.0.3로 게시.
 
 ---
 
