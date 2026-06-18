@@ -182,6 +182,38 @@ section('7) 배치 입력 + 멱등 upsert');
   ok('배치 프로젝트: 배치 내 동명은 1건', projectRepo.list().filter((x) => x.name === '대시보드').length === 1 && p.created === 1);
 }
 
+/* ------------------ 8. strList 코어션 (LLM이 배열을 문자열로 보낼 때) */
+// Reproduces the real failure: a client sent `keywords` as a string and the SDK
+// rejected the call with "Expected array, received string". The schema must now
+// absorb JSON-string and comma/newline forms into a real array — across MCP and
+// HTTP, since both validate with the same JobInput/FitAnalysis schemas.
+section('8) strList 코어션: 문자열 → 배열');
+{
+  const { JobInputSchema, FitAnalysisInputSchema } = await import('../packages/shared/src/schemas.ts');
+
+  const csv = JobInputSchema.parse({ company: 'A', position: 'B', keywords: 'Java, Spring, Kafka' });
+  ok('CSV 문자열 keywords → 배열 3개', Array.isArray(csv.keywords) && csv.keywords.length === 3 && csv.keywords[0] === 'Java');
+
+  const jsonStr = JobInputSchema.parse({ company: 'A', position: 'B', keywords: '["Java","Spring"]' });
+  ok('JSON 문자열 keywords → 배열 2개', Array.isArray(jsonStr.keywords) && jsonStr.keywords.length === 2 && jsonStr.keywords[1] === 'Spring');
+
+  const arr = JobInputSchema.parse({ company: 'A', position: 'B', keywords: ['Java', 'Spring'] });
+  ok('실제 배열 keywords는 그대로 통과', Array.isArray(arr.keywords) && arr.keywords.length === 2);
+
+  const nl = JobInputSchema.parse({ company: 'A', position: 'B', requirements: 'Java 경험\nSpring 경험' });
+  ok('개행 문자열 requirements → 배열 2개', Array.isArray(nl.requirements) && nl.requirements.length === 2);
+
+  const empty = JobInputSchema.parse({ company: 'A', position: 'B', keywords: '' });
+  ok('빈 문자열 keywords → 빈 배열(실패 아님)', Array.isArray(empty.keywords) && empty.keywords.length === 0);
+
+  const fit = FitAnalysisInputSchema.parse({ job_id: 'x', matched_keywords: 'Java, Spring' });
+  ok('적합도 matched_keywords 문자열 → 배열', Array.isArray(fit.matched_keywords) && fit.matched_keywords.length === 2);
+
+  // End-to-end through the HTTP save path → must be stored & returned as an array.
+  const strJob = (await json('POST', '/api/jobs', { company: '카카오', position: '백엔드', keywords: 'Java, Kotlin' }, { 'x-careermate-token': SESSION_TOKEN })).job;
+  ok('API: 문자열 keywords로 저장 → 배열로 보관', Array.isArray(strJob.keywords) && strJob.keywords.length === 2);
+}
+
 console.log(`\n${'='.repeat(40)}`);
 console.log(`결과: ${pass} 통과 · ${fail} 실패`);
 console.log(fail === 0 ? '✅ 전체 통과' : '❌ 실패 있음');

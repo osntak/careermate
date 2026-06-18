@@ -6,7 +6,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ZodError, type ZodType } from 'zod';
+import { ZodError, type ZodTypeAny, type output } from 'zod';
 
 export interface Ctx {
   req: IncomingMessage;
@@ -93,16 +93,21 @@ export class HttpError extends Error {
   }
 }
 
-export async function readJsonBody<T>(req: IncomingMessage, schema?: ZodType<T>): Promise<T> {
+// Typed by the schema's OUTPUT, not its input: some schemas coerce (e.g. strList
+// accepts a string and yields string[]), so input ≠ output. Callers want the
+// parsed result, so return `output<S>` (= z.infer) rather than collapsing both.
+export async function readJsonBody<S extends ZodTypeAny>(req: IncomingMessage, schema: S): Promise<output<S>>;
+export async function readJsonBody(req: IncomingMessage): Promise<unknown>;
+export async function readJsonBody(req: IncomingMessage, schema?: ZodTypeAny): Promise<unknown> {
   const raw = await readBody(req);
-  if (!raw) return (schema ? schema.parse({}) : {}) as T;
+  if (!raw) return schema ? schema.parse({}) : {};
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
     throw new HttpError(400, '잘못된 JSON 형식입니다.', 'bad_json');
   }
-  if (!schema) return parsed as T;
+  if (!schema) return parsed;
   try {
     return schema.parse(parsed);
   } catch (e) {

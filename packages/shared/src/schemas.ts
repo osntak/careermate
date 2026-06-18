@@ -72,8 +72,32 @@ const reqBody = z
   .string()
   .max(MAX_BODY)
   .refine((s) => s.trim().length > 0, { message: EMPTY_MSG });
-/** Bounded array of bounded strings. */
-const strList = z.array(z.string().max(MAX_ITEM)).max(MAX_ITEMS);
+/**
+ * Coerce a stray scalar into a string array. MCP/LLM clients routinely serialize
+ * array arguments as a *string* — a JSON-encoded array (`'["Java","Spring"]'`) or
+ * a comma/newline-separated list (`'Java, Spring'`) — instead of a real array. The
+ * SDK then rejects the whole tool call with "Expected array, received string", so
+ * a single mis-serialized field (keywords, requirements, strengths, tech, tags…)
+ * fails the entire save. Absorb those shapes here; real arrays and non-strings
+ * pass straight through. The emitted JSON schema still advertises `array`, so the
+ * client is still told the correct shape — this only rescues the cases it ignores.
+ */
+function toStrList(v: unknown): unknown {
+  if (typeof v !== 'string') return v;
+  const s = v.trim();
+  if (!s) return [];
+  if (s.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      /* not valid JSON — fall through to delimiter split */
+    }
+  }
+  return s.split(/[\n,]/).map((x) => x.trim()).filter(Boolean);
+}
+/** Bounded array of bounded strings; tolerant of stringified inputs (see toStrList). */
+const strList = z.preprocess(toStrList, z.array(z.string().max(MAX_ITEM)).max(MAX_ITEMS));
 
 const baseRecord = {
   id,
