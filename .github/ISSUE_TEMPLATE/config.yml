@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 질문·사용법 / Questions & help
+    url: https://github.com/osntak/careermate/discussions
+    about: "버그가 아니라 '이거 어떻게 해요?' 같은 질문은 Discussions에서 물어봐 주세요. / For how-to questions (not bugs), please use Discussions."
+  - name: 설치·연결 도움 / Install help
+    url: https://careermate.life
+    about: "설치·연결이 막히면 careermate.life 또는 INSTALL.md를 먼저 보세요. / For install or connection trouble, check careermate.life or INSTALL.md first."

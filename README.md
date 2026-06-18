@@ -1,5 +1,7 @@
 # CareerMate
 
+[![npm](https://img.shields.io/npm/v/careermate?logo=npm&color=cb3837)](https://www.npmjs.com/package/careermate) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/node/v/careermate)](https://nodejs.org)
+
 **한국어** · [English](#careermate-english)
 
 **MCP 우선(MCP-first) 로컬 커리어 관리 도구.** 내 컴퓨터에서 동작하는 AI 에이전트(Claude Desktop·Claude Code·Codex 등)를 인터페이스로 쓰고, CareerMate는 당신의 커리어 데이터를 **이 컴퓨터에만** 저장한 뒤 MCP로 노출합니다.

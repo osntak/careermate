@@ -1,4 +1,6 @@
-# 행동 강령 (Code of Conduct)
+# 행동 강령
+
+**한국어** · [English](#code-of-conduct)
 
 ## 우리의 약속
 
@@ -45,3 +47,57 @@
 
 이 행동 강령은 [Contributor Covenant](https://www.contributor-covenant.org) 버전 2.1을
 바탕으로 합니다.
+
+---
+
+# Code of Conduct
+
+[한국어](#행동-강령) · **English**
+
+## Our pledge
+
+As members, contributors, and maintainers, we pledge to make participation in our
+community a harassment-free experience for everyone, regardless of age, body size,
+visible or invisible disability, ethnicity, sex characteristics, gender identity and
+expression, level of experience, education, socio-economic status, nationality,
+personal appearance, race, religion, or sexual orientation.
+
+## Our standards
+
+Examples of behavior that contributes to a positive environment:
+
+- Showing empathy and kindness toward others
+- Respecting differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Taking responsibility for our mistakes, apologizing, and learning from them
+- Focusing on what is best for the community as a whole, not just ourselves
+
+Examples of unacceptable behavior:
+
+- Sexualized language or imagery, and unwelcome sexual attention or advances
+- Trolling, insulting or derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information (such as a physical or email address) without their explicit permission
+- Other conduct that could reasonably be considered inappropriate in a professional setting
+
+## Enforcement responsibilities
+
+Project maintainers are responsible for clarifying the standards of acceptable behavior
+and will take fair corrective action in response to any behavior they deem inappropriate.
+
+## Scope
+
+This Code of Conduct applies within all project spaces, and also when an individual is
+officially representing the project in public.
+
+## Enforcement
+
+Abusive, harassing, or otherwise unacceptable behavior may be reported by opening an
+issue in the GitHub repository ([osntak/careermate](https://github.com/osntak/careermate))
+or by contacting the maintainers directly. All reports will be reviewed promptly and
+fairly. Maintainers will respect the privacy and safety of the reporter.
+
+## Attribution
+
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org),
+version 2.1.
