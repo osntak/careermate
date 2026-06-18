@@ -94,7 +94,7 @@
             <label class="choice"><input type="radio" name="sub" value="chatgpt" />
               <span class="choice__t">ChatGPT 유료</span><span class="choice__s">Plus 이상 구독</span></label>
             <label class="choice"><input type="radio" name="sub" value="free" />
-              <span class="choice__t">무료 / 잘 모름</span><span class="choice__s">유료 구독 없음</span></label>
+              <span class="choice__t">기타 (그 외 AI)</span><span class="choice__s">Claude·ChatGPT 외 / 잘 모름</span></label>
           </div>
         </div>
         <!-- Q2 -->
@@ -113,47 +113,74 @@
         <!-- ============ 결과 ============ -->
         <div class="result" id="result" aria-live="polite">
 
-          <!-- ===== Claude 유료 → Code 탭 ===== -->
+          <!-- ===== Claude → 방법1 Code 탭 / 방법2 파일설치 ===== -->
           <div class="path" data-sub="claude">
-            <span class="path__tag">당신에겐 — Claude "Code" 탭</span>
-            <h2>Claude 데스크톱 앱의 Code 탭으로</h2>
-            <p>이미 Claude를 구독 중이라 추가 비용 없이 가장 매끄럽습니다.<br />앱 안에서 끝나 별도 터미널이 필요 없습니다.</p>
-            <ol class="steps">
-              <li class="step"><div class="step__no">1</div><div class="step__body">
-                <h3>Claude 데스크톱 설치 → 로그인</h3>
-                <p><a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a>에서 받아 설치하고 본인 계정으로 로그인하세요.</p>
-              </div></li>
-              <li class="step os-win"><div class="step__no">2</div><div class="step__body">
-                <h3>(Windows) Git 설치</h3>
-                <p>Code 탭을 처음 열면 앱이 <strong>"Git is required"</strong>라고 안내합니다.<br /><a href="https://git-scm.com/download/win" rel="noopener" target="_blank">git-scm.com/download/win</a>에서 설치하고 앱을 다시 켜면 됩니다. (Mac은 필요 없습니다.)</p>
-              </div></li>
-              <li class="step"><div class="step__no">3</div><div class="step__body">
-                <h3>Code 탭에서 빈 폴더 선택</h3>
-                <p>상단의 <strong>Code</strong> 탭을 누르고, 새 폴더 하나(예: 문서/CareerMate)를 작업 폴더로 고르세요.<br />이 폴더가 CareerMate 작업실이 됩니다.</p>
-              </div></li>
-              <li class="step"><div class="step__no">4</div><div class="step__body">
-                <h3>이 문장 한 번 붙여넣기</h3>
-                <p class="paste-note">💬 Code 탭의 <strong>대화창에</strong> 붙여넣으세요 — 터미널 명령이 아니에요. 이 문장은 공개 안내 페이지만 읽어 설치하며, <strong>당신의 이력서·개인정보는 외부로 올라가지 않아요.</strong></p>
-                <div class="code"><button class="copy-btn" type="button" data-copy-target="p-claude">복사</button>
-                  <pre id="p-claude">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 데이터도 이 폴더의 .cm/data 안에 저장하고, Node 설치처럼 시스템에 바꿀 게 있으면 실행 전에 먼저 알려줘. 설치가 끝나면 앱 재시작 방법과 이력서를 주는 법, 대시보드 주소(http://127.0.0.1:4319)도 알려줘.</pre></div>
-                <p class="step__tip"><strong>Node가 없어도 됩니다.</strong> 필요하면 Claude가 먼저 확인하고 설치까지 도와줍니다.<br />직접 받으려면 아래 <strong>'필요한 프로그램 받기'</strong>의 Node.js를 보세요. 설치 중 뜨는 허용 창은 눌러 주세요.</p>
-              </div></li>
-              <li class="step"><div class="step__no">5</div><div class="step__body">
-                <h3>앱 재시작 → 확인</h3>
-                <p>Claude 앱을 완전히 껐다 켜고(처음 한 번 MCP 승인 허용), <strong>"커리어메이트 연결됐는지 확인해줘"</strong>라고 말하면 끝.</p>
-                <p class="recover"><strong>도구가 안 보이면?</strong> 앱을 트레이까지 <strong>완전히 종료</strong>했다 다시 켜고, 처음 뜬 승인 창을 허용했는지 확인하세요. 그래도 안 되면 <a href="index.html#install">파일로 설치(zip)</a>나 설치 전체의 <a href="index.html#install">문제가 생겼을 때</a>를 보세요.</p>
-              </div></li>
-            </ol>
-            <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 가장 쉬운 방법은 <strong>이력서 내용을 대화창에 붙여넣기</strong>입니다. 또는 작업 폴더에 파일을 넣고 <em>"이력서.pdf 읽어서 등록해줘"</em>라고 하거나 채팅에 직접 첨부하세요. (스캔본·보안 PDF는 안 읽힐 수 있습니다 → 그땐 텍스트로 붙여넣으세요.)</div>
-            <p class="hint" style="margin-top:.8rem">터미널이 부담되면 → <a href="index.html#install">파일로 설치(zip)</a>하는 방법도 있습니다(Claude 무료 기능).</p>
+            <span class="path__tag">당신에겐 — Claude 데스크톱</span>
+            <h2>Claude 데스크톱으로</h2>
+            <p>두 가지 길이 있어요 — <strong>Code 탭</strong>(앱 안에서 한 문장·추천)과 <strong>파일 설치</strong>(터미널·Node 없이). 둘 다 같은 CareerMate에 연결됩니다.</p>
+
+            <div class="subcard">
+              <strong>방법 1 — Code 탭 (추천)</strong>
+              <p class="hint" style="margin:.3rem 0 .8rem">앱 안에서 끝나 별도 터미널이 필요 없습니다. <strong>Pro 이상</strong> 구독이 필요해요.</p>
+              <ol class="steps">
+                <li class="step"><div class="step__no">1</div><div class="step__body">
+                  <h3>Claude 데스크톱 설치 → 로그인</h3>
+                  <p><a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a>에서 받아 설치하고 본인 계정으로 로그인하세요.</p>
+                </div></li>
+                <li class="step os-win"><div class="step__no">2</div><div class="step__body">
+                  <h3>(Windows) Git 설치</h3>
+                  <p>Code 탭을 처음 열면 앱이 <strong>"Git is required"</strong>라고 안내합니다.<br /><a href="https://git-scm.com/download/win" rel="noopener" target="_blank">git-scm.com/download/win</a>에서 설치하고 앱을 다시 켜면 됩니다. (Mac은 필요 없습니다.)</p>
+                </div></li>
+                <li class="step"><div class="step__no">3</div><div class="step__body">
+                  <h3>Code 탭에서 빈 폴더 선택</h3>
+                  <p>상단의 <strong>Code</strong> 탭을 누르고, 새 폴더 하나(예: 문서/CareerMate)를 작업 폴더로 고르세요.<br />이 폴더가 CareerMate 작업실이 됩니다.</p>
+                </div></li>
+                <li class="step"><div class="step__no">4</div><div class="step__body">
+                  <h3>이 문장 한 번 붙여넣기</h3>
+                  <p class="paste-note">💬 Code 탭의 <strong>대화창에</strong> 붙여넣으세요 — 터미널 명령이 아니에요. 이 문장은 공개 안내 페이지만 읽어 설치하며, <strong>당신의 이력서·개인정보는 외부로 올라가지 않아요.</strong></p>
+                  <div class="code"><button class="copy-btn" type="button" data-copy-target="p-claude">복사</button>
+                    <pre id="p-claude">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 데이터도 이 폴더의 .cm/data 안에 저장하고, Node 설치처럼 시스템에 바꿀 게 있으면 실행 전에 먼저 알려줘. 설치가 끝나면 앱 재시작 방법과 이력서를 주는 법, 대시보드 주소(http://127.0.0.1:4319)도 알려줘.</pre></div>
+                  <p class="step__tip"><strong>Node가 없어도 됩니다.</strong> 필요하면 Claude가 먼저 확인하고 설치까지 도와줍니다.<br />직접 받으려면 아래 <strong>'필요한 프로그램 받기'</strong>의 Node.js를 보세요. 설치 중 뜨는 허용 창은 눌러 주세요.</p>
+                </div></li>
+                <li class="step"><div class="step__no">5</div><div class="step__body">
+                  <h3>앱 재시작 → 확인</h3>
+                  <p>Claude 앱을 완전히 껐다 켜고(처음 한 번 MCP 승인 허용), <strong>"커리어메이트 연결됐는지 확인해줘"</strong>라고 말하면 끝.</p>
+                  <p class="recover"><strong>도구가 안 보이면?</strong> 앱을 트레이까지 <strong>완전히 종료</strong>했다 다시 켜고, 처음 뜬 승인 창을 허용했는지 확인하세요. 그래도 안 되면 아래 <strong>방법 2</strong>(파일 설치)를 써 보세요.</p>
+                </div></li>
+              </ol>
+              <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 가장 쉬운 방법은 <strong>이력서 내용을 대화창에 붙여넣기</strong>입니다. 또는 작업 폴더에 파일을 넣고 <em>"이력서.pdf 읽어서 등록해줘"</em>라고 하거나 채팅에 직접 첨부하세요. (스캔본·보안 PDF는 안 읽힐 수 있습니다 → 그땐 텍스트로 붙여넣으세요.)</div>
+            </div>
+
+            <div class="subcard">
+              <strong>방법 2 — 파일로 설치 (터미널·Node 없이)</strong>
+              <p class="hint" style="margin:.3rem 0 .8rem">Claude 데스크톱 <strong>채팅</strong>에 확장으로 붙이는 방식. 터미널·Node 없이 되고 <strong>무료·유료 어느 플랜이든</strong> 됩니다. 단 Claude 내장 Node 버전에 따라 불안정할 수 있어요 — 안 되면 방법 1을 쓰세요.</p>
+              <ol class="steps">
+                <li class="step"><div class="step__no">1</div><div class="step__body">
+                  <h3>설치 파일 받기</h3>
+                  <p>
+                    <a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.zip">.zip</a>
+                    <a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">.mcpb</a>
+                  </p>
+                  <p class="hint"><code>.zip</code> 압축을 풀어 폴더로 추가하세요. <code>.mcpb</code> 직접 추가는 일부 Claude Desktop 버전에서 실패할 수 있습니다.</p>
+                </div></li>
+                <li class="step"><div class="step__no">2</div><div class="step__body">
+                  <h3>설정에서 추가</h3>
+                  <p>Claude 데스크톱 → <strong>Settings → Extensions → Advanced settings → Install extension…</strong> 에서 압축을 푼 폴더를 추가하세요. <span class="hint">(Windows에서 더블클릭·드래그는 반응이 없을 수 있으니 이 메뉴를 쓰세요.)</span></p>
+                </div></li>
+                <li class="step"><div class="step__no">3</div><div class="step__body">
+                  <h3>재시작 → 확인</h3>
+                  <p>앱을 껐다 켜고 <strong>"커리어메이트 연결됐는지 확인해줘"</strong>. 도구가 보이면 끝.</p>
+                </div></li>
+              </ol>
+              <div class="filenote">📎 <strong>이력서 넣는 법:</strong> Claude 채팅창에 파일을 <strong>직접 첨부</strong>하면 됩니다(가장 쉬움).</div>
+            </div>
           </div>
 
           <!-- ===== ChatGPT 유료 → Codex CLI ===== -->
           <div class="path" data-sub="chatgpt">
             <span class="path__tag">당신에겐 — Codex CLI</span>
             <h2>ChatGPT 구독으로 Codex에서</h2>
-            <p>ChatGPT는 <strong>Codex를 터미널(CLI)에서</strong> 씁니다 — 명령을 몇 줄 입력합니다.<br />Codex <strong>데스크톱 앱은 등록이 사라질 수 있어</strong> 권장하지 않습니다. 터미널이 부담되면 <a href="#" data-goto-free>터미널 없이 가능한 무료 길</a>도 있습니다.</p>
-            <p class="hint" style="margin:.2rem 0 0">💡 <strong>무료 ChatGPT 계정도 지금은 Codex를 쓸 수 있어요</strong>(한시적 제공). 단 무료·저가 플랜은 사용량 한도가 더 빡빡합니다.</p>
+            <p>ChatGPT는 <strong>Codex를 터미널(CLI)에서</strong> 씁니다 — 명령을 몇 줄 입력합니다.<br />Codex <strong>데스크톱 앱은 등록이 사라질 수 있어</strong> 권장하지 않습니다.</p>
             <ol class="steps">
               <li class="step"><div class="step__no">1</div><div class="step__body">
                 <h3>Node.js 설치</h3>
@@ -184,65 +211,31 @@
             <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 첨부 기능이 없으니, 작업 폴더에 파일을 넣고 <em>"./이력서.pdf 읽어서 등록해줘"</em>라고 하세요. PDF가 안 읽히면 내용을 <strong>텍스트로 붙여넣으세요.</strong></div>
           </div>
 
-          <!-- ===== 무료/없음 → zip 1순위, Antigravity 2순위 ===== -->
+          <!-- ===== 기타(Agent) → 로컬 접근 가능한 AI 채팅에 붙여넣기 ===== -->
           <div class="path" data-sub="free">
-            <span class="path__tag">당신에겐 — 무료로 시작</span>
-            <h2>유료 구독 없이 무료로</h2>
-            <p>유료 구독이 없어도 됩니다. 터미널이 필요 없는, 가장 쉬운 길부터 안내합니다.</p>
-            <p class="hint" style="margin:.2rem 0 0">⚠️ <strong>무료는 사용량이 더 빠듯해요.</strong> 무료 플랜은 보낼 수 있는 메시지·요청 수가 유료보다 적어서, 많이 쓰면 한도에 걸려 잠깐 기다리거나 유료로 올려야 할 수 있어요. <strong>CareerMate 자체는 계속 무료</strong> — 한도는 고른 AI 쪽 이야기예요.</p>
+            <span class="path__tag">당신에겐 — 기타 (Agent)</span>
+            <h2>로컬 접근 가능한 AI 채팅에서</h2>
+            <p>Claude·ChatGPT가 아니어도, <strong>내 컴퓨터에서 명령을 실행할 수 있는 AI 에이전트</strong>면 됩니다. 빈 폴더를 잡고 아래 한 문장을 그 AI의 대화창에 붙여넣으세요.</p>
+            <p class="hint" style="margin:.2rem 0 0">⚠️ <strong>무료·약한 모델은 한글 품질·사용량 한계</strong>가 있을 수 있어요(글자가 깨지거나 한도에 빨리 걸림). 제대로 쓰려면 <strong>Claude Pro·ChatGPT Plus</strong>를 권장합니다. <strong>CareerMate 자체는 계속 무료</strong> — 한계는 고른 AI 쪽 이야기예요. Claude 데스크톱을 쓴다면 <strong>맨 위 Q1에서 ‘Claude’</strong>를 고르면 나오는 ‘방법 2(파일 설치)’가 더 쉬울 수 있어요.</p>
 
-            <div class="subcard">
-              <strong>① 1순위 — Claude 데스크톱 + 파일 설치(터미널 없이)</strong>
-              <p class="hint" style="margin:.3rem 0 .8rem">Claude 무료 계정이면 됩니다. 터미널·Node 없이 zip을 풀어 폴더로 추가합니다.</p>
-              <ol class="steps">
-                <li class="step"><div class="step__no">1</div><div class="step__body">
-                  <h3>Claude 데스크톱 설치 → 로그인(무료 OK)</h3>
-                  <p><a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a>에서 받아 설치하고 로그인하세요.</p>
-                </div></li>
-                <li class="step"><div class="step__no">2</div><div class="step__body">
-                  <h3>설치 파일 받기</h3>
-                  <p>
-                    <a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.zip">.zip</a>
-                    <a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">.mcpb</a>
-                  </p>
-                  <p class="hint"><code>.zip</code> 압축을 풀어 폴더로 추가하세요. <code>.mcpb</code> 직접 추가는 일부 Claude Desktop 버전에서 실패할 수 있습니다.</p>
-                </div></li>
-                <li class="step"><div class="step__no">3</div><div class="step__body">
-                  <h3>설정에서 추가</h3>
-                  <p>Claude 데스크톱 → <strong>Settings → Extensions → Advanced settings → Install extension…</strong> 에서 압축을 푼 폴더를 추가하세요. <span class="hint">(Windows에서 더블클릭·드래그는 반응이 없을 수 있으니 이 메뉴를 쓰세요.)</span></p>
-                </div></li>
-                <li class="step"><div class="step__no">4</div><div class="step__body">
-                  <h3>재시작 → 확인</h3>
-                  <p>앱을 껐다 켜고 <strong>"커리어메이트 연결됐는지 확인해줘"</strong>. 도구가 보이면 끝.</p>
-                </div></li>
-              </ol>
-              <div class="filenote">📎 <strong>이력서 넣는 법:</strong> Claude 채팅창에 파일을 <strong>직접 첨부</strong>하면 됩니다(가장 쉬움).</div>
-              <p class="hint" style="margin-top:.7rem">⚠️ <strong>도구가 안 뜨면</strong>(Claude 내장 Node 버전 문제일 수 있습니다) → 아래 ②를 쓰세요.</p>
-            </div>
-
-            <div class="subcard">
-              <strong>② 안 되거나 더 안정적으로 — Antigravity(무료)</strong>
-              <p class="hint" style="margin:.3rem 0 .8rem">Google Antigravity는 <strong>개인 Gmail로 무료</strong>(신용카드 불필요). 앱을 쓰지만 더 안정적입니다.</p>
-              <ol class="steps">
-                <li class="step"><div class="step__no">1</div><div class="step__body">
-                  <h3>Antigravity 설치 → Gmail 로그인</h3>
-                  <p><a href="https://antigravity.google/download" rel="noopener" target="_blank">antigravity.google/download</a>에서 받아 설치하고 개인 Gmail로 로그인(무료 플랜).</p>
-                </div></li>
-                <li class="step"><div class="step__no">2</div><div class="step__body">
-                  <h3>빈 폴더 열고 → 이 문장</h3>
-                  <p class="paste-note">💬 Antigravity의 <strong>대화창에</strong> 붙여넣으세요 — 터미널 명령이 아니에요. 공개 안내만 읽어 설치하며, <strong>당신의 데이터는 외부로 올라가지 않아요.</strong></p>
-                  <div class="code"><button class="copy-btn" type="button" data-copy-target="p-anti">복사</button>
-                    <pre id="p-anti">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 데이터도 이 폴더의 .cm/data 안에 저장하고, Node 설치처럼 시스템에 바꿀 게 있으면 실행 전에 먼저 알려줘. 설치가 끝나면 앱 재시작 방법과 이력서를 주는 법, 대시보드 주소(http://127.0.0.1:4319)도 알려줘.</pre></div>
-                </div></li>
-                <li class="step"><div class="step__no">3</div><div class="step__body">
-                  <h3>확인</h3>
-                  <p>연결 상태를 확인하고(보통 <code>/mcp</code> 또는 "연결됐는지 확인해줘") 끝.</p>
-                  <p class="recover"><strong>안 보이면?</strong> 앱을 완전히 껐다 켜고 다시 시도하세요. 막히면 설치 전체의 <a href="index.html#install">문제가 생겼을 때</a>를 보세요.</p>
-                </div></li>
-              </ol>
-              <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 작업 폴더에 파일을 넣고 파일명으로 지시. 안 읽히면 텍스트로 붙여넣기.</div>
-              <p class="hint" style="margin-top:.7rem">참고: 예전 <strong>Gemini CLI는 2026-06-18부터 무료 종료</strong>되어 Antigravity로 옮겨졌습니다.</p>
-            </div>
+            <ol class="steps">
+              <li class="step"><div class="step__no">1</div><div class="step__body">
+                <h3>명령 실행 가능한 AI를 빈 폴더에서 열기</h3>
+                <p>내 컴퓨터에서 파일·명령을 다룰 수 있는 AI 에이전트(데스크톱 앱이든 CLI든)를 준비하고, 새 폴더 하나를 작업 폴더로 잡으세요.</p>
+              </div></li>
+              <li class="step"><div class="step__no">2</div><div class="step__body">
+                <h3>이 문장 붙여넣기</h3>
+                <p class="paste-note">💬 그 AI의 <strong>대화창에</strong> 붙여넣으세요 — 터미널 명령이 아니에요. 공개 안내만 읽어 설치하며, <strong>당신의 데이터는 외부로 올라가지 않아요.</strong></p>
+                <div class="code"><button class="copy-btn" type="button" data-copy-target="p-other">복사</button>
+                  <pre id="p-other">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 데이터도 이 폴더의 .cm/data 안에 저장하고, Node 설치처럼 시스템에 바꿀 게 있으면 실행 전에 먼저 알려줘. 설치가 끝나면 앱 재시작 방법과 이력서를 주는 법, 대시보드 주소(http://127.0.0.1:4319)도 알려줘.</pre></div>
+              </div></li>
+              <li class="step"><div class="step__no">3</div><div class="step__body">
+                <h3>확인</h3>
+                <p>그 AI를 완전히 껐다 켜고(처음 한 번 승인을 물으면 허용), <strong>"커리어메이트 연결됐는지 확인해줘"</strong> 또는 <code>/mcp</code>로 확인하세요.</p>
+                <p class="recover"><strong>안 보이면?</strong> <code>node --version</code>이 v22.5 이상인지, 앱을 완전히 껐다 켰는지 확인하세요. 막히면 설치 전체의 <a href="index.html#install">문제가 생겼을 때</a>를 보세요.</p>
+              </div></li>
+            </ol>
+            <div class="filenote">📎 <strong>이력서 넣는 법:</strong> 작업 폴더에 파일을 넣고 파일명·경로로 지시. 안 읽히면 텍스트로 붙여넣기.</div>
           </div>
 
         </div><!-- /result -->
@@ -270,7 +263,6 @@
                 <li><strong>Node.js (LTS)</strong> — <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a> · 설치 파일을 받아 더블클릭(계속 '다음'). 터미널·CLI 경로에 필요.</li>
                 <li><strong>Claude 데스크톱</strong> — <a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a> · Code 탭 / zip 폴더 설치에 사용.</li>
                 <li><strong>Git for Windows</strong> — <a href="https://git-scm.com/download/win" rel="noopener" target="_blank">git-scm.com/download/win</a> · <em>Windows에서 Claude Code 탭을 쓸 때만</em>(Mac은 불필요).</li>
-                <li><strong>Antigravity</strong>(Google·무료) — <a href="https://antigravity.google/download" rel="noopener" target="_blank">antigravity.google/download</a> · 개인 Gmail 로그인, 카드 불필요.</li>
                 <li><strong>CareerMate 설치 파일</strong> — <a href="https://github.com/osntak/careermate/releases/latest/download/careermate.zip">careermate.zip</a> / <a href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">careermate.mcpb</a> · Claude 데스크톱 "채팅" 앱용.</li>
               </ul>
               <p class="hint">받은 뒤 무엇을 하는지는 위에서 고른 "내게 맞는 길"의 단계를 따르면 됩니다.</p>
@@ -317,15 +309,6 @@
       });
       document.querySelectorAll('input[name="os"]').forEach(function (r) {
         r.addEventListener('change', function () { os = r.value; markSel('q-os'); render(); });
-      });
-      // "무료 길로" 점프(ChatGPT 경로에서)
-      document.querySelectorAll('[data-goto-free]').forEach(function (a) {
-        a.addEventListener('click', function (e) {
-          e.preventDefault();
-          var freeRadio = document.querySelector('input[name="sub"][value="free"]');
-          if (freeRadio) { freeRadio.checked = true; sub = 'free'; markSel('q-sub'); render(); }
-          result.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
       });
     })();
   </script>

@@ -291,8 +291,8 @@
     <section id="install" class="section">
       <div class="section__head section__head--center">
         <h2>내 AI 앱에 연결하기</h2>
-        <p>빈 폴더 잡고 <strong>한 문장이면 끝.</strong><br />
-        터미널이 익숙하면 한 줄 설치, 싫으면 파일 하나로 — <strong>무료도 있습니다.</strong></p>
+        <p>작업 폴더에서 <strong>한 문장</strong>, 또는 터미널 <strong>한 줄</strong>이면 끝.<br />
+        아래는 명령 위주 빠른 설치예요 — <strong>처음이면 ↓ ‘길 찾기’</strong>에서 단계별로 안내받으세요.</p>
       </div>
 
       <a class="note" href="start.html" style="display:block;text-decoration:none;border-left-color:var(--accent);background:var(--accent-soft)">
@@ -301,7 +301,7 @@
 
       <div class="note">
         <strong>어떤 AI에서 되나요?</strong> 내 컴퓨터에서 프로그램을 띄울 수 있는 AI에서만 됩니다.<br />
-        <strong style="color:var(--accent)">✓</strong> Claude Desktop · Claude Code · Codex · Cursor 등<br /><strong style="color:var(--warn-text)">✗</strong> ChatGPT·Gemini·Claude의 <strong>웹·모바일</strong>(클라우드라 내 컴퓨터 서버에 못 닿음).
+        <strong style="color:var(--accent)">✓</strong> Claude Desktop(Code 탭) · Claude Code(CLI) · Codex · Cursor 등<br /><strong style="color:var(--warn-text)">✗</strong> ChatGPT·Gemini·Claude의 <strong>웹·모바일</strong>(클라우드라 내 컴퓨터 서버에 못 닿음).
       </div>
 
       <!-- track 1 · 앱에서 직접 설치 (비개발자 메인) -->
@@ -370,46 +370,6 @@
             <div class="step__body">
               <h3>대시보드 열기 (선택)</h3>
               <p>내 데이터를 눈으로 보려면 <code>npx -y careermate start</code> 실행 → <code>http://127.0.0.1:4319</code>. 종료는 <kbd>Ctrl</kbd>+<kbd>C</kbd>.</p>
-            </div>
-          </li>
-          </ol>
-        </div>
-      </details>
-
-      <!-- track 3 · Claude Desktop zip (demoted) -->
-      <details class="acc">
-        <summary><span class="track__tag">Claude Desktop · <code>.zip</code></span> 설치 파일로 추가 (터미널 없이)</summary>
-        <div class="acc__body">
-          <p class="track-desc">터미널·Node 없이 붙일 수 있지만, <strong>Claude Desktop 내장 Node 버전에 따라 불안정할 수 있습니다.</strong> 잘 안 되면 위 <strong>에이전트가 직접 설치</strong> 또는 <strong>터미널 한 줄</strong>을 쓰세요.</p>
-          <ol class="steps">
-          <li class="step">
-            <div class="step__no">1</div>
-            <div class="step__body">
-              <h3>설치 파일 받기</h3>
-              <p><code>careermate.zip</code>을 압축 해제해 폴더로 추가하세요. <code>.mcpb</code> 직접 추가는 일부 Claude Desktop 버전에서 실패할 수 있습니다.</p>
-              <a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.zip">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-                .zip
-              </a>
-              <a class="btn btn--ghost" href="https://github.com/osntak/careermate/releases/latest/download/careermate.mcpb">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-                .mcpb
-              </a>
-            </div>
-          </li>
-          <li class="step">
-            <div class="step__no">2</div>
-            <div class="step__body">
-              <h3>Claude Desktop 설정에서 추가</h3>
-              <p>Claude Desktop → <strong>Settings(설정) → Extensions(확장)</strong>에서 <strong>Advanced settings(고급 설정)</strong>를 누르면 나오는 <strong>Install extension…</strong>으로 압축을 푼 폴더를 추가하세요.</p>
-              <p class="step__tip">더블클릭·드래그는 Windows에서 파일 연결이 안 잡혀 <strong>반응이 없을 수 있으니</strong>, 위 설정 메뉴 경로를 쓰세요.</p>
-            </div>
-          </li>
-          <li class="step">
-            <div class="step__no">3</div>
-            <div class="step__body">
-              <h3>재시작하고 확인</h3>
-              <p>Claude Desktop을 완전히 종료했다 다시 켜고, <strong>“커리어메이트 연결됐는지 확인해줘”</strong>라고 말해 보세요.</p>
             </div>
           </li>
           </ol>
