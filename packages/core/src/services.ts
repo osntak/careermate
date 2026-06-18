@@ -42,6 +42,43 @@ import {
   skillRepo,
   activityRepo,
 } from '@careermate/db';
+import { lintArtifact, type VerifyCorpus, type LintReport } from './verify/index.ts';
+
+/**
+ * Collect the user's stored facts (zero-ai) in THREE separate scopes so the
+ * verify engine can tier a claim's provenance:
+ *  - documents:  the user's actual résumé/document TEXT (excl. AI-generated docs)
+ *                — the strongest "user provided this" anchor → full support.
+ *  - structured: experiences/projects/skills. CareerMate is MCP-first and the AI
+ *                is the sole writer of these, so a number that lives ONLY here
+ *                (and not in the document text) can't be verified → advisory.
+ *                This de-silences the "fabricate a record then cite it" bypass.
+ *  - job:        the posting (can't license an applicant's performance claim).
+ */
+export function collectVerifyCorpus(jobId?: string | null): VerifyCorpus {
+  const documents: string[] = [];
+  for (const d of documentRepo.list()) {
+    if (d.source !== 'ai') documents.push(d.content); // exclude AI-written docs
+  }
+  const structured: string[] = [];
+  for (const e of experienceRepo.list()) {
+    structured.push([e.company, e.role, e.description, ...(e.achievements ?? []), ...(e.tech ?? [])].filter(Boolean).join('\n'));
+  }
+  for (const p of projectRepo.list()) {
+    structured.push([p.name, p.description, ...(p.highlights ?? []), ...(p.tech ?? [])].filter(Boolean).join('\n'));
+  }
+  for (const s of skillRepo.list()) {
+    structured.push([s.name, s.level, s.years != null ? `${s.years}년` : ''].filter(Boolean).join(' '));
+  }
+  const job = jobId ? jobRepo.get(jobId) : null;
+  const jobText = job ? [job.description, ...(job.requirements ?? []), ...(job.keywords ?? [])].filter(Boolean).join('\n') : '';
+  return { documents: documents.join('\n'), structured: structured.join('\n'), job: jobText };
+}
+
+/** Read-only preview of the deterministic cover-letter checks (no save). */
+export function previewCoverLetter(text: string, jobId?: string | null): LintReport {
+  return lintArtifact('cover_letter', text, collectVerifyCorpus(jobId));
+}
 
 /* ----------------------------------------------------------------- Profile */
 
@@ -107,7 +144,20 @@ export function saveFitAnalysis(input: FitAnalysisInput): FitAnalysisRecord {
 
 /* ----------------------------------------------------------- Cover letters */
 
-export function saveCoverLetterVersion(input: CoverLetterVersionInput) {
+export function saveCoverLetterVersion(input: CoverLetterVersionInput & { force?: boolean }) {
+  // Deterministic save-gate: block suspected fabricated quantified claims (numbers
+  // that don't trace to the user's stored facts) unless the caller forces it.
+  // Style slop / job-sourced numbers are advisory only — they never block.
+  const verification = lintArtifact('cover_letter', input.content, collectVerifyCorpus(input.job_id));
+  const forced = verification.blocking.length > 0 && input.force === true;
+  if (verification.blocking.length > 0 && !forced) {
+    const detail = verification.blocking.map((b) => `${b.label}: ${b.detail}`).join('; ');
+    throw new Error(
+      `저장 전 자동 점검에서 막혔습니다 — ${detail}. ` +
+        `이 수치는 저장된 경력·이력서·프로젝트에 없습니다. 원본 데이터의 실제 수치로 고치거나, ` +
+        `의도한 값이 맞다면 먼저 경력/프로젝트에 그 수치를 추가한 뒤 다시 저장하세요(그대로 저장하려면 force: true).`,
+    );
+  }
   const { coverLetter, version } = coverLetterRepo.addVersion({
     cover_letter_id: input.cover_letter_id,
     title: input.title,
@@ -130,7 +180,7 @@ export function saveCoverLetterVersion(input: CoverLetterVersionInput) {
     'cover_letter',
     coverLetter.id,
   );
-  return { coverLetter, version };
+  return { coverLetter, version, verification, forced };
 }
 
 /* ------------------------------------------------- Application status flow */

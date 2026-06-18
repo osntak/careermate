@@ -191,12 +191,15 @@ export function registerApiRoutes(router: Router): void {
   router.post('/api/cover-letters', async (ctx) => {
     const input = await readJsonBody(ctx.req, CoverLetterInputSchema);
     if (input.content) {
+      // Dashboard = the user's own trusted edit surface; the deterministic
+      // fabrication gate is advisory here (force) and enforced on the AI/MCP path.
       const { coverLetter } = saveCoverLetterVersion({
         title: input.title,
         job_id: input.job_id,
         content: input.content,
         note: input.note,
         source: input.source ?? 'manual',
+        force: true,
       });
       if (input.is_primary) coverLetterRepo.setPrimary(coverLetter.id);
       activityRepo.log('cover_letter_added', `${coverLetter.title} 자기소개서를 추가했습니다.`, 'cover_letter', coverLetter.id);
@@ -216,7 +219,8 @@ export function registerApiRoutes(router: Router): void {
       ctx.req,
       CoverLetterVersionInputSchema.omit({ cover_letter_id: true }),
     );
-    const { coverLetter, version } = saveCoverLetterVersion({ ...input, cover_letter_id: id(ctx) });
+    // Dashboard edits are human-authored & self-vouched → advisory (force).
+    const { coverLetter, version } = saveCoverLetterVersion({ ...input, cover_letter_id: id(ctx), force: true });
     return { cover_letter: coverLetter, version };
   });
   router.put('/api/cover-letters/:id/current-version', async (ctx) => {
