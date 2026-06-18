@@ -244,6 +244,10 @@ export const CoverLetterVersionInputSchema = z.object({
   note: optNote.describe('이 버전의 변경 요약 (예: 지원동기 보강)'),
   source: z.enum(CONTENT_SOURCES).optional(),
   set_current: z.boolean().optional().describe('이 버전을 현재 버전으로 지정 (기본 true)'),
+  force: z
+    .boolean()
+    .optional()
+    .describe('저장 전 자동 점검(근거 없는 수치)에서 막혔을 때, 의도한 값임을 확인하고 그대로 저장'),
 });
 export type CoverLetterVersionInput = z.infer<typeof CoverLetterVersionInputSchema>;
 

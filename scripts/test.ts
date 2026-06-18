@@ -132,6 +132,23 @@ ok('링크 속성 탈출 차단', !breakout.includes('onmouseover="alert') && br
 const titleInj = toPrintableHtml('</title><script>alert(1)</script>', '본문');
 ok('내보내기 제목 인젝션 차단', !titleInj.includes('<script>') && !titleInj.includes('</title><script>'));
 
+/* -------------------------- 6. 결정론 검증 엔진 (verify) — 숫자 출처 게이트 */
+section('6) 검증 엔진(verify) — 숫자 출처 게이트');
+{
+  const { lintArtifact, analyzeProvenance } = await import('../packages/core/src/verify/index.ts');
+  const corpus = {
+    documents: '이력서: 매출 30% 성장. 고객 1,200명.',
+    structured: '경력: 야간 인계 누락 민원을 분기 12건에서 3건으로 줄였다. 공공데이터 약 8만 건. 경력 7년.',
+    job: '데이터 분석가 5년 이상. SQL.',
+  };
+  ok('구조화 전용 수치(12→3, 8만)는 차단 안 함', lintArtifact('cover_letter', '민원을 12건에서 3건으로 줄였고 8만 건을 정제했습니다.', corpus).blocking.length === 0);
+  ok('파생 수치(9건=12−3)는 fabricated 아님', analyzeProvenance('9건을 줄였습니다', corpus).fabricated.length === 0);
+  ok('허위 수치(250%)는 차단', lintArtifact('cover_letter', '매출을 250% 올렸습니다.', corpus).blocking.length === 1);
+  ok('구조화 전용 수치는 unverified로 표기', analyzeProvenance('12건에서 3건으로 줄였습니다', corpus).unverified.length >= 1);
+  ok('공고의 5년이 본인 5년을 지지하지 않음', analyzeProvenance('5년 경험이 있습니다', corpus).jobSourced.length === 1);
+  ok('코퍼스 없으면 차단 안 함', lintArtifact('cover_letter', '250% 향상', { documents: '', structured: '', job: '' }).blocking.length === 0);
+}
+
 console.log(`\n${'='.repeat(40)}`);
 console.log(`결과: ${pass} 통과 · ${fail} 실패`);
 console.log(fail === 0 ? '✅ 전체 통과' : '❌ 실패 있음');

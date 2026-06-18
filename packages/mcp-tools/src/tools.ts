@@ -58,6 +58,8 @@ import {
   saveInterviewPrep,
   listRecentActivity,
   jobWithMeta,
+  previewCoverLetter,
+  summarizeReport,
 } from '@careermate/core';
 import { HUMANIZE_WRITING_GUIDE } from '@careermate/prompts';
 import { getWorkflow, renderWorkflowMarkdown, WORKFLOWS } from '@careermate/workflows';
@@ -414,11 +416,26 @@ export const TOOLS: ToolDef[] = [
     name: 'save_cover_letter_version',
     title: '자기소개서 버전 저장',
     description:
-      '자기소개서의 새 버전을 저장합니다. CareerMate 자소서 작성 워크플로우의 핵심 저장 단계입니다. cover_letter_id를 주면 기존 자소서에 새 버전을 추가하고, 없으면 새 자소서를 만들어 v1로 저장합니다(이때 title 권장). note에 이 버전의 변경 요약(예: "지원동기 보강")을 남기면 사용자가 대시보드에서 버전 히스토리를 이해하기 쉽습니다. job_id로 공고에 연결하면 지원 항목과 자동 연결됩니다.',
+      '자기소개서의 새 버전을 저장합니다. CareerMate 자소서 작성 워크플로우의 핵심 저장 단계입니다. cover_letter_id를 주면 기존 자소서에 새 버전을 추가하고, 없으면 새 자소서를 만들어 v1로 저장합니다(이때 title 권장). note에 이 버전의 변경 요약(예: "지원동기 보강")을 남기면 사용자가 대시보드에서 버전 히스토리를 이해하기 쉽습니다. job_id로 공고에 연결하면 지원 항목과 자동 연결됩니다. 저장 직전 자동으로 "근거 없는 수치" 점검을 돌립니다 — 본문의 정량 수치가 저장된 경력·이력서·프로젝트에 근거가 없으면(환각 의심) 저장이 막힙니다. 그때는 원본의 실제 수치로 고치거나, 의도한 값이면 force:true로 다시 저장하세요.',
     inputSchema: CoverLetterVersionInputSchema.shape,
     handler: (args) => {
-      const { coverLetter, version } = saveCoverLetterVersion(args);
-      return ok(`'${coverLetter.title}' v${version.version_no}을 저장했습니다.`, { coverLetter, version });
+      try {
+        const { coverLetter, version, verification, forced } = saveCoverLetterVersion(args);
+        const advisory = summarizeReport(verification);
+        const head = `'${coverLetter.title}' v${version.version_no}을 저장했습니다.`;
+        const hasAdvisory =
+          verification.signals.length ||
+          verification.provenance.jobSourced.length ||
+          verification.provenance.unverified.length;
+        const note = forced
+          ? '\n⚠️ 근거 없는 수치가 있는데도 force로 저장했습니다(검증 미통과로 기록). 면접 전 사실 확인을 권합니다.'
+          : hasAdvisory
+            ? `\n점검: ${advisory}`
+            : '';
+        return ok(head + note, { coverLetter, version, verification });
+      } catch (e) {
+        return fail(e instanceof Error ? e.message : '저장 실패');
+      }
     },
   },
 
@@ -672,7 +689,9 @@ export const TOOLS: ToolDef[] = [
     handler: (args) => {
       try {
         const content = getPlaybook(args.domain as ExpertDomain);
-        return ok(content, { domain: args.domain, content });
+        // Content is already in the text block; don't duplicate it in the
+        // structured payload (it was being shipped ~2x → token bloat).
+        return ok(content, { domain: args.domain });
       } catch (e) {
         return fail(e instanceof Error ? e.message : '플레이북을 불러오지 못했습니다.');
       }
@@ -692,10 +711,32 @@ export const TOOLS: ToolDef[] = [
     handler: (args) => {
       try {
         const content = getVerifier(args.id as VerifierId);
-        return ok(content, { id: args.id, content });
+        return ok(content, { id: args.id });
       } catch (e) {
         return fail(e instanceof Error ? e.message : '검증 루브릭을 불러오지 못했습니다.');
       }
+    },
+  },
+
+  /* ----------------------------------------- career-os: deterministic lint */
+  {
+    name: 'validate_cover_letter',
+    title: '자기소개서 자동 점검 (저장 전 미리보기)',
+    description:
+      '자기소개서를 save_cover_letter_version으로 저장하기 직전에 호출하면, 저장하지 않고 미리 점검만 합니다. CareerMate가 LLM 없이 결정론으로 (1) 본문의 정량 수치가 저장된 경력·이력서·프로젝트에 근거가 있는지(없으면 환각 의심 → 저장 시 차단됨), (2) 공고에서 가져온 수치를 본인 성과처럼 쓰지 않았는지, (3) 번역투·제너릭 도입·빈 형용사·블라인드 위반 같은 문체 신호를 세어 돌려줍니다. 점검은 셀 수 있는 것만 봅니다 — 사실성·동문서답 같은 의미 판단은 당신(AI)이 직접 하세요. job_id를 주면 공고 수치까지 비교합니다.',
+    inputSchema: {
+      text: z.string().max(200_000).describe('점검할 자기소개서 본문'),
+      job_id: z.string().optional().describe('연결할 공고(있으면 공고 수치까지 비교)'),
+    },
+    readOnly: true,
+    handler: (args) => {
+      const text = typeof args?.text === 'string' ? args.text : '';
+      if (!text.trim()) return fail('점검할 본문이 비어 있습니다.');
+      const report = previewCoverLetter(text, args?.job_id ?? null);
+      const verdict = report.blocking.length
+        ? `⛔ 이대로 저장하면 막힙니다 — ${report.blocking.map((b) => `${b.label}: ${b.detail}`).join('; ')}`
+        : '✅ 자동 차단 항목 없음(셀 수 있는 항목 기준).';
+      return ok(`${verdict}\n${summarizeReport(report)}\n\n${report.disclaimer}`, report);
     },
   },
 
