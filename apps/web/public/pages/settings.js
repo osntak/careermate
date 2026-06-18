@@ -19,6 +19,7 @@ export async function render(ctx) {
     DataLocation(info),
     Connection(info),
     Theme(),
+    VerifyMode(info),
     MyData(info.counts),
     Backup(backups, () => render(ctx)),
     DangerZone(ctx),
@@ -132,6 +133,50 @@ function Theme() {
     title: '테마',
     sub: '시스템 설정을 따르거나 직접 고를 수 있어요',
     body: row,
+  });
+}
+
+/* ------------------------------------------------- 자소서 수치 점검 모드 */
+function VerifyMode(info) {
+  const options = [
+    { value: false, label: '기본', desc: '저장된 경력·이력서·프로젝트에 아예 근거가 없는 수치만 차단' },
+    { value: true, label: '엄격', desc: '이력서 본문에 없고 구조화 경력/프로젝트 항목에만 있는 수치까지 차단' },
+  ];
+  let current = !!info.verify_strict;
+  const row = el('div', { class: 'flex gap-2 wrap' });
+
+  async function set(value) {
+    if (value === current) return;
+    try {
+      const res = await post('/api/settings/verify-mode', { strict: value });
+      current = !!res.verify_strict;
+      toastOk(current ? '엄격 모드를 켰어요.' : '엄격 모드를 껐어요.');
+      paint();
+    } catch (e) {
+      toastError(e);
+    }
+  }
+
+  function paint() {
+    mount(row, ...options.map((o) => {
+      const b = Btn(o.label, { variant: 'ghost', onClick: () => set(o.value) });
+      b.setAttribute('aria-pressed', String(o.value === current));
+      if (o.value === current) b.classList.add('is-selected');
+      return b;
+    }));
+  }
+  paint();
+
+  const note = el('div', { class: 'muted text-sm', style: { lineHeight: '1.7', marginTop: '10px' } },
+    el('div', {}, el('span', { class: 'strong' }, '기본'), ' — ', options[0].desc),
+    el('div', {}, el('span', { class: 'strong' }, '엄격'), ' — ', options[1].desc),
+    el('div', { style: { marginTop: '6px' } },
+      '엄격 모드에선 올린 이력서에 없는 수치가 막힐 수 있어요. 막히면 이력서를 올리거나 모드를 끄세요. AI에게 "엄격하게 봐줘"라고 해도 켤 수 있습니다.'));
+
+  return Card({
+    title: '자소서 수치 점검',
+    sub: 'AI가 쓴 수치가 내 실제 데이터에 근거가 있는지 저장 전에 자동으로 확인합니다',
+    body: el('div', { class: 'stack-2' }, row, note),
   });
 }
 

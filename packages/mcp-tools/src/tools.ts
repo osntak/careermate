@@ -42,6 +42,8 @@ import {
   getExportsDir,
   getDataDir,
   getInboxDir,
+  getVerifyStrict,
+  setVerifyStrict,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -266,11 +268,19 @@ export const TOOLS: ToolDef[] = [
       const s = getOnboardingStatus();
       const lines = s.next_steps.map((t, i) => `${i + 1}. ${t}`).join('\n');
       const upd = getUpdateStatus();
+      const strict = getVerifyStrict();
       let text = `온보딩 ${s.completed ? '완료됨' : '진행 필요'} · 프로필 완성도 ${s.profile_completeness}%\n\n다음 단계:\n${lines}`;
+      // One-time guidance: CareerMate machine-checks that the numbers in a cover
+      // letter trace to the user's real data. Mention the optional strict mode.
+      if (!s.completed) {
+        text +=
+          `\n\n💡 참고: 자소서를 저장할 때 CareerMate가 본문의 수치를 저장된 경력·이력서와 자동 대조해, 근거 없는 수치는 막습니다. ` +
+          `더 깐깐하게 보길 원하면 "엄격하게 봐줘"라고 하거나 대시보드 설정에서 엄격 모드를 켤 수 있어요(이력서 본문에 없는 수치까지 차단).`;
+      }
       if (upd.update_available) {
         text += `\n\n🆕 새 버전 v${upd.latest} 사용 가능 (현재 v${upd.current}). 사용자가 원하면 update_careermate 도구로 업데이트하세요.`;
       }
-      return ok(text, { ...s, update: upd });
+      return ok(text, { ...s, verify_strict: strict, update: upd });
     },
   },
 
@@ -727,16 +737,39 @@ export const TOOLS: ToolDef[] = [
     inputSchema: {
       text: z.string().max(200_000).describe('점검할 자기소개서 본문'),
       job_id: z.string().optional().describe('연결할 공고(있으면 공고 수치까지 비교)'),
+      strict: z
+        .boolean()
+        .optional()
+        .describe('이번 점검만 엄격하게(이력서 본문에 근거 없는 수치도 차단). 사용자가 "엄격하게 봐줘"라고 할 때 true. 생략하면 저장된 모드를 따름'),
     },
     readOnly: true,
     handler: (args) => {
       const text = typeof args?.text === 'string' ? args.text : '';
       if (!text.trim()) return fail('점검할 본문이 비어 있습니다.');
-      const report = previewCoverLetter(text, args?.job_id ?? null);
+      const report = previewCoverLetter(text, args?.job_id ?? null, args?.strict);
       const verdict = report.blocking.length
         ? `⛔ 이대로 저장하면 막힙니다 — ${report.blocking.map((b) => `${b.label}: ${b.detail}`).join('; ')}`
         : '✅ 자동 차단 항목 없음(셀 수 있는 항목 기준).';
-      return ok(`${verdict}\n${summarizeReport(report)}\n\n${report.disclaimer}`, report);
+      const modeLine = report.strict ? '\n(엄격 모드 적용 중)' : '';
+      return ok(`${verdict}${modeLine}\n${summarizeReport(report)}\n\n${report.disclaimer}`, report);
+    },
+  },
+  {
+    name: 'set_verify_mode',
+    title: '점검 모드 설정 (기본/엄격)',
+    description:
+      '저장 전 자동 점검의 엄격도를 바꿉니다. 엄격 모드(strict=true)를 켜면, 이후 모든 자소서 저장에서 "이력서 본문에 근거 없는 수치"(구조화 경력 항목에만 있는 값)까지 차단합니다. 기본 모드는 출처가 아예 없는 수치만 차단합니다. 사용자가 "엄격하게 봐줘"라고 하면 바로 켜지 말고 "앞으로 항상 엄격하게 볼까요?"라고 먼저 확인한 뒤 동의하면 strict=true로 호출하세요. 끄기(strict=false)는 안전장치를 약하게 만드는 것이므로, 사용자가 명확히 끄겠다고 할 때만 호출하세요. 이번 한 건만 엄격하게 보려면 모드를 바꾸지 말고 validate_cover_letter / save_cover_letter_version에 strict:true를 한 번만 넘기세요.',
+    inputSchema: {
+      strict: z.boolean().describe('true=엄격 켜기, false=끄기(명확한 사용자 의사일 때만)'),
+    },
+    handler: (args) => {
+      const on = setVerifyStrict(!!args?.strict);
+      return ok(
+        on
+          ? '엄격 점검 모드를 켰습니다. 이제 자소서를 저장할 때, 올린 이력서 본문에 근거가 없는 수치는 막힙니다(구조화 경력 항목에만 있는 값 포함). 끄려면 "엄격 모드 꺼줘"라고 하세요.'
+          : '엄격 점검 모드를 껐습니다. 이제 출처가 아예 없는 수치만 차단합니다(구조화 항목에만 있는 값은 경고만).',
+        { strict: on },
+      );
     },
   },
 

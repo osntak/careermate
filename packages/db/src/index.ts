@@ -6,6 +6,7 @@
 export * from './paths.ts';
 export * from './runtime.ts';
 export * from './connection.ts';
+export * from './settings.ts';
 export { migrate, MIGRATIONS } from './schema.ts';
 export {
   profileRepo,

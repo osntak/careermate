@@ -74,7 +74,17 @@ export interface LintReport {
   blocking: { id: string; label: string; detail: string }[];
   /** Whether a stored corpus existed to verify against (else provenance is N/A). */
   corpusAvailable: boolean;
+  /** Whether strict provenance mode was applied (structured-only numbers block). */
+  strict: boolean;
   disclaimer: string;
+}
+
+export interface LintOptions {
+  /**
+   * Strict provenance: also block numbers that live ONLY in structured records
+   * (not the user's résumé document). Opt-in — raises "advisory" to "blocking".
+   */
+  strict?: boolean;
 }
 
 const within = (a: number, b: number) => Math.abs(a - b) <= Math.max(0.5, 0.02 * Math.max(Math.abs(a), Math.abs(b)));
@@ -175,21 +185,37 @@ const DISCLAIMER =
  * Full lint for a cover letter / fit analysis. `corpus.applicant` empty ⇒ nothing
  * to verify against ⇒ provenance reported but never blocking.
  */
-export function lintArtifact(kind: LintReport['kind'], text: string, corpus: VerifyCorpus): LintReport {
+export function lintArtifact(
+  kind: LintReport['kind'],
+  text: string,
+  corpus: VerifyCorpus,
+  opts: LintOptions = {},
+): LintReport {
   const norm = normalizeText(text);
   const corpusAvailable = (corpus.documents + corpus.structured).trim().length > 0;
   const provenance = analyzeProvenance(text, corpus);
   const signals = styleSignals(text);
+  const strict = !!opts.strict;
 
   const blocking: LintReport['blocking'] = [];
-  // The single hard gate: suspected fabricated quantified claims in a letter,
-  // and only when a corpus exists to verify against.
-  if (corpusAvailable && kind === 'cover_letter' && provenance.fabricated.length > 0) {
-    blocking.push({
-      id: 'fabricated_numbers',
-      label: '근거 없는 수치(저장된 경력·이력서에 없음)',
-      detail: provenance.fabricated.map((f) => f.raw).join(', '),
-    });
+  if (corpusAvailable && kind === 'cover_letter') {
+    // Always block suspected fabrication (numbers tracing to nothing).
+    if (provenance.fabricated.length > 0) {
+      blocking.push({
+        id: 'fabricated_numbers',
+        label: '근거 없는 수치(저장된 경력·이력서에 없음)',
+        detail: provenance.fabricated.map((f) => f.raw).join(', '),
+      });
+    }
+    // Strict mode: also block numbers backed only by structured records, not by
+    // the user's actual résumé document ("back your claims with your résumé").
+    if (strict && provenance.unverified.length > 0) {
+      blocking.push({
+        id: 'unverified_numbers_strict',
+        label: '엄격 모드: 이력서 본문에 근거 없는 수치(구조화 경력/프로젝트 항목에만 있음)',
+        detail: provenance.unverified.map((u) => u.raw).join(', '),
+      });
+    }
   }
 
   return {
@@ -199,6 +225,7 @@ export function lintArtifact(kind: LintReport['kind'], text: string, corpus: Ver
     provenance,
     blocking,
     corpusAvailable,
+    strict,
     disclaimer: DISCLAIMER,
   };
 }

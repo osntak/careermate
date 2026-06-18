@@ -147,6 +147,7 @@ section('6) 검증 엔진(verify) — 숫자 출처 게이트');
   ok('구조화 전용 수치는 unverified로 표기', analyzeProvenance('12건에서 3건으로 줄였습니다', corpus).unverified.length >= 1);
   ok('공고의 5년이 본인 5년을 지지하지 않음', analyzeProvenance('5년 경험이 있습니다', corpus).jobSourced.length === 1);
   ok('코퍼스 없으면 차단 안 함', lintArtifact('cover_letter', '250% 향상', { documents: '', structured: '', job: '' }).blocking.length === 0);
+  ok('엄격 모드: 구조화 전용 수치(12→3)도 차단', lintArtifact('cover_letter', '12건에서 3건으로 줄였습니다', corpus, { strict: true }).blocking.length === 1);
 }
 
 console.log(`\n${'='.repeat(40)}`);

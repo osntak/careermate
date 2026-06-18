@@ -38,6 +38,7 @@ import {
   applicationRepo,
   interviewRepo,
   activityRepo,
+  setVerifyStrict,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -321,6 +322,12 @@ export function registerApiRoutes(router: Router): void {
       content: JSON.stringify(exportAll(), null, 2),
     }),
   );
+  router.post('/api/settings/verify-mode', async (ctx) => {
+    const { strict } = await readJsonBody(ctx.req, z.object({ strict: z.boolean() }));
+    const on = setVerifyStrict(strict);
+    activityRepo.log('profile_updated', `자소서 점검을 ${on ? '엄격' : '기본'} 모드로 변경했습니다.`);
+    return { verify_strict: on };
+  });
   router.post('/api/settings/backup', () => createBackup());
   router.post('/api/settings/reset', async (ctx) => {
     const { confirm } = await readJsonBody(ctx.req, z.object({ confirm: z.string() }));

@@ -9,6 +9,7 @@ import {
   getExportsDir,
   getBackupsDir,
   getEntityCounts,
+  getVerifyStrict,
 } from '@careermate/db';
 import { APP_VERSION } from '@careermate/shared';
 
@@ -33,5 +34,6 @@ export function getServerInfo() {
     backups_dir: getBackupsDir(),
     node_version: process.version,
     counts: getEntityCounts(),
+    verify_strict: getVerifyStrict(),
   };
 }

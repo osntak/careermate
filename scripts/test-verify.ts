@@ -64,6 +64,16 @@ console.log('\n3) 게이트 — 허위수치 차단 / 구조화 전용은 adviso
   ok('코퍼스 없으면 차단 안 함(검증 불가)', noCorpus.blocking.length === 0 && noCorpus.corpusAvailable === false);
 }
 
+console.log('\n5) 엄격 모드 — 구조화 전용 수치도 차단');
+{
+  const text = '인계 누락 민원을 12건에서 3건으로 줄였습니다.'; // 구조화에만 있는 수치
+  ok('기본 모드: 구조화 전용 → 차단 안 함', lintArtifact('cover_letter', text, corpus).blocking.length === 0);
+  const strict = lintArtifact('cover_letter', text, corpus, { strict: true });
+  ok('엄격 모드: 구조화 전용 → 차단', strict.blocking.length === 1 && strict.strict === true, JSON.stringify(strict.blocking));
+  ok('엄격 모드: 문서 수치(30%)는 통과', lintArtifact('cover_letter', '매출을 30% 키웠습니다', corpus, { strict: true }).blocking.length === 0);
+  ok('엄격 모드: 허위수치는 여전히 차단', lintArtifact('cover_letter', '매출 250% 성장', corpus, { strict: true }).blocking.length === 1);
+}
+
 console.log('\n4) 문체 신호 (advisory)');
 {
   const sig = styleSignals('저는 항상 데이터의 힘을 믿어왔습니다. 책임감이 강하며 데이터 분석을 통해 귀사에 기여하고 싶습니다.');

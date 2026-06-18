@@ -248,6 +248,10 @@ export const CoverLetterVersionInputSchema = z.object({
     .boolean()
     .optional()
     .describe('저장 전 자동 점검(근거 없는 수치)에서 막혔을 때, 의도한 값임을 확인하고 그대로 저장'),
+  strict: z
+    .boolean()
+    .optional()
+    .describe('이번 저장만 엄격하게 점검(이력서 본문에 근거 없는 수치도 차단). 생략하면 저장된 모드 설정을 따름'),
 });
 export type CoverLetterVersionInput = z.infer<typeof CoverLetterVersionInputSchema>;
 

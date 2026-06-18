@@ -41,6 +41,7 @@ import {
   projectRepo,
   skillRepo,
   activityRepo,
+  getVerifyStrict,
 } from '@careermate/db';
 import { lintArtifact, type VerifyCorpus, type LintReport } from './verify/index.ts';
 
@@ -75,9 +76,14 @@ export function collectVerifyCorpus(jobId?: string | null): VerifyCorpus {
   return { documents: documents.join('\n'), structured: structured.join('\n'), job: jobText };
 }
 
-/** Read-only preview of the deterministic cover-letter checks (no save). */
-export function previewCoverLetter(text: string, jobId?: string | null): LintReport {
-  return lintArtifact('cover_letter', text, collectVerifyCorpus(jobId));
+/**
+ * Read-only preview of the deterministic cover-letter checks (no save).
+ * `strict` overrides the persisted mode for this one call (one-shot strict).
+ */
+export function previewCoverLetter(text: string, jobId?: string | null, strict?: boolean): LintReport {
+  return lintArtifact('cover_letter', text, collectVerifyCorpus(jobId), {
+    strict: strict ?? getVerifyStrict(),
+  });
 }
 
 /* ----------------------------------------------------------------- Profile */
@@ -144,19 +150,22 @@ export function saveFitAnalysis(input: FitAnalysisInput): FitAnalysisRecord {
 
 /* ----------------------------------------------------------- Cover letters */
 
-export function saveCoverLetterVersion(input: CoverLetterVersionInput & { force?: boolean }) {
+export function saveCoverLetterVersion(input: CoverLetterVersionInput & { force?: boolean; strict?: boolean }) {
   // Deterministic save-gate: block suspected fabricated quantified claims (numbers
   // that don't trace to the user's stored facts) unless the caller forces it.
   // Style slop / job-sourced numbers are advisory only — they never block.
-  const verification = lintArtifact('cover_letter', input.content, collectVerifyCorpus(input.job_id));
+  // Strict mode (persisted, or one-shot via input.strict) also blocks numbers
+  // backed only by structured records, not the user's résumé document.
+  const strict = input.strict ?? getVerifyStrict();
+  const verification = lintArtifact('cover_letter', input.content, collectVerifyCorpus(input.job_id), { strict });
   const forced = verification.blocking.length > 0 && input.force === true;
   if (verification.blocking.length > 0 && !forced) {
     const detail = verification.blocking.map((b) => `${b.label}: ${b.detail}`).join('; ');
-    throw new Error(
-      `저장 전 자동 점검에서 막혔습니다 — ${detail}. ` +
-        `이 수치는 저장된 경력·이력서·프로젝트에 없습니다. 원본 데이터의 실제 수치로 고치거나, ` +
-        `의도한 값이 맞다면 먼저 경력/프로젝트에 그 수치를 추가한 뒤 다시 저장하세요(그대로 저장하려면 force: true).`,
-    );
+    const strictHit = verification.blocking.some((b) => b.id === 'unverified_numbers_strict');
+    const tail = strictHit
+      ? `엄격 모드가 켜져 있어, 올린 이력서 본문에 없는 수치는 막힙니다. 이력서를 올리거나 엄격 모드를 끄거나, 의도한 값이면 force: true로 저장하세요.`
+      : `이 수치는 저장된 경력·이력서·프로젝트에 없습니다. 원본 데이터의 실제 수치로 고치거나, 의도한 값이 맞다면 먼저 경력/프로젝트에 그 수치를 추가한 뒤 다시 저장하세요(그대로 저장하려면 force: true).`;
+    throw new Error(`저장 전 자동 점검에서 막혔습니다 — ${detail}. ${tail}`);
   }
   const { coverLetter, version } = coverLetterRepo.addVersion({
     cover_letter_id: input.cover_letter_id,
