@@ -93,7 +93,13 @@ async function main() {
     recursive: true,
     filter: (src) => {
       const base = path.basename(src);
-      return base !== 'implementation' && base !== 'validation';
+      // 내부 R&D(implementation·validation) 제외. 그리고 점(.)으로 시작하는 모든 항목을 제외한다
+      // — .omc/.omx(오케스트레이션 상태·세션 로그)·.DS_Store 등이 gitignore라 git엔 없지만
+      // 디스크의 docs/career-os/ 아래 남아 있을 수 있고, cpSync는 gitignore를 무시하므로
+      // 명시적으로 막지 않으면 게시 tarball/번들로 샌다(런타임 소비 대상도 아님).
+      if (base === 'implementation' || base === 'validation') return false;
+      if (base.startsWith('.')) return false;
+      return true;
     },
   });
 

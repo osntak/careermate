@@ -87,7 +87,9 @@ function main() {
   //                     애초에 careermate.life를 거쳐 들어온다). npm 패키지는 dist/site를
   //                     그대로 포함하므로 /install/가 유지된다.
   fs.mkdirSync(path.join(STAGE, 'dist'), { recursive: true });
-  for (const name of ['mcp.mjs', 'web.mjs', 'public']) {
+  // career-os(전문가 플레이북·검증 루브릭)와 pdf 워커는 런타임 사이드카다. 빠지면 .mcpb에서
+  // get_playbook/get_verifier와 PDF 추출(read_document)이 깨진다. site만 제외(마케팅 사본).
+  for (const name of ['mcp.mjs', 'web.mjs', 'public', 'career-os', 'pdf.worker.min.mjs']) {
     const src = path.join(DIST, name);
     if (fs.existsSync(src)) fs.cpSync(src, path.join(STAGE, 'dist', name), { recursive: true });
   }
