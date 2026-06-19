@@ -153,7 +153,7 @@ npm run init -- --print
 
 `.mcpb` 직접 추가는 일부 Claude Desktop 버전에서 설치 창이 뜨지 않거나 실패하는 알려진 이슈가 있습니다. `careermate.zip`은 같은 번들을 폴더 설치용으로 제공하는 파일이며, 폴더 안에는 같은 `manifest.json`과 서버 코드가 들어 있습니다.
 
-> 참고: `careermate.mcpb`와 `careermate.zip`은 **https://careermate.life 또는 GitHub Release에서 누구나 바로 내려받을 수 있습니다.** 소스를 받은 경우 `npm run build:mcpb`로 둘 다 직접 빌드할 수 있습니다. 둘 다 잘 안 되면 **터미널에서 `npx -y careermate init`** 가 가장 간단한 대안입니다.
+> 참고: `careermate.mcpb`와 `careermate.zip`은 GitHub Release에서 내려받을 수 있습니다. 소스를 받은 경우 `npm run build:mcpb`로 둘 다 직접 빌드할 수 있습니다. 둘 다 잘 안 되면 **터미널에서 `npx -y careermate init`** 가 가장 간단한 대안입니다.
 
 ### init 직후 마무리
 

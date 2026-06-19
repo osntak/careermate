@@ -115,7 +115,7 @@ function Connection(info) {
         el('div', { class: 'strong' }, 'MCP 서버'),
         el('div', { class: 'muted text-sm', style: { maxWidth: '440px', lineHeight: '1.6' } },
           'MCP 서버는 사용하시는 AI 클라이언트(Claude·ChatGPT·Cursor)가 직접 실행하며, 이 대시보드와 같은 데이터베이스를 공유합니다.'))),
-    Btn('설치·연결 안내 열기', { icon: 'external', sm: true, variant: 'ghost', onClick: () => window.open('/install', '_blank') }));
+    Btn('설치·연결 안내 열기', { icon: 'external', sm: true, variant: 'ghost', onClick: () => window.open(isDemo ? '/start.html' : '/install', '_blank') }));
 
   return Card({
     title: '연결 상태',
