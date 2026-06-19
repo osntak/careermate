@@ -64,7 +64,15 @@ import { z } from 'zod';
 import { Router, HttpError, readJsonBody, type Ctx } from './http.ts';
 import { exportCoverLetter, exportDocument, exportProfile, exportInterview, type ExportFormat } from './exports.ts';
 import { getServerInfo } from './info.ts';
-import { exportAll, createBackup, resetAll, listBackups } from './settings.ts';
+import {
+  exportAll,
+  createBackup,
+  resetAll,
+  listBackups,
+  previewBackupImport,
+  restoreBackup,
+  createDashboardShortcut,
+} from './settings.ts';
 
 function id(ctx: Ctx, key = 'id'): string {
   const v = ctx.params[key];
@@ -75,6 +83,10 @@ function id(ctx: Ctx, key = 'id'): string {
 function fmt(ctx: Ctx): ExportFormat {
   const f = (ctx.query.get('format') ?? 'md').toLowerCase();
   return (['md', 'html', 'txt'].includes(f) ? f : 'md') as ExportFormat;
+}
+
+function backupError(e: unknown): HttpError {
+  return new HttpError(400, e instanceof Error ? e.message : '백업 파일을 처리하지 못했습니다.', 'backup_import');
 }
 
 /** Assemble the full detail bundle for one job (used by the Jobs/Applications UI). */
@@ -329,6 +341,32 @@ export function registerApiRoutes(router: Router): void {
     return { verify_strict: on };
   });
   router.post('/api/settings/backup', () => createBackup());
+  router.post('/api/settings/dashboard-shortcut', async (ctx) => {
+    const { open } = await readJsonBody(ctx.req, z.object({ open: z.boolean().optional() }));
+    return { shortcut: createDashboardShortcut(open === true) };
+  });
+  router.post('/api/settings/import-preview', async (ctx) => {
+    const { backup } = await readJsonBody(ctx.req, z.object({ backup: z.unknown() }));
+    try {
+      return { preview: previewBackupImport(backup) };
+    } catch (e) {
+      throw backupError(e);
+    }
+  });
+  router.post('/api/settings/restore', async (ctx) => {
+    const { backup, confirm } = await readJsonBody(
+      ctx.req,
+      z.object({ backup: z.unknown(), confirm: z.string() }),
+    );
+    if (confirm !== 'RESTORE') {
+      throw new HttpError(400, '복원을 진행하려면 확인 값이 필요합니다.', 'restore_confirm_required');
+    }
+    try {
+      return restoreBackup(backup);
+    } catch (e) {
+      throw backupError(e);
+    }
+  });
   router.post('/api/settings/reset', async (ctx) => {
     const { confirm } = await readJsonBody(ctx.req, z.object({ confirm: z.string() }));
     const result = resetAll(confirm);

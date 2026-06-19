@@ -25,7 +25,7 @@ interface Route {
   handler: Handler;
 }
 
-const MAX_BODY = 8 * 1024 * 1024; // 8 MB — generous for pasted résumés, bounded against abuse.
+const MAX_BODY = 32 * 1024 * 1024; // 32 MB — enough for local JSON backups, still bounded.
 
 export class Router {
   private routes: Route[] = [];

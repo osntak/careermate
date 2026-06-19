@@ -10,6 +10,12 @@ const COUNT_LABELS = {
   documents: '문서', cover_letters: '자기소개서', jobs: '채용공고',
   applications: '지원', interview_preps: '면접 준비',
 };
+const BACKUP_COUNT_LABELS = {
+  ...COUNT_LABELS,
+  cover_letter_versions: '자소서 버전',
+  fit_analyses: '적합도 분석',
+  activities: '활동',
+};
 
 export async function render(ctx) {
   ctx.setActions([]);
@@ -21,7 +27,7 @@ export async function render(ctx) {
     Theme(),
     VerifyMode(info),
     MyData(info.counts),
-    Backup(backups, () => render(ctx)),
+    Backup(backups, async () => { await ctx.refreshNav(); await render(ctx); }),
     DangerZone(ctx),
   );
 
@@ -64,15 +70,39 @@ function DataLocation(info) {
 
 /* ---------------------------------------------------------- 연결 상태 */
 function Connection(info) {
+  async function createShortcut() {
+    try {
+      const { shortcut } = await post('/api/settings/dashboard-shortcut', { open: true });
+      toastOk('대시보드 바로가기를 만들었어요.');
+      openModal({
+        title: '바로가기 생성',
+        body: el('div', { class: 'stack-3' },
+          el('div', { class: 'callout' },
+            icon('info'),
+            el('div', {},
+              el('div', { class: 'callout__title' }, '폴더를 만들었습니다'),
+              el('div', { class: 'callout__body' },
+                '대시보드가 실행 중이면 브라우저만 열고, 꺼져 있으면 서버를 시작한 뒤 브라우저를 엽니다.'))),
+          el('dl', { class: 'kv' },
+            ...kvRow('폴더', shortcut.shortcut_dir, true),
+            ...kvRow('바로가기', shortcut.launcher_path, true))),
+        footer: (close) => [
+          Btn('경로 복사', { icon: 'copy', onClick: () => copyText(shortcut.launcher_path) }),
+          Btn('확인', { variant: 'primary', onClick: close }),
+        ],
+      });
+    } catch (e) {
+      toastError(e);
+    }
+  }
+
   const dashRow = el('div', { class: 'flex between gap-3', style: { padding: '4px 0' } },
     el('div', { class: 'flex gap-3', style: { alignItems: 'center' } },
       el('span', { class: 'badge badge--final_passed' }, el('span', { class: 'dot' }), '실행 중'),
       el('div', {},
         el('div', { class: 'strong' }, '대시보드'),
         el('div', { class: 'muted text-sm tnum' }, info.url || '—'))),
-    info.url
-      ? Btn('새 탭에서 열기', { icon: 'external', sm: true, variant: 'ghost', onClick: () => window.open(info.url, '_blank') })
-      : null);
+    Btn('바로가기 만들기', { icon: 'copy', sm: true, variant: 'ghost', onClick: createShortcut }));
 
   const mcpRow = el('div', { class: 'flex between gap-3', style: { padding: '4px 0', alignItems: 'flex-start' } },
     el('div', { class: 'flex gap-3', style: { alignItems: 'flex-start' } },
@@ -193,8 +223,26 @@ function MyData(counts = {}) {
   });
 }
 
-/* ------------------------------------------------- 백업 / 내보내기 */
+/* ------------------------------------------------- 내보내기 / 가져오기 */
 function Backup(backups = [], rerender) {
+  const fileInput = el('input', {
+    type: 'file',
+    accept: '.json,application/json',
+    style: { display: 'none' },
+    onChange: async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file) return;
+      try {
+        const backup = await readBackupFile(file);
+        const { preview } = await post('/api/settings/import-preview', { backup });
+        openImportModal({ fileName: file.name, backup, preview, rerender });
+      } catch (err) {
+        toastError(err);
+      }
+    },
+  });
+
   async function createBackup() {
     try {
       const res = await post('/api/settings/backup');
@@ -213,15 +261,113 @@ function Backup(backups = [], rerender) {
           el('td', {}, el('span', { class: 'truncate', title: b.path || b.filename }, b.filename)),
           el('td', { class: 'muted text-sm' }, fmtRelative(b.created_at)),
           el('td', { class: 'muted text-sm tnum', style: { textAlign: 'right' } }, `${Math.round((b.size || 0) / 1024)} KB`)))))
-    : el('p', { class: 'muted', style: { margin: 0 } }, '아직 백업이 없습니다. "백업 생성"으로 현재 데이터를 안전하게 보관하세요.');
+    : el('p', { class: 'muted', style: { margin: 0 } }, '아직 로컬 백업이 없습니다. "현재 상태 백업"으로 지금 데이터를 보관하세요.');
 
   return Card({
-    title: '백업 / 내보내기',
+    title: '내보내기 / 가져오기',
     actions: [
-      Btn('백업 생성', { icon: 'copy', sm: true, variant: 'primary', onClick: createBackup }),
-      Btn('전체 데이터 내보내기(JSON)', { icon: 'download', sm: true, variant: 'ghost', onClick: () => downloadUrl('/api/settings/export-all') }),
+      Btn('내보내기(JSON)', { icon: 'download', sm: true, variant: 'primary', onClick: () => downloadUrl('/api/settings/export-all') }),
+      Btn('가져오기(JSON)', { icon: 'upload', sm: true, variant: 'ghost', onClick: () => fileInput.click() }),
+      Btn('현재 상태 백업', { icon: 'copy', sm: true, variant: 'ghost', onClick: createBackup }),
     ],
-    body: list,
+    body: el('div', { class: 'stack-3' }, fileInput, list),
+  });
+}
+
+function readBackupFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('백업 파일을 읽지 못했어요.'));
+    reader.onload = () => {
+      try {
+        resolve(JSON.parse(String(reader.result || '')));
+      } catch {
+        reject(new Error('JSON 백업 파일만 복원할 수 있어요.'));
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+function fmtBackupDate(iso) {
+  if (!iso) return '알 수 없음';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function previewRows(counts = {}) {
+  const entries = Object.entries(counts)
+    .filter(([, count]) => Number(count) > 0)
+    .sort(([a], [b]) => (BACKUP_COUNT_LABELS[a] || a).localeCompare(BACKUP_COUNT_LABELS[b] || b, 'ko'));
+
+  if (!entries.length) {
+    return el('p', { class: 'muted', style: { margin: 0 } }, '복원할 항목이 없습니다.');
+  }
+
+  return el('table', { class: 'table' },
+    el('thead', {}, el('tr', {}, el('th', {}, '데이터'), el('th', { style: { textAlign: 'right' } }, '항목'))),
+    el('tbody', {}, ...entries.map(([key, count]) => el('tr', {},
+      el('td', {}, BACKUP_COUNT_LABELS[key] || key),
+      el('td', { class: 'tnum', style: { textAlign: 'right' } }, String(count))))));
+}
+
+function openImportModal({ fileName, backup, preview, rerender }) {
+  let confirmBtn;
+  const input = Input({
+    placeholder: '가져오기',
+    onInput: (e) => { if (confirmBtn) confirmBtn.disabled = e.target.value.trim() !== '가져오기'; },
+    onKeydown: (e) => {
+      if (e.key === 'Enter' && e.target.value.trim() === '가져오기' && confirmBtn && !confirmBtn.disabled) confirmBtn.click();
+    },
+  });
+
+  openModal({
+    title: '데이터 가져오기',
+    size: 'lg',
+    body: el('div', { class: 'stack-3' },
+      el('div', { class: 'callout' },
+        icon('info'),
+        el('div', {},
+          el('div', { class: 'callout__title' }, '현재 데이터는 먼저 백업됩니다'),
+          el('div', { class: 'callout__body' },
+            '가져오면 이 컴퓨터의 CareerMate 데이터가 선택한 JSON 내용으로 전체 교체됩니다.'))),
+      el('dl', { class: 'kv' },
+        ...kvRow('파일', fileName, false),
+        ...kvRow('백업 시각', fmtBackupDate(preview.exported_at), false),
+        ...kvRow('스키마', `${preview.version} / 현재 ${preview.current_version}`, false),
+        ...kvRow('전체 항목', String(preview.total_rows || 0), false)),
+      previewRows(preview.counts),
+      preview.warnings?.length
+        ? el('div', { class: 'callout' },
+            icon('info'),
+            el('div', {},
+              el('div', { class: 'callout__title' }, '확인 필요'),
+              el('div', { class: 'callout__body' }, preview.warnings.join(' '))))
+        : null,
+      el('p', { class: 'text-secondary', style: { margin: 0, lineHeight: '1.6' } },
+        '계속하려면 아래 입력란에 ', el('span', { class: 'strong' }, '가져오기'), ' 를 입력하세요.'),
+      input),
+    footer: (close) => {
+      confirmBtn = Btn('가져오기', {
+        icon: 'upload',
+        variant: 'danger',
+        disabled: true,
+        onClick: async () => {
+          confirmBtn.disabled = true;
+          try {
+            await post('/api/settings/restore', { backup, confirm: 'RESTORE' });
+            close();
+            toastOk('데이터를 가져왔어요.');
+            await rerender();
+          } catch (e) {
+            toastError(e);
+            confirmBtn.disabled = input.value.trim() !== '가져오기';
+          }
+        },
+      });
+      return [Btn('취소', { onClick: close }), confirmBtn];
+    },
   });
 }
 

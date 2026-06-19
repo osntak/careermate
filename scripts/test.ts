@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-e2e-'));
 process.env.CAREERMATE_DATA_DIR = tmp;
+process.env.CAREERMATE_SHORTCUT_DIR = path.join(tmp, 'shortcut');
 process.env.CAREERMATE_NO_OPEN = '1';
 
 const { startServer } = await import('../apps/web/src/server.ts');
@@ -92,6 +93,15 @@ await authed('POST', `/api/cover-letters/${cl.id}/versions`, { content: 'v2', no
 ok('자소서 버전 관리', (await json('GET', `/api/cover-letters/${cl.id}`)).cover_letter.version_count === 2);
 const exp = await reqRaw('GET', `/api/export/cover-letter/${cl.id}?format=md`);
 ok('자소서 내보내기(MD)', String(exp.headers['content-disposition'] || '').includes('attachment'));
+
+const backupPayload = JSON.parse((await reqRaw('GET', '/api/settings/export-all')).text);
+const preview = await json('POST', '/api/settings/import-preview', { backup: backupPayload }, { 'x-careermate-token': SESSION_TOKEN });
+ok('백업 가져오기 미리보기', preview.preview.total_rows > 0 && preview.preview.counts.jobs >= 1);
+await authed('PUT', '/api/profile', { name: '임시 변경' });
+await authed('POST', '/api/settings/restore', { backup: backupPayload, confirm: 'RESTORE' });
+ok('백업 가져오기: 현재 데이터 자동 백업 후 전체 교체', (await json('GET', '/api/profile')).profile.name === '김커리어');
+const shortcut = (await json('POST', '/api/settings/dashboard-shortcut', { open: false }, { 'x-careermate-token': SESSION_TOKEN })).shortcut;
+ok('대시보드 바로가기 생성', fs.existsSync(shortcut.launcher_path) && fs.readFileSync(shortcut.launcher_path, 'utf8').includes('/api/health'));
 
 /* ------------------------------------------------- 3 & 4. MCP + DB 공유 불변식 */
 section('3) MCP 서버 (stdio) + 4) 핵심 불변식: 대시보드 ↔ MCP 동일 DB');
