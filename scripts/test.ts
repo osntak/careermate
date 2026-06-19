@@ -19,6 +19,7 @@ import fs from 'node:fs';
 import net from 'node:net';
 import http from 'node:http';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-e2e-'));
 process.env.CAREERMATE_DATA_DIR = tmp;
@@ -26,7 +27,7 @@ process.env.CAREERMATE_NO_OPEN = '1';
 
 const { startServer } = await import('../apps/web/src/server.ts');
 const { SESSION_TOKEN } = await import('../apps/web/src/security.ts');
-const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const here = path.dirname(fileURLToPath(import.meta.url));
 
 let pass = 0;
 let fail = 0;

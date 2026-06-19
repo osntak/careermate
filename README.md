@@ -350,6 +350,7 @@ npm start
 - The default address is `http://127.0.0.1:4319` and the browser opens automatically.
 - If the port is busy, it falls back to the next free port — check the actual address printed in the terminal.
 - Stop it with `Ctrl+C` in the terminal.
+- When connected to an AI client, saying "open the dashboard" starts the server in the background if needed, so it is not tied to the AI terminal session.
 
 ### 3) Explore with demo data (optional)
 
@@ -492,6 +493,7 @@ CareerMate/
   - `backups/` — backups
   - `uploads/` — uploaded files
   - `server.json` — runtime handshake info
+  - `server.log` — background dashboard launch log
 - You can change behavior with environment variables.
   - `CAREERMATE_DATA_DIR` — change the data folder location
   - `CAREERMATE_PORT` — pin the dashboard port

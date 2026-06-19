@@ -66,7 +66,7 @@
     "shots:seed": "node --no-warnings --experimental-sqlite --import tsx scripts/shots-seed.ts",
     "shots": "node --no-warnings --experimental-sqlite --import tsx scripts/shots.ts",
     "doctor": "node --no-warnings --experimental-sqlite --import tsx scripts/doctor.ts",
-    "test": "node --no-warnings scripts/run.mjs scripts/test-init.ts \"INIT_TEST_VERDICT PASS\" && node --no-warnings scripts/run.mjs scripts/test.ts \"TEST_VERDICT PASS\"",
+    "test": "node --no-warnings scripts/run.mjs scripts/test-init.ts \"INIT_TEST_VERDICT PASS\" && node --no-warnings scripts/run.mjs scripts/test-bridge.ts \"BRIDGE_TEST_VERDICT PASS\" && node --no-warnings scripts/run.mjs scripts/test.ts \"TEST_VERDICT PASS\"",
     "test:ui": "node --no-warnings scripts/run.mjs scripts/ui-smoke.ts \"UI_VERDICT PASS\"",
     "typecheck": "tsc --noEmit"
   },
