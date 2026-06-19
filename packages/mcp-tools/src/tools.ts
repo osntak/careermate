@@ -82,6 +82,8 @@ import { resolveDashboardUrl, openInBrowser, openInFileManager } from './bridge.
 import { getUpdateStatus, getUpdateStatusAsync, runSelfUpdate } from './update.ts';
 
 const STATUS_LIST = APPLICATION_STATUSES.map((s) => `${s}(${APPLICATION_STATUS_LABELS[s]})`).join(', ');
+const DELETE_CONFIRMATION = 'DELETE';
+const DASHBOARD_URL = 'http://127.0.0.1:4319';
 
 /** List real, user-dropped files in the inbox (skips hidden/OS/office-lock cruft). */
 function listInboxFiles(dir: string): { name: string; path: string }[] {
@@ -278,9 +280,19 @@ export const TOOLS: ToolDef[] = [
           `더 깐깐하게 보길 원하면 "엄격하게 봐줘"라고 하거나 대시보드 설정에서 엄격 모드를 켤 수 있어요(이력서 본문에 없는 수치까지 차단).`;
       }
       if (upd.update_available) {
-        text += `\n\n🆕 새 버전 v${upd.latest} 사용 가능 (현재 v${upd.current}). 사용자가 원하면 update_careermate 도구로 업데이트하세요.`;
+        text += `\n\n새 버전 v${upd.latest}이 나왔습니다(현재 v${upd.current}). 사용자가 원하면 바로 업데이트를 진행하세요. 업데이트 후에는 AI 앱 또는 MCP 연결을 재시작해야 적용됩니다.`;
       }
-      return ok(text, { ...s, verify_strict: strict, update: upd });
+      return ok(text, {
+        ...s,
+        verify_strict: strict,
+        update: upd,
+        suggested_next_action: upd.update_available
+          ? {
+              prompt: `새 버전 v${upd.latest}이 나왔습니다. 지금 업데이트할까요?`,
+              next_tool: 'update_careermate',
+            }
+          : null,
+      });
     },
   },
 
@@ -451,6 +463,32 @@ export const TOOLS: ToolDef[] = [
       }
     },
   },
+  {
+    name: 'delete_cover_letter',
+    title: '자기소개서 삭제',
+    description:
+      '사용자가 저장된 자기소개서 삭제를 명확히 요청했을 때만 사용합니다. 먼저 get_cover_letters로 전체 목록 또는 공고별 목록을 확인하고, 삭제할 항목을 사용자가 확인한 뒤 호출하세요. 삭제하면 해당 자기소개서의 모든 버전이 함께 삭제되며 되돌릴 수 없습니다. confirm에는 DELETE를 넣으세요.',
+    inputSchema: {
+      cover_letter_id: z.string(),
+      confirm: z.string().describe('삭제 확인값. 정확히 DELETE를 넣어야 삭제됩니다.'),
+    },
+    handler: (args) => {
+      if (args?.confirm !== DELETE_CONFIRMATION) {
+        return fail('삭제하려면 confirm에 DELETE를 넣어 다시 호출하세요.');
+      }
+      const cl = coverLetterRepo.get(args.cover_letter_id, false);
+      if (!cl) return fail('자기소개서를 찾을 수 없습니다.');
+      const removed = coverLetterRepo.remove(cl.id);
+      if (!removed) return fail('자기소개서를 삭제하지 못했습니다.');
+      const user_message = `'${cl.title}' 자기소개서를 삭제했어요. 연결된 지원 기록에서는 자기소개서 연결만 비워뒀습니다.`;
+      return ok(user_message, {
+        deleted: true,
+        cover_letter_id: cl.id,
+        title: cl.title,
+        user_message,
+      });
+    },
+  },
 
   /* ------------------------------------------------------------------ jobs */
   {
@@ -461,7 +499,15 @@ export const TOOLS: ToolDef[] = [
     inputSchema: JobInputSchema.shape,
     handler: (args) => {
       const { job } = saveJobPosting(args);
-      return ok(`'${job.company} · ${job.position}' 공고를 저장했습니다. (job_id: ${job.id})`, job);
+      const user_message = `'${job.company} · ${job.position}' 공고를 저장했어요.`;
+      return ok(user_message, {
+        ...job,
+        user_message,
+        suggested_next_action: {
+          prompt: '이 공고와 내 프로필을 비교해 적합도를 분석할까요?',
+          next_workflow: 'analyze_job',
+        },
+      });
     },
   },
   {
@@ -472,7 +518,7 @@ export const TOOLS: ToolDef[] = [
     readOnly: true,
     handler: (args) => {
       const job = jobRepo.get(args.job_id);
-      if (!job) return fail(`공고를 찾을 수 없습니다: ${args.job_id}`);
+      if (!job) return fail('공고를 찾을 수 없습니다.');
       return ok(`${job.company} · ${job.position}`, {
         job: jobWithMeta(job),
         fit: fitRepo.getByJob(job.id),
@@ -491,6 +537,38 @@ export const TOOLS: ToolDef[] = [
     handler: () => {
       const jobs = jobRepo.list().map(jobWithMeta);
       return ok(`공고 ${jobs.length}건`, jobs);
+    },
+  },
+  {
+    name: 'delete_job_posting',
+    title: '채용공고 삭제',
+    description:
+      '사용자가 저장된 채용공고 삭제를 명확히 요청했을 때만 사용합니다. 먼저 list_jobs로 전체 공고 목록을 확인하고, 삭제할 공고를 사용자가 확인한 뒤 호출하세요. 삭제하면 연결된 지원 상태·적합도 분석·면접 준비가 함께 삭제됩니다. 연결된 자기소개서는 삭제하지 않고 공고 연결만 해제합니다. confirm에는 DELETE를 넣으세요.',
+    inputSchema: {
+      job_id: z.string(),
+      confirm: z.string().describe('삭제 확인값. 정확히 DELETE를 넣어야 삭제됩니다.'),
+    },
+    handler: (args) => {
+      if (args?.confirm !== DELETE_CONFIRMATION) {
+        return fail('삭제하려면 confirm에 DELETE를 넣어 다시 호출하세요.');
+      }
+      const job = jobRepo.get(args.job_id);
+      if (!job) return fail('공고를 찾을 수 없습니다.');
+      const detachedCoverLetters = coverLetterRepo.listByJob(job.id).length;
+      const removed = jobRepo.remove(job.id);
+      if (!removed) return fail('공고를 삭제하지 못했습니다.');
+      const detachedNote = detachedCoverLetters
+        ? ` 연결된 자기소개서 ${detachedCoverLetters}건은 삭제하지 않고 공고 연결만 해제했습니다.`
+        : '';
+      const user_message = `'${job.company} · ${job.position}' 공고를 삭제했어요. 연결된 지원 상태, 적합도 분석, 면접 준비도 함께 정리했습니다.${detachedNote}`;
+      return ok(user_message, {
+        deleted: true,
+        job_id: job.id,
+        company: job.company,
+        position: job.position,
+        detached_cover_letters: detachedCoverLetters,
+        user_message,
+      });
     },
   },
 
@@ -520,8 +598,8 @@ export const TOOLS: ToolDef[] = [
         ctx.job ? `대상 공고: ${ctx.job.company} · ${ctx.job.position}` : '대상 공고 없음',
         ctx.writing_preferences.preferred_tone ? `선호 문체: ${ctx.writing_preferences.preferred_tone}` : '',
         recommended_route
-          ? `💡 다음 단계: get_workflow_guide({ workflow_id: "${recommended_route}" })로 전문가 실행 절차(EOP)와 적용할 플레이북·검증 순서를 받아 적용하세요(즉답 금지).`
-          : '💡 커리어 작업을 시작하려면 get_workflow_guide로 전문가 실행 절차와 검증 순서를 먼저 받으세요.',
+          ? `내부 안내: 사용자에게는 도구명이나 ID를 말하지 말고, 먼저 get_workflow_guide({ workflow_id: "${recommended_route}" })로 실행 절차와 검증 순서를 받은 뒤 쉬운 말로 안내하세요.`
+          : '내부 안내: 사용자에게는 도구명을 말하지 말고, 먼저 get_workflow_guide로 실행 절차와 검증 순서를 받은 뒤 쉬운 말로 안내하세요.',
       ].filter(Boolean).join('\n');
       return ok(summary, enriched);
     },
@@ -535,7 +613,34 @@ export const TOOLS: ToolDef[] = [
     handler: (args) => {
       try {
         const fit = saveFitAnalysis(args);
-        return ok(`적합도 분석을 저장했습니다${fit.score != null ? ` (${fit.score}점)` : ''}.`, fit);
+        const suggested_next_action = {
+          prompt: '이 공고에 맞춘 자기소개서를 써드릴까요?',
+          options: [
+            {
+              label: '네, 이 공고에 맞춘 자기소개서를 써줘',
+              next_workflow: 'write_cover_letter',
+            },
+            {
+              label: '아니요, 분석만 저장해줘',
+              next_workflow: null,
+            },
+          ],
+        };
+        const user_message = `적합도 분석을 저장했어요${fit.score != null ? ` (${fit.score}점)` : ''}. 자세한 결과는 대시보드에서도 확인할 수 있습니다: ${DASHBOARD_URL}`;
+        return ok(
+          [
+            user_message,
+            '',
+            '사용자에게 다음 선택지를 보여주세요:',
+            '1. 네, 이 공고에 맞춘 자기소개서를 써줘',
+            '2. 아니요, 분석만 저장해줘',
+          ].join('\n'),
+          {
+            ...fit,
+            user_message,
+            suggested_next_action,
+          },
+        );
       } catch (e) {
         return fail(e instanceof Error ? e.message : '저장 실패');
       }
@@ -555,9 +660,21 @@ export const TOOLS: ToolDef[] = [
     handler: (args) => {
       try {
         const res = updateApplicationStatus(args.job_id, args.status, args.note);
+        const user_message =
+          `지원 상태를 '${APPLICATION_STATUS_LABELS[args.status as keyof typeof APPLICATION_STATUS_LABELS]}'(으)로 바꿨어요.` +
+          (res.hint ? `\n\n${res.hint}` : '');
         return ok(
-          `상태를 '${APPLICATION_STATUS_LABELS[args.status as keyof typeof APPLICATION_STATUS_LABELS]}'(으)로 변경했습니다.${res.hint ? `\n\n💡 ${res.hint}` : ''}`,
-          res,
+          user_message,
+          {
+            ...res,
+            user_message,
+            suggested_next_action: res.hint
+              ? {
+                  prompt: res.hint,
+                  next_workflow: 'prepare_interview',
+                }
+              : null,
+          },
         );
       } catch (e) {
         return fail(e instanceof Error ? e.message : '변경 실패');
@@ -575,7 +692,8 @@ export const TOOLS: ToolDef[] = [
     handler: (args) => {
       try {
         const prep = saveInterviewPrep(args);
-        return ok(`면접 준비 자료를 저장했습니다 (질문 ${prep.questions.length}개).`, prep);
+        const user_message = `면접 준비 자료를 저장했어요. 예상 질문 ${prep.questions.length}개가 준비되어 있습니다.`;
+        return ok(user_message, { ...prep, user_message });
       } catch (e) {
         return fail(e instanceof Error ? e.message : '저장 실패');
       }
@@ -792,17 +910,27 @@ export const TOOLS: ToolDef[] = [
     name: 'check_for_update',
     title: '업데이트 확인',
     description:
-      'CareerMate에 새 버전이 있는지 npm 레지스트리에서 지금 확인합니다(공개 버전 정보만 GET하며 사용자 데이터는 전송하지 않습니다). 현재 버전·최신 버전·업데이트 가능 여부를 돌려줍니다. 사용자가 "최신이야?/업데이트 있어?"라고 묻거나, get_onboarding_status가 새 버전을 알릴 때 호출하세요. 실제 적용은 update_careermate로 합니다.',
+      'CareerMate에 새 버전이 있는지 npm 레지스트리에서 지금 확인합니다(공개 버전 정보만 GET하며 사용자 데이터는 전송하지 않습니다). 현재 버전·최신 버전·업데이트 가능 여부를 돌려줍니다. 사용자가 "최신이야?/업데이트 있어?"라고 묻거나, get_onboarding_status가 새 버전을 알릴 때 호출하세요. 확인만 하고 설치는 하지 않습니다. 사용자가 "업데이트해줘/최신으로 올려줘"처럼 명시적으로 요청하면 update_careermate를 호출하세요.',
     inputSchema: {},
     readOnly: true,
     handler: async () => {
       const u = await getUpdateStatusAsync();
       if (u.latest === null) return ok('업데이트 확인에 실패했습니다(오프라인이거나 일시적 오류). 잠시 후 다시 시도하세요.', u);
+      const user_message = u.update_available
+        ? `새 버전 v${u.latest}이 나왔어요. 현재 버전은 v${u.current}입니다. 원하시면 지금 업데이트할 수 있습니다.`
+        : `최신 버전입니다 (v${u.current}).`;
       return ok(
-        u.update_available
-          ? `새 버전 v${u.latest} 사용 가능 (현재 v${u.current}). update_careermate로 업데이트할 수 있습니다.`
-          : `최신 버전입니다 (v${u.current}).`,
-        u,
+        user_message,
+        {
+          ...u,
+          user_message,
+          suggested_next_action: u.update_available
+            ? {
+                prompt: '지금 CareerMate를 업데이트할까요?',
+                next_tool: 'update_careermate',
+              }
+            : null,
+        },
       );
     },
   },
@@ -810,12 +938,12 @@ export const TOOLS: ToolDef[] = [
     name: 'update_careermate',
     title: 'CareerMate 업데이트',
     description:
-      'CareerMate를 최신 버전으로 업데이트합니다(설치 폴더에 npm으로 careermate@latest 설치). 사용자가 명시적으로 "업데이트해줘"라고 할 때만 호출하세요. 성공하면 적용을 위해 AI 앱(또는 MCP 연결) 재시작이 필요하며, 재시작 시 데이터베이스는 자동 마이그레이션되어 기존 데이터가 보존됩니다. 자동 설치가 막히면(개발 모드·비표준 설치) 직접 칠 명령을 안내합니다.',
+      'CareerMate를 최신 버전으로 업데이트합니다(설치 폴더에 npm으로 careermate@latest 설치). 사용자가 명시적으로 "업데이트해줘", "CareerMate 업데이트해줘", "최신으로 올려줘"라고 할 때 호출하세요. 이 도구가 최신 버전 확인도 함께 하므로 별도 확인 질문 없이 실행해도 됩니다. 성공하면 적용을 위해 AI 앱(또는 MCP 연결) 재시작이 필요하며, 재시작 시 데이터베이스는 자동 마이그레이션되어 기존 데이터는 보존됩니다. 자동 설치가 막히면(개발 모드·비표준 설치) 직접 칠 명령을 안내합니다.',
     inputSchema: {},
     handler: async () => {
       const r = await runSelfUpdate();
       if (!r.ok) return fail(`${r.message}${r.manual ? `\n\n직접 실행: ${r.manual}` : ''}`);
-      return ok(r.message, r);
+      return ok(r.message, { ...r, user_message: r.message });
     },
   },
 ];

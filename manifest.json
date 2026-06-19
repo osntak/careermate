@@ -99,6 +99,10 @@
       "description": "자기소개서 버전 저장"
     },
     {
+      "name": "delete_cover_letter",
+      "description": "자기소개서 삭제"
+    },
+    {
       "name": "save_job_posting",
       "description": "채용공고 저장"
     },
@@ -109,6 +113,10 @@
     {
       "name": "list_jobs",
       "description": "저장된 공고 목록"
+    },
+    {
+      "name": "delete_job_posting",
+      "description": "채용공고 삭제"
     },
     {
       "name": "get_application_context",

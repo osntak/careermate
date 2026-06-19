@@ -94,6 +94,43 @@ ok('자소서 버전 관리', (await json('GET', `/api/cover-letters/${cl.id}`))
 const exp = await reqRaw('GET', `/api/export/cover-letter/${cl.id}?format=md`);
 ok('자소서 내보내기(MD)', String(exp.headers['content-disposition'] || '').includes('attachment'));
 
+const { TOOLS } = await import('../packages/mcp-tools/src/tools.ts');
+const tool = (name: string) => {
+  const t = TOOLS.find((x) => x.name === name);
+  if (!t) throw new Error(`tool not found: ${name}`);
+  return t;
+};
+const savedJobToolRes = await tool('save_job_posting').handler({ company: '친화회사', position: '친화직무' });
+ok(
+  'MCP 공고 저장 메시지: 내부 ID 노출 없음 + 사용자용 문장 제공',
+  savedJobToolRes.isError !== true &&
+    !savedJobToolRes.text.includes('job_id') &&
+    (savedJobToolRes.data as any).user_message?.includes('공고를 저장했어요'),
+);
+const fitToolRes = await tool('save_fit_analysis').handler({ job_id: apiJob.id, score: 78, summary: '선택지 안내 테스트' });
+ok(
+  'MCP 적합도 저장 후 자소서 작성 여부 선택지 안내',
+  fitToolRes.isError !== true &&
+    fitToolRes.text.includes('사용자에게 다음 선택지를 보여주세요') &&
+    (fitToolRes.data as any).user_message?.includes('적합도 분석을 저장했어요') &&
+    (fitToolRes.data as any).suggested_next_action?.options?.length === 2,
+);
+const deleteClTarget = (await json('POST', '/api/cover-letters', { title: '삭제 테스트 자소서', content: 'tmp' }, { 'x-careermate-token': SESSION_TOKEN })).cover_letter;
+const blockedDeleteCl = await tool('delete_cover_letter').handler({ cover_letter_id: deleteClTarget.id });
+ok('MCP 자소서 삭제: 확인값 없으면 차단', blockedDeleteCl.isError === true);
+const deletedCl = await tool('delete_cover_letter').handler({ cover_letter_id: deleteClTarget.id, confirm: 'DELETE' });
+ok('MCP 자소서 삭제', deletedCl.isError !== true && (await reqRaw('GET', `/api/cover-letters/${deleteClTarget.id}`)).status === 404);
+const deleteJob = (await json('POST', '/api/jobs', { company: '삭제회사', position: '삭제직무' }, { 'x-careermate-token': SESSION_TOKEN })).job;
+const linkedCl = (await json('POST', '/api/cover-letters', { title: '공고 삭제 후 보존 자소서', job_id: deleteJob.id, content: 'tmp' }, { 'x-careermate-token': SESSION_TOKEN })).cover_letter;
+const deletedJob = await tool('delete_job_posting').handler({ job_id: deleteJob.id, confirm: 'DELETE' });
+const linkedAfterJobDelete = (await json('GET', `/api/cover-letters/${linkedCl.id}`)).cover_letter;
+ok(
+  'MCP 공고 삭제: 공고는 삭제하고 연결 자소서는 보존',
+  deletedJob.isError !== true &&
+    (await reqRaw('GET', `/api/jobs/${deleteJob.id}`)).status === 404 &&
+    linkedAfterJobDelete.job_id === null,
+);
+
 const backupPayload = JSON.parse((await reqRaw('GET', '/api/settings/export-all')).text);
 const preview = await json('POST', '/api/settings/import-preview', { backup: backupPayload }, { 'x-careermate-token': SESSION_TOKEN });
 ok('백업 가져오기 미리보기', preview.preview.total_rows > 0 && preview.preview.counts.jobs >= 1);

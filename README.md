@@ -30,7 +30,7 @@
 
 ## 주요 기능
 
-- **AI와 대화로 모든 작업** — MCP 도구 35개로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
+- **AI와 대화로 모든 작업** — MCP 도구 37개로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
 - **지원 상태 8단계 관리** — `draft`(작성 중) · `planned`(지원 예정) · `applied`(지원 완료) · `document_passed`(서류 합격) · `interview`(면접 진행) · `final_passed`(최종 합격) · `rejected`(불합격) · `on_hold`(보류). `document_passed` 이상에서 면접 준비가 해금됩니다.
 - **자기소개서 버전 관리** — 공고별로 자소서 버전을 쌓고 타임라인으로 비교, 파일로 내보내기.
 - **채용공고 파싱** — 붙여넣은 공고 텍스트를 구조화해 저장.
@@ -46,7 +46,7 @@
 | 프로세스 | 실행 | 역할 |
 | --- | --- | --- |
 | **대시보드 웹 서버** | `npm start` | `http://127.0.0.1:4319` — 내 데이터를 눈으로 확인·관리. `127.0.0.1`에만 바인딩. |
-| **MCP 서버** | `npm run mcp` | stdio 기반. 보통 AI 클라이언트가 자동 실행. 도구 35개 제공. |
+| **MCP 서버** | `npm run mcp` | stdio 기반. 보통 AI 클라이언트가 자동 실행. 도구 37개 제공. |
 
 ---
 
@@ -141,7 +141,7 @@ npx -y careermate init
 
 ---
 
-## MCP 도구 한눈에 (35개)
+## MCP 도구 한눈에 (37개)
 
 | 분류 | 도구 |
 | --- | --- |
@@ -149,8 +149,8 @@ npx -y careermate init
 | 프로필 | `save_profile` · `get_profile` |
 | 이력서 | `read_document` · `add_resume` · `get_resumes` · `open_inbox` · `read_inbox` |
 | 경력·프로젝트·스킬 | `add_experience` · `get_experiences` · `add_project` · `get_projects` · `add_skill` · `get_skills` |
-| 자기소개서 | `get_cover_letters` · `save_cover_letter_version` · `export_cover_letter` |
-| 채용공고 | `save_job_posting` · `get_job_posting` · `list_jobs` |
+| 자기소개서 | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
+| 채용공고 | `save_job_posting` · `get_job_posting` · `list_jobs` · `delete_job_posting` |
 | 핵심 컨텍스트 | **`get_application_context`** (지원에 필요한 맥락을 한 번에 모아줌) |
 | 핏 분석 | `save_fit_analysis` |
 | 지원 상태 | `update_application_status` |
@@ -176,7 +176,7 @@ CareerMate/
 │  ├─ shared/         # 공용 타입·zod 스키마·유틸
 │  ├─ db/             # node:sqlite DB 접근·스키마·마이그레이션
 │  ├─ core/           # 도메인 유스케이스
-│  ├─ mcp-tools/      # MCP 도구 35개 정의
+│  ├─ mcp-tools/      # MCP 도구 37개 정의
 │  ├─ knowledge/      # Career-OS 전문가 플레이북·검증 루브릭 serve
 │  ├─ exporters/      # 내보내기(자소서 등)
 │  ├─ parsers/        # 채용공고 파싱

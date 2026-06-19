@@ -202,7 +202,7 @@ export function saveJobPosting(input: JobInput, id?: string): { job: JobRecord; 
 
 export function saveFitAnalysis(input: FitAnalysisInput): FitAnalysisRecord {
   const job = jobRepo.get(input.job_id);
-  if (!job) throw notFound(`공고를 찾을 수 없습니다: ${input.job_id}. 먼저 save_job_posting으로 공고를 저장하세요.`);
+  if (!job) throw notFound('공고를 찾을 수 없습니다. 먼저 공고를 저장한 뒤 다시 시도하세요.');
   applicationRepo.ensure(job.id, 'draft');
   const fit = fitRepo.save(input);
   const scoreText = fit.score != null ? ` (적합도 ${fit.score}점)` : '';
@@ -269,7 +269,7 @@ export function updateApplicationStatus(
   note?: string,
 ): StatusChangeResult {
   const job = jobRepo.get(jobId);
-  if (!job) throw notFound(`공고를 찾을 수 없습니다: ${jobId}`);
+  if (!job) throw notFound('공고를 찾을 수 없습니다.');
   const application = applicationRepo.setStatus(jobId, status, note);
   activityRepo.log(
     'application_status_changed',
@@ -282,7 +282,7 @@ export function updateApplicationStatus(
   const hasPrep = !!interviewRepo.getByJob(jobId);
   const hint =
     interview_unlocked && !hasPrep
-      ? '서류 단계를 통과했어요. 이 공고 기준으로 예상 면접 질문과 1분 자기소개를 준비할까요? (save_interview_prep)'
+      ? '서류 단계를 통과했어요. 이 공고 기준으로 예상 면접 질문과 1분 자기소개를 준비할까요?'
       : null;
 
   return { application, job, interview_unlocked, hint };
@@ -292,14 +292,14 @@ export function updateApplicationStatus(
 
 export function saveInterviewPrep(input: InterviewPrepInput): InterviewPrepRecord {
   const job = jobRepo.get(input.job_id);
-  if (!job) throw notFound(`공고를 찾을 수 없습니다: ${input.job_id}`);
+  if (!job) throw notFound('공고를 찾을 수 없습니다.');
   // Spec gate: interview prep is only allowed once the application has reached
   // 서류 합격(document_passed) or beyond. Enforce it server-side, not just in prompts.
   const app = applicationRepo.getByJob(job.id);
   if (!app || !INTERVIEW_UNLOCK_STATUSES.includes(app.status)) {
     const current = app ? APPLICATION_STATUS_LABELS[app.status] : '미지원';
     throw conflict(
-      `면접 준비는 '서류 합격' 이상 상태에서만 저장할 수 있습니다. 현재 상태: '${current}'. 먼저 update_application_status로 상태를 올린 뒤 다시 시도하세요.`,
+      `면접 준비는 '서류 합격' 이상 상태에서만 저장할 수 있습니다. 현재 상태: '${current}'. 먼저 지원 상태를 '서류 합격' 이상으로 바꾼 뒤 다시 시도하세요.`,
     );
   }
   const prep = interviewRepo.save(input);

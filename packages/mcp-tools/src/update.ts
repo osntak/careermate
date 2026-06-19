@@ -325,6 +325,6 @@ export async function runSelfUpdate(): Promise<UpdateResult> {
     ok: true,
     from,
     to: latest,
-    message: `careermate를 ${latest ? `v${latest}` : '최신 버전'}(으)로 업데이트했습니다. 적용하려면 AI 앱(또는 MCP 연결)을 재시작하세요. 재시작 시 데이터베이스는 자동으로 마이그레이션되며 기존 데이터는 보존됩니다.`,
+    message: `CareerMate를 ${latest ? `v${latest}` : '최신 버전'}(으)로 업데이트했습니다. 적용하려면 AI 앱(또는 MCP 연결)을 재시작하세요. 재시작 시 데이터베이스는 자동으로 마이그레이션되며 기존 데이터는 보존됩니다.`,
   };
 }
