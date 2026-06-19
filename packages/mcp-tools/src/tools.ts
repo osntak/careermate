@@ -125,7 +125,7 @@ async function mapWithLimit<T, R>(items: T[], limit: number, fn: (item: T, index
   return out;
 }
 
-/** Statuses at/after which interview prep is unlocked (mirror of INTERVIEW_UNLOCK_STATUSES). */
+/** Statuses at/after which interview prep is recommended as a next step. */
 const INTERVIEW_UNLOCKED = ['document_passed', 'interview', 'final_passed'];
 
 /**
@@ -513,7 +513,7 @@ export const TOOLS: ToolDef[] = [
   {
     name: 'get_job_posting',
     title: '채용공고 상세 조회',
-    description: '공고 1건의 상세를 조회합니다. 공고 정보와 함께 적합도 분석, 지원 상태, 연결된 자기소개서, 면접 준비 자료를 한 번에 돌려줍니다.',
+    description: '공고 1건의 상세를 조회합니다. 공고 정보와 함께 적합도 분석, 지원 상태, 자기소개서, 면접 준비 자료를 한 번에 돌려줍니다.',
     inputSchema: { job_id: z.string() },
     readOnly: true,
     handler: (args) => {
@@ -687,7 +687,7 @@ export const TOOLS: ToolDef[] = [
     name: 'save_interview_prep',
     title: '면접 준비 자료 저장',
     description:
-      '예상 면접 질문, 꼬리 질문, STAR 답변 가이드, 1분 자기소개 초안 등 면접 준비 자료를 저장합니다. 보통 지원 상태가 서류 합격으로 바뀐 뒤, 해당 공고/직무/자소서를 근거로 당신(AI)이 생성한 자료를 저장하는 데 사용합니다. job_id는 필수입니다. 같은 공고에 다시 저장하면 갱신됩니다.',
+      '예상 면접 질문, 꼬리 질문, STAR 답변 가이드, 1분 자기소개 초안 등 해당 공고 기준 면접 준비 자료를 저장합니다. 공고/직무/자기소개서를 근거로 당신(AI)이 생성한 자료를 저장하는 데 사용합니다. job_id는 필수입니다. 같은 공고에 다시 저장하면 갱신됩니다.',
     inputSchema: InterviewPrepInputSchema.shape,
     handler: (args) => {
       try {

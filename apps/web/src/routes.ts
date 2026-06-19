@@ -275,20 +275,19 @@ export function registerApiRoutes(router: Router): void {
   });
 
   /* --------------------------------------------------------- interview */
-  // All saved interview preps joined with their jobs, plus jobs eligible for prep
-  // (status at/after 서류 합격) that don't have prep yet — powers the Interview page.
+  // All saved interview preps joined with their jobs, plus jobs where interview
+  // prep is a timely next step (status at/after 서류 합격) — powers the Interview page.
   router.get('/api/interview', () => {
     const preps = interviewRepo.list().map((p) => ({ ...p, job: jobRepo.get(p.job_id) }));
     const eligible = applicationRepo
       .list()
-      .filter((a) => INTERVIEW_UNLOCK_STATUSES.includes(a.status))
       .map((a) => ({
         job: jobRepo.get(a.job_id),
         status: a.status,
         status_label: APPLICATION_STATUS_LABELS[a.status],
         has_prep: !!interviewRepo.getByJob(a.job_id),
       }))
-      .filter((x) => x.job);
+      .filter((x) => x.job && (x.has_prep || INTERVIEW_UNLOCK_STATUSES.includes(x.status)));
     return { preps, eligible };
   });
   router.get('/api/jobs/:id/interview', (ctx) => ({ interview: interviewRepo.getByJob(id(ctx)) }));

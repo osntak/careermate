@@ -357,9 +357,8 @@ const ROUTES = [
   ['GET', /^\/api\/interview$/, () => {
     const preps = db.interviews.map((pp) => ({ ...pp, job: db.jobs.find((j) => j.id === pp.job_id) }));
     const eligible = db.applications
-      .filter((a) => INTERVIEW_UNLOCK.includes(a.status))
       .map((a) => ({ job: db.jobs.find((j) => j.id === a.job_id), status: a.status, status_label: STATUS_LABELS[a.status], has_prep: !!ivByJob(a.job_id) }))
-      .filter((x) => x.job);
+      .filter((x) => x.job && (x.has_prep || INTERVIEW_UNLOCK.includes(x.status)));
     return { preps, eligible };
   }],
 

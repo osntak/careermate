@@ -252,7 +252,7 @@ CareerMate는 모든 데이터를 사용자 컴퓨터의 단일 SQLite 파일(`c
 | `on_hold` | 보류 |
 
 - 칸반 보드 표시 순서(`APPLICATION_BOARD_ORDER`): `draft → planned → applied → document_passed → interview → final_passed → on_hold → rejected`.
-- **면접 준비 해금**(`INTERVIEW_UNLOCK_STATUSES`): `document_passed`, `interview`, `final_passed` 중 하나에 도달하면 면접 준비 단계가 열린다.
+- **면접 준비 추천 상태**(`INTERVIEW_UNLOCK_STATUSES`): `document_passed`, `interview`, `final_passed` 중 하나에 도달하면 면접 준비를 다음 행동으로 제안한다. 저장 자체는 공고 기준으로 언제든 가능하다.
 
 ### 11. `interview_preps`
 

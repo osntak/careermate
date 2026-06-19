@@ -45,7 +45,7 @@ export const APPLICATION_BOARD_ORDER: ApplicationStatus[] = [
   'rejected',
 ];
 
-/** Reaching this status unlocks interview-prep prompting in the workflow. */
+/** Reaching this status makes interview prep a recommended next step. */
 export const INTERVIEW_UNLOCK_STATUSES: ApplicationStatus[] = [
   'document_passed',
   'interview',
@@ -61,9 +61,9 @@ export const INTERVIEW_UNLOCK_STATUSES: ApplicationStatus[] = [
  * backward among active stages, be parked (`on_hold`) or closed (`rejected`) from
  * anywhere, and be reopened/resumed from those terminal states. The one move we
  * forbid is regressing an *active* application back to `draft` ("untracked"),
- * which would silently drop its lifecycle history. The hard spec invariant
- * (interview prep requires `document_passed`+) is enforced separately at the
- * service layer via {@link INTERVIEW_UNLOCK_STATUSES}.
+ * which would silently drop its lifecycle history. Interview prep can be saved
+ * whenever the user asks for it; {@link INTERVIEW_UNLOCK_STATUSES} only controls
+ * when it is recommended as a timely next step.
  */
 export const ALLOWED_STATUS_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
   draft: ['planned', 'applied', 'document_passed', 'interview', 'final_passed', 'rejected', 'on_hold'],

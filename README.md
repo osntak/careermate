@@ -31,7 +31,7 @@
 ## 주요 기능
 
 - **AI와 대화로 모든 작업** — MCP 도구 37개로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
-- **지원 상태 8단계 관리** — `draft`(작성 중) · `planned`(지원 예정) · `applied`(지원 완료) · `document_passed`(서류 합격) · `interview`(면접 진행) · `final_passed`(최종 합격) · `rejected`(불합격) · `on_hold`(보류). `document_passed` 이상에서 면접 준비가 해금됩니다.
+- **지원 상태 8단계 관리** — `draft`(작성 중) · `planned`(지원 예정) · `applied`(지원 완료) · `document_passed`(서류 합격) · `interview`(면접 진행) · `final_passed`(최종 합격) · `rejected`(불합격) · `on_hold`(보류). `document_passed` 이상에서는 면접 준비를 다음 행동으로 제안합니다.
 - **자기소개서 버전 관리** — 공고별로 자소서 버전을 쌓고 타임라인으로 비교, 파일로 내보내기.
 - **채용공고 파싱** — 붙여넣은 공고 텍스트를 구조화해 저장.
 - **로컬 대시보드** — 프레임워크·CDN 없는 바닐라 JS로 만든 7페이지 웹 화면(다크모드 지원).
@@ -303,7 +303,7 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 ## Key features
 
 - **Everything through conversation with AI** — 35 MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
-- **8-stage application status** — `draft` · `planned` · `applied` · `document_passed` · `interview` · `final_passed` · `rejected` · `on_hold`. Interview prep unlocks at `document_passed` or later.
+- **8-stage application status** — `draft` · `planned` · `applied` · `document_passed` · `interview` · `final_passed` · `rejected` · `on_hold`. Interview prep is suggested at `document_passed` or later.
 - **Cover-letter versioning** — Stack versions per posting, compare on a timeline, export to a file.
 - **Job-posting parsing** — Turn pasted posting text into structured records.
 - **Local dashboard** — A 7-page web UI built with framework-free, CDN-free vanilla JS (dark mode supported).
@@ -407,7 +407,7 @@ After connecting, **fully restart** the AI client and verify the connection by a
 | **Jobs** | List and detail of saved postings (posting content + fit analysis). |
 | **Applications** | A kanban board showing your pipeline across the 8 statuses. |
 | **Documents** | Cover-letter version timeline and resumes. |
-| **Interview** | Interview prep materials (unlocked at `document_passed` or later). |
+| **Interview** | Interview prep materials and interview-stage next steps. |
 | **Settings** | Export/delete data, environment info. |
 
 Dark mode is supported.

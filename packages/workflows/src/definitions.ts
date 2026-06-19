@@ -95,9 +95,9 @@ export const WORKFLOWS: WorkflowDefinition[] = [
     id: 'prepare_interview',
     title: '면접 준비',
     description:
-      '서류 합격 이후 예상 질문·STAR 답변·1분 자기소개를 준비해 저장하는 흐름.',
+      '공고 기준 예상 질문·STAR 답변·1분 자기소개를 준비해 저장하는 흐름.',
     trigger:
-      '지원 상태가 서류 합격(document_passed) 또는 면접 진행(interview)으로 바뀌었을 때, 또는 사용자가 "면접 준비 도와줘"라고 요청할 때.',
+      '사용자가 "면접 준비 도와줘"라고 요청하거나, 지원 상태가 서류 합격(document_passed) 또는 면접 진행(interview)으로 바뀌었을 때.',
     steps: [
       '`get_application_context`(job_id 포함)를 호출해 공고, 프로필, 경력/프로젝트, 적합도 분석(강점·갭), 자기소개서를 가져온다.',
       '공고와 사용자 경험을 바탕으로 예상 면접 질문(question, intent, followups, answer_outline)을 도출한다.',

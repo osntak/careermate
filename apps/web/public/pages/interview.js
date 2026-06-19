@@ -1,4 +1,4 @@
-// Interview — preparation materials for jobs that reached 서류 합격 or beyond.
+// Interview — preparation materials saved for jobs, plus timely interview-stage to-dos.
 import {
   el, get, put, icon, navigate, Card, Badge, Btn, SubmitBtn, EmptyState, Field, Input,
   Textarea, openModal, closeModal, toastOk, copyText,
@@ -17,9 +17,9 @@ export async function render(ctx) {
   if (!eligible.length) {
     wrap.append(EmptyState({
       iconName: 'mic',
-      title: '아직 면접 준비할 공고가 없어요',
-      body: '서류 합격 이상 상태가 되면 그 공고의 면접 준비를 여기서 할 수 있어요.',
-      action: Btn('지원 현황으로 가기', { icon: 'layers', variant: 'primary', onClick: () => navigate('/applications') }),
+      title: '아직 면접 준비 자료가 없어요',
+      body: '공고 화면에서 AI에게 면접 준비를 요청하면 여기에 저장돼요.',
+      action: Btn('공고 보러 가기', { icon: 'briefcase', variant: 'primary', onClick: () => navigate('/jobs') }),
     }));
     mount(ctx.view, wrap);
     ctx.setActions([]);

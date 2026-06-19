@@ -430,13 +430,13 @@ function CoverLettersCard(coverLetters) {
   const list = coverLetters || [];
   if (!list.length) {
     return Card({
-      title: '연결된 자기소개서',
+      title: '자기소개서',
       body: el('p', { class: 'muted', style: { margin: 0, lineHeight: '1.6' } },
-        '아직 연결된 자기소개서가 없어요. 문서 탭에서 작성하거나 붙여넣어 보관하세요.'),
+        '아직 이 공고의 자기소개서가 없어요. AI에게 작성을 요청하면 여기에 저장돼요.'),
     });
   }
   return Card({
-    title: '연결된 자기소개서',
+    title: '자기소개서',
     sub: `${list.length}개`,
     body: el('div', { class: 'stack-2' },
       ...list.map((cl) => el('div', {
@@ -470,13 +470,10 @@ function InterviewCard(job) {
     });
   }
 
-  const eligible = ['document_passed', 'interview', 'final_passed'].includes(job.status);
   return Card({
     title: '면접 준비',
     body: el('p', { class: 'muted', style: { margin: 0, lineHeight: '1.6' } },
-      eligible
-        ? '서류 단계를 통과했어요. 면접 준비 탭에서 예상 질문과 1분 자기소개를 정리할 수 있어요.'
-        : '서류 합격 이후 단계가 되면 이 공고 기준으로 면접 준비를 안내해 드려요.'),
+      '아직 이 공고의 면접 준비가 없어요. AI에게 준비를 요청하면 여기에 저장돼요.'),
   });
 }
 

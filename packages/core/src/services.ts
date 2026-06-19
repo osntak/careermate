@@ -30,7 +30,6 @@ import {
   INTERVIEW_UNLOCK_STATUSES,
   CareerMateError,
   notFound,
-  conflict,
 } from '@careermate/shared';
 import {
   jobRepo,
@@ -293,15 +292,8 @@ export function updateApplicationStatus(
 export function saveInterviewPrep(input: InterviewPrepInput): InterviewPrepRecord {
   const job = jobRepo.get(input.job_id);
   if (!job) throw notFound('공고를 찾을 수 없습니다.');
-  // Spec gate: interview prep is only allowed once the application has reached
-  // 서류 합격(document_passed) or beyond. Enforce it server-side, not just in prompts.
-  const app = applicationRepo.getByJob(job.id);
-  if (!app || !INTERVIEW_UNLOCK_STATUSES.includes(app.status)) {
-    const current = app ? APPLICATION_STATUS_LABELS[app.status] : '미지원';
-    throw conflict(
-      `면접 준비는 '서류 합격' 이상 상태에서만 저장할 수 있습니다. 현재 상태: '${current}'. 먼저 지원 상태를 '서류 합격' 이상으로 바꾼 뒤 다시 시도하세요.`,
-    );
-  }
+  // Interview prep can be drafted before a formal document pass. Status still
+  // controls when the dashboard recommends it as a to-do, not whether it can be saved.
   const prep = interviewRepo.save(input);
   activityRepo.log('interview_prep_saved', `${job.company} · ${job.position} 면접 준비 자료를 저장했습니다.`, 'interview_prep', prep.id);
   return prep;
