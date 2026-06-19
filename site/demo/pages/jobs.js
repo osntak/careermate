@@ -262,7 +262,13 @@ async function renderDetail(ctx, jobId) {
           if (res && res.hint) toastOk(res.hint);
           await ctx.refreshNav();
           await remount();
-        } catch (err) { toastError(err); e.target.value = job.status; }
+        } catch (err) {
+          toastError(err);
+          // Stale tab: the job was removed since this page loaded. Re-render so the
+          // detail reflects reality (shows "not found") instead of looping the error.
+          if (err && err.status === 404) { await ctx.refreshNav(); await remount(); return; }
+          e.target.value = job.status;
+        }
       },
     },
   );
@@ -309,20 +315,18 @@ async function renderDetail(ctx, jobId) {
     el('div', { class: 'page-head__actions' }, headActions),
   );
 
-  // --- Layout: two columns (info+fit left, side cards right) ----------------
-  const left = el('div', { class: 'stack-4' },
-    PostingCard(job),
-    FitCard(job.fit),
-  );
-  const right = el('div', { class: 'stack-4' },
-    CoverLettersCard(job.cover_letters),
-    InterviewCard(job),
-    RelatedCard(job.related),
-  );
-
+  // --- Layout ---------------------------------------------------------------
+  // 자기소개서·면접을 맨 위 2열로(둘 다 짧음), 그 아래 공고 정보(원문은 접힘)와
+  // 적합도를 전체폭으로 쌓는다. 한쪽 칼럼만 길어 빈 공간이 도드라지던 50/50
+  // 그리드를 대체한다. 관련 기록은 있을 때만 맨 아래.
   const wrap = el('div', { class: 'stack-4' },
     head,
-    el('div', { class: 'grid grid--2' }, left, right),
+    el('div', { class: 'grid grid--2' },
+      CoverLettersCard(job.cover_letters),
+      InterviewCard(job)),
+    PostingCard(job),
+    FitCard(job.fit),
+    RelatedCard(job.related),
   );
   mount(ctx.view, wrap);
 }
@@ -353,9 +357,12 @@ function PostingCard(job) {
   }
 
   if (job.description) {
-    body.push(el('div', { class: 'mt-3' },
-      el('div', { class: 'muted text-sm mb-2' }, '공고 원문'),
-      el('div', { class: 'doc-preview' }, job.description)));
+    // 원문은 가장 길어 칼럼을 늘리는 주범 — 기본 접힘(아코디언)으로 둔다.
+    body.push(el('details', { class: 'disclosure mt-3' },
+      el('summary', { class: 'disclosure__summary' },
+        icon('chevronRight', 'disclosure__chevron'),
+        el('span', {}, '공고 원문')),
+      el('div', { class: 'doc-preview mt-2' }, job.description)));
   }
 
   return Card({ title: '공고 정보', body });
@@ -365,11 +372,7 @@ function FitCard(fit) {
   if (!fit) {
     return Card({
       title: '적합도 분석',
-      body: EmptyState({
-        iconName: 'target',
-        title: '적합도 분석 전이에요',
-        body: '이 공고와 내 프로필을 비교한 분석 결과가 여기에 표시됩니다.',
-      }),
+      body: el('p', { class: 'muted', style: { margin: 0 } }, '아직 분석 전이에요. 이 공고와 내 프로필을 비교한 결과가 여기에 표시됩니다.'),
     });
   }
 

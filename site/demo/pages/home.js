@@ -4,7 +4,7 @@
 // the 시작하기 card. Every empty state is ONE screen-specific sentence; never repeat
 // the same "AI에게 보내면 저장됩니다" instruction across surfaces.
 import {
-  el, get, icon, navigate, Card, Badge, Btn, EmptyState, ListRow, CheckRow,
+  el, get, icon, navigate, Card, Badge, Btn, ListRow, CheckRow,
   Stat, PageHead, fmtDate, fmtRelative, scoreClass, STATUS_COLOR, statusColor, mount,
 } from '/demo/lib.js';
 
@@ -59,7 +59,7 @@ function Greeting(name, s, firstRun) {
   let focus;
   if (firstRun) focus = '시작해 볼까요 — 먼저 기본 정보를 채워 주세요.';
   else if (s.interview_todo.length) focus = `면접 준비가 필요한 지원 ${s.interview_todo.length}건이 있어요.`;
-  else if (s.in_progress.length) focus = `진행 중인 지원 ${s.in_progress.length}건을 확인하세요.`;
+  else if (s.in_progress.length) focus = `진행 중인 지원 ${s.in_progress.length}건이 있어요.`;
   else if (s.counts.jobs) focus = `저장된 공고 ${s.counts.jobs}건 · 새 적합도 분석을 받아보세요.`;
   else focus = '오늘도 한 걸음 나아가 볼까요.';
   return PageHead({ title: name ? `${name}님, 안녕하세요` : '환영합니다', desc: focus });
@@ -87,7 +87,7 @@ function GettingStarted(o) {
           el('div', { class: 'callout__body' },
             '공고 분석·자기소개서·면접 준비는 평소 쓰던 AI에게 말로 시키면, 결과가 이 대시보드에 쌓여요.'))),
       el('div', { class: 'progress' }, el('div', { class: 'progress__bar', style: { width: `${o.profile_completeness}%` } })),
-      el('p', { class: 'text-secondary text-sm', style: { margin: '12px 0 8px' } },
+      el('p', { class: 'text-secondary text-sm mt-3 mb-2' },
         '완성할수록 AI의 적합도 분석과 자기소개서 품질이 좋아져요.'),
       el('div', {}, ...steps.map((it) => CheckRow({ done: it.done, label: it.label, onClick: () => navigate(it.to) }))),
     ],
@@ -201,10 +201,7 @@ function RecentJobs(jobs) {
   if (!jobs.length) {
     return Card({
       title: '최근 공고',
-      body: EmptyState({
-        iconName: 'briefcase', title: '저장된 공고가 아직 없어요',
-        action: Btn('공고 추가', { icon: 'plus', variant: 'ghost', onClick: () => navigate('/jobs') }),
-      }),
+      body: el('p', { class: 'muted', style: { margin: 0 } }, '저장된 공고가 아직 없어요. 새 공고를 추가해 보세요.'),
     });
   }
   const rows = jobs.map((j) => ListRow({

@@ -23,6 +23,7 @@ export async function render(ctx) {
   root.append(el('div', { class: 'tabs' }, tabCover, tabDocs), panel);
 
   let query = '';
+  let searchInput = null;
   function selectTab(next) {
     tab = next;
     query = '';
@@ -43,9 +44,12 @@ export async function render(ctx) {
       if (!hide) shown += 1;
     }
     const existing = panel.querySelector('.search-empty');
+    if (existing) existing.remove();
     if (q && cards.length && shown === 0) {
-      if (!existing) panel.append(el('p', { class: 'search-empty muted', style: { textAlign: 'center', margin: '8px 0' } }, '검색 결과가 없어요.'));
-    } else if (existing) existing.remove();
+      panel.append(el('div', { class: 'search-empty empty' },
+        el('p', { class: 'muted', style: { margin: '0 0 12px' } }, `‘${query.trim()}’에 맞는 항목이 없어요.`),
+        Btn('필터 초기화', { sm: true, variant: 'ghost', onClick: () => { query = ''; if (searchInput) searchInput.value = ''; applyFilter(); } })));
+    }
   }
 
   async function reload() {
@@ -70,6 +74,7 @@ export async function render(ctx) {
   function setActions() {
     const search = Input({ type: 'search', placeholder: tab === 'cover' ? '자기소개서 검색' : '문서 검색', value: query, attrs: { 'aria-label': '검색' } });
     search.classList.add('input--inline');
+    searchInput = search;
     search.addEventListener('input', () => { query = search.value; applyFilter(); });
     const createBtn = tab === 'cover'
       ? Btn('새 자기소개서', { icon: 'plus', variant: 'primary', onClick: () => openCoverCreate(reload) })

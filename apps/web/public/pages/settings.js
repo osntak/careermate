@@ -70,19 +70,23 @@ function DataLocation(info) {
 
 /* ---------------------------------------------------------- 연결 상태 */
 function Connection(info) {
+  const isDemo = !!info.demo;
+
   async function createShortcut() {
     try {
       const { shortcut } = await post('/api/settings/dashboard-shortcut', { open: true });
-      toastOk('대시보드 바로가기를 만들었어요.');
+      toastOk(isDemo ? '데모 바로가기 동작을 미리 보여드려요.' : '대시보드 바로가기를 만들었어요.');
       openModal({
-        title: '바로가기 생성',
+        title: isDemo ? '바로가기 미리보기' : '바로가기 생성',
         body: el('div', { class: 'stack-3' },
           el('div', { class: 'callout' },
             icon('info'),
             el('div', {},
-              el('div', { class: 'callout__title' }, '폴더를 만들었습니다'),
+              el('div', { class: 'callout__title' }, isDemo ? '데모에서는 파일을 만들지 않습니다' : '폴더를 만들었습니다'),
               el('div', { class: 'callout__body' },
-                '대시보드가 실행 중이면 브라우저만 열고, 꺼져 있으면 서버를 시작한 뒤 브라우저를 엽니다.'))),
+                isDemo
+                  ? '실제 앱에서는 대시보드 바로가기 폴더와 실행 파일을 만들고, 여기서는 경로 예시만 보여줍니다.'
+                  : '대시보드가 실행 중이면 브라우저만 열고, 꺼져 있으면 서버를 시작한 뒤 브라우저를 엽니다.'))),
           el('dl', { class: 'kv' },
             ...kvRow('폴더', shortcut.shortcut_dir, true),
             ...kvRow('바로가기', shortcut.launcher_path, true))),

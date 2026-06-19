@@ -121,10 +121,12 @@ function jobDetail(jobId) {
 
 function settingsInfo() {
   return {
-    name: 'CareerMate', version: 'demo', port: 0, url: '',
+    name: 'CareerMate', version: 'demo', port: 0, url: '데모 모드',
+    demo: true,
     data_dir: '데모 모드 — 브라우저 메모리에만 존재',
     db_path: '저장되지 않습니다 (새로고침 시 초기화)',
     exports_dir: '데모', backups_dir: '데모', node_version: '데모',
+    verify_strict: !!db.verify_strict,
     counts: {
       profile: db.profile ? 1 : 0, experiences: db.experiences.length, projects: db.projects.length,
       skills: db.skills.length, documents: db.documents.length, cover_letters: db.coverLetters.length,
@@ -150,6 +152,79 @@ function normProfile(input, base) {
   };
 }
 const arr = (v) => (Array.isArray(v) ? v : []);
+
+function backupTables() {
+  return {
+    profile: db.profile ? [db.profile] : [],
+    experiences: db.experiences,
+    projects: db.projects,
+    skills: db.skills,
+    documents: db.documents,
+    jobs: db.jobs,
+    cover_letters: db.coverLetters.map(({ versions, ...letter }) => letter),
+    cover_letter_versions: db.coverLetters.flatMap((letter) => letter.versions || []),
+    fit_analyses: db.fits,
+    applications: db.applications,
+    interview_preps: db.interviews,
+    activities: db.activities,
+  };
+}
+
+function demoBackup() {
+  return { exported_at: nowIso(), version: 0, tables: backupTables() };
+}
+
+function previewBackup(backup) {
+  if (!backup || typeof backup !== 'object' || !backup.tables || typeof backup.tables !== 'object') {
+    return { __status: 400, error: 'CareerMate 백업 JSON 형식이 아닙니다.' };
+  }
+  const counts = {};
+  let total_rows = 0;
+  for (const [key, rows] of Object.entries(backup.tables)) {
+    counts[key] = Array.isArray(rows) ? rows.length : 0;
+    total_rows += counts[key];
+  }
+  return {
+    exported_at: typeof backup.exported_at === 'string' ? backup.exported_at : null,
+    version: Number.isFinite(Number(backup.version)) ? Number(backup.version) : 0,
+    current_version: 0,
+    counts,
+    total_rows,
+    warnings: ['데모에서는 브라우저 메모리의 샘플 데이터만 바뀌며 실제 파일은 변경되지 않습니다.'],
+  };
+}
+
+function restoreDemoBackup(backup) {
+  const preview = previewBackup(backup);
+  if (preview.__status) return preview;
+  const tables = backup.tables || {};
+  const coverLetters = clone(tables.cover_letters || []);
+  const versions = clone(tables.cover_letter_versions || []);
+  for (const cl of coverLetters) {
+    cl.versions = versions.filter((v) => v.cover_letter_id === cl.id);
+    const current = cl.versions.find((v) => v.id === cl.current_version_id) || cl.versions.at(-1);
+    cl.current_version_id = current?.id || null;
+    cl.current_content = current?.content || null;
+    cl.version_count = cl.versions.length;
+  }
+  db = {
+    profile: clone(tables.profile?.[0] || null),
+    experiences: clone(tables.experiences || []),
+    projects: clone(tables.projects || []),
+    skills: clone(tables.skills || []),
+    documents: clone(tables.documents || []),
+    jobs: clone(tables.jobs || []),
+    coverLetters,
+    fits: clone(tables.fit_analyses || []),
+    applications: clone(tables.applications || []),
+    interviews: clone(tables.interview_preps || []),
+    activities: clone(tables.activities || []),
+    backups: db.backups || [],
+    verify_strict: !!db.verify_strict,
+  };
+  logActivity('profile_updated', '데모 백업 JSON을 가져왔습니다.');
+  return { ok: true, restored: previewBackup(demoBackup()) };
+}
 
 /* -------------------------------------------------------------- routes */
 // Each: [method, RegExp on pathname, handler(params, body, query) -> data | {__status,error}]
@@ -313,11 +388,30 @@ const ROUTES = [
 
   /* settings */
   ['GET', /^\/api\/settings$/, () => ({ info: settingsInfo(), backups: db.backups || [] })],
+  ['POST', /^\/api\/settings\/verify-mode$/, (_p, body) => {
+    db.verify_strict = !!body.strict;
+    logActivity('profile_updated', `자소서 점검을 ${db.verify_strict ? '엄격' : '기본'} 모드로 변경했습니다.`);
+    return { verify_strict: db.verify_strict };
+  }],
   ['POST', /^\/api\/settings\/backup$/, () => {
     db.backups = db.backups || [];
-    const b = { filename: `careermate-${nowIso().replace(/[:.]/g, '-')}.sqlite`, path: '(데모)', created_at: nowIso(), size: 48 * 1024 };
+    const b = { filename: `careermate-demo-${nowIso().replace(/[:.]/g, '-')}.json`, path: '데모 브라우저 메모리', created_at: nowIso(), size: JSON.stringify(demoBackup()).length };
     db.backups.unshift(b);
     return b;
+  }],
+  ['POST', /^\/api\/settings\/dashboard-shortcut$/, () => ({
+    shortcut: {
+      shortcut_dir: '데모 모드 — 실제 폴더를 만들지 않습니다',
+      launcher_path: '실제 앱에서는 CareerMate 대시보드 바로가기가 생성됩니다',
+    },
+  })],
+  ['POST', /^\/api\/settings\/import-preview$/, (_p, body) => {
+    const preview = previewBackup(body.backup);
+    return preview.__status ? preview : { preview };
+  }],
+  ['POST', /^\/api\/settings\/restore$/, (_p, body) => {
+    if (body.confirm !== 'RESTORE') return { __status: 400, error: '복원을 진행하려면 확인 값이 필요합니다.' };
+    return restoreDemoBackup(body.backup);
   }],
   ['POST', /^\/api\/settings\/reset$/, (_p, body) => {
     if (body.confirm !== 'DELETE') return { __status: 400, error: 'confirm 값이 올바르지 않습니다.' };
@@ -453,7 +547,7 @@ function buildExport(pathname, query) {
     return { name: '면접준비.md', content: wrap(fmt, '면접 준비', lines.join('\n')) };
   }
   if (pathname === '/api/settings/export-all') {
-    return { name: 'careermate-demo-export.json', content: JSON.stringify({ exported_at: nowIso(), demo: true, data: db }, null, 2) };
+    return { name: 'careermate-demo-export.json', content: JSON.stringify(demoBackup(), null, 2) };
   }
   return null;
 }

@@ -264,7 +264,7 @@ function editWriting(p, reload) {
 /* ---------------------------------------------------- 4. 경력 (Experiences) */
 
 function ExperiencesCard(items, reload) {
-  const add = Btn('추가', { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editExperience(null, reload) });
+  const add = Btn('경력 추가', { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editExperience(null, reload) });
 
   if (!items.length) {
     return Card({
@@ -368,7 +368,7 @@ function editExperience(x, reload) {
 /* ----------------------------------------------------- 5. 프로젝트 (Projects) */
 
 function ProjectsCard(items, reload) {
-  const add = Btn('추가', { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editProject(null, reload) });
+  const add = Btn('프로젝트 추가', { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editProject(null, reload) });
 
   if (!items.length) {
     return Card({
@@ -469,7 +469,7 @@ function editProject(x, reload) {
 /* -------------------------------------------------------- 6. 기술 (Skills) */
 
 function SkillsCard(items, reload) {
-  const add = Btn('추가', { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editSkill(null, reload) });
+  const add = Btn('기술 추가', { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editSkill(null, reload) });
 
   if (!items.length) {
     return Card({
