@@ -190,10 +190,10 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 
 /* ----------------------------------------------------------------- card */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
-.card__head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.card__head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; min-width: 0; }
 .card__head h3 { font-size: 15px; }
 .card__head .sub { color: var(--text-tertiary); font-size: 13px; }
-.card__head .right { margin-left: auto; display: flex; gap: 6px; }
+.card__head .right { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; min-width: 0; max-width: 100%; }
 .card__body { padding: 18px; }
 .card__body--tight { padding: 0; }
 /* a light bordered block for grouping inside a card/modal — never nest a full .card */
@@ -417,6 +417,10 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 /* min-width:0 overrides a grid item's default min-width:auto so the 1fr column
    can shrink below its content — otherwise a long path/value overflows the grid. */
 .kv dd { margin: 0; min-width: 0; }
+.settings-action-row { align-items: flex-start; min-width: 0; }
+.settings-action-row__main { flex: 1 1 auto; min-width: 0; }
+.settings-action-row__main > div:last-child { min-width: 0; }
+.settings-action-row > .btn { flex: 0 0 auto; }
 
 /* ----------------------------------------------------------------- modal */
 .modal-root { position: fixed; inset: 0; z-index: 60; display: none; }
@@ -505,5 +509,9 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
   .kv{ grid-template-columns: 1fr; gap: 0; }
   .kv dt{ margin-top: 10px; }
   .kv dd{ margin: 0 0 2px; }
+  .settings-action-row{ align-items: stretch; flex-direction: column; }
+  .settings-action-row > .btn{ width: 100%; justify-content: center; }
+  .card__head{ align-items: flex-start; flex-wrap: wrap; }
+  .card__head .right{ margin-left: 0; width: 100%; justify-content: flex-start; }
   .page-head{ flex-wrap: wrap; }
 }

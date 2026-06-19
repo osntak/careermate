@@ -96,16 +96,16 @@ function Connection(info) {
     }
   }
 
-  const dashRow = el('div', { class: 'flex between gap-3', style: { padding: '4px 0' } },
-    el('div', { class: 'flex gap-3', style: { alignItems: 'center' } },
+  const dashRow = el('div', { class: 'settings-action-row flex between gap-3', style: { padding: '4px 0' } },
+    el('div', { class: 'settings-action-row__main flex gap-3', style: { alignItems: 'center' } },
       el('span', { class: 'badge badge--final_passed' }, el('span', { class: 'dot' }), '실행 중'),
       el('div', {},
         el('div', { class: 'strong' }, '대시보드'),
         el('div', { class: 'muted text-sm tnum' }, info.url || '—'))),
     Btn('바로가기 만들기', { icon: 'copy', sm: true, variant: 'ghost', onClick: createShortcut }));
 
-  const mcpRow = el('div', { class: 'flex between gap-3', style: { padding: '4px 0', alignItems: 'flex-start' } },
-    el('div', { class: 'flex gap-3', style: { alignItems: 'flex-start' } },
+  const mcpRow = el('div', { class: 'settings-action-row flex between gap-3', style: { padding: '4px 0', alignItems: 'flex-start' } },
+    el('div', { class: 'settings-action-row__main flex gap-3', style: { alignItems: 'flex-start' } },
       el('div', { class: 'empty__icon', style: { width: '30px', height: '30px', margin: 0, borderRadius: '8px' } }, icon('link')),
       el('div', {},
         el('div', { class: 'strong' }, 'MCP 서버'),
