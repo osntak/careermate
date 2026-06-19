@@ -58,12 +58,13 @@ export const VERIFIER_IDS = [
 ] as const;
 export type VerifierId = (typeof VERIFIER_IDS)[number];
 
-/** 5 per-feature execution procedures — docs/career-os/eop/<feature>.md. */
+/** Per-feature execution procedures — docs/career-os/eop/<feature>.md. */
 export const EOP_FEATURES = [
   'fit-analysis',
   'job-analysis',
   'profile-extraction',
   'cover-letter',
+  'career-description',
   'interview-prep',
 ] as const;
 export type EopFeature = (typeof EOP_FEATURES)[number];
@@ -118,6 +119,12 @@ export const CAREER_ROUTES: Record<string, CareerRoute> = {
     eop: 'cover-letter',
     expertSequence: ['cover-letter', 'human-writing', 'company-research'],
     verifierSequence: ['human-voice', 'truthfulness', 'ats-compat', 'consistency'],
+    loop: 'draft_verify_revise',
+  },
+  write_career_description: {
+    eop: 'career-description',
+    expertSequence: ['resume', 'ats'],
+    verifierSequence: ['truthfulness', 'consistency', 'ats-compat'],
     loop: 'draft_verify_revise',
   },
   prepare_interview: {

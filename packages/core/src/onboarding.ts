@@ -40,13 +40,14 @@ export function profileCompleteness(p: ProfileRecord | null): number {
 export function getOnboardingStatus(): OnboardingStatus {
   const profile = profileRepo.get();
   const resumes = documentRepo.list('resume');
+  const careerDescriptions = documentRepo.list('career_description');
   const coverLetters = coverLetterRepo.list();
   const experiences = experienceRepo.list();
   const skills = skillRepo.list();
   const jobs = jobRepo.list();
 
   const has_profile = !!(profile && profile.name);
-  const has_resume = resumes.length > 0;
+  const has_resume = resumes.length > 0 || careerDescriptions.length > 0;
   const has_cover_letter = coverLetters.length > 0;
   const has_experience = experiences.length > 0;
   const has_skills = skills.length > 0;

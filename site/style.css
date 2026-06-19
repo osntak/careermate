@@ -308,7 +308,7 @@ code { font-family: var(--mono); }
 }
 .command-card__bubble--ai span { color: var(--accent); }
 .command-card__steps {
-  list-style: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+  list-style: none; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
   margin: 0 18px 14px; padding: 0;
 }
 .command-card__steps li { min-width: 0; }

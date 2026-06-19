@@ -29,7 +29,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '사용자가 처음 CareerMate에 연결했거나, "시작하자 / 셋업해줘 / 프로필 등록"이라고 요청할 때.',
     steps: [
       '`get_onboarding_status`를 호출해 현재 등록 상태(has_profile, has_resume, has_cover_letter, has_experience, has_skills, profile_completeness, next_steps)를 확인한다.',
-      '비어 있는 항목을 사용자에게 쉬운 한국어로 안내하고, 먼저 "기존에 작성해 둔 이력서·경력기술서 파일이 있는지" 묻는다(hwp/docx/pdf 모두 가능).',
+      '비어 있는 항목을 사용자에게 쉬운 한국어로 안내하고, 먼저 "기존에 작성해 둔 이력서·경력기술서·자기소개서 파일이 있는지" 묻는다(hwp/docx/pdf 모두 가능).',
       '파일 입력 분기: ① 사용자가 "파일이 있다"고 하면 `open_inbox`로 인입 폴더를 열어 파일을 넣게 하고, "다 넣었다"고 하면 `read_inbox`로 본문을 읽는다(pdf·이미지는 read_inbox가 경로만 주므로 클라이언트의 파일 읽기로 직접 읽는다). ② 사용자가 파일 경로를 직접 알려주면 `read_document`로 읽는다. ③ "없다/직접 입력/텍스트로 붙여넣기"면 폴더를 열지 말고 받은 텍스트를 그대로 쓴다. (묻지도 않고 open_inbox로 폴더를 자동으로 열지 않는다.)',
       '수집한 정보를 구조화해 `save_profile`로 저장한다(이름·연락처·headline·summary·desired_roles·desired_conditions, 그리고 글쓰기 선호인 preferred_tone과 emphasis_points 포함). 파일 출처는 source=upload, 직접 입력은 manual.',
       '업로드한 이력서/경력기술서/포트폴리오 본문을 `add_resume`로 저장한다(kind·title 지정, 대표 문서는 is_primary=true).',
@@ -74,6 +74,25 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '완성본을 `save_cover_letter_version`으로 저장한다(기존 자기소개서면 cover_letter_id, 새로 만들면 title, 공고용이면 job_id, 변경 요약은 note, source=ai).',
       '사용자가 원하면 `export_cover_letter`로 파일로 내보내고, 추가 수정 요청이 있으면 새 버전으로 다시 저장한다.',
       '저장 결과를 쉬운 한국어로 알리고, 지원 상태 업데이트(`update_application_status`)나 면접 준비 등 다음 단계를 제안한다.',
+    ],
+  },
+  {
+    id: 'write_career_description',
+    title: '경력기술서 작성',
+    description:
+      '프로필·이력서·경력·프로젝트·스킬을 근거로 실제 제출 가능한 경력기술서를 작성하고 문서함에 저장하는 흐름.',
+    trigger:
+      '사용자가 "경력기술서 써줘 / 경력기술서 만들어줘 / 내 경력 정리해줘"라고 요청할 때.',
+    steps: [
+      '`get_onboarding_status`로 준비 상태를 확인하고, `get_profile`·`get_resumes`·`get_experiences`·`get_projects`·`get_skills`를 호출해 기존 프로필, 이력서, 경력기술서(kind=career_description), 경력, 프로젝트, 기술스택을 모두 확인한다.',
+      '사용자가 파일 경로를 주면 `read_document`로 읽고, 인입 폴더를 사용했다면 `read_inbox`로 본문을 읽는다. 이미 저장된 자료와 새 파일을 비교해 중복·상충되는 사실은 표시하고 추측하지 않는다.',
+      '`get_workflow_guide({ workflow_id: "write_career_description" })`가 안내하는 전문가 절차를 따른다. 작성 직전 `get_playbook({ domain: "resume" })`와 `get_playbook({ domain: "ats" })`를 받아 실제 경력기술서 형식과 ATS 친화성을 적용한다.',
+      '작성 전에 목적을 확인한다: 범용 마스터본인지, 특정 직무/공고용인지, 신입/무경력이라 프로젝트·교육·활동 중심 역량기술서로 쓸지, 분량과 톤은 어떻게 할지 묻는다.',
+      '경력기술서는 자기소개서처럼 서사로 쓰지 않는다. 제목, 핵심 요약, 핵심 역량, 경력/프로젝트별 역할·기간·도구·문제·행동·성과를 표나 불릿 중심으로 정리한다. 수치·회사명·기간·직책은 저장된 사실만 쓰고, 없는 성과 수치는 만들지 않는다.',
+      '무경력/비개발자라면 경력을 날조하지 말고 교육·프로젝트·운영 경험·업무 도구·협업 경험·성과 증거 중심의 "역량기술서"로 구성한다.',
+      '저장 직전 `get_verifier({ id: "truthfulness" })`, `get_verifier({ id: "consistency" })`, `get_verifier({ id: "ats-compat" })`를 받아 당신이 직접 점검하고, 허위·상충·키워드 누락을 고친다. 확인이 필요한 사실은 본문에 표시하고 사용자에게 묻는다.',
+      '완성본을 `add_resume`으로 저장한다(kind=career_description, source=ai, title은 사용 목적이 드러나게 작성, tags에 직무/용도 키워드 포함). 대표 문서로 삼아도 되는지 확인된 경우에만 is_primary=true를 쓴다.',
+      '저장 결과를 쉬운 한국어로 알리고, 문서 탭에서 확인할 수 있음을 안내한다. 특정 공고용으로 작성했다면 이어서 자기소개서나 면접 준비를 제안한다.',
     ],
   },
   {

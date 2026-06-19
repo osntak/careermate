@@ -69,7 +69,7 @@ function Greeting(name, s, firstRun) {
 function GettingStarted(o) {
   const steps = [
     { done: o.has_profile, label: '기본 프로필 작성', to: '/profile' },
-    { done: o.has_resume || o.has_experience, label: '이력서 또는 경력 추가', to: '/profile' },
+    { done: o.has_resume, label: '경력기술서 또는 이력서 추가', to: '/documents/career' },
     { done: o.has_cover_letter, label: '기존 자기소개서 등록', to: '/documents' },
     { done: o.has_job, label: '관심 공고 저장', to: '/jobs' },
   ];
@@ -85,7 +85,7 @@ function GettingStarted(o) {
         el('div', {},
           el('div', { class: 'callout__title' }, '두뇌는 당신의 AI, 보관은 CareerMate'),
           el('div', { class: 'callout__body' },
-            '공고 분석·자기소개서·면접 준비는 평소 쓰던 AI에게 말로 시키면, 결과가 이 대시보드에 쌓여요.'))),
+            '공고 분석·자기소개서·경력기술서·면접 준비는 평소 쓰던 AI에게 말로 시키면, 결과가 이 대시보드에 쌓여요.'))),
       el('div', { class: 'progress' }, el('div', { class: 'progress__bar', style: { width: `${o.profile_completeness}%` } })),
       el('p', { class: 'text-secondary text-sm mt-3 mb-2' },
         '완성할수록 AI의 적합도 분석과 자기소개서 품질이 좋아져요.'),

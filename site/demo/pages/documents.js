@@ -1,4 +1,4 @@
-// Documents — cover letters (with version history) and résumés/other documents.
+// Documents — cover letters (with version history), career descriptions, and résumés/other documents.
 // XSS-safe: all DB/user text rendered via el() textContent / .doc-preview (never innerHTML).
 import {
   el, get, post, put, del, Card, Badge, Btn, IconBtn, SubmitBtn, EmptyState,
@@ -9,18 +9,21 @@ import {
 const SOURCE_LABELS = { manual: '직접 입력', upload: '파일 업로드', ai: 'AI 생성', edit: '직접 수정' };
 const sourceLabel = (s) => SOURCE_LABELS[s] || s || '';
 
-// Module-scoped on purpose: remember the last-viewed tab ('cover' | 'docs') across
+// Module-scoped on purpose: remember the last-viewed tab ('cover' | 'career' | 'docs') across
 // navigations so returning to Documents reopens where the user left off. The search
 // query is intentionally NOT persisted (it resets per visit).
 let tab = 'cover';
 
 export async function render(ctx) {
+  if (['cover', 'career', 'docs'].includes(ctx.params?.[0])) tab = ctx.params[0];
+
   const root = el('div', { class: 'stack-4' });
 
   const panel = el('div', {});
   const tabCover = el('div', { class: `tab${tab === 'cover' ? ' is-active' : ''}`, onClick: () => selectTab('cover') }, '자기소개서');
-  const tabDocs = el('div', { class: `tab${tab === 'docs' ? ' is-active' : ''}`, onClick: () => selectTab('docs') }, '이력서·문서');
-  root.append(el('div', { class: 'tabs' }, tabCover, tabDocs), panel);
+  const tabCareer = el('div', { class: `tab${tab === 'career' ? ' is-active' : ''}`, onClick: () => selectTab('career') }, '경력기술서');
+  const tabDocs = el('div', { class: `tab${tab === 'docs' ? ' is-active' : ''}`, onClick: () => selectTab('docs') }, '이력서·포트폴리오');
+  root.append(el('div', { class: 'tabs' }, tabCover, tabCareer, tabDocs), panel);
 
   let query = '';
   let searchInput = null;
@@ -28,6 +31,7 @@ export async function render(ctx) {
     tab = next;
     query = '';
     tabCover.classList.toggle('is-active', tab === 'cover');
+    tabCareer.classList.toggle('is-active', tab === 'career');
     tabDocs.classList.toggle('is-active', tab === 'docs');
     setActions();
     renderPanel();
@@ -61,6 +65,7 @@ export async function render(ctx) {
     mount(panel, el('div', { class: 'muted text-sm' }, '불러오는 중…'));
     try {
       if (tab === 'cover') mount(panel, await CoverLettersTab(reload));
+      else if (tab === 'career') mount(panel, await CareerDescriptionsTab(reload));
       else mount(panel, await DocumentsTab(reload));
       applyFilter();
     } catch (err) {
@@ -72,13 +77,15 @@ export async function render(ctx) {
 
   // topbar: search (filters the active tab) + the tab's create action
   function setActions() {
-    const search = Input({ type: 'search', placeholder: tab === 'cover' ? '자기소개서 검색' : '문서 검색', value: query, attrs: { 'aria-label': '검색' } });
+    const placeholder = tab === 'cover' ? '자기소개서 검색' : tab === 'career' ? '경력기술서 검색' : '이력서·포트폴리오 검색';
+    const search = Input({ type: 'search', placeholder, value: query, attrs: { 'aria-label': '검색' } });
     search.classList.add('input--inline');
     searchInput = search;
     search.addEventListener('input', () => { query = search.value; applyFilter(); });
-    const createBtn = tab === 'cover'
-      ? Btn('새 자기소개서', { icon: 'plus', variant: 'primary', onClick: () => openCoverCreate(reload) })
-      : Btn('문서 추가', { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload) });
+    let createBtn;
+    if (tab === 'cover') createBtn = Btn('새 자기소개서', { icon: 'plus', variant: 'primary', onClick: () => openCoverCreate(reload) });
+    else if (tab === 'career') createBtn = Btn('경력기술서 추가', { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload, 'career_description') });
+    else createBtn = Btn('문서 추가', { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload) });
     ctx.setActions([search, createBtn]);
   }
 
@@ -336,10 +343,31 @@ function EditNewVersion(cl, refresh) {
   return el('div', { class: 'stack-2' }, toggle, editor);
 }
 
-/* ============================================================ Tab B — 이력서·문서 */
+/* ============================================================ Tab B — 경력기술서 */
+
+async function CareerDescriptionsTab(reload) {
+  const [{ documents: list }, m] = await Promise.all([get('/api/documents?kind=career_description'), meta()]);
+  const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, k.label]));
+  const wrap = el('div', { class: 'stack-3' });
+
+  if (!list.length) {
+    return mountInto(wrap, EmptyState({
+      iconName: 'file',
+      title: '아직 경력기술서가 없어요',
+      body: 'AI에게 경력기술서 작성을 요청하면 여기에 저장돼요.',
+      action: Btn('직접 추가', { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload, 'career_description') }),
+    }));
+  }
+
+  for (const doc of list) wrap.append(DocRow(doc, kindLabels, m, reload));
+  return wrap;
+}
+
+/* ============================================================ Tab C — 이력서·포트폴리오 */
 
 async function DocumentsTab(reload) {
-  const [{ documents: list }, m] = await Promise.all([get('/api/documents'), meta()]);
+  const [{ documents }, m] = await Promise.all([get('/api/documents'), meta()]);
+  const list = (documents || []).filter((doc) => doc.kind !== 'career_description');
   const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, k.label]));
   const wrap = el('div', { class: 'stack-3' });
 
@@ -347,7 +375,7 @@ async function DocumentsTab(reload) {
     return mountInto(wrap, EmptyState({
       iconName: 'file',
       title: '저장된 문서가 없어요',
-      body: '이력서·경력기술서·포트폴리오 텍스트를 보관하세요.',
+      body: '이력서·포트폴리오·기타 문서를 보관하세요.',
       action: Btn('문서 추가', { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload) }),
     }));
   }
@@ -414,24 +442,25 @@ async function openDocDetail(id, kindLabels, m, reload) {
   });
 }
 
-function openDocCreate(reload) {
-  meta().then((m) => docForm(null, m, reload)).catch(toastError);
+function openDocCreate(reload, defaultKind = 'resume') {
+  meta().then((m) => docForm(null, m, reload, defaultKind)).catch(toastError);
 }
 
 function openDocEdit(doc, m, reload) {
-  docForm(doc, m, reload);
+  docForm(doc, m, reload, doc?.kind || 'resume');
 }
 
-function docForm(doc, m, reload) {
-  const kinds = (m.document_kinds || []).map((k) => ({ value: k.value, label: k.label, selected: doc ? doc.kind === k.value : k.value === 'resume' }));
+function docForm(doc, m, reload, defaultKind = 'resume') {
+  const kindLabel = (m.document_kinds || []).find((k) => k.value === defaultKind)?.label || '문서';
+  const kinds = (m.document_kinds || []).map((k) => ({ value: k.value, label: k.label, selected: doc ? doc.kind === k.value : k.value === defaultKind }));
   const kind = Select(kinds);
-  const title = Input({ value: doc?.title || '', placeholder: '예: 2026 이력서', attrs: { maxlength: '200' } });
-  const content = Textarea({ placeholder: '이력서·경력기술서 본문을 붙여넣으세요.', style: { minHeight: '300px' } });
+  const title = Input({ value: doc?.title || '', placeholder: defaultKind === 'career_description' ? '예: 마스터 경력기술서' : '예: 2026 이력서', attrs: { maxlength: '200' } });
+  const content = Textarea({ placeholder: defaultKind === 'career_description' ? '경력기술서 본문을 붙여넣으세요.' : '이력서·포트폴리오 본문을 붙여넣으세요.', style: { minHeight: '300px' } });
   content.value = doc?.content || '';
   const primary = el('input', { type: 'checkbox', checked: !!doc?.is_primary });
 
   openModal({
-    title: doc ? '문서 수정' : '문서 추가',
+    title: doc ? '문서 수정' : `${kindLabel} 추가`,
     size: 'lg',
     body: el('div', { class: 'stack-3' },
       Field('종류', kind),

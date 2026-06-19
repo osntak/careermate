@@ -131,7 +131,9 @@ const INTERVIEW_UNLOCKED = ['document_passed', 'interview', 'final_passed'];
 /**
  * Pick the recommended Career-OS route from the loaded context, so the AI is
  * nudged onto the expert procedure for what it's most likely about to do.
- * Returns a get_workflow_guide workflow_id, or null when there's no target job.
+ * Returns a get_workflow_guide workflow_id for job-centered tasks, or null when
+ * there's no target job. Non-job tasks such as write_career_description are
+ * selected from the user's explicit request via get_workflow_guide.
  */
 function pickRoute(ctx: ReturnType<typeof getApplicationContext>): string | null {
   if (!ctx.job) return null;
@@ -190,9 +192,9 @@ export const TOOLS: ToolDef[] = [
   /* --------------------------------------------------------- inbox (파일 인입) */
   {
     name: 'open_inbox',
-    title: '이력서 인입 폴더 열기',
+    title: '문서 인입 폴더 열기',
     description:
-      'CLI 클라이언트는 파일 첨부가 안 되므로, 사용자가 기존 이력서·경력기술서 파일(hwp/hwpx/docx/pdf 등)을 끌어다 넣을 수 있는 로컬 인입 폴더(~/.careermate/inbox)를 보장하고 파일 탐색기로 엽니다. 온보딩에서 "기존에 작성해 둔 이력서 파일이 있다"고 사용자가 답했을 때만 호출하세요 — 묻지도 않고 폴더를 자동으로 열지 마세요. 파일 경로를 직접 알려주는 사용자에게는 이 도구 대신 read_document를 쓰세요. 호출하면 폴더 경로와 현재 폴더에 들어 있는 파일 목록을 돌려줍니다. 사용자가 파일을 다 넣었다고 하면 read_inbox로 본문을 읽으세요.',
+      'CLI 클라이언트는 파일 첨부가 안 되므로, 사용자가 기존 이력서·경력기술서·포트폴리오·자기소개서 파일(hwp/hwpx/docx/pdf 등)을 끌어다 넣을 수 있는 로컬 인입 폴더(~/.careermate/inbox)를 보장하고 파일 탐색기로 엽니다. 온보딩에서 "기존에 작성해 둔 문서 파일이 있다"고 사용자가 답했을 때만 호출하세요 — 묻지도 않고 폴더를 자동으로 열지 마세요. 파일 경로를 직접 알려주는 사용자에게는 이 도구 대신 read_document를 쓰세요. 호출하면 폴더 경로와 현재 폴더에 들어 있는 파일 목록을 돌려줍니다. 사용자가 파일을 다 넣었다고 하면 read_inbox로 본문을 읽으세요.',
     inputSchema: {},
     handler: () => {
       const dir = getInboxDir();
@@ -200,7 +202,7 @@ export const TOOLS: ToolDef[] = [
       const files = listInboxFiles(dir);
       const list = files.length ? files.map((f) => `- ${f.name}`).join('\n') : '(아직 비어 있음)';
       return ok(
-        `이력서 인입 폴더를 열었습니다:\n${dir}\n\n여기에 이력서·경력기술서 파일을 넣고 "다 넣었어"라고 알려주세요. (hwp/hwpx/docx는 자동으로 텍스트를 추출하고, pdf·이미지는 제가 직접 읽습니다.)\n\n현재 파일:\n${list}`,
+        `문서 인입 폴더를 열었습니다:\n${dir}\n\n여기에 이력서·경력기술서·포트폴리오·기존 자기소개서 파일을 넣고 "다 넣었어"라고 알려주세요. (hwp/hwpx/docx는 자동으로 텍스트를 추출하고, pdf·이미지는 제가 직접 읽습니다.)\n\n현재 파일:\n${list}`,
         { dir, files },
       );
     },
@@ -209,7 +211,7 @@ export const TOOLS: ToolDef[] = [
     name: 'read_inbox',
     title: '인입 폴더 파일 읽기',
     description:
-      '인입 폴더(~/.careermate/inbox)에 사용자가 넣어 둔 문서들의 본문을 한 번에 읽어 돌려줍니다. open_inbox로 폴더를 안내한 뒤 사용자가 "다 넣었어"라고 하면 호출하세요. docx/hwp/hwpx/텍스트는 텍스트를 추출하고, pdf·이미지는 추출하지 않고 파일 경로를 돌려주니 AI 클라이언트의 파일 읽기 기능으로 그 경로를 직접 열어 읽으세요. 읽은 내용을 구조화해 save_profile·add_resume 등 알맞은 도구로 저장하세요(파일 내용을 새 파일로 다시 쓰지 마세요). filename을 주면 해당 파일만 읽습니다.',
+      '인입 폴더(~/.careermate/inbox)에 사용자가 넣어 둔 문서들의 본문을 한 번에 읽어 돌려줍니다. open_inbox로 폴더를 안내한 뒤 사용자가 "다 넣었어"라고 하면 호출하세요. docx/hwp/hwpx/텍스트는 텍스트를 추출하고, pdf·이미지는 추출하지 않고 파일 경로를 돌려주니 AI 클라이언트의 파일 읽기 기능으로 그 경로를 직접 열어 읽으세요. 읽은 내용을 구조화해 프로필은 save_profile, 이력서·경력기술서·포트폴리오는 add_resume, 기존 자기소개서는 save_cover_letter_version으로 저장하세요(파일 내용을 새 파일로 다시 쓰지 마세요). filename을 주면 해당 파일만 읽습니다.',
     inputSchema: {
       filename: z.string().optional().describe('특정 파일만 읽을 때 파일명(대소문자 무시). 생략하면 폴더 안 모든 파일을 읽습니다.'),
       max_chars: z.number().optional().describe('파일별 반환 텍스트 최대 길이(초과 시 잘라냄). 기본 20000자'),
@@ -252,7 +254,7 @@ export const TOOLS: ToolDef[] = [
         )
         .join('\n');
       return ok(
-        `인입 폴더 파일 ${files.length}건을 읽었습니다:\n${summary}\n\n추출된 내용을 구조화해 save_profile·add_resume 등으로 저장하세요.`,
+        `인입 폴더 파일 ${files.length}건을 읽었습니다:\n${summary}\n\n추출된 내용을 구조화해 프로필은 save_profile, 이력서·경력기술서·포트폴리오는 add_resume, 기존 자기소개서는 save_cover_letter_version으로 저장하세요.`,
         { dir, files },
       );
     },
@@ -325,7 +327,7 @@ export const TOOLS: ToolDef[] = [
     name: 'add_resume',
     title: '이력서/경력기술서 추가',
     description:
-      '이력서, 경력기술서, 포트폴리오 등 문서를 저장합니다. content에는 사용자가 업로드/붙여넣은 텍스트(또는 정리한 Markdown)를 넣으세요. kind 기본값은 resume입니다. is_primary=true로 대표 문서를 지정하면 get_application_context의 primary_resume로 노출됩니다.',
+      '이력서, 경력기술서, 포트폴리오 등 문서를 저장합니다. content에는 사용자가 업로드/붙여넣은 텍스트 또는 AI가 전문가 절차로 정리한 Markdown을 넣으세요. 경력기술서를 작성해 저장할 때는 kind=career_description, source=ai를 사용합니다. kind 기본값은 resume입니다. is_primary=true로 대표 문서를 지정하면 get_application_context의 primary_resume로 노출됩니다.',
     // Reuse the shared (length-bounded, whitespace-rejecting) Document schema so
     // the MCP ingestion path — the primary route for résumé text — inherits the
     // same caps as the web API. kind stays optional here (defaults to resume).
@@ -780,10 +782,17 @@ export const TOOLS: ToolDef[] = [
     name: 'get_workflow_guide',
     title: '워크플로우 가이드',
     description:
-      '커리어 작업(공고 분석·자소서·면접 준비 등)을 시작하기 직전에 호출하세요. 표준 워크플로우의 단계별 안내에 더해, 그 작업의 "전문가 실행 절차(EOP)"와 적용할 전문가 플레이북·저장 전 검증기 순서를 한 번에 돌려줍니다. 안내된 대로 get_playbook으로 도메인 지식을, 저장 직전 get_verifier로 검증 루브릭을 받아 적용하세요. workflow_id를 생략하면 전체 목록을 돌려줍니다.',
+      '커리어 작업(공고 분석·자소서·경력기술서·면접 준비 등)을 시작하기 직전에 호출하세요. 표준 워크플로우의 단계별 안내에 더해, 그 작업의 "전문가 실행 절차(EOP)"와 적용할 전문가 플레이북·저장 전 검증기 순서를 한 번에 돌려줍니다. 안내된 대로 get_playbook으로 도메인 지식을, 저장 직전 get_verifier로 검증 루브릭을 받아 적용하세요. workflow_id를 생략하면 전체 목록을 돌려줍니다.',
     inputSchema: {
       workflow_id: z
-        .enum(['onboarding', 'analyze_job', 'write_cover_letter', 'manage_application_status', 'prepare_interview'])
+        .enum([
+          'onboarding',
+          'analyze_job',
+          'write_cover_letter',
+          'write_career_description',
+          'manage_application_status',
+          'prepare_interview',
+        ])
         .optional(),
     },
     readOnly: true,

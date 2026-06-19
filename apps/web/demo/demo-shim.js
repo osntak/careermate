@@ -49,7 +49,7 @@ function jobWithMeta(job) {
 function onboarding() {
   const p = db.profile;
   const has_profile = !!(p && p.name);
-  const has_resume = db.documents.some((d) => d.kind === 'resume');
+  const has_resume = db.documents.some((d) => d.kind === 'resume' || d.kind === 'career_description');
   const has_cover_letter = db.coverLetters.length > 0;
   const has_experience = db.experiences.length > 0;
   const has_skills = db.skills.length > 0;

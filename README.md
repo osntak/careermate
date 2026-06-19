@@ -161,7 +161,7 @@ npx -y careermate init
 | 대시보드/활동 | `open_dashboard` · `open_application` · `list_recent_activity` · `get_workflow_guide` |
 | 업데이트 | `check_for_update` · `update_careermate` |
 
-이 도구들 위에 5종의 워크플로우(`onboarding`, `analyze_job`, `write_cover_letter`, `manage_application_status`, `prepare_interview`)가 정의되어 있어, AI가 단계별로 자연스럽게 안내합니다.
+이 도구들 위에 6종의 워크플로우(`onboarding`, `analyze_job`, `write_cover_letter`, `write_career_description`, `manage_application_status`, `prepare_interview`)가 정의되어 있어, AI가 단계별로 자연스럽게 안내합니다.
 
 ---
 
@@ -181,7 +181,7 @@ CareerMate/
 │  ├─ exporters/      # 내보내기(자소서 등)
 │  ├─ parsers/        # 채용공고 파싱
 │  ├─ prompts/        # 프롬프트·안내 문구
-│  └─ workflows/      # 워크플로우 5종
+│  └─ workflows/      # 워크플로우 6종
 ├─ site/      # 설치 안내 페이지
 ├─ docs/              # 문서
 ├─ scripts/           # migrate / seed / doctor / test 등
@@ -434,7 +434,7 @@ Dark mode is supported.
 | Dashboard / activity | `open_dashboard` · `open_application` · `list_recent_activity` · `get_workflow_guide` |
 | Update | `check_for_update` · `update_careermate` |
 
-On top of these tools, five workflows (`onboarding`, `analyze_job`, `write_cover_letter`, `manage_application_status`, `prepare_interview`) are defined so the AI can guide you naturally, step by step.
+On top of these tools, six workflows (`onboarding`, `analyze_job`, `write_cover_letter`, `write_career_description`, `manage_application_status`, `prepare_interview`) are defined so the AI can guide you naturally, step by step.
 
 ---
 
@@ -454,7 +454,7 @@ CareerMate/
 │  ├─ exporters/      # Exporters (cover letters, etc.)
 │  ├─ parsers/        # Job-posting parsing
 │  ├─ prompts/        # Prompts and guidance copy
-│  └─ workflows/      # The 5 workflows
+│  └─ workflows/      # The 6 workflows
 ├─ site/      # Install guide page
 ├─ docs/              # Documentation
 ├─ scripts/           # migrate / seed / doctor / test, etc.
