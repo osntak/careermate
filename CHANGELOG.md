@@ -3,6 +3,20 @@
 이 프로젝트의 주요 변경 사항을 기록합니다. 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를
 따르고, 버전은 [유의적 버전(SemVer)](https://semver.org/lang/ko/)을 따릅니다.
 
+## [0.0.5] - 2026-06-19
+
+### 추가 (Added)
+- 공고와 자기소개서를 삭제할 수 있는 MCP 도구(`delete_job_posting`, `delete_cover_letter`) 추가.
+- 공고 적합도 분석 저장 후, 자기소개서를 바로 작성할지 사용자에게 선택지를 제안하도록 안내 강화.
+- "CareerMate 업데이트해줘" 같은 직접 요청이 업데이트 도구로 이어지도록 LLM 지침과 도구 설명 보강.
+
+### 변경 (Changed)
+- MCP 결과 메시지를 사용자 친화적으로 다듬고 내부 식별자·도구명을 사용자 대면 문장에서 덜 노출.
+- 업데이트 확인/온보딩 상태 응답의 안내 문구를 자연스러운 사용자 메시지 중심으로 정리.
+
+### 수정 (Fixed)
+- 모바일 390px 설정 화면에서 카드 헤더 액션 버튼이 가로 오버플로를 만들던 문제 수정.
+
 ## [0.0.4] - 2026-06-18
 
 ### 추가 (Added)
@@ -47,6 +61,7 @@
 - 내보내기 HTML 인젝션 무력화(raw `<img>`/`<script>`, `javascript:` 링크, 링크 속성·제목 인젝션).
 - 민감 정보(이력서·자소서 본문) 로그·에러 응답 비노출.
 
+[0.0.5]: https://github.com/osntak/careermate/releases/tag/v0.0.5
 [0.0.4]: https://github.com/osntak/careermate/releases/tag/v0.0.4
 [0.0.3]: https://github.com/osntak/careermate/releases/tag/v0.0.3
 [0.0.2]: https://github.com/osntak/careermate/releases/tag/v0.0.2
