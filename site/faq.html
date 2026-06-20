@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    (function () {
+      try {
+        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
+        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : 'dark');
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+  </script>
+  <title>자주 묻는 질문 — CareerMate</title>
+  <meta name="description" content="설치·연결·대시보드·문서 읽기·프라이버시 등 CareerMate를 쓰다 자주 막히는 지점과 해결 방법을 모았습니다." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://careermate.life/faq" />
+  <link rel="alternate" hreflang="ko" href="https://careermate.life/faq" />
+  <link rel="alternate" hreflang="en" href="https://careermate.life/en/faq" />
+  <link rel="alternate" hreflang="x-default" href="https://careermate.life/faq" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)" />
+  <link rel="preload" href="fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <script src="/analytics.js" defer></script>
+  <style>
+    .faq { max-width: 760px; margin: 0 auto; }
+    .faq__hero { max-width: var(--maxw); padding-top: 54px; padding-bottom: 18px; }
+    .faq__group { margin: 0 0 30px; }
+    .faq__group > h2 { font-size: 1.1rem; font-weight: 650; margin: 0 0 12px; }
+    .faq .acc__body p { margin: 0 0 .6rem; }
+    .faq .acc__body p:last-child { margin-bottom: 0; }
+    .faq .acc__body code { font-size: .88em; }
+    .faq__more { color: var(--text-secondary); font-size: .95rem; border-top: 1px solid var(--border); padding-top: 18px; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="nav__brand" href="index.html#top">
+      <span class="nav__logo" aria-hidden="true">C</span>
+      <span class="nav__name">CareerMate</span>
+    </a>
+    <div class="nav__links">
+      <a href="index.html#how">사용 예시</a>
+      <a href="index.html#install">빠른 설치</a>
+      <a href="start.html">처음이세요?</a>
+    </div>
+    <div class="nav__actions">
+      <a class="nav__lang" href="/en/faq" hreflang="en" lang="en" aria-label="View in English" title="English"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14.5 14.5 0 0 1 0 18 14.5 14.5 0 0 1 0-18"/></svg><span>English</span></a>
+      <a class="nav__icon" href="https://github.com/osntak/careermate" target="_blank" rel="noopener" aria-label="GitHub 저장소" title="GitHub에서 소스 보기"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="다크 모드 전환" title="다크 모드 전환">
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main id="top">
+    <header class="hero hero--solo faq__hero">
+      <div class="hero__main">
+        <span class="pill-badge"><span class="pill-badge__dot" aria-hidden="true"></span> 도움말</span>
+        <h1 class="hero__title">자주 묻는 질문</h1>
+        <p class="hero__lede">설치·연결·대시보드·문서 읽기·프라이버시에서 자주 막히는 지점을 모았어요. 설치가 처음이라면 <a href="start.html">처음이세요?</a>부터 보세요.</p>
+      </div>
+    </header>
+
+    <section class="section" style="padding-top:0">
+      <div class="faq">
+        <div class="faq__group">
+          <h2>시작하기 전에</h2>
+          <details class="acc">
+            <summary>돈이 드나요? API 키가 필요한가요?</summary>
+            <div class="acc__body">
+              <p>CareerMate 자체는 <strong>무료·오픈소스</strong>이고, 내부에 LLM이 없어 <strong>별도 API 키가 필요 없습니다.</strong> 분석·작성은 이미 쓰고 계신 AI 구독(Claude 등)이 그대로 수행하고, CareerMate는 커리어 데이터를 로컬에 저장·제공하는 “서랍장” 역할만 합니다.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>어떻게 업데이트하나요?</summary>
+            <div class="acc__body">
+              <p>AI에게 <strong>“CareerMate 업데이트해줘”</strong>라고 하면 최신 버전으로 올립니다(확인만 하려면 “최신이야?”). 업데이트 후에는 AI 앱 또는 MCP 연결을 <strong>재시작</strong>해 주세요.</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="faq__group">
+          <h2>설치 · 연결</h2>
+          <details class="acc">
+            <summary>“MCP 도구가 안 보여요” / AI가 CareerMate를 모릅니다</summary>
+            <div class="acc__body">
+              <p>AI 클라이언트를 <strong>완전히 종료한 뒤 다시 시작</strong>했는지 확인하세요(설정만 바꾸고 재시작을 안 하면 적용되지 않습니다).</p>
+              <p>Claude Code는 첫 실행 시 프로젝트 서버에 대한 <strong>1회 승인</strong>을 묻습니다 — 승인하세요. 클라이언트의 <code>/mcp</code> 명령으로 <code>careermate</code> 연결을 확인하거나, AI에게 “온보딩 상태 확인해줘”라고 해 응답이 오는지 보세요.</p>
+              <p>그래도 안 되면 클라이언트별 등록 방법을 <a href="start.html">처음이세요?</a> 또는 <a href="https://github.com/osntak/careermate/blob/main/INSTALL.md" target="_blank" rel="noopener">INSTALL.md</a>에서 확인하세요.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>ChatGPT 웹/모바일, Gemini 웹에서 안 돼요</summary>
+            <div class="acc__body">
+              <p>정상입니다. 이들은 클라우드에서 실행되어 <strong>원격 URL MCP만</strong> 쓸 수 있고, CareerMate는 사용자 컴퓨터에서 도는 <strong>로컬 stdio 서버</strong>라 닿지 못합니다.</p>
+              <p>로컬에서 실행되는 <strong>Claude Desktop · Claude Code · Codex CLI</strong>를 사용하세요.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>Node 버전 오류가 나요</summary>
+            <div class="acc__body">
+              <p>CareerMate는 <strong>Node.js 22.5.0 이상</strong>이 필요합니다(<code>node:sqlite</code> 사용). <code>node -v</code>로 확인하고 필요하면 업데이트하세요.</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="faq__group">
+          <h2>대시보드</h2>
+          <details class="acc">
+            <summary>“대시보드가 안 열려요” (<code>http://127.0.0.1:4319</code>)</summary>
+            <div class="acc__body">
+              <p>그 주소는 <strong>CareerMate가 실행 중일 때만</strong> 열립니다. AI에게 <strong>“대시보드 열어줘”</strong>라고 하면 서버가 꺼져 있을 때도 백그라운드로 자동 시작한 뒤 브라우저를 엽니다.</p>
+              <p><strong>포트가 이미 사용 중</strong>이면 자동으로 다른 포트로 폴백합니다(<code>CAREERMATE_PORT</code>로 고정 가능). 자동 시작이 실패하면 <code>~/.careermate/server.log</code>를 확인하세요.</p>
+              <p>대시보드는 보안상 <strong><code>127.0.0.1</code>(이 컴퓨터)</strong>에만 열립니다 — 다른 기기에서는 접속되지 않습니다(의도된 동작).</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>브라우저를 자동으로 안 열어요</summary>
+            <div class="acc__body">
+              <p>첫 온보딩 때 한 번만 자동으로 엽니다. 이후에는 링크만 안내합니다 — 직접 주소를 열거나, AI에게 “대시보드 열어줘”라고 하세요. 자동 열기를 끄려면 <code>CAREERMATE_NO_OPEN=1</code>.</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="faq__group">
+          <h2>문서(이력서·공고) 읽기</h2>
+          <details class="acc">
+            <summary>“PDF가 안 읽혀요”</summary>
+            <div class="acc__body">
+              <p><strong>스캔본/이미지 PDF</strong>(텍스트 레이어 없음)는 추출되지 않습니다. 이미지를 직접 볼 수 있는 AI라면 PDF를 그대로 보여주고, 아니면 내용을 <strong>텍스트로 붙여넣어</strong> 주세요.</p>
+              <p><strong>암호로 보호된 PDF</strong>는 읽을 수 없습니다 — 뷰어에서 암호를 해제해 다시 저장하거나 내용을 텍스트로 붙여넣으세요. 손상된 PDF, 25MB 초과 파일도 거부되며 안내 메시지에 이유가 나옵니다.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>지원하는 파일 형식은?</summary>
+            <div class="acc__body">
+              <p>PDF, Word(<code>.docx</code>), 한컴(<code>.hwp</code>/<code>.hwpx</code>), 텍스트(<code>.txt</code>/<code>.md</code>). 가능하면 <strong>절대 경로</strong>로 파일 위치를 알려 주세요(예: <code>C:\Users\me\Desktop\이력서.pdf</code>).</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>한글이 깨져요</summary>
+            <div class="acc__body">
+              <p>UTF-8과 한국어 인코딩(CP949/EUC-KR)을 자동 감지합니다. 그래도 깨지면 파일을 UTF-8로 다시 저장하거나 내용을 붙여넣어 주세요.</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="faq__group">
+          <h2>공고 분석 · 자소서</h2>
+          <details class="acc">
+            <summary>공고 URL은 어떻게 넣어요?</summary>
+            <div class="acc__body">
+              <p>URL을 그대로 붙여넣어도 되고, 공고 <strong>본문 텍스트</strong>를 붙여넣어도 됩니다. CareerMate는 LLM이 없어 URL을 직접 크롤링하지 않으므로, <strong>공고 본문 텍스트가 있으면 분석 품질이 가장 좋습니다.</strong></p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>“분석이 안 돼요” / 결과가 비어요</summary>
+            <div class="acc__body">
+              <p>분석은 <strong>AI가</strong> 수행하고 CareerMate는 입력(프로필·공고)과 결과를 저장합니다. 먼저 <strong>프로필과 공고가 저장돼 있어야</strong> 합니다.</p>
+              <p>AI에게 “분석 전에 application context부터 불러와줘”라고 하면 프로필·이력서·공고를 한 번에 모아 분석 맥락을 갖춥니다.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>면접 준비는 언제 만들 수 있나요</summary>
+            <div class="acc__body">
+              <p>공고가 저장되어 있으면 AI에게 면접 준비를 요청해 저장할 수 있습니다. 지원 상태가 <strong>‘서류 합격’ 이상</strong>이 되면 대시보드가 면접 준비를 다음 행동으로 더 적극적으로 제안합니다.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>이력서·자소서를 파일로 받을 수 있나요?</summary>
+            <div class="acc__body">
+              <p>네. AI에게 <strong>“이력서 파일로 내보내줘”</strong>(또는 자소서/프로필)라고 하면 <code>~/.careermate/exports</code>에 <strong>Markdown</strong> 또는 <strong>인쇄용 HTML</strong>(브라우저에서 “인쇄 → PDF로 저장”)로 저장됩니다.</p>
+              <p>대시보드 <strong>문서·프로필 페이지</strong>에서 버튼으로 직접 다운로드할 수도 있습니다.</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="faq__group">
+          <h2>데이터 · 프라이버시</h2>
+          <details class="acc">
+            <summary>내 데이터는 어디에 저장되나요?</summary>
+            <div class="acc__body">
+              <p>사용자 컴퓨터의 <code>~/.careermate</code>(Windows: <code>%USERPROFILE%\.careermate</code>)에만 저장됩니다. 대시보드 <strong>설정 &gt; 데이터 저장 위치</strong>에서 정확한 경로를 볼 수 있고, 외부로 전송되지 않습니다.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>백업하거나 전부 삭제하려면?</summary>
+            <div class="acc__body">
+              <p>대시보드 <strong>설정 &gt; 백업/내보내기</strong>에서 백업 생성·전체 JSON 내보내기를, <strong>위험 구역</strong>에서 전체 초기화를 할 수 있습니다(초기화 직전 자동 백업).</p>
+            </div>
+          </details>
+        </div>
+
+        <p class="faq__more">여기서 해결되지 않으면 <a href="https://github.com/osntak/careermate/issues" target="_blank" rel="noopener">GitHub 이슈</a>에 남기거나 <a href="mailto:osntak@gmail.com">osntak@gmail.com</a>으로 문의하세요. <strong>보안 문제</strong>는 이슈가 아니라 <a href="https://github.com/osntak/careermate/blob/main/SECURITY.md" target="_blank" rel="noopener">SECURITY.md</a>의 비공개 절차를 이용해 주세요.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__brand"><span class="nav__logo" aria-hidden="true">C</span> CareerMate</div>
+    <p>로컬에서 동작하는 MCP 기반 커리어 관리 도구. 모든 데이터는 이 컴퓨터에만 저장됩니다.</p>
+    <div class="foot__links"><a href="index.html#top">홈</a><a href="index.html#install">설치</a><a href="faq.html">FAQ</a><a href="https://github.com/osntak/careermate" target="_blank" rel="noopener">GitHub</a><a href="https://github.com/osntak/careermate/issues" target="_blank" rel="noopener">문제 신고</a><a href="mailto:osntak@gmail.com">문의</a></div>
+  </footer>
+
+  <script src="landing.js"></script>
+</body>
+</html>
