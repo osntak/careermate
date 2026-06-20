@@ -175,6 +175,26 @@ ok('문서 내보내기 HTML 은 text/html', String(docHtmlExp.headers['content-
 const profHtmlExp = await reqRaw('GET', '/api/export/profile?format=html');
 ok('프로필 내보내기 HTML 은 text/html', String(profHtmlExp.headers['content-type'] || '').includes('text/html'));
 
+/* 홈 시간축 넛지 — 마감 임박(deadlines) + 지원 후 무응답(followups) */
+const { getHomeSummary } = await import('../packages/core/src/summary.ts');
+const dlDate = new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10);
+const dlJob = (await tool('save_job_posting').handler({ company: '마감테스트회사', position: '직무', deadline: dlDate })).data as any;
+void dlJob;
+const sumNow = getHomeSummary() as any;
+ok(
+  '홈 요약: 마감 임박 공고를 deadlines로 노출(draft, days_left≈5)',
+  Array.isArray(sumNow.deadlines) &&
+    sumNow.deadlines.some((d: any) => d.job.company === '마감테스트회사' && d.days_left >= 4 && d.days_left <= 6),
+);
+const fuJob = (await tool('save_job_posting').handler({ company: '후속테스트회사', position: '직무' })).data as any;
+await tool('update_application_status').handler({ job_id: fuJob.id, status: 'applied' });
+const sumFuture = getHomeSummary(new Date(Date.now() + 12 * 86400000)) as any;
+ok(
+  '홈 요약: 지원 후 무응답을 followups로 노출(applied, days_since≈12)',
+  Array.isArray(sumFuture.followups) &&
+    sumFuture.followups.some((f: any) => f.job.company === '후속테스트회사' && f.days_since >= 11 && f.days_since <= 13),
+);
+
 const savedJobToolRes = await tool('save_job_posting').handler({ company: '친화회사', position: '친화직무' });
 ok(
   'MCP 공고 저장 메시지: 내부 ID 노출 없음 + 사용자용 문장 제공',

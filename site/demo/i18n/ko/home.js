@@ -45,6 +45,7 @@ export default {
   'home.actionLane.title': '이번에 할 일',
   'home.actionLane.viewAll': '전체 보기',
   'home.actionLane.interviewPrep': '면접 준비',
+  'home.actionLane.followup': '후속 필요 · {{n}}일',
   'home.actionLane.empty': '지금 처리할 일이 없어요. 새 공고를 분석해 보세요.',
   'home.placeholder.dash': '—',
 

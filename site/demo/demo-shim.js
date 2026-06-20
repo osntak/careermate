@@ -349,6 +349,23 @@ function homeSummary() {
     .filter((a) => INTERVIEW_UNLOCK.includes(a.status) && !ivByJob(a.job_id))
     .map((a) => { const job = db.jobs.find((j) => j.id === a.job_id); return job ? { job, status_label: t('status.' + a.status) } : null; })
     .filter(Boolean);
+  // Mirror summary.ts: deadline + follow-up nudges (kept in sync with the real backend contract).
+  const daysUntil = (s) => { if (!s) return null; const d = new Date(`${s}T00:00:00`); if (isNaN(d.getTime())) return null; const td = new Date(); td.setHours(0, 0, 0, 0); return Math.round((d.getTime() - td.getTime()) / 86400000); };
+  const daysSince = (s) => { if (!s) return null; const d = new Date(s); if (isNaN(d.getTime())) return null; return Math.floor((Date.now() - d.getTime()) / 86400000); };
+  const statusOf = (jobId) => (apps.find((a) => a.job_id === jobId)?.status ?? 'draft');
+  const deadlines = db.jobs
+    .map((job) => {
+      const status = statusOf(job.id);
+      if (!['draft', 'planned'].includes(status)) return null;
+      const days_left = daysUntil(job.deadline);
+      if (days_left == null || days_left > 14) return null;
+      return { job, status, status_label: t('status.' + status), days_left };
+    })
+    .filter(Boolean).sort((a, b) => a.days_left - b.days_left).slice(0, 5);
+  const followups = apps
+    .filter((a) => a.status === 'applied')
+    .map((a) => { const days_since = daysSince(a.applied_at); if (days_since == null || days_since < 10) return null; const job = db.jobs.find((j) => j.id === a.job_id); return job ? { job, days_since } : null; })
+    .filter(Boolean).sort((a, b) => b.days_since - a.days_since).slice(0, 5);
   return {
     onboarding: onboarding(),
     counts: {
@@ -364,6 +381,8 @@ function homeSummary() {
     })),
     recent_cover_letters: db.coverLetters.slice(0, 5),
     interview_todo,
+    deadlines,
+    followups,
     recent_activity: db.activities.slice(0, 10),
   };
 }

@@ -40,10 +40,38 @@ export interface HomeSummary {
   in_progress: { application: ApplicationRecord; job: JobRecord | null; status_label: string }[];
   recent_cover_letters: CoverLetterRecord[];
   interview_todo: { job: JobRecord; status_label: string }[];
+  deadlines: { job: JobRecord; status: ApplicationStatus; status_label: string; days_left: number }[];
+  followups: { job: JobRecord; days_since: number }[];
   recent_activity: ActivityRecord[];
 }
 
 const ACTIVE: ApplicationStatus[] = ['draft', 'planned', 'applied', 'document_passed', 'interview'];
+
+// Deadline nudge applies only while the posting still needs action (not yet applied).
+const DEADLINE_ACTIONABLE: ApplicationStatus[] = ['draft', 'planned'];
+// Surface a deadline once it's within this many days (overdue items are always shown).
+const DEADLINE_SOON_DAYS = 14;
+// Suggest a follow-up when an application has sat in 'applied' this many days with no response.
+const FOLLOWUP_STALE_DAYS = 10;
+const DAY_MS = 86400000;
+
+/** Whole days from `now`'s local midnight to a `YYYY-MM-DD` date (future > 0, today = 0, past < 0); null if unparseable. */
+function daysUntilDate(dateStr: string | null | undefined, now: Date): number | null {
+  if (!dateStr) return null;
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (isNaN(d.getTime())) return null;
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - today.getTime()) / DAY_MS);
+}
+
+/** Whole days elapsed since an ISO timestamp up to `now`; null if unparseable. */
+function daysSinceTimestamp(iso: string | null | undefined, now: Date): number | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  return Math.floor((now.getTime() - d.getTime()) / DAY_MS);
+}
 
 export function jobWithMeta(job: JobRecord): JobWithMeta {
   const app = applicationRepo.getByJob(job.id);
@@ -52,11 +80,12 @@ export function jobWithMeta(job: JobRecord): JobWithMeta {
   return { ...job, status, status_label: APPLICATION_STATUS_LABELS[status], fit_score: fit?.score ?? null };
 }
 
-export function getHomeSummary(): HomeSummary {
+export function getHomeSummary(now: Date = new Date()): HomeSummary {
   const onboarding = getOnboardingStatus();
   const jobs = jobRepo.list();
   const applications = applicationRepo.list();
   const coverLetters = coverLetterRepo.list();
+  const statusByJob = new Map(applications.map((a) => [a.job_id, a]));
 
   const status_breakdown = (Object.keys(APPLICATION_STATUS_LABELS) as ApplicationStatus[]).map((status) => ({
     status,
@@ -74,6 +103,33 @@ export function getHomeSummary(): HomeSummary {
       return job ? { job, status_label: APPLICATION_STATUS_LABELS[a.status] } : null;
     })
     .filter((x): x is { job: JobRecord; status_label: string } => x !== null);
+
+  // Deadline nudges: postings still awaiting action (draft/planned) whose deadline
+  // is overdue or within DEADLINE_SOON_DAYS. Most urgent (overdue) first.
+  const deadlines = jobs
+    .map((job) => {
+      const status = statusByJob.get(job.id)?.status ?? 'draft';
+      if (!DEADLINE_ACTIONABLE.includes(status)) return null;
+      const days_left = daysUntilDate(job.deadline, now);
+      if (days_left == null || days_left > DEADLINE_SOON_DAYS) return null;
+      return { job, status, status_label: APPLICATION_STATUS_LABELS[status], days_left };
+    })
+    .filter((x): x is { job: JobRecord; status: ApplicationStatus; status_label: string; days_left: number } => x !== null)
+    .sort((a, b) => a.days_left - b.days_left)
+    .slice(0, 5);
+
+  // Follow-up nudges: applications sitting in 'applied' with no response for a while.
+  const followups = applications
+    .filter((a) => a.status === 'applied')
+    .map((a) => {
+      const days_since = daysSinceTimestamp(a.applied_at, now);
+      if (days_since == null || days_since < FOLLOWUP_STALE_DAYS) return null;
+      const job = jobRepo.get(a.job_id);
+      return job ? { job, days_since } : null;
+    })
+    .filter((x): x is { job: JobRecord; days_since: number } => x !== null)
+    .sort((a, b) => b.days_since - a.days_since)
+    .slice(0, 5);
 
   return {
     onboarding,
@@ -95,6 +151,8 @@ export function getHomeSummary(): HomeSummary {
     }),
     recent_cover_letters: coverLetters.slice(0, 5),
     interview_todo,
+    deadlines,
+    followups,
     recent_activity: activityRepo.recent(10),
   };
 }

@@ -48,7 +48,7 @@ export async function render(ctx) {
   wrap.append(StatRow(s.counts));
   wrap.append(Pipeline(s.status_breakdown));
   wrap.append(el('div', { class: 'grid grid--2' },
-    el('div', { class: 'stack-4' }, ActionLane(s.interview_todo, s.in_progress), RecentJobs(s.recent_jobs)),
+    el('div', { class: 'stack-4' }, ActionLane(s), RecentJobs(s.recent_jobs)),
     el('div', { class: 'stack-4' }, Activity(s.recent_activity)),
   ));
 
@@ -167,10 +167,27 @@ function statusDot(status) {
   return el('span', { class: 'list-row__dot', style: { background: statusColor(status) } });
 }
 
-function ActionLane(interviewTodo, inProgress) {
+// deadline days_left (computed server-side) → coloured D-day badge.
+function ddayBadge(daysLeft) {
+  if (daysLeft < 0) return Badge('rejected', t('applications.dday.past'));
+  if (daysLeft === 0) return Badge('rejected', t('applications.dday.today'));
+  return Badge('interview', t('applications.dday.future', { n: daysLeft }));
+}
+
+function ActionLane(s) {
   const rows = [];
-  for (const it of interviewTodo) {
-    rows.push(ListRow({
+  const seen = new Set();
+  // Dedup by job id: the same posting can surface in multiple lanes (e.g. a draft
+  // with a near deadline is also in_progress) — show it once, in its highest lane.
+  const push = (jobId, r) => {
+    if (rows.length >= 6 || (jobId && seen.has(jobId))) return;
+    if (jobId) seen.add(jobId);
+    rows.push(r);
+  };
+  // Priority: interview prep (post-screening, time-bound) → deadline-urgent postings
+  // → stale follow-ups → other in-progress. interview prep keeps its prior top slot.
+  for (const it of s.interview_todo || []) {
+    push(it.job.id, ListRow({
       leading: statusDot('document_passed'),
       title: it.job.company,
       sub: it.job.position,
@@ -178,9 +195,26 @@ function ActionLane(interviewTodo, inProgress) {
       onClick: () => navigate(`/jobs/${it.job.id}`),
     }));
   }
-  for (const it of inProgress) {
-    if (rows.length >= 6) break;
-    rows.push(ListRow({
+  for (const it of s.deadlines || []) {
+    push(it.job.id, ListRow({
+      leading: statusDot(it.status),
+      title: it.job.company,
+      sub: it.job.position,
+      trailing: ddayBadge(it.days_left),
+      onClick: () => navigate(`/jobs/${it.job.id}`),
+    }));
+  }
+  for (const it of s.followups || []) {
+    push(it.job.id, ListRow({
+      leading: statusDot('applied'),
+      title: it.job.company,
+      sub: it.job.position,
+      trailing: Badge('accent', t('home.actionLane.followup', { n: it.days_since })),
+      onClick: () => navigate(`/jobs/${it.job.id}`),
+    }));
+  }
+  for (const it of s.in_progress || []) {
+    push(it.job?.id, ListRow({
       leading: statusDot(it.application.status),
       title: it.job?.company || t('home.placeholder.dash'),
       sub: it.job?.position || '',
