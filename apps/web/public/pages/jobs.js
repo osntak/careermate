@@ -250,18 +250,31 @@ async function renderDetail(ctx, jobId) {
   ctx.setTitle(`${job.company} · ${job.position}`);
 
   // --- Header actions (also mirrored into the topbar) -----------------------
+  async function changeStatus(status, extra = {}) {
+    const res = await put(`/api/applications/${jobId}/status`, { status, ...extra });
+    toastOk('상태를 변경했어요.');
+    if (res && res.hint) toastOk(res.hint);
+    await ctx.refreshNav();
+    await remount();
+  }
+
   const statusSelect = Select(
     m.statuses.map((s) => ({ value: s.value, label: s.label, selected: s.value === job.status })),
     {
       onChange: async (e) => {
         const status = e.target.value;
         if (status === job.status) return;
+        if (status === 'applied') {
+          e.target.value = job.status;
+          try {
+            await openAppliedModal({ job, metaInfo: m, changeStatus });
+          } catch (err) {
+            toastError(err);
+          }
+          return;
+        }
         try {
-          const res = await put(`/api/applications/${jobId}/status`, { status });
-          toastOk('상태를 변경했어요.');
-          if (res && res.hint) toastOk(res.hint);
-          await ctx.refreshNav();
-          await remount();
+          await changeStatus(status);
         } catch (err) {
           toastError(err);
           // Stale tab: the job was removed since this page loaded. Re-render so the
@@ -326,6 +339,7 @@ async function renderDetail(ctx, jobId) {
       InterviewCard(job)),
     PostingCard(job),
     FitCard(job.fit),
+    TimelineCard(job.timeline),
     RelatedCard(job.related),
   );
   mount(ctx.view, wrap);
@@ -442,7 +456,7 @@ function CoverLettersCard(coverLetters) {
       ...list.map((cl) => el('div', {
         class: 'flex between center is-clickable',
         style: { padding: '8px 0', cursor: 'pointer' },
-        activate: () => navigate('/documents'),
+        activate: () => navigate(`/documents/cover/${cl.id}`),
       },
         el('div', { class: 'flex gap-2 center' },
           icon('file', 'muted'),
@@ -475,6 +489,205 @@ function InterviewCard(job) {
     body: el('p', { class: 'muted', style: { margin: 0, lineHeight: '1.6' } },
       '아직 이 공고의 면접 준비가 없어요. AI에게 준비를 요청하면 여기에 저장돼요.'),
   });
+}
+
+async function openAppliedModal({ job, metaInfo, changeStatus }) {
+  const [{ cover_letters: allCoverLetters }, { documents }] = await Promise.all([
+    get('/api/cover-letters'),
+    get('/api/documents'),
+  ]);
+  const kindLabels = Object.fromEntries((metaInfo.document_kinds || []).map((k) => [k.value, k.label]));
+  const jobCoverIds = new Set((job.cover_letters || []).map((cl) => cl.id));
+  const today = new Date().toISOString().slice(0, 10);
+  const submittedAt = Input({ type: 'date', value: job.application?.applied_at?.slice(0, 10) || today });
+  const channel = Input({ placeholder: '예: 원티드, 사람인, 회사 채용페이지' });
+  const note = Textarea({ placeholder: '상태 변경 메모를 남길 수 있어요.', style: { minHeight: '76px' } });
+  const coverList = el('div', {});
+  const docList = el('div', { class: 'pick-list' });
+  const selectedDocIds = new Set(job.application?.resume_id ? [job.application.resume_id] : []);
+  let showAllCovers = false;
+  let selectedCoverId =
+    job.application?.cover_letter_id ||
+    (job.cover_letters || [])[0]?.id ||
+    '';
+
+  function pickRow({ input, title, sub }) {
+    return el('label', { class: 'pick-row' },
+      input,
+      el('span', { class: 'pick-row__main' },
+        el('span', { class: 'pick-row__title' }, title),
+        sub ? el('span', { class: 'pick-row__sub' }, sub) : null));
+  }
+
+  function drawCoverList() {
+    const scoped = (allCoverLetters || []).filter((cl) => jobCoverIds.has(cl.id));
+    const list = showAllCovers ? (allCoverLetters || []) : scoped;
+    const rows = [
+      pickRow({
+        input: el('input', {
+          type: 'radio',
+          name: 'submission-cover',
+          checked: !selectedCoverId,
+          onChange: () => { selectedCoverId = ''; drawCoverList(); },
+        }),
+        title: '선택 안 함',
+        sub: '자기소개서를 제출 자료로 기록하지 않음',
+      }),
+      ...list.map((cl) => pickRow({
+        input: el('input', {
+          type: 'radio',
+          name: 'submission-cover',
+          checked: selectedCoverId === cl.id,
+          onChange: () => { selectedCoverId = cl.id; drawCoverList(); },
+        }),
+        title: cl.title,
+        sub: [
+          `버전 ${cl.version_count ?? 1}개`,
+          cl.job_id && cl.job_id !== job.id ? '다른 공고 연결' : null,
+          cl.is_primary ? '대표' : null,
+        ].filter(Boolean).join(' · '),
+      })),
+    ];
+    if (!showAllCovers && !scoped.length) {
+      rows.push(el('p', { class: 'muted text-sm', style: { margin: '2px 0 0' } }, '이 공고의 자기소개서가 아직 없어요.'));
+    }
+    mount(coverList, ...rows);
+  }
+
+  function drawDocuments() {
+    const docs = documents || [];
+    if (!docs.length) {
+      mount(docList, el('p', { class: 'muted text-sm', style: { margin: 0 } }, '문서함에 저장된 이력서·경력기술서·포트폴리오가 없어요.'));
+      return;
+    }
+    mount(docList, ...docs.map((doc) => pickRow({
+      input: el('input', {
+        type: 'checkbox',
+        checked: selectedDocIds.has(doc.id),
+        onChange: (e) => {
+          if (e.target.checked) selectedDocIds.add(doc.id);
+          else selectedDocIds.delete(doc.id);
+        },
+      }),
+      title: doc.title,
+      sub: [
+        kindLabels[doc.kind] || doc.kind,
+        doc.is_primary ? '대표' : null,
+      ].filter(Boolean).join(' · '),
+    })));
+  }
+
+  const toggleCovers = Btn('다른 자기소개서', {
+    sm: true,
+    variant: 'ghost',
+    onClick: () => {
+      showAllCovers = !showAllCovers;
+      toggleCovers.querySelector('span').textContent = showAllCovers ? '이 공고 자기소개서만' : '다른 자기소개서';
+      drawCoverList();
+    },
+  });
+
+  drawCoverList();
+  drawDocuments();
+
+  openModal({
+    title: '지원 완료 기록',
+    size: 'lg',
+    body: el('div', { class: 'stack-3' },
+      el('div', { class: 'grid grid--2' },
+        Field('제출일', submittedAt),
+        Field('제출 채널', channel)),
+      Field(el('div', { class: 'flex between center' }, el('span', {}, '자기소개서'), toggleCovers), coverList),
+      Field('제출 문서', docList),
+      Field('메모', note),
+    ),
+    footer: (close) => [
+      Btn('취소', { onClick: close }),
+      SubmitBtn('상태만 변경', async () => {
+        await changeStatus('applied');
+        close();
+      }, { variant: 'ghost' }),
+      SubmitBtn('기록하고 완료', async () => {
+        const submission = {
+          submitted_at: submittedAt.value || undefined,
+          channel: channel.value.trim() || undefined,
+          cover_letter_id: selectedCoverId || undefined,
+          document_ids: [...selectedDocIds],
+        };
+        await changeStatus('applied', {
+          note: note.value.trim() || undefined,
+          submission,
+        });
+        close();
+      }),
+    ],
+  });
+}
+
+function TimelineCard(timeline) {
+  const list = timeline || [];
+  if (!list.length) return null;
+  return Card({
+    title: '타임라인',
+    sub: `${list.length}개`,
+    body: el('div', { class: 'timeline timeline--job' },
+      ...list.map((event, idx) => TimelineItem(event, idx === list.length - 1))),
+  });
+}
+
+function TimelineItem(event, isCurrent) {
+  return el('div', { class: `tl-item${isCurrent ? ' is-current' : ''}` },
+    el('div', { class: 'tl-item__rail' },
+      el('div', { class: 'tl-item__dot' }),
+      el('div', { class: 'tl-item__line' })),
+    el('div', { class: 'tl-item__body timeline-event' },
+      el('div', { class: 'timeline-event__head' },
+        el('div', { class: 'timeline-event__title' }, event.title),
+        el('time', { class: 'muted text-sm', attrs: { datetime: event.occurred_at || '' } }, fmtDate(event.occurred_at))),
+      event.summary ? el('div', { class: 'timeline-event__summary' }, event.summary) : null,
+      TimelinePayload(event)));
+}
+
+function TimelinePayload(event) {
+  const payload = event.payload || {};
+  const rows = [];
+  if (payload.cover_letter) rows.push(TimelineRef('자기소개서', payload.cover_letter));
+  if (payload.submission) {
+    const s = payload.submission;
+    const submittedMeta = [s.submitted_at ? fmtDate(s.submitted_at) : null, s.channel].filter(Boolean).join(' · ');
+    if (submittedMeta) rows.push(el('div', { class: 'timeline-event__meta' }, submittedMeta));
+    if (s.cover_letter) rows.push(TimelineRef('자기소개서', s.cover_letter));
+    if (Array.isArray(s.documents) && s.documents.length) {
+      rows.push(el('div', { class: 'timeline-docs' },
+        ...s.documents.map((doc) => TimelineRef(documentKindLabel(doc), doc))));
+    }
+  }
+  if (!rows.length) return null;
+  return el('div', { class: 'timeline-event__extra' }, ...rows);
+}
+
+function documentKindLabel(ref) {
+  const labels = {
+    resume: '이력서',
+    career_description: '경력기술서',
+    portfolio: '포트폴리오',
+    other: '문서',
+  };
+  return labels[ref.document_kind] || '문서';
+}
+
+function TimelineRef(label, ref) {
+  const version = ref.version_no ? ` v${ref.version_no}` : '';
+  const title = `${ref.title || '삭제된 문서'}${version}`;
+  if (ref.exists && ref.route) {
+    return el('div', { class: 'timeline-ref' },
+      el('span', { class: 'timeline-ref__label' }, label),
+      el('button', { class: 'timeline-ref__link', onClick: () => navigate(ref.route) }, title));
+  }
+  return el('div', { class: 'timeline-ref timeline-ref--missing' },
+    el('span', { class: 'timeline-ref__label' }, label),
+    el('span', { class: 'timeline-ref__missing' }, title),
+    el('span', { class: 'timeline-ref__deleted' }, '삭제됨'));
 }
 
 function RelatedCard(related) {

@@ -317,6 +317,33 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .tl-item__line { width: 2px; flex: 1; background: var(--border); margin: 4px 0; }
 .tl-item:last-child .tl-item__line { display: none; }
 .tl-item__body { padding-bottom: 16px; }
+.timeline--job .tl-item__dot { margin-top: 7px; }
+.timeline-event__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-width: 0; }
+.timeline-event__title { font-weight: 650; font-size: 14px; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.timeline-event__summary { margin-top: 3px; color: var(--text-secondary); font-size: 13.5px; line-height: 1.5; }
+.timeline-event__extra { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.timeline-event__meta { color: var(--text-tertiary); font-size: 13px; }
+.timeline-docs { display: flex; flex-direction: column; gap: 4px; }
+.timeline-ref { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 13.5px; }
+.timeline-ref__label { flex: none; color: var(--text-tertiary); }
+.timeline-ref__link {
+  appearance: none; border: 0; background: transparent; color: var(--text); padding: 1px 4px;
+  border-radius: 4px; font: inherit; font-weight: 600; cursor: pointer; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.timeline-ref__link:hover { background: var(--surface-hover); text-decoration: underline; }
+.timeline-ref__missing { color: var(--text-tertiary); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.timeline-ref__deleted { flex: none; padding: 1px 6px; border-radius: 999px; background: var(--bg-sunken); color: var(--text-tertiary); font-size: 11.5px; font-weight: 650; }
+.pick-list { display: flex; flex-direction: column; gap: 6px; }
+.pick-row {
+  display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer; background: var(--surface);
+}
+.pick-row:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.pick-row input { margin-top: 3px; flex: none; }
+.pick-row__main { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pick-row__title { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-row__sub { color: var(--text-tertiary); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ----------------------------------------------------------------- kanban */
 .board { display: grid; grid-auto-flow: column; grid-auto-columns: 272px; gap: 14px; overflow-x: auto; padding-bottom: 8px; }

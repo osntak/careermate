@@ -44,6 +44,7 @@ const RESTORE_ORDER = [
   'fit_analyses',
   'applications',
   'interview_preps',
+  'application_timeline_events',
   'activities',
 ] as const;
 

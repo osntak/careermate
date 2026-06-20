@@ -11,6 +11,7 @@
 import { z } from 'zod';
 import {
   APPLICATION_STATUSES,
+  APPLICATION_TIMELINE_TYPES,
   ACTIVITY_TYPES,
   CONTENT_SOURCES,
   DOCUMENT_KINDS,
@@ -402,11 +403,21 @@ export const ApplicationInputSchema = z.object({
 });
 export type ApplicationInput = z.infer<typeof ApplicationInputSchema>;
 
+export const ApplicationSubmissionSchema = z.object({
+  submitted_at: optLine.describe('실제 제출일 YYYY-MM-DD'),
+  channel: optLine.describe('제출 채널(원티드/사람인/회사 채용페이지 등)'),
+  cover_letter_id: optLine,
+  cover_letter_version_id: optLine,
+  document_ids: strList.optional().describe('제출한 이력서·경력기술서·포트폴리오 문서 ID 목록'),
+});
+export type ApplicationSubmission = z.infer<typeof ApplicationSubmissionSchema>;
+
 export const ApplicationStatusUpdateSchema = z.object({
   job_id: optLine,
   application_id: optLine,
   status: z.enum(APPLICATION_STATUSES),
   note: optNote.describe('상태 변경 사유/메모'),
+  submission: ApplicationSubmissionSchema.optional().describe('지원 완료 기록에 남길 제출 자료 스냅샷'),
 });
 export type ApplicationStatusUpdate = z.infer<typeof ApplicationStatusUpdateSchema>;
 
@@ -470,6 +481,28 @@ export const ActivityRecordSchema = z.object({
   created_at: isoDateTime,
 });
 export type ActivityRecord = z.infer<typeof ActivityRecordSchema>;
+
+export const ApplicationTimelineInputSchema = z.object({
+  job_id: reqLine,
+  type: z.enum(APPLICATION_TIMELINE_TYPES),
+  title: reqLine,
+  summary: optNote,
+  payload: z.record(z.string(), z.unknown()).optional(),
+  occurred_at: optLine,
+});
+export type ApplicationTimelineInput = z.infer<typeof ApplicationTimelineInputSchema>;
+
+export const ApplicationTimelineRecordSchema = z.object({
+  id,
+  job_id: z.string(),
+  type: z.enum(APPLICATION_TIMELINE_TYPES),
+  title: z.string(),
+  summary: z.string().nullable(),
+  payload: z.record(z.string(), z.unknown()),
+  occurred_at: isoDateTime,
+  created_at: isoDateTime,
+});
+export type ApplicationTimelineRecord = z.infer<typeof ApplicationTimelineRecordSchema>;
 
 /* ----------------------------------------------------- Aggregates / context */
 

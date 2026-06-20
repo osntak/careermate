@@ -13,9 +13,12 @@ const sourceLabel = (s) => SOURCE_LABELS[s] || s || '';
 // navigations so returning to Documents reopens where the user left off. The search
 // query is intentionally NOT persisted (it resets per visit).
 let tab = 'cover';
+let openedDeepLink = '';
 
 export async function render(ctx) {
-  if (['cover', 'career', 'docs'].includes(ctx.params?.[0])) tab = ctx.params[0];
+  const requestedTab = ['cover', 'career', 'docs'].includes(ctx.params?.[0]) ? ctx.params[0] : null;
+  const requestedId = ctx.params?.[1] || '';
+  if (requestedTab) tab = requestedTab;
 
   const root = el('div', { class: 'stack-4' });
 
@@ -68,11 +71,26 @@ export async function render(ctx) {
       else if (tab === 'career') mount(panel, await CareerDescriptionsTab(reload));
       else mount(panel, await DocumentsTab(reload));
       applyFilter();
+      await openRequestedDocument();
     } catch (err) {
       toastError(err);
       mount(panel, el('div', { class: 'card' }, el('div', { class: 'card__body' },
         el('p', { class: 'text-secondary' }, err instanceof Error ? err.message : String(err)))));
     }
+  }
+
+  async function openRequestedDocument() {
+    if (!requestedId || requestedTab !== tab) return;
+    const key = `${requestedTab}:${requestedId}`;
+    if (openedDeepLink === key) return;
+    openedDeepLink = key;
+    if (tab === 'cover') {
+      await openCoverDetail(requestedId, reload);
+      return;
+    }
+    const m = await meta();
+    const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, k.label]));
+    await openDocDetail(requestedId, kindLabels, m, reload);
   }
 
   // topbar: search (filters the active tab) + the tab's create action

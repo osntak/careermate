@@ -283,6 +283,23 @@ export const MIGRATIONS: string[] = [
   COMMIT;
   PRAGMA foreign_keys=ON;
   `,
+
+  // v3 — per-job timeline entries. Document/cover-letter refs live in payload
+  // snapshots instead of FKs so deleting a document does not erase the history.
+  `
+  CREATE TABLE IF NOT EXISTS application_timeline_events (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    summary TEXT,
+    payload TEXT NOT NULL DEFAULT '{}',
+    occurred_at TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_timeline_job ON application_timeline_events(job_id, occurred_at ASC);
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

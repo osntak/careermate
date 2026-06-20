@@ -21,6 +21,7 @@ import {
   JobInputSchema,
   FitAnalysisInputSchema,
   CoverLetterVersionInputSchema,
+  ApplicationSubmissionSchema,
   InterviewPrepInputSchema,
   DocumentInputSchema,
   APPLICATION_STATUSES,
@@ -658,10 +659,11 @@ export const TOOLS: ToolDef[] = [
       job_id: z.string(),
       status: z.enum(APPLICATION_STATUSES),
       note: z.string().optional(),
+      submission: ApplicationSubmissionSchema.optional(),
     },
     handler: (args) => {
       try {
-        const res = updateApplicationStatus(args.job_id, args.status, args.note);
+        const res = updateApplicationStatus(args.job_id, args.status, args.note, args.submission);
         const user_message =
           `지원 상태를 '${APPLICATION_STATUS_LABELS[args.status as keyof typeof APPLICATION_STATUS_LABELS]}'(으)로 바꿨어요.` +
           (res.hint ? `\n\n${res.hint}` : '');

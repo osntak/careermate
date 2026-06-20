@@ -33,17 +33,118 @@ function logActivity(type, summary, entity_type = null, entity_id = null) {
   db.activities.unshift({ id: nid('ac'), type, entity_type, entity_id, summary, created_at: nowIso() });
 }
 
+function addTimeline(job_id, type, title, summary = null, payload = {}, occurred_at = null) {
+  db.timeline = db.timeline || [];
+  const ts = nowIso();
+  const event = { id: nid('tl'), job_id, type, title, summary, payload, occurred_at: occurred_at || ts, created_at: ts };
+  db.timeline.push(event);
+  return event;
+}
+
 /* ------------------------------------------------------- derived helpers */
 const appByJob = (jobId) => db.applications.find((a) => a.job_id === jobId) || null;
 const fitByJob = (jobId) => db.fits.find((f) => f.job_id === jobId) || null;
 const ivByJob = (jobId) => db.interviews.find((i) => i.job_id === jobId) || null;
 const clByJob = (jobId) => db.coverLetters.filter((c) => c.job_id === jobId);
+const timelineByJob = (jobId) => (db.timeline || []).filter((e) => e.job_id === jobId);
 
 function jobWithMeta(job) {
   const app = appByJob(job.id);
   const fit = fitByJob(job.id);
   const status = app?.status ?? 'draft';
   return { ...job, status, status_label: STATUS_LABELS[status], fit_score: fit?.score ?? null };
+}
+
+function coverRef(cl, version = null, versionId = null) {
+  const resolved = version || (cl.versions || []).find((v) => v.id === versionId || v.id === cl.current_version_id) || null;
+  return {
+    kind: 'cover_letter',
+    id: cl.id,
+    title: cl.title,
+    version_id: resolved?.id || versionId || cl.current_version_id,
+    version_no: resolved?.version_no || cl.version_count,
+  };
+}
+
+function documentRef(doc) {
+  return { kind: 'document', id: doc.id, title: doc.title, document_kind: doc.kind };
+}
+
+function submittedAtToOccurrence(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? `${value}T00:00:00.000Z` : null;
+}
+
+function documentRoute(doc) {
+  return doc.kind === 'career_description' ? `/documents/career/${doc.id}` : `/documents/docs/${doc.id}`;
+}
+
+function enrichDocumentRef(ref) {
+  if (!ref || typeof ref !== 'object') return ref;
+  const doc = db.documents.find((d) => d.id === ref.id);
+  return {
+    ...ref,
+    title: doc?.title || ref.title || '삭제된 문서',
+    document_kind: doc?.kind || ref.document_kind || ref.kind || null,
+    exists: !!doc,
+    route: doc ? documentRoute(doc) : null,
+  };
+}
+
+function enrichCoverRef(ref) {
+  if (!ref || typeof ref !== 'object') return ref;
+  const cl = db.coverLetters.find((c) => c.id === ref.id);
+  return {
+    ...ref,
+    title: cl?.title || ref.title || '삭제된 자기소개서',
+    exists: !!cl,
+    route: cl ? `/documents/cover/${cl.id}` : null,
+  };
+}
+
+function enrichTimelinePayload(payload) {
+  const out = payload && typeof payload === 'object' && !Array.isArray(payload) ? { ...payload } : {};
+  if (out.cover_letter) out.cover_letter = enrichCoverRef(out.cover_letter);
+  if (out.submission && typeof out.submission === 'object') {
+    const submission = { ...out.submission };
+    if (submission.cover_letter) submission.cover_letter = enrichCoverRef(submission.cover_letter);
+    if (Array.isArray(submission.documents)) submission.documents = submission.documents.map(enrichDocumentRef);
+    out.submission = submission;
+  }
+  return out;
+}
+
+function buildTimeline(job) {
+  const app = appByJob(job.id);
+  const fit = fitByJob(job.id);
+  const covers = clByJob(job.id);
+  const interview = ivByJob(job.id);
+  const stored = timelineByJob(job.id);
+  const events = [
+    { id: `synthetic-job-${job.id}`, job_id: job.id, type: 'job_saved', title: '공고 등록', summary: `${job.company} · ${job.position}`, payload: { synthetic: true }, occurred_at: job.created_at, created_at: job.created_at },
+    ...stored,
+  ];
+  const hasStored = (type, predicate) => stored.some((event) => event.type === type && (!predicate || predicate(enrichTimelinePayload(event.payload))));
+  if (fit && !hasStored('fit_analysis_saved', (payload) => payload.fit_id === fit.id)) {
+    events.push({ id: `synthetic-fit-${fit.id}`, job_id: job.id, type: 'fit_analysis_saved', title: '적합도 분석', summary: fit.score != null ? `종합 ${fit.score}점` : fit.summary, payload: { synthetic: true, fit_id: fit.id, score: fit.score }, occurred_at: fit.updated_at, created_at: fit.created_at });
+  }
+  for (const cl of covers) {
+    const alreadyStored = hasStored('cover_letter_version_saved', (payload) => {
+      const ref = payload.cover_letter && typeof payload.cover_letter === 'object' ? payload.cover_letter : null;
+      return ref?.id === cl.id && (!cl.current_version_id || ref.version_id === cl.current_version_id);
+    });
+    if (!alreadyStored) {
+      events.push({ id: `synthetic-cover-${cl.id}`, job_id: job.id, type: 'cover_letter_version_saved', title: '자기소개서 작성', summary: `${cl.title}${cl.version_count ? ` v${cl.version_count}` : ''}`, payload: { synthetic: true, cover_letter: coverRef(cl) }, occurred_at: cl.updated_at, created_at: cl.created_at });
+    }
+  }
+  if (app?.status && app.status !== 'draft' && !hasStored('application_status_changed', (payload) => payload.status === app.status)) {
+    events.push({ id: `synthetic-status-${app.id}`, job_id: job.id, type: 'application_status_changed', title: STATUS_LABELS[app.status], summary: app.notes, payload: { synthetic: true, status: app.status, status_label: STATUS_LABELS[app.status], submission: null }, occurred_at: app.applied_at || app.updated_at, created_at: app.created_at });
+  }
+  if (interview && !hasStored('interview_prep_saved', (payload) => payload.interview_prep_id === interview.id)) {
+    events.push({ id: `synthetic-interview-${interview.id}`, job_id: job.id, type: 'interview_prep_saved', title: '면접 준비', summary: interview.questions.length ? `예상 질문 ${interview.questions.length}개` : interview.notes, payload: { synthetic: true, interview_prep_id: interview.id, question_count: interview.questions.length }, occurred_at: interview.updated_at, created_at: interview.created_at });
+  }
+  return events
+    .sort((a, b) => String(a.occurred_at).localeCompare(String(b.occurred_at)) || String(a.created_at).localeCompare(String(b.created_at)))
+    .map((event) => ({ ...event, payload: enrichTimelinePayload(event.payload) }));
 }
 
 function onboarding() {
@@ -115,6 +216,7 @@ function jobDetail(jobId) {
       cover_letters: clByJob(jobId),
       interview: ivByJob(jobId),
       related,
+      timeline: buildTimeline(job),
     },
   };
 }
@@ -131,6 +233,7 @@ function settingsInfo() {
       profile: db.profile ? 1 : 0, experiences: db.experiences.length, projects: db.projects.length,
       skills: db.skills.length, documents: db.documents.length, cover_letters: db.coverLetters.length,
       jobs: db.jobs.length, applications: db.applications.length, interview_preps: db.interviews.length,
+      application_timeline_events: (db.timeline || []).length,
     },
   };
 }
@@ -166,6 +269,7 @@ function backupTables() {
     fit_analyses: db.fits,
     applications: db.applications,
     interview_preps: db.interviews,
+    application_timeline_events: db.timeline || [],
     activities: db.activities,
   };
 }
@@ -218,6 +322,7 @@ function restoreDemoBackup(backup) {
     fits: clone(tables.fit_analyses || []),
     applications: clone(tables.applications || []),
     interviews: clone(tables.interview_preps || []),
+    timeline: clone(tables.application_timeline_events || []),
     activities: clone(tables.activities || []),
     backups: db.backups || [],
     verify_strict: !!db.verify_strict,
@@ -291,6 +396,9 @@ const ROUTES = [
     if (cl.is_primary) db.coverLetters.forEach((c) => { c.is_primary = false; });
     cl.is_primary = !!body.is_primary;
     db.coverLetters.unshift(cl);
+    if (body.content && cl.job_id) {
+      addTimeline(cl.job_id, 'cover_letter_version_saved', '자기소개서 작성', `${cl.title} v${cl.version_count}`, { cover_letter: coverRef(cl) }, cl.updated_at);
+    }
     logActivity('cover_letter_added', `${cl.title} 자기소개서를 추가했습니다.`, 'cover_letter', id);
     return { cover_letter: cl };
   }],
@@ -302,6 +410,9 @@ const ROUTES = [
     const cl = db.coverLetters.find((c) => c.id === p[0]);
     if (!cl) return { __status: 404, error: '자기소개서를 찾을 수 없습니다.' };
     const version = addVersion(cl, body.content, body.note, body.source || 'edit');
+    if (cl.job_id) {
+      addTimeline(cl.job_id, 'cover_letter_version_saved', '자기소개서 작성', `${cl.title} v${version.version_no}`, { cover_letter: coverRef(cl, version) }, version.created_at);
+    }
     logActivity('cover_letter_version_saved', `${cl.title} v${version.version_no}을(를) 저장했습니다.`, 'cover_letter', cl.id);
     return { cover_letter: cl, version };
   }],
@@ -337,7 +448,18 @@ const ROUTES = [
     if (!iv) { iv = { id: nid('iv'), created_at: nowIso(), updated_at: nowIso(), job_id: p[0], questions: [], star_guides: [], self_introduction: null, notes: null }; db.interviews.unshift(iv); }
     Object.assign(iv, { questions: arr(body.questions), star_guides: arr(body.star_guides), self_introduction: body.self_introduction ?? iv.self_introduction, notes: body.notes ?? iv.notes, updated_at: nowIso() });
     logActivity('interview_prep_saved', '면접 준비 자료를 저장했습니다.', 'interview_prep', iv.id);
+    addTimeline(p[0], 'interview_prep_saved', '면접 준비', iv.questions.length ? `예상 질문 ${iv.questions.length}개` : iv.notes, { interview_prep_id: iv.id, question_count: iv.questions.length }, iv.updated_at);
     return { interview: iv };
+  }],
+  ['PUT', /^\/api\/jobs\/([^/]+)\/fit$/, (p, body) => {
+    const job = db.jobs.find((j) => j.id === p[0]);
+    if (!job) return { __status: 404, error: '공고를 찾을 수 없습니다.' };
+    let fit = fitByJob(p[0]);
+    if (!fit) { fit = { id: nid('f'), created_at: nowIso(), updated_at: nowIso(), job_id: p[0], score: null, summary: null, strengths: [], gaps: [], matched_keywords: [], missing_keywords: [], recommendations: [] }; db.fits.unshift(fit); }
+    Object.assign(fit, pick(body, ['score', 'summary', 'strengths', 'gaps', 'matched_keywords', 'missing_keywords', 'recommendations']), { updated_at: nowIso() });
+    logActivity('fit_analysis_saved', `${job.company} 적합도 분석을 저장했습니다.`, 'fit_analysis', fit.id);
+    addTimeline(p[0], 'fit_analysis_saved', '적합도 분석', fit.score != null ? `종합 ${fit.score}점` : fit.summary, { fit_id: fit.id, score: fit.score }, fit.updated_at);
+    return { fit };
   }],
   ['GET', /^\/api\/jobs\/([^/]+)$/, (p) => jobDetail(p[0])],
   ['PUT', /^\/api\/jobs\/([^/]+)$/, (p, body) => {
@@ -350,6 +472,7 @@ const ROUTES = [
     db.applications = db.applications.filter((a) => a.job_id !== p[0]);
     db.fits = db.fits.filter((f) => f.job_id !== p[0]);
     db.interviews = db.interviews.filter((i) => i.job_id !== p[0]);
+    db.timeline = (db.timeline || []).filter((e) => e.job_id !== p[0]);
     return remove(db.jobs, p[0]);
   }],
 
@@ -357,9 +480,8 @@ const ROUTES = [
   ['GET', /^\/api\/interview$/, () => {
     const preps = db.interviews.map((pp) => ({ ...pp, job: db.jobs.find((j) => j.id === pp.job_id) }));
     const eligible = db.applications
-      .filter((a) => INTERVIEW_UNLOCK.includes(a.status))
       .map((a) => ({ job: db.jobs.find((j) => j.id === a.job_id), status: a.status, status_label: STATUS_LABELS[a.status], has_prep: !!ivByJob(a.job_id) }))
-      .filter((x) => x.job);
+      .filter((x) => x.job && (x.has_prep || INTERVIEW_UNLOCK.includes(x.status)));
     return { preps, eligible };
   }],
 
@@ -373,9 +495,32 @@ const ROUTES = [
     if (!job) return { __status: 404, error: '공고를 찾을 수 없습니다.' };
     let app = appByJob(p[0]);
     if (!app) { app = { id: nid('a'), created_at: nowIso(), updated_at: nowIso(), job_id: p[0], status: 'draft', resume_id: null, cover_letter_id: null, applied_at: null, notes: null }; db.applications.unshift(app); }
+    const beforeStatus = app.status;
     app.status = body.status; app.updated_at = nowIso();
-    if (body.note) app.notes = body.note;
+    if (body.note) app.notes = [app.notes, body.note].filter(Boolean).join('\n');
+    const submittedDocs = arr(body.submission?.document_ids).map((id) => db.documents.find((d) => d.id === id)).filter(Boolean);
+    const submittedCover = body.submission?.cover_letter_id ? db.coverLetters.find((c) => c.id === body.submission.cover_letter_id) : null;
+    if (body.status === 'applied' && body.submission) {
+      const resumeLike = submittedDocs.find((doc) => doc.kind === 'resume' || doc.kind === 'career_description') || submittedDocs[0] || null;
+      if (resumeLike) app.resume_id = resumeLike.id;
+      if (submittedCover) app.cover_letter_id = submittedCover.id;
+      if (body.submission.submitted_at) app.applied_at = body.submission.submitted_at;
+    }
     logActivity('application_status_changed', `${job.company} · ${job.position} 상태를 '${STATUS_LABELS[body.status]}'(으)로 변경했습니다.`, 'application', app.id);
+    const submittedAt = body.submission?.submitted_at || null;
+    const channel = body.submission?.channel || null;
+    addTimeline(p[0], 'application_status_changed', STATUS_LABELS[body.status], channel && body.status === 'applied' ? `${channel}로 제출` : body.note || null, {
+      from_status: beforeStatus,
+      status: body.status,
+      status_label: STATUS_LABELS[body.status],
+      note: body.note || null,
+      submission: body.submission ? {
+        submitted_at: submittedAt,
+        channel,
+        cover_letter: submittedCover ? coverRef(submittedCover, null, body.submission.cover_letter_version_id) : null,
+        documents: submittedDocs.map(documentRef),
+      } : null,
+    }, submittedAtToOccurrence(submittedAt));
     const interview_unlocked = INTERVIEW_UNLOCK.includes(body.status);
     return { application: app, job, interview_unlocked, hint: interview_unlocked && !ivByJob(p[0]) ? '서류 단계를 통과했어요. 면접 질문과 자기소개를 준비해 보세요.' : null };
   }],

@@ -13,11 +13,14 @@ import {
   type FitAnalysisRecord,
   type CoverLetterVersionInput,
   type ApplicationStatus,
+  type ApplicationSubmission,
   type ApplicationRecord,
   type InterviewPrepInput,
   type InterviewPrepRecord,
   type DocumentInput,
   type DocumentRecord,
+  type CoverLetterRecord,
+  type CoverLetterVersionRecord,
   type ProfileInput,
   type ProfileRecord,
   type ExperienceInput,
@@ -43,6 +46,7 @@ import {
   projectRepo,
   skillRepo,
   activityRepo,
+  timelineRepo,
   getVerifyStrict,
 } from '@careermate/db';
 import { lintArtifact, type VerifyCorpus, type LintReport } from './verify/index.ts';
@@ -142,6 +146,39 @@ function batchNames(names: string[]): string {
   return `: ${shown}${names.length > 8 ? ' 외' : ''}`;
 }
 
+function coverLetterTimelineRef(
+  coverLetter: CoverLetterRecord,
+  version?: CoverLetterVersionRecord | null,
+  requestedVersionId?: string | null,
+) {
+  const resolvedVersion =
+    version ??
+    coverLetter.versions?.find((v) => v.id === requestedVersionId || v.id === coverLetter.current_version_id) ??
+    null;
+  return {
+    kind: 'cover_letter',
+    id: coverLetter.id,
+    title: coverLetter.title,
+    version_id: resolvedVersion?.id ?? requestedVersionId ?? coverLetter.current_version_id,
+    version_no: resolvedVersion?.version_no ?? coverLetter.version_count,
+  };
+}
+
+function documentTimelineRef(doc: DocumentRecord) {
+  return {
+    kind: 'document',
+    id: doc.id,
+    title: doc.title,
+    document_kind: doc.kind,
+  };
+}
+
+function submittedAtToOccurrence(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return `${value}T00:00:00.000Z`;
+  return undefined;
+}
+
 export function addExperiences(inputs: ExperienceInput[]): {
   records: ExperienceRecord[];
   created: number;
@@ -206,6 +243,17 @@ export function saveFitAnalysis(input: FitAnalysisInput): FitAnalysisRecord {
   const fit = fitRepo.save(input);
   const scoreText = fit.score != null ? ` (적합도 ${fit.score}점)` : '';
   activityRepo.log('fit_analysis_saved', `${job.company} · ${job.position} 적합도 분석을 저장했습니다${scoreText}.`, 'fit_analysis', fit.id);
+  timelineRepo.add({
+    job_id: job.id,
+    type: 'fit_analysis_saved',
+    title: '적합도 분석',
+    summary: fit.score != null ? `종합 ${fit.score}점` : fit.summary ?? undefined,
+    payload: {
+      fit_id: fit.id,
+      score: fit.score,
+    },
+    occurred_at: fit.updated_at,
+  });
   return fit;
 }
 
@@ -250,6 +298,18 @@ export function saveCoverLetterVersion(input: CoverLetterVersionInput & { force?
     'cover_letter',
     coverLetter.id,
   );
+  if (coverLetter.job_id) {
+    timelineRepo.add({
+      job_id: coverLetter.job_id,
+      type: 'cover_letter_version_saved',
+      title: '자기소개서 작성',
+      summary: `${coverLetter.title} v${version.version_no}`,
+      payload: {
+        cover_letter: coverLetterTimelineRef(coverLetter, version),
+      },
+      occurred_at: version.created_at,
+    });
+  }
   return { coverLetter, version, verification, forced };
 }
 
@@ -266,16 +326,63 @@ export function updateApplicationStatus(
   jobId: string,
   status: ApplicationStatus,
   note?: string,
+  submission?: ApplicationSubmission,
 ): StatusChangeResult {
   const job = jobRepo.get(jobId);
   if (!job) throw notFound('공고를 찾을 수 없습니다.');
-  const application = applicationRepo.setStatus(jobId, status, note);
+  const before = applicationRepo.getByJob(jobId);
+  let application = applicationRepo.setStatus(jobId, status, note);
+  const submittedDocs = (submission?.document_ids ?? [])
+    .map((docId) => documentRepo.get(docId))
+    .filter((doc): doc is DocumentRecord => !!doc);
+  const submittedCoverLetter = submission?.cover_letter_id
+    ? coverLetterRepo.get(submission.cover_letter_id, true)
+    : null;
+  if (status === 'applied' && submission) {
+    const resumeLike =
+      submittedDocs.find((doc) => doc.kind === 'resume' || doc.kind === 'career_description') ??
+      submittedDocs[0] ??
+      null;
+    application = applicationRepo.upsert({
+      job_id: jobId,
+      resume_id: resumeLike?.id ?? application.resume_id ?? undefined,
+      cover_letter_id: submittedCoverLetter?.id ?? application.cover_letter_id ?? undefined,
+      applied_at: submission.submitted_at ?? application.applied_at ?? undefined,
+    });
+  }
   activityRepo.log(
     'application_status_changed',
     `${job.company} · ${job.position} 상태를 '${APPLICATION_STATUS_LABELS[status]}'(으)로 변경했습니다.`,
     'application',
     application.id,
   );
+  const submittedAt = submission?.submitted_at?.trim();
+  const channel = submission?.channel?.trim();
+  const submissionPayload =
+    submission && (submittedAt || channel || submittedCoverLetter || submittedDocs.length > 0)
+      ? {
+          submitted_at: submittedAt || null,
+          channel: channel || null,
+          cover_letter: submittedCoverLetter
+            ? coverLetterTimelineRef(submittedCoverLetter, null, submission.cover_letter_version_id)
+            : null,
+          documents: submittedDocs.map(documentTimelineRef),
+        }
+      : null;
+  timelineRepo.add({
+    job_id: job.id,
+    type: 'application_status_changed',
+    title: APPLICATION_STATUS_LABELS[status],
+    summary: channel && status === 'applied' ? `${channel}로 제출` : note ?? undefined,
+    payload: {
+      from_status: before?.status ?? null,
+      status,
+      status_label: APPLICATION_STATUS_LABELS[status],
+      note: note ?? null,
+      submission: submissionPayload,
+    },
+    occurred_at: submittedAtToOccurrence(submittedAt),
+  });
 
   const interview_unlocked = INTERVIEW_UNLOCK_STATUSES.includes(status);
   const hasPrep = !!interviewRepo.getByJob(jobId);
@@ -296,5 +403,16 @@ export function saveInterviewPrep(input: InterviewPrepInput): InterviewPrepRecor
   // controls when the dashboard recommends it as a to-do, not whether it can be saved.
   const prep = interviewRepo.save(input);
   activityRepo.log('interview_prep_saved', `${job.company} · ${job.position} 면접 준비 자료를 저장했습니다.`, 'interview_prep', prep.id);
+  timelineRepo.add({
+    job_id: job.id,
+    type: 'interview_prep_saved',
+    title: '면접 준비',
+    summary: prep.questions.length > 0 ? `예상 질문 ${prep.questions.length}개` : prep.notes ?? undefined,
+    payload: {
+      interview_prep_id: prep.id,
+      question_count: prep.questions.length,
+    },
+    occurred_at: prep.updated_at,
+  });
   return prep;
 }

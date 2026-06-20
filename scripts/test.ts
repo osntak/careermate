@@ -91,6 +91,46 @@ ok('get_application_context 집계', ctx.job?.id === apiJob.id && ctx.fit_analys
 const cl = (await json('POST', '/api/cover-letters', { title: '라인 자소서', job_id: apiJob.id, content: 'v1' }, { 'x-careermate-token': SESSION_TOKEN })).cover_letter;
 await authed('POST', `/api/cover-letters/${cl.id}/versions`, { content: 'v2', note: '보강' });
 ok('자소서 버전 관리', (await json('GET', `/api/cover-letters/${cl.id}`)).cover_letter.version_count === 2);
+const timelineBeforeApply = (await json('GET', `/api/jobs/${apiJob.id}`)).job.timeline;
+ok(
+  '공고 상세 타임라인: 공고 등록/분석/자소서 이벤트',
+  timelineBeforeApply.some((e: any) => e.type === 'job_saved') &&
+    timelineBeforeApply.some((e: any) => e.type === 'fit_analysis_saved') &&
+    timelineBeforeApply.some((e: any) => e.type === 'cover_letter_version_saved'),
+);
+const submissionDoc = (await json('POST', '/api/documents', {
+  kind: 'career_description',
+  title: '제출용 경력기술서',
+  content: '경력기술서 본문',
+}, { 'x-careermate-token': SESSION_TOKEN })).document;
+await authed('PUT', `/api/applications/${apiJob.id}/status`, {
+  status: 'applied',
+  note: '원티드 제출',
+  submission: {
+    submitted_at: '2026-06-19',
+    channel: '원티드',
+    cover_letter_id: cl.id,
+    document_ids: [submissionDoc.id],
+  },
+});
+let timelineDetail = (await json('GET', `/api/jobs/${apiJob.id}`)).job.timeline;
+const appliedEvent = timelineDetail.find((e: any) => e.type === 'application_status_changed' && e.payload?.submission?.channel === '원티드');
+ok(
+  '지원 완료 타임라인: 제출 자료 링크 참조',
+  appliedEvent?.payload?.submission?.cover_letter?.exists === true &&
+    appliedEvent.payload.submission.cover_letter.route === `/documents/cover/${cl.id}` &&
+    appliedEvent.payload.submission.documents?.[0]?.exists === true &&
+    appliedEvent.payload.submission.documents[0].route === `/documents/career/${submissionDoc.id}`,
+);
+await authed('DELETE', `/api/documents/${submissionDoc.id}`);
+timelineDetail = (await json('GET', `/api/jobs/${apiJob.id}`)).job.timeline;
+const deletedDocRef = timelineDetail
+  .find((e: any) => e.id === appliedEvent.id)
+  ?.payload?.submission?.documents?.[0];
+ok(
+  '지원 완료 타임라인: 삭제된 제출 문서는 정적 삭제 표시용 데이터',
+  deletedDocRef?.exists === false && deletedDocRef.title === '제출용 경력기술서' && deletedDocRef.route === null,
+);
 const exp = await reqRaw('GET', `/api/export/cover-letter/${cl.id}?format=md`);
 ok('자소서 내보내기(MD)', String(exp.headers['content-disposition'] || '').includes('attachment'));
 

@@ -38,6 +38,7 @@ import {
   applicationRepo,
   interviewRepo,
   activityRepo,
+  timelineRepo,
   setVerifyStrict,
 } from '@careermate/db';
 import {
@@ -89,6 +90,152 @@ function backupError(e: unknown): HttpError {
   return new HttpError(400, e instanceof Error ? e.message : '백업 파일을 처리하지 못했습니다.', 'backup_import');
 }
 
+function isRecord(v: unknown): v is Record<string, any> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+function documentRoute(doc: { id: string; kind: DocumentKind }): string {
+  return doc.kind === 'career_description' ? `/documents/career/${doc.id}` : `/documents/docs/${doc.id}`;
+}
+
+function enrichDocumentRef(ref: unknown) {
+  if (!isRecord(ref)) return ref;
+  const refId = typeof ref.id === 'string' ? ref.id : null;
+  const doc = refId ? documentRepo.get(refId) : null;
+  const kind = doc?.kind ?? ref.document_kind ?? ref.kind ?? null;
+  return {
+    ...ref,
+    title: doc?.title ?? ref.title ?? '삭제된 문서',
+    document_kind: kind,
+    exists: !!doc,
+    route: doc ? documentRoute(doc) : null,
+  };
+}
+
+function enrichCoverLetterRef(ref: unknown) {
+  if (!isRecord(ref)) return ref;
+  const refId = typeof ref.id === 'string' ? ref.id : null;
+  const cl = refId ? coverLetterRepo.get(refId, false) : null;
+  return {
+    ...ref,
+    title: cl?.title ?? ref.title ?? '삭제된 자기소개서',
+    exists: !!cl,
+    route: cl ? `/documents/cover/${cl.id}` : null,
+  };
+}
+
+function enrichTimelinePayload(payload: unknown): Record<string, any> {
+  const out = isRecord(payload) ? { ...payload } : {};
+  if (out.cover_letter) out.cover_letter = enrichCoverLetterRef(out.cover_letter);
+  if (isRecord(out.submission)) {
+    const submission = { ...out.submission };
+    if (submission.cover_letter) submission.cover_letter = enrichCoverLetterRef(submission.cover_letter);
+    if (Array.isArray(submission.documents)) submission.documents = submission.documents.map(enrichDocumentRef);
+    out.submission = submission;
+  }
+  return out;
+}
+
+function buildTimeline(job: NonNullable<ReturnType<typeof jobRepo.get>>) {
+  const application = applicationRepo.getByJob(job.id);
+  const fit = fitRepo.getByJob(job.id);
+  const coverLetters = coverLetterRepo.listByJob(job.id);
+  const interview = interviewRepo.getByJob(job.id);
+  const stored = timelineRepo.listByJob(job.id);
+  const events: any[] = [
+    {
+      id: `synthetic-job-${job.id}`,
+      job_id: job.id,
+      type: 'job_saved',
+      title: '공고 등록',
+      summary: `${job.company} · ${job.position}`,
+      payload: { synthetic: true },
+      occurred_at: job.created_at,
+      created_at: job.created_at,
+    },
+    ...stored,
+  ];
+  const hasStored = (type: string, predicate?: (payload: Record<string, any>) => boolean) =>
+    stored.some((event) => event.type === type && (!predicate || predicate(enrichTimelinePayload(event.payload))));
+
+  if (fit && !hasStored('fit_analysis_saved', (payload) => payload.fit_id === fit.id)) {
+    events.push({
+      id: `synthetic-fit-${fit.id}`,
+      job_id: job.id,
+      type: 'fit_analysis_saved',
+      title: '적합도 분석',
+      summary: fit.score != null ? `종합 ${fit.score}점` : fit.summary,
+      payload: { synthetic: true, fit_id: fit.id, score: fit.score },
+      occurred_at: fit.updated_at,
+      created_at: fit.created_at,
+    });
+  }
+
+  for (const cl of coverLetters) {
+    const versionId = cl.current_version_id;
+    const alreadyStored = hasStored('cover_letter_version_saved', (payload) => {
+      const ref = isRecord(payload.cover_letter) ? payload.cover_letter : null;
+      return ref?.id === cl.id && (!versionId || ref.version_id === versionId);
+    });
+    if (!alreadyStored) {
+      events.push({
+        id: `synthetic-cover-${cl.id}`,
+        job_id: job.id,
+        type: 'cover_letter_version_saved',
+        title: '자기소개서 작성',
+        summary: `${cl.title}${cl.version_count ? ` v${cl.version_count}` : ''}`,
+        payload: {
+          synthetic: true,
+          cover_letter: {
+            kind: 'cover_letter',
+            id: cl.id,
+            title: cl.title,
+            version_id: versionId,
+            version_no: cl.version_count,
+          },
+        },
+        occurred_at: cl.updated_at,
+        created_at: cl.created_at,
+      });
+    }
+  }
+
+  if (application?.status && application.status !== 'draft' && !hasStored('application_status_changed', (payload) => payload.status === application.status)) {
+    events.push({
+      id: `synthetic-status-${application.id}`,
+      job_id: job.id,
+      type: 'application_status_changed',
+      title: APPLICATION_STATUS_LABELS[application.status],
+      summary: application.notes,
+      payload: {
+        synthetic: true,
+        status: application.status,
+        status_label: APPLICATION_STATUS_LABELS[application.status],
+        submission: null,
+      },
+      occurred_at: application.applied_at ?? application.updated_at,
+      created_at: application.created_at,
+    });
+  }
+
+  if (interview && !hasStored('interview_prep_saved', (payload) => payload.interview_prep_id === interview.id)) {
+    events.push({
+      id: `synthetic-interview-${interview.id}`,
+      job_id: job.id,
+      type: 'interview_prep_saved',
+      title: '면접 준비',
+      summary: interview.questions.length > 0 ? `예상 질문 ${interview.questions.length}개` : interview.notes,
+      payload: { synthetic: true, interview_prep_id: interview.id, question_count: interview.questions.length },
+      occurred_at: interview.updated_at,
+      created_at: interview.created_at,
+    });
+  }
+
+  return events
+    .sort((a, b) => String(a.occurred_at).localeCompare(String(b.occurred_at)) || String(a.created_at).localeCompare(String(b.created_at)))
+    .map((event) => ({ ...event, payload: enrichTimelinePayload(event.payload) }));
+}
+
 /** Assemble the full detail bundle for one job (used by the Jobs/Applications UI). */
 function jobDetail(jobId: string) {
   const job = jobRepo.get(jobId);
@@ -98,6 +245,7 @@ function jobDetail(jobId: string) {
   const cover_letters = coverLetterRepo.listByJob(jobId);
   const interview = interviewRepo.getByJob(jobId);
   const related = jobRepo.relatedTo(job.company, job.position, job.id).map(jobWithMeta);
+  const timeline = buildTimeline(job);
   return {
     ...jobWithMeta(job),
     application,
@@ -105,6 +253,7 @@ function jobDetail(jobId: string) {
     cover_letters,
     interview,
     related,
+    timeline,
   };
 }
 
@@ -308,7 +457,7 @@ export function registerApiRoutes(router: Router): void {
   });
   router.put('/api/applications/:jobId/status', async (ctx) => {
     const body = await readJsonBody(ctx.req, ApplicationStatusUpdateSchema.omit({ job_id: true, application_id: true }));
-    return updateApplicationStatus(id(ctx, 'jobId'), body.status, body.note);
+    return updateApplicationStatus(id(ctx, 'jobId'), body.status, body.note, body.submission);
   });
   router.put('/api/applications/:jobId', async (ctx) => {
     const body = await readJsonBody(ctx.req, ApplicationInputSchema.omit({ job_id: true }));

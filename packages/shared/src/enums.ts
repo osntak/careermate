@@ -131,6 +131,16 @@ export const ACTIVITY_TYPES = [
 ] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
+/** Per-job timeline entries shown on the job detail screen. */
+export const APPLICATION_TIMELINE_TYPES = [
+  'job_saved',
+  'fit_analysis_saved',
+  'cover_letter_version_saved',
+  'application_status_changed',
+  'interview_prep_saved',
+] as const;
+export type ApplicationTimelineType = (typeof APPLICATION_TIMELINE_TYPES)[number];
+
 /** Entity kinds referenced by activities and deep links. */
 export const ENTITY_TYPES = [
   'profile',

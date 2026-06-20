@@ -20,5 +20,6 @@ export {
   applicationRepo,
   interviewRepo,
   activityRepo,
+  timelineRepo,
   getEntityCounts,
 } from './repositories.ts';
