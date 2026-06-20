@@ -13,6 +13,9 @@ data/
 # Throwaway marketing-screenshot data dir (see scripts/shots-seed.ts)
 .shots-data/
 
+# Agent-portable skills mirror (canonical source is .claude/skills/)
+.agents/
+
 # Build output
 dist/
 build/
