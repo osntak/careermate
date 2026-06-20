@@ -4,6 +4,7 @@ import {
   Field, Input, Textarea, openModal, closeModal, confirmDialog,
   toastOk, toastError, fmtDate, mount, linesToArray, csvToArray,
 } from '/demo/lib.js';
+import { t } from '/demo/i18n.js';
 
 /* ----------------------------------------------------------- small helpers */
 
@@ -12,9 +13,9 @@ function val(node) { return node ? node.value : ''; }
 // Render a "YYYY-MM ~ YYYY-MM / 재직중" period label from a record.
 function periodLabel(r) {
   const start = r.start_date || '';
-  if (r.is_current) return start ? `${start} ~ 재직중` : '재직중';
+  if (r.is_current) return start ? t('profile.period.startToPresent', { start }) : t('profile.period.present');
   const end = r.end_date || '';
-  if (start && end) return `${start} ~ ${end}`;
+  if (start && end) return t('profile.period.startToEnd', { start, end });
   return start || end || '';
 }
 
@@ -31,7 +32,7 @@ function kv(rows) {
 /* ------------------------------------------------------------------ render */
 
 export async function render(ctx) {
-  ctx.setTitle?.('프로필');
+  ctx.setTitle?.(t('profile.title'));
   const [{ profile }, { experiences }, { projects }, { skills }, onboarding] = await Promise.all([
     get('/api/profile'),
     get('/api/experiences'),
@@ -63,8 +64,8 @@ function CompletenessCard(o) {
   const pct = o?.profile_completeness ?? 0;
   const steps = (o?.next_steps || []).slice(0, 3);
   return Card({
-    title: '프로필 완성도',
-    sub: `${pct}%`,
+    title: t('profile.completeness.title'),
+    sub: t('profile.completeness.percent', { pct }),
     body: [
       el('div', { class: 'progress', style: { marginBottom: steps.length ? '12px' : '0' } },
         el('div', { class: 'progress__bar', style: { width: `${pct}%` } })),
@@ -85,14 +86,14 @@ function BasicInfoCard(p, reload) {
 
   const body = hasAny ? [
     kv([
-      ['이름', p.name],
-      ['이메일', p.email],
-      ['연락처', p.phone],
-      ['지역', p.location],
-      ['한 줄 소개', p.headline],
+      [t('profile.basic.kv.name'), p.name],
+      [t('profile.basic.kv.email'), p.email],
+      [t('profile.basic.kv.phone'), p.phone],
+      [t('profile.basic.kv.location'), p.location],
+      [t('profile.basic.kv.headline'), p.headline],
     ]),
     p.summary ? el('div', { class: 'mt-3' },
-      el('div', { class: 'muted text-sm mb-2' }, '자기소개 요약'),
+      el('div', { class: 'muted text-sm mb-2' }, t('profile.basic.summaryLabel')),
       el('div', { class: 'doc-preview' }, p.summary)) : null,
     (p.links || []).length ? el('div', { class: 'mt-3 flex wrap gap-2' },
       ...p.links.map((l) => el('a', {
@@ -100,45 +101,45 @@ function BasicInfoCard(p, reload) {
       }, icon('link'), l.label || l.url))) : null,
   ] : EmptyState({
     iconName: 'user',
-    title: '기본 정보가 비어 있어요',
-    body: '이름·연락처·한 줄 소개를 채워 두면 모든 문서의 기본 정보로 쓰입니다.',
-    action: Btn('정보 입력', { icon: 'edit', variant: 'primary', onClick: () => editBasic(p, reload) }),
+    title: t('profile.basic.empty.title'),
+    body: t('profile.basic.empty.body'),
+    action: Btn(t('profile.basic.empty.action'), { icon: 'edit', variant: 'primary', onClick: () => editBasic(p, reload) }),
   });
 
   return Card({
-    title: '기본 정보',
-    actions: hasAny ? Btn('수정', { icon: 'edit', sm: true, variant: 'ghost', onClick: () => editBasic(p, reload) }) : null,
+    title: t('profile.basic.title'),
+    actions: hasAny ? Btn(t('profile.basic.edit'), { icon: 'edit', sm: true, variant: 'ghost', onClick: () => editBasic(p, reload) }) : null,
     body,
   });
 }
 
 function editBasic(p, reload) {
-  const name = Input({ value: p.name || '', placeholder: '홍길동' });
-  const email = Input({ value: p.email || '', type: 'email', placeholder: 'you@example.com' });
-  const phone = Input({ value: p.phone || '', placeholder: '010-0000-0000' });
-  const location = Input({ value: p.location || '', placeholder: '서울' });
-  const headline = Input({ value: p.headline || '', placeholder: '예: 5년차 백엔드 엔지니어' });
-  const summary = Textarea({ value: p.summary || '', attrs: { rows: '5' }, placeholder: '자기소개 요약' });
-  // links as one "라벨 | URL" per line
+  const name = Input({ value: p.name || '', placeholder: t('profile.basic.ph.name') });
+  const email = Input({ value: p.email || '', type: 'email', placeholder: t('profile.basic.ph.email') });
+  const phone = Input({ value: p.phone || '', placeholder: t('profile.basic.ph.phone') });
+  const location = Input({ value: p.location || '', placeholder: t('profile.basic.ph.location') });
+  const headline = Input({ value: p.headline || '', placeholder: t('profile.basic.ph.headline') });
+  const summary = Textarea({ value: p.summary || '', attrs: { rows: '5' }, placeholder: t('profile.basic.ph.summary') });
+  // links as one "label | URL" per line
   const linksTa = Textarea({
     value: (p.links || []).map((l) => `${l.label} | ${l.url}`).join('\n'),
-    attrs: { rows: '3' }, placeholder: 'GitHub | https://github.com/...\n포트폴리오 | https://...',
+    attrs: { rows: '3' }, placeholder: t('profile.basic.ph.links'),
   });
 
   openModal({
-    title: '기본 정보 수정',
+    title: t('profile.basic.modal.title'),
     size: 'lg',
     body: el('div', {},
-      Field('이름', name),
-      el('div', { class: 'grid grid--2' }, Field('이메일', email), Field('연락처', phone)),
-      Field('지역', location),
-      Field('한 줄 소개', headline, '직무 타이틀이나 강점을 한 문장으로'),
-      Field('자기소개 요약', summary),
-      Field('링크', linksTa, '한 줄에 하나씩 "라벨 | URL" 형식으로 입력하세요.'),
+      Field(t('profile.basic.field.name'), name),
+      el('div', { class: 'grid grid--2' }, Field(t('profile.basic.field.email'), email), Field(t('profile.basic.field.phone'), phone)),
+      Field(t('profile.basic.field.location'), location),
+      Field(t('profile.basic.field.headline'), headline, t('profile.basic.field.headlineHint')),
+      Field(t('profile.basic.field.summary'), summary),
+      Field(t('profile.basic.field.links'), linksTa, t('profile.basic.field.linksHint')),
     ),
     footer: (close) => [
-      Btn('취소', { onClick: close }),
-      SubmitBtn('기본 정보 저장', async () => {
+      Btn(t('profile.basic.cancel'), { onClick: close }),
+      SubmitBtn(t('profile.basic.save'), async () => {
         const links = linesToArray(linksTa.value).map((line) => {
           const i = line.indexOf('|');
           const label = (i >= 0 ? line.slice(0, i) : line).trim();
@@ -150,7 +151,7 @@ function editBasic(p, reload) {
           location: val(location).trim(), headline: val(headline).trim(),
           summary: val(summary).trim(), links,
         });
-        toastOk('기본 정보를 저장했어요.');
+        toastOk(t('profile.basic.saved'));
         close();
         await reload();
       }),
@@ -166,42 +167,42 @@ function DesiredCard(p, reload) {
 
   const body = hasAny ? [
     roles.length ? el('div', {},
-      el('div', { class: 'muted text-sm mb-2' }, '희망 직무'),
+      el('div', { class: 'muted text-sm mb-2' }, t('profile.desired.rolesLabel')),
       Chips(roles, { accent: true })) : null,
     p.desired_conditions ? el('div', { class: roles.length ? 'mt-3' : '' },
-      el('div', { class: 'muted text-sm mb-2' }, '희망 조건'),
+      el('div', { class: 'muted text-sm mb-2' }, t('profile.desired.conditionsLabel')),
       el('div', { class: 'doc-preview' }, p.desired_conditions)) : null,
   ] : EmptyState({
     iconName: 'target',
-    title: '희망 조건이 비어 있어요',
-    body: '희망 직무와 근무 조건을 적어 두면 공고 매칭이 정확해집니다.',
-    action: Btn('희망 조건 입력', { icon: 'edit', variant: 'primary', onClick: () => editDesired(p, reload) }),
+    title: t('profile.desired.empty.title'),
+    body: t('profile.desired.empty.body'),
+    action: Btn(t('profile.desired.empty.action'), { icon: 'edit', variant: 'primary', onClick: () => editDesired(p, reload) }),
   });
 
   return Card({
-    title: '희망 조건',
-    actions: hasAny ? Btn('수정', { icon: 'edit', sm: true, variant: 'ghost', onClick: () => editDesired(p, reload) }) : null,
+    title: t('profile.desired.title'),
+    actions: hasAny ? Btn(t('profile.desired.edit'), { icon: 'edit', sm: true, variant: 'ghost', onClick: () => editDesired(p, reload) }) : null,
     body,
   });
 }
 
 function editDesired(p, reload) {
-  const roles = Input({ value: (p.desired_roles || []).join(', '), placeholder: '백엔드 엔지니어, 플랫폼 엔지니어' });
-  const conditions = Textarea({ value: p.desired_conditions || '', attrs: { rows: '4' }, placeholder: '예: 연봉 6,000 이상 / 서울·재택 / 정규직' });
+  const roles = Input({ value: (p.desired_roles || []).join(', '), placeholder: t('profile.desired.ph.roles') });
+  const conditions = Textarea({ value: p.desired_conditions || '', attrs: { rows: '4' }, placeholder: t('profile.desired.ph.conditions') });
   openModal({
-    title: '희망 조건 수정',
+    title: t('profile.desired.modal.title'),
     body: el('div', {},
-      Field('희망 직무', roles, '쉼표(,)로 구분해 여러 개 입력할 수 있어요.'),
-      Field('희망 조건', conditions, '연봉·지역·근무형태 등 자유롭게'),
+      Field(t('profile.desired.field.roles'), roles, t('profile.desired.field.rolesHint')),
+      Field(t('profile.desired.field.conditions'), conditions, t('profile.desired.field.conditionsHint')),
     ),
     footer: (close) => [
-      Btn('취소', { onClick: close }),
-      SubmitBtn('희망 조건 저장', async () => {
+      Btn(t('profile.desired.cancel'), { onClick: close }),
+      SubmitBtn(t('profile.desired.save'), async () => {
         await put('/api/profile', {
           desired_roles: csvToArray(roles.value),
           desired_conditions: val(conditions).trim(),
         });
-        toastOk('희망 조건을 저장했어요.');
+        toastOk(t('profile.desired.saved'));
         close();
         await reload();
       }),
@@ -219,41 +220,41 @@ function WritingCard(p, reload) {
     !hasAny ? el('div', { class: 'callout', style: { marginBottom: '12px' } },
       icon('sparkle'),
       el('div', {},
-        el('div', { class: 'callout__title' }, 'AI 글쓰기 품질에 직접 반영돼요'),
-        el('div', { class: 'callout__body' }, '선호 문체와 강조 포인트를 적어 두면 자기소개서·면접 답변의 톤이 일관되게 맞춰집니다.'))) : null,
+        el('div', { class: 'callout__title' }, t('profile.writing.callout.title')),
+        el('div', { class: 'callout__body' }, t('profile.writing.callout.body')))) : null,
     hasAny ? kv([
-      ['선호 문체', p.preferred_tone],
+      [t('profile.writing.toneLabel'), p.preferred_tone],
     ]) : null,
     emphasis.length ? el('div', { class: p.preferred_tone ? 'mt-3' : '' },
-      el('div', { class: 'muted text-sm mb-2' }, '강조 포인트'),
+      el('div', { class: 'muted text-sm mb-2' }, t('profile.writing.emphasisLabel')),
       Chips(emphasis, { accent: true })) : null,
-    !hasAny ? el('p', { class: 'muted', style: { margin: '4px 0 0' } }, '아직 선호 문체·강조 포인트가 없어요.') : null,
+    !hasAny ? el('p', { class: 'muted', style: { margin: '4px 0 0' } }, t('profile.writing.emptyHint')) : null,
   ];
 
   return Card({
-    title: '자기소개서 설정',
-    actions: Btn(hasAny ? '수정' : '설정', { icon: 'edit', sm: true, variant: 'ghost', onClick: () => editWriting(p, reload) }),
+    title: t('profile.writing.title'),
+    actions: Btn(hasAny ? t('profile.writing.edit') : t('profile.writing.setup'), { icon: 'edit', sm: true, variant: 'ghost', onClick: () => editWriting(p, reload) }),
     body,
   });
 }
 
 function editWriting(p, reload) {
-  const tone = Input({ value: p.preferred_tone || '', placeholder: '예: 담백하고 구체적' });
-  const emphasis = Textarea({ value: (p.emphasis_points || []).join('\n'), attrs: { rows: '5' }, placeholder: '문제 해결 능력\n주도적인 협업\n정량 성과' });
+  const tone = Input({ value: p.preferred_tone || '', placeholder: t('profile.writing.ph.tone') });
+  const emphasis = Textarea({ value: (p.emphasis_points || []).join('\n'), attrs: { rows: '5' }, placeholder: t('profile.writing.ph.emphasis') });
   openModal({
-    title: '자기소개서 설정',
+    title: t('profile.writing.modal.title'),
     body: el('div', {},
-      Field('선호 문체', tone, '예: 담백하고 구체적 / 자신감 있게 / 진솔하게'),
-      Field('강조 포인트', emphasis, '한 줄에 하나씩. AI가 글을 쓸 때 이 포인트를 우선 반영해요.'),
+      Field(t('profile.writing.field.tone'), tone, t('profile.writing.field.toneHint')),
+      Field(t('profile.writing.field.emphasis'), emphasis, t('profile.writing.field.emphasisHint')),
     ),
     footer: (close) => [
-      Btn('취소', { onClick: close }),
-      SubmitBtn('설정 저장', async () => {
+      Btn(t('profile.writing.cancel'), { onClick: close }),
+      SubmitBtn(t('profile.writing.save'), async () => {
         await put('/api/profile', {
           preferred_tone: val(tone).trim(),
           emphasis_points: linesToArray(emphasis.value),
         });
-        toastOk('자기소개서 설정을 저장했어요.');
+        toastOk(t('profile.writing.saved'));
         close();
         await reload();
       }),
@@ -264,17 +265,17 @@ function editWriting(p, reload) {
 /* ---------------------------------------------------- 4. 경력 (Experiences) */
 
 function ExperiencesCard(items, reload) {
-  const add = Btn('경력 추가', { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editExperience(null, reload) });
+  const add = Btn(t('profile.exp.add'), { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editExperience(null, reload) });
 
   if (!items.length) {
     return Card({
-      title: '경력',
+      title: t('profile.exp.title'),
       actions: add,
       body: EmptyState({
         iconName: 'briefcase',
-        title: '등록된 경력이 없어요',
-        body: '주요 경력을 추가하면 적합도 분석과 자기소개서 품질이 올라갑니다.',
-        action: Btn('경력 추가', { icon: 'plus', variant: 'primary', onClick: () => editExperience(null, reload) }),
+        title: t('profile.exp.empty.title'),
+        body: t('profile.exp.empty.body'),
+        action: Btn(t('profile.exp.add'), { icon: 'plus', variant: 'primary', onClick: () => editExperience(null, reload) }),
       }),
     });
   }
@@ -290,8 +291,8 @@ function ExperiencesCard(items, reload) {
             x.employment_type ? el('span', { class: 'muted text-sm' }, x.employment_type) : null),
           periodLabel(x) ? el('div', { class: 'muted text-sm' }, periodLabel(x)) : null),
         el('div', { class: 'flex gap-2' },
-          IconBtn('edit', { title: '수정', onClick: () => editExperience(x, reload) }),
-          IconBtn('trash', { title: '삭제', variant: 'danger', onClick: () => removeExperience(x, reload) }))),
+          IconBtn('edit', { title: t('profile.exp.editTitle'), onClick: () => editExperience(x, reload) }),
+          IconBtn('trash', { title: t('profile.exp.deleteTitle'), variant: 'danger', onClick: () => removeExperience(x, reload) }))),
       x.description ? el('div', { class: 'doc-preview mt-2' }, x.description) : null,
       (x.achievements || []).length ? el('ul', { class: 'mt-2', style: { margin: '8px 0 0', paddingLeft: '18px' } },
         ...x.achievements.map((a) => el('li', { class: 'text-secondary text-sm', style: { marginBottom: '3px' } }, a))) : null,
@@ -299,51 +300,51 @@ function ExperiencesCard(items, reload) {
     )));
 
   return Card({
-    title: '경력',
-    sub: `${items.length}건`,
+    title: t('profile.exp.title'),
+    sub: t('profile.exp.count', { count: items.length }),
     actions: add,
     body: el('div', { class: 'timeline' }, ...rows),
   });
 }
 
 async function removeExperience(x, reload) {
-  const ok = await confirmDialog({ title: '경력 삭제', message: `"${x.company}" 경력을 삭제할까요?`, confirmLabel: '삭제', danger: true });
+  const ok = await confirmDialog({ title: t('profile.exp.delete.title'), message: t('profile.exp.delete.message', { company: x.company }), confirmLabel: t('profile.exp.delete.confirm'), danger: true });
   if (!ok) return;
-  try { await del(`/api/experiences/${x.id}`); toastOk('경력을 삭제했어요.'); await reload(); }
+  try { await del(`/api/experiences/${x.id}`); toastOk(t('profile.exp.deleted')); await reload(); }
   catch (e) { toastError(e); }
 }
 
 function editExperience(x, reload) {
   const r = x || {};
-  const company = Input({ value: r.company || '', placeholder: '회사명 (필수)' });
-  const role = Input({ value: r.role || '', placeholder: '직무 / 직책' });
-  const empType = Input({ value: r.employment_type || '', placeholder: '정규직 / 계약직 / 인턴 / 프리랜서' });
-  const start = Input({ value: r.start_date || '', placeholder: 'YYYY-MM' });
-  const end = Input({ value: r.end_date || '', placeholder: 'YYYY-MM' });
+  const company = Input({ value: r.company || '', placeholder: t('profile.exp.ph.company') });
+  const role = Input({ value: r.role || '', placeholder: t('profile.exp.ph.role') });
+  const empType = Input({ value: r.employment_type || '', placeholder: t('profile.exp.ph.empType') });
+  const start = Input({ value: r.start_date || '', placeholder: t('profile.exp.ph.month') });
+  const end = Input({ value: r.end_date || '', placeholder: t('profile.exp.ph.month') });
   const isCurrent = el('input', { type: 'checkbox', checked: !!r.is_current });
   const sync = () => { end.disabled = isCurrent.checked; if (isCurrent.checked) end.value = ''; };
   isCurrent.addEventListener('change', sync);
-  const desc = Textarea({ value: r.description || '', attrs: { rows: '3' }, placeholder: '담당 업무 / 역할' });
-  const achievements = Textarea({ value: (r.achievements || []).join('\n'), attrs: { rows: '4' }, placeholder: '결제 전환율 12% 개선\n월 배포 횟수 3배 증가' });
-  const tech = Input({ value: (r.tech || []).join(', '), placeholder: 'TypeScript, Node.js, PostgreSQL' });
+  const desc = Textarea({ value: r.description || '', attrs: { rows: '3' }, placeholder: t('profile.exp.ph.desc') });
+  const achievements = Textarea({ value: (r.achievements || []).join('\n'), attrs: { rows: '4' }, placeholder: t('profile.exp.ph.achievements') });
+  const tech = Input({ value: (r.tech || []).join(', '), placeholder: t('profile.exp.ph.tech') });
   sync();
 
   openModal({
-    title: x ? '경력 수정' : '경력 추가',
+    title: x ? t('profile.exp.modal.editTitle') : t('profile.exp.modal.addTitle'),
     size: 'lg',
     body: el('div', {},
-      Field('회사', company),
-      el('div', { class: 'grid grid--2' }, Field('직무', role), Field('고용형태', empType)),
-      el('div', { class: 'grid grid--2' }, Field('시작 (YYYY-MM)', start), Field('종료 (YYYY-MM)', end)),
-      Field(null, el('label', { class: 'flex gap-2', style: { alignItems: 'center', fontWeight: '500' } }, isCurrent, el('span', {}, '현재 재직 중'))),
-      Field('업무 설명', desc),
-      Field('주요 성과', achievements, '한 줄에 하나씩. 정량 지표를 함께 적으면 좋아요.'),
-      Field('사용 기술', tech, '쉼표(,)로 구분'),
+      Field(t('profile.exp.field.company'), company),
+      el('div', { class: 'grid grid--2' }, Field(t('profile.exp.field.role'), role), Field(t('profile.exp.field.empType'), empType)),
+      el('div', { class: 'grid grid--2' }, Field(t('profile.exp.field.start'), start), Field(t('profile.exp.field.end'), end)),
+      Field(null, el('label', { class: 'flex gap-2', style: { alignItems: 'center', fontWeight: '500' } }, isCurrent, el('span', {}, t('profile.exp.field.isCurrent')))),
+      Field(t('profile.exp.field.desc'), desc),
+      Field(t('profile.exp.field.achievements'), achievements, t('profile.exp.field.achievementsHint')),
+      Field(t('profile.exp.field.tech'), tech, t('profile.exp.field.techHint')),
     ),
     footer: (close) => [
-      Btn('취소', { onClick: close }),
-      SubmitBtn(x ? '경력 저장' : '경력 추가', async () => {
-        if (!val(company).trim()) throw new Error('회사명을 입력해 주세요.');
+      Btn(t('profile.exp.cancel'), { onClick: close }),
+      SubmitBtn(x ? t('profile.exp.saveEdit') : t('profile.exp.saveNew'), async () => {
+        if (!val(company).trim()) throw new Error(t('profile.exp.validation.company'));
         const payload = {
           company: val(company).trim(),
           role: val(role).trim(),
@@ -357,7 +358,7 @@ function editExperience(x, reload) {
         };
         if (x) await put(`/api/experiences/${x.id}`, payload);
         else await post('/api/experiences', payload);
-        toastOk(x ? '경력을 수정했어요.' : '경력을 추가했어요.');
+        toastOk(x ? t('profile.exp.updated') : t('profile.exp.added'));
         close();
         await reload();
       }),
@@ -368,17 +369,17 @@ function editExperience(x, reload) {
 /* ----------------------------------------------------- 5. 프로젝트 (Projects) */
 
 function ProjectsCard(items, reload) {
-  const add = Btn('프로젝트 추가', { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editProject(null, reload) });
+  const add = Btn(t('profile.proj.add'), { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editProject(null, reload) });
 
   if (!items.length) {
     return Card({
-      title: '프로젝트',
+      title: t('profile.proj.title'),
       actions: add,
       body: EmptyState({
         iconName: 'layers',
-        title: '등록된 프로젝트가 없어요',
-        body: '대표 프로젝트를 정리해 두면 자기소개서·면접에서 구체적인 근거로 활용돼요.',
-        action: Btn('프로젝트 추가', { icon: 'plus', variant: 'primary', onClick: () => editProject(null, reload) }),
+        title: t('profile.proj.empty.title'),
+        body: t('profile.proj.empty.body'),
+        action: Btn(t('profile.proj.add'), { icon: 'plus', variant: 'primary', onClick: () => editProject(null, reload) }),
       }),
     });
   }
@@ -391,9 +392,9 @@ function ProjectsCard(items, reload) {
           x.role ? el('span', { class: 'text-secondary text-sm' }, x.role) : null),
         periodProject(x) ? el('div', { class: 'muted text-sm' }, periodProject(x)) : null),
       el('div', { class: 'flex gap-2' },
-        x.url ? el('a', { class: 'btn btn--ghost icon-btn', href: x.url, title: '링크 열기', attrs: { target: '_blank', rel: 'noopener', 'aria-label': '링크 열기' } }, icon('external')) : null,
-        IconBtn('edit', { title: '수정', onClick: () => editProject(x, reload) }),
-        IconBtn('trash', { title: '삭제', variant: 'danger', onClick: () => removeProject(x, reload) }))),
+        x.url ? el('a', { class: 'btn btn--ghost icon-btn', href: x.url, title: t('profile.proj.openLink'), attrs: { target: '_blank', rel: 'noopener', 'aria-label': t('profile.proj.openLink') } }, icon('external')) : null,
+        IconBtn('edit', { title: t('profile.proj.editTitle'), onClick: () => editProject(x, reload) }),
+        IconBtn('trash', { title: t('profile.proj.deleteTitle'), variant: 'danger', onClick: () => removeProject(x, reload) }))),
     x.description ? el('div', { class: 'doc-preview mt-2' }, x.description) : null,
     (x.highlights || []).length ? el('ul', { style: { margin: '8px 0 0', paddingLeft: '18px' } },
       ...x.highlights.map((h) => el('li', { class: 'text-secondary text-sm', style: { marginBottom: '3px' } }, h))) : null,
@@ -401,8 +402,8 @@ function ProjectsCard(items, reload) {
   ));
 
   return Card({
-    title: '프로젝트',
-    sub: `${items.length}건`,
+    title: t('profile.proj.title'),
+    sub: t('profile.proj.count', { count: items.length }),
     actions: add,
     body: el('div', { class: 'stack-3' }, ...cards),
   });
@@ -414,38 +415,38 @@ function periodProject(x) {
 }
 
 async function removeProject(x, reload) {
-  const ok = await confirmDialog({ title: '프로젝트 삭제', message: `"${x.name}" 프로젝트를 삭제할까요?`, confirmLabel: '삭제', danger: true });
+  const ok = await confirmDialog({ title: t('profile.proj.delete.title'), message: t('profile.proj.delete.message', { name: x.name }), confirmLabel: t('profile.proj.delete.confirm'), danger: true });
   if (!ok) return;
-  try { await del(`/api/projects/${x.id}`); toastOk('프로젝트를 삭제했어요.'); await reload(); }
+  try { await del(`/api/projects/${x.id}`); toastOk(t('profile.proj.deleted')); await reload(); }
   catch (e) { toastError(e); }
 }
 
 function editProject(x, reload) {
   const r = x || {};
-  const name = Input({ value: r.name || '', placeholder: '프로젝트명 (필수)' });
-  const role = Input({ value: r.role || '', placeholder: '맡은 역할' });
-  const start = Input({ value: r.start_date || '', placeholder: 'YYYY-MM' });
-  const end = Input({ value: r.end_date || '', placeholder: 'YYYY-MM' });
-  const url = Input({ value: r.url || '', placeholder: 'https://...' });
-  const desc = Textarea({ value: r.description || '', attrs: { rows: '3' }, placeholder: '프로젝트 개요 / 목적' });
-  const highlights = Textarea({ value: (r.highlights || []).join('\n'), attrs: { rows: '4' }, placeholder: '핵심 성과를 한 줄에 하나씩' });
-  const tech = Input({ value: (r.tech || []).join(', '), placeholder: 'React, AWS, GraphQL' });
+  const name = Input({ value: r.name || '', placeholder: t('profile.proj.ph.name') });
+  const role = Input({ value: r.role || '', placeholder: t('profile.proj.ph.role') });
+  const start = Input({ value: r.start_date || '', placeholder: t('profile.proj.ph.month') });
+  const end = Input({ value: r.end_date || '', placeholder: t('profile.proj.ph.month') });
+  const url = Input({ value: r.url || '', placeholder: t('profile.proj.ph.url') });
+  const desc = Textarea({ value: r.description || '', attrs: { rows: '3' }, placeholder: t('profile.proj.ph.desc') });
+  const highlights = Textarea({ value: (r.highlights || []).join('\n'), attrs: { rows: '4' }, placeholder: t('profile.proj.ph.highlights') });
+  const tech = Input({ value: (r.tech || []).join(', '), placeholder: t('profile.proj.ph.tech') });
 
   openModal({
-    title: x ? '프로젝트 수정' : '프로젝트 추가',
+    title: x ? t('profile.proj.modal.editTitle') : t('profile.proj.modal.addTitle'),
     size: 'lg',
     body: el('div', {},
-      Field('프로젝트명', name),
-      el('div', { class: 'grid grid--2' }, Field('역할', role), Field('링크', url)),
-      el('div', { class: 'grid grid--2' }, Field('시작 (YYYY-MM)', start), Field('종료 (YYYY-MM)', end)),
-      Field('설명', desc),
-      Field('주요 내용', highlights, '한 줄에 하나씩'),
-      Field('사용 기술', tech, '쉼표(,)로 구분'),
+      Field(t('profile.proj.field.name'), name),
+      el('div', { class: 'grid grid--2' }, Field(t('profile.proj.field.role'), role), Field(t('profile.proj.field.url'), url)),
+      el('div', { class: 'grid grid--2' }, Field(t('profile.proj.field.start'), start), Field(t('profile.proj.field.end'), end)),
+      Field(t('profile.proj.field.desc'), desc),
+      Field(t('profile.proj.field.highlights'), highlights, t('profile.proj.field.highlightsHint')),
+      Field(t('profile.proj.field.tech'), tech, t('profile.proj.field.techHint')),
     ),
     footer: (close) => [
-      Btn('취소', { onClick: close }),
-      SubmitBtn(x ? '프로젝트 저장' : '프로젝트 추가', async () => {
-        if (!val(name).trim()) throw new Error('프로젝트명을 입력해 주세요.');
+      Btn(t('profile.proj.cancel'), { onClick: close }),
+      SubmitBtn(x ? t('profile.proj.saveEdit') : t('profile.proj.saveNew'), async () => {
+        if (!val(name).trim()) throw new Error(t('profile.proj.validation.name'));
         const payload = {
           name: val(name).trim(),
           role: val(role).trim(),
@@ -458,7 +459,7 @@ function editProject(x, reload) {
         };
         if (x) await put(`/api/projects/${x.id}`, payload);
         else await post('/api/projects', payload);
-        toastOk(x ? '프로젝트를 수정했어요.' : '프로젝트를 추가했어요.');
+        toastOk(x ? t('profile.proj.updated') : t('profile.proj.added'));
         close();
         await reload();
       }),
@@ -469,17 +470,17 @@ function editProject(x, reload) {
 /* -------------------------------------------------------- 6. 기술 (Skills) */
 
 function SkillsCard(items, reload) {
-  const add = Btn('기술 추가', { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editSkill(null, reload) });
+  const add = Btn(t('profile.skill.add'), { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editSkill(null, reload) });
 
   if (!items.length) {
     return Card({
-      title: '기술',
+      title: t('profile.skill.title'),
       actions: add,
       body: EmptyState({
         iconName: 'sparkle',
-        title: '등록된 기술이 없어요',
-        body: '보유 기술을 정리해 두면 공고 키워드 매칭이 정확해집니다.',
-        action: Btn('기술 추가', { icon: 'plus', variant: 'primary', onClick: () => editSkill(null, reload) }),
+        title: t('profile.skill.empty.title'),
+        body: t('profile.skill.empty.body'),
+        action: Btn(t('profile.skill.add'), { icon: 'plus', variant: 'primary', onClick: () => editSkill(null, reload) }),
       }),
     });
   }
@@ -487,7 +488,7 @@ function SkillsCard(items, reload) {
   // Group by category (uncategorized last).
   const groups = new Map();
   for (const s of items) {
-    const key = s.category || '기타';
+    const key = s.category || t('profile.skill.uncategorized');
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(s);
   }
@@ -500,44 +501,44 @@ function SkillsCard(items, reload) {
           el('div', { class: 'flex gap-2 wrap', style: { alignItems: 'baseline' } },
             el('span', { class: 'strong' }, s.name),
             s.level ? el('span', { class: 'badge badge--applied' }, el('span', { class: 'dot' }), s.level) : null,
-            s.years != null ? el('span', { class: 'muted text-sm' }, `${s.years}년`) : null),
+            s.years != null ? el('span', { class: 'muted text-sm' }, t('profile.skill.years', { count: s.years })) : null),
           el('div', { class: 'flex gap-2' },
-            IconBtn('edit', { title: '수정', onClick: () => editSkill(s, reload) }),
-            IconBtn('trash', { title: '삭제', variant: 'danger', onClick: () => removeSkill(s, reload) })))))));
+            IconBtn('edit', { title: t('profile.skill.editTitle'), onClick: () => editSkill(s, reload) }),
+            IconBtn('trash', { title: t('profile.skill.deleteTitle'), variant: 'danger', onClick: () => removeSkill(s, reload) })))))));
 
   return Card({
-    title: '기술',
-    sub: `${items.length}개`,
+    title: t('profile.skill.title'),
+    sub: t('profile.skill.count', { count: items.length }),
     actions: add,
     body: el('div', { class: 'stack-3' }, ...blocks),
   });
 }
 
 async function removeSkill(s, reload) {
-  const ok = await confirmDialog({ title: '기술 삭제', message: `"${s.name}"을(를) 삭제할까요?`, confirmLabel: '삭제', danger: true });
+  const ok = await confirmDialog({ title: t('profile.skill.delete.title'), message: t('profile.skill.delete.message', { name: s.name }), confirmLabel: t('profile.skill.delete.confirm'), danger: true });
   if (!ok) return;
-  try { await del(`/api/skills/${s.id}`); toastOk('기술을 삭제했어요.'); await reload(); }
+  try { await del(`/api/skills/${s.id}`); toastOk(t('profile.skill.deleted')); await reload(); }
   catch (e) { toastError(e); }
 }
 
 function editSkill(s, reload) {
   const r = s || {};
-  const name = Input({ value: r.name || '', placeholder: '기술명 (필수)' });
-  const category = Input({ value: r.category || '', placeholder: '언어 / 프레임워크 / 툴 / 소프트스킬' });
-  const level = Input({ value: r.level || '', placeholder: '상 / 중 / 하 또는 자유 서술' });
-  const years = Input({ value: r.years != null ? String(r.years) : '', type: 'number', attrs: { min: '0', step: '0.5' }, placeholder: '연차' });
+  const name = Input({ value: r.name || '', placeholder: t('profile.skill.ph.name') });
+  const category = Input({ value: r.category || '', placeholder: t('profile.skill.ph.category') });
+  const level = Input({ value: r.level || '', placeholder: t('profile.skill.ph.level') });
+  const years = Input({ value: r.years != null ? String(r.years) : '', type: 'number', attrs: { min: '0', step: '0.5' }, placeholder: t('profile.skill.ph.years') });
 
   openModal({
-    title: s ? '기술 수정' : '기술 추가',
+    title: s ? t('profile.skill.modal.editTitle') : t('profile.skill.modal.addTitle'),
     body: el('div', {},
-      Field('기술명', name),
-      Field('분류', category),
-      el('div', { class: 'grid grid--2' }, Field('숙련도', level), Field('연차', years)),
+      Field(t('profile.skill.field.name'), name),
+      Field(t('profile.skill.field.category'), category),
+      el('div', { class: 'grid grid--2' }, Field(t('profile.skill.field.level'), level), Field(t('profile.skill.field.years'), years)),
     ),
     footer: (close) => [
-      Btn('취소', { onClick: close }),
-      SubmitBtn(s ? '기술 저장' : '기술 추가', async () => {
-        if (!val(name).trim()) throw new Error('기술명을 입력해 주세요.');
+      Btn(t('profile.skill.cancel'), { onClick: close }),
+      SubmitBtn(s ? t('profile.skill.saveEdit') : t('profile.skill.saveNew'), async () => {
+        if (!val(name).trim()) throw new Error(t('profile.skill.validation.name'));
         const yrs = val(years).trim();
         const payload = {
           name: val(name).trim(),
@@ -547,7 +548,7 @@ function editSkill(s, reload) {
         if (yrs !== '' && !Number.isNaN(Number(yrs))) payload.years = Number(yrs);
         if (s) await put(`/api/skills/${s.id}`, payload);
         else await post('/api/skills', payload);
-        toastOk(s ? '기술을 수정했어요.' : '기술을 추가했어요.');
+        toastOk(s ? t('profile.skill.updated') : t('profile.skill.added'));
         close();
         await reload();
       }),

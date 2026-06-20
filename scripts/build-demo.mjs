@@ -46,10 +46,10 @@ function rimraf(target) {
 /** Rewrite root-absolute references to assets so they work under /demo/. */
 function rewritePaths(code) {
   return code
-    // import/href/src strings: '/lib.js', "/app.js", '/styles.css', '/icon-180.png'
-    .replace(/(['"`])\/(lib\.js|app\.js|styles\.css|icon-180\.png)/g, '$1/demo/$2')
-    // directories referenced as '/pages/...' or '/fonts/...' (JS/HTML)
-    .replace(/(['"`])\/(pages|fonts)\//g, '$1/demo/$2/')
+    // import/href/src strings: '/lib.js', "/app.js", '/styles.css', '/icon-180.png', '/i18n.js'
+    .replace(/(['"`])\/(lib\.js|app\.js|styles\.css|icon-180\.png|i18n\.js)/g, '$1/demo/$2')
+    // directories referenced as '/pages/...', '/fonts/...', '/i18n/...' (JS/HTML)
+    .replace(/(['"`])\/(pages|fonts|i18n)\//g, '$1/demo/$2/')
     // CSS url(/fonts/...) — with or without quotes
     .replace(/url\(\s*(['"]?)\/fonts\//g, 'url($1/demo/fonts/');
 }
@@ -84,9 +84,11 @@ function injectDemo(htmlPath) {
     "      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }\n" +
     '    })();\n' +
     '  </script>';
+  // noindex the demo: it's a JS-rendered marketing prop with no SEO value, and a
+  // crawlable near-duplicate of the real dashboard. Excluded from sitemap.xml too.
   html = html.replace(
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
-    '<meta name="viewport" content="width=device-width, initial-scale=1" />' + themeScript,
+    '<meta name="viewport" content="width=device-width, initial-scale=1" />\n  <meta name="robots" content="noindex,follow" />' + themeScript,
   );
 
   // demo.css after the dashboard stylesheet
@@ -121,7 +123,11 @@ copyTree(SRC, OUT);
 
 console.log('· copying demo overlay');
 for (const f of ['demo-shim.js', 'seed.js', 'demo.css']) {
-  fs.copyFileSync(path.join(OVERLAY, f), path.join(OUT, f));
+  // Run overlay text files through rewritePaths too, so demo-shim.js's
+  // `import … from '/i18n.js'` (and any /fonts, /pages refs) resolve under /demo/.
+  const ext = path.extname(f).toLowerCase();
+  const src = fs.readFileSync(path.join(OVERLAY, f), 'utf8');
+  fs.writeFileSync(path.join(OUT, f), TEXT_EXT.has(ext) ? rewritePaths(src) : src);
 }
 
 console.log('· injecting shim + styles into index.html');

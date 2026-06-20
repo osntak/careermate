@@ -61,7 +61,7 @@
   --maxw: 1080px;
 
   --font: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
-    'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    'Segoe UI', system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --mono: 'SFMono-Regular', 'JetBrains Mono', Consolas, 'D2Coding', monospace;
 }
 

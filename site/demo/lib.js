@@ -7,6 +7,7 @@
 // (résumé/cover-letter text) is always rendered as text. Only our own trusted
 // icon SVG strings use innerHTML.
 // =============================================================================
+import { t, getLang } from '/demo/i18n.js';
 
 /* --------------------------------------------------------------- DOM helper */
 
@@ -131,7 +132,7 @@ export async function api(method, path, body) {
     });
   } catch {
     // Connection failure (server stopped, machine asleep) — never surface "Failed to fetch".
-    throw new Error('서버에 연결하지 못했어요. 대시보드가 실행 중인지 확인한 뒤 다시 시도해 주세요.');
+    throw new Error(t('err.connect'));
   }
   const text = await res.text();
   let data = {};
@@ -145,10 +146,10 @@ export async function api(method, path, body) {
 }
 // Friendly fallback when the server didn't supply a message — never show a raw status code.
 function friendlyStatus(status) {
-  if (status === 404) return '요청한 항목을 찾을 수 없어요. 새로고침 후 다시 시도해 주세요.';
-  if (status === 403) return '권한 확인이 필요해요. 대시보드를 새로고침해 주세요.';
-  if (status >= 500) return '일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요.';
-  return '요청을 처리하지 못했어요. 입력을 확인하고 다시 시도해 주세요.';
+  if (status === 404) return t('err.404');
+  if (status === 403) return t('err.403');
+  if (status >= 500) return t('err.500');
+  return t('err.generic');
 }
 export const get = (p) => api('GET', p);
 export const post = (p, b) => api('POST', p, b);
@@ -156,19 +157,24 @@ export const put = (p, b) => api('PUT', p, b);
 export const del = (p) => api('DELETE', p);
 
 /* ------------------------------------------------------------- formatters */
+// Locale-aware date/relative-time via Intl, cached per active locale.
+const _dtf = {};
+const _rtf = {};
+const dateFmt = () => (_dtf[getLang()] ||= new Intl.DateTimeFormat(getLang(), { year: 'numeric', month: 'short', day: 'numeric' }));
+const relFmt = () => (_rtf[getLang()] ||= new Intl.RelativeTimeFormat(getLang(), { numeric: 'auto' }));
 export function fmtDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d)) return iso;
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  return dateFmt().format(d);
 }
 export function fmtRelative(iso) {
   if (!iso) return '';
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return '방금 전';
-  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
+  const sec = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (sec < 60) return t('common.justNow');
+  if (sec < 3600) return relFmt().format(-Math.floor(sec / 60), 'minute');
+  if (sec < 86400) return relFmt().format(-Math.floor(sec / 3600), 'hour');
+  if (sec < 604800) return relFmt().format(-Math.floor(sec / 86400), 'day');
   return fmtDate(iso);
 }
 export function scoreClass(score) {
@@ -311,7 +317,7 @@ export function toast(message, { title, type = 'default', timeout = 3800 } = {})
   toastRoot.append(t);
   setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .25s'; setTimeout(() => t.remove(), 260); }, timeout);
 }
-export function toastError(e) { toast(e instanceof Error ? e.message : String(e), { title: '오류', type: 'error' }); }
+export function toastError(e) { toast(e instanceof Error ? e.message : String(e), { title: t('toast.errorTitle'), type: 'error' }); }
 export function toastOk(msg) { toast(msg, { type: 'success' }); }
 
 /* ------------------------------------------------------------------ modal */
@@ -339,7 +345,7 @@ export function openModal({ title, body, footer, size }) {
   const root = ensureModalRoot();
   const close = closeModal;
   modalReturnFocus = document.activeElement; // restored by closeModal
-  const closeBtn = IconBtn('plus', { title: '닫기', onClick: close }); // rotated to look like ×
+  const closeBtn = IconBtn('plus', { title: t('common.close'), onClick: close }); // rotated to look like ×
   closeBtn.style.transform = 'rotate(45deg)';
   const modal = el('div', {
     class: `modal${size === 'lg' ? ' modal--lg' : ''}`,
@@ -370,13 +376,13 @@ export function openModal({ title, body, footer, size }) {
   setTimeout(() => (bodyNode.querySelector('input,textarea,select') || modal.querySelector(MODAL_FOCUSABLE))?.focus(), 30);
 }
 /** Confirmation dialog. Returns a Promise<boolean>. */
-export function confirmDialog({ title = '확인', message, confirmLabel = '확인', danger } = {}) {
+export function confirmDialog({ title = t('common.confirm'), message, confirmLabel = t('common.confirm'), danger } = {}) {
   return new Promise((resolve) => {
     openModal({
       title,
       body: el('p', { class: 'text-secondary', style: { margin: 0, lineHeight: '1.6' } }, message),
       footer: (close) => [
-        Btn('취소', { onClick: () => { close(); resolve(false); } }),
+        Btn(t('common.cancel'), { onClick: () => { close(); resolve(false); } }),
         Btn(confirmLabel, { variant: danger ? 'danger' : 'primary', onClick: () => { close(); resolve(true); } }),
       ],
     });
@@ -385,8 +391,8 @@ export function confirmDialog({ title = '확인', message, confirmLabel = '확�
 
 /* ---------------------------------------------------------------- utility */
 export async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); toastOk('클립보드에 복사했습니다.'); }
-  catch { toast('복사에 실패했습니다. 직접 선택해 복사해 주세요.', { type: 'error' }); }
+  try { await navigator.clipboard.writeText(text); toastOk(t('toast.copied')); }
+  catch { toast(t('toast.copyFailed'), { type: 'error' }); }
 }
 /** Trigger a file download via a GET endpoint (no token needed; read-only). */
 export function downloadUrl(url) {
