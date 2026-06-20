@@ -141,6 +141,13 @@ function localizeShell() {
   if (skip) skip.textContent = t('nav.skip');
   const foot = document.getElementById('foot-status');
   if (foot && !window.__CAREERMATE_DEMO__) foot.textContent = t('nav.footStatus');
+  // FAQ help link points at the marketing-site FAQ in the active locale.
+  const faq = document.getElementById('foot-faq');
+  if (faq) {
+    const en = document.documentElement.lang === 'en';
+    faq.href = en ? 'https://careermate.life/en/faq' : 'https://careermate.life/faq';
+    faq.title = en ? 'FAQ' : '자주 묻는 질문';
+  }
 }
 
 async function boot() {
