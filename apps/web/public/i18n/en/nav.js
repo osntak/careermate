@@ -11,5 +11,8 @@ export default {
   'nav.section.system': 'System',
   'nav.menu.open': 'Open menu',
   'nav.menu.close': 'Close menu',
+  'nav.subtitle': 'Manage your career',
+  'nav.skip': 'Skip to content',
+  'nav.footStatus': 'Running locally',
   'err.page.load': "Couldn't load the page",
 };

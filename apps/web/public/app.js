@@ -131,9 +131,22 @@ function initTheme() {
   if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
 }
 
+// Static shell strings live in index.html (not page-rendered), so set them from the
+// catalog at boot + on locale change. foot-status belongs to the demo shim when the
+// demo is running, so skip it there.
+function localizeShell() {
+  const sub = document.querySelector('.sidebar__subtitle');
+  if (sub) sub.textContent = t('nav.subtitle');
+  const skip = document.getElementById('skip-link');
+  if (skip) skip.textContent = t('nav.skip');
+  const foot = document.getElementById('foot-status');
+  if (foot && !window.__CAREERMATE_DEMO__) foot.textContent = t('nav.footStatus');
+}
+
 async function boot() {
   initTheme();
   setupMobileNav();
+  localizeShell();
   // Skip link: jump keyboard focus past the sidebar to the page content. A hash
   // anchor would collide with the router, so move focus directly instead.
   document.getElementById('skip-link')?.addEventListener('click', () => {
@@ -148,7 +161,7 @@ async function boot() {
   } catch { /* ignore */ }
   await refreshNav();
   // 로케일 전환 시 내비게이션과 현재 라우트를 다시 그린다(전체 리로드 없이).
-  onLangChange(() => { refreshNav(); route(); });
+  onLangChange(() => { localizeShell(); refreshNav(); route(); });
   window.addEventListener('hashchange', route);
   await route();
 }

@@ -184,6 +184,16 @@ code { font-family: var(--mono); }
 .nav__icon:hover { background: var(--surface-hover); color: var(--text); text-decoration: none; }
 .nav__icon svg { width: 17px; height: 17px; }
 
+/* Language toggle — globe + label, styled like the icon buttons. */
+.nav__lang {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 11px;
+  border: 1px solid var(--border-strong); background: var(--surface); border-radius: var(--radius-sm);
+  color: var(--text-secondary); font-size: 13px; font-weight: 500; line-height: 1;
+  transition: background .15s, color .15s;
+}
+.nav__lang:hover { background: var(--surface-hover); color: var(--text); text-decoration: none; }
+.nav__lang svg { width: 15px; height: 15px; }
+
 /* ----------------------------------------------------------------- buttons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;

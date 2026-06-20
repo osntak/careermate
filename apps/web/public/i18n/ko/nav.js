@@ -11,5 +11,8 @@ export default {
   'nav.section.system': '시스템',
   'nav.menu.open': '메뉴 열기',
   'nav.menu.close': '메뉴 닫기',
+  'nav.subtitle': '내 커리어 흐름 관리',
+  'nav.skip': '본문으로 건너뛰기',
+  'nav.footStatus': '로컬에서 실행 중',
   'err.page.load': '페이지를 불러오지 못했습니다',
 };

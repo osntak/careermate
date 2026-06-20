@@ -14,6 +14,9 @@ import { buildSeed } from './seed.js';
 import { buildSeedEn } from './seed.en.js';
 import { t, getLang } from '/i18n.js';
 
+// Lets the dashboard shell know the demo owns the sidebar footer text.
+window.__CAREERMATE_DEMO__ = true;
+
 /* ------------------------------------------------------------- demo-only strings */
 const DEMO_STR = {
   ko: {
