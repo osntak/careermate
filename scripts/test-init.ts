@@ -97,12 +97,12 @@ try {
     ok('careermate 서버 신뢰 등록(enabledMcpjsonServers)', enabled.includes('careermate'));
     ok('SAFE 도구 사전허용(get_onboarding_status)', allow.has('mcp__careermate__get_onboarding_status'));
     ok('SAFE 도구 사전허용(save_fit_analysis)', allow.has('mcp__careermate__save_fit_analysis'));
+    // careermate 내부만 여는 로컬 동작도 사전허용(밖으로 안 나감).
+    ok('내부 동작 사전허용(open_dashboard)', allow.has('mcp__careermate__open_dashboard'));
+    ok('내부 동작 사전허용(read_inbox)', allow.has('mcp__careermate__read_inbox'));
 
-    // 민감/파괴 도구는 사전허용에서 제외 → 프롬프트 유지.
-    const MUST_PROMPT = [
-      'read_document', 'read_inbox', 'open_inbox', 'open_dashboard',
-      'open_application', 'update_careermate', 'delete_cover_letter', 'delete_job_posting',
-    ];
+    // 정말로 밖으로 나가거나(임의 파일읽기·npm) 비가역(삭제)인 4개만 사전허용에서 제외 → 프롬프트 유지.
+    const MUST_PROMPT = ['read_document', 'update_careermate', 'delete_cover_letter', 'delete_job_posting'];
     const leaked = MUST_PROMPT.filter((t) => allow.has(`mcp__careermate__${t}`));
     ok(`민감/파괴 도구는 사전허용 제외 (누출: ${leaked.join(', ') || '없음'})`, leaked.length === 0);
 

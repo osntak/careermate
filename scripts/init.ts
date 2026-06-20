@@ -303,19 +303,19 @@ function writeTarget(target: ClientTarget, server: ServerEntry): WriteResult {
 /**
  * Claude Code 도구 사전허용 분류.
  * 첫 사용 마찰의 핵심은 careermate MCP 도구를 처음 부를 때마다 뜨는 승인 프롬프트다. init이 작업
- * 폴더의 .claude/settings.local.json에 아래 SAFE 도구를 미리 허용하면 그 프롬프트가 사라진다.
- * SENSITIVE는 의도적으로 제외해 사용자 확인을 유지한다 — 데이터는 어차피 ~/.careermate 로컬이라
- * SAFE는 외부 유출·시스템 변경이 없지만, SENSITIVE는 다음과 같이 손이 밖으로 나가기 때문이다:
- *   read_document/read_inbox = 임의 파일경로 읽기 · open_* = 외부 프로세스/브라우저 실행 ·
- *   update_careermate = npm 실행 · delete_* = 파괴적 삭제.
+ * 폴더의 .claude/settings.local.json에 SAFE 도구를 미리 허용하면 그 프롬프트가 사라진다.
+ * 거의 모든 도구는 ~/.careermate 안에서만 읽고 쓰거나 careermate 자신의 폴더·대시보드(127.0.0.1)만
+ * 여는 로컬 동작이라 SAFE다(인박스 폴더·대시보드 열기, 인박스 안 문서 읽기 포함 — 모두 careermate 내부).
+ * SENSITIVE는 정말로 손이 careermate 밖으로 나가거나 되돌릴 수 없는 4개뿐이고, 이것만 확인을 유지한다:
+ *   - read_document    : 사용자가 준 임의 절대경로 파일 읽기(careermate 밖). 인젝션 시 민감 파일 탈취
+ *                        증폭 — packages/parsers의 denylist는 ~/.ssh·.env 등 일부만 막는다.
+ *   - update_careermate: npm install 실행(외부 프로세스·네트워크·공급망 표면).
+ *   - delete_cover_letter / delete_job_posting : 되돌릴 수 없는 데이터 삭제. 내부 데이터지만 비가역이라
+ *                        권한 프롬프트(=사용자 본인의 확인)에 가치가 있다(코드의 confirm='DELETE'는 모델 자가확인).
  * 새 MCP 도구를 추가하면 둘 중 하나로 분류해야 한다(scripts/test-init.ts가 manifest와 대조해 누락을 잡는다).
  */
 const SENSITIVE_TOOLS: readonly string[] = [
   'read_document',
-  'read_inbox',
-  'open_inbox',
-  'open_dashboard',
-  'open_application',
   'update_careermate',
   'delete_cover_letter',
   'delete_job_posting',
@@ -328,6 +328,8 @@ const SAFE_TOOLS: readonly string[] = [
   'get_application_context', 'save_fit_analysis', 'update_application_status', 'save_interview_prep',
   'export_cover_letter', 'list_recent_activity', 'get_workflow_guide', 'get_playbook', 'get_verifier',
   'validate_cover_letter', 'set_verify_mode', 'get_writing_style_guide', 'check_for_update',
+  // careermate 자신의 인박스 폴더·대시보드(127.0.0.1)만 여는 로컬 동작 + 인박스 내부 문서 읽기 → 사전허용 안전.
+  'read_inbox', 'open_inbox', 'open_dashboard', 'open_application',
 ];
 
 /** Claude Code 작업 폴더의 로컬(비공유) 설정 파일. 권한·신뢰는 머신/사용자 로컬 산출물이다. */
