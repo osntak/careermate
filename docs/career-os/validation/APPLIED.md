@@ -31,10 +31,10 @@
 | `eop/cover-letter.md` §2 step4(경계) | 프레이밍 경계 예시(p99·Kafka·A/B)가 IT 직군 한 예임을 명시 — 원리는 전 직군 동일 |
 | `eop/interview-prep.md` §0 | '도메인 지식'의 예(격리수준·idempotency)가 직군별 전문 개념의 한 예임을 명시 |
 
-## 아직 cross-vendor로 닫히지 않은 항목 (참고)
-아래는 **claude 멀티모델(opus·sonnet·haiku) 만장일치**로 적용됐으나, **codex cross-vendor 재확인은 미완**(codex 사용량 소진). 정본에는 적용된 상태이며 R5·R6 clean 산출물에 간접 반영됨. 3-vendor 재개 시 codex 표결로 닫을 후속 과제. 본문 인라인 주석으로 표기됨.
+## cross-vendor로 닫힌 항목 (2026-06-20 closed — 이력 보존)
+아래 2건은 R6까지 claude 멀티모델 만장일치만 있고 codex 규칙-텍스트 전용 표결이 없어 '미완'이었으나, **2026-06-20 codex 규칙-텍스트 전용 표결에서 agree** 하여 닫혔다(consensus 하니스의 클린 codex 패널리스트 = cross-vendor). 4/4 agree.
 
 | 항목 | 위치 | 상태 |
 |---|---|---|
-| P4 STAR 앵커-우선 | `eop/cover-letter.md` §2 step4 | claude 3모델 만장일치(haiku 반대→해소) **+ R7 cross-vendor 생성-채점 PASS로 간접 지지**(cl-s1 opus생성·codex채점 94 / cl-s2 codex생성 90 PASS·opus생성 94) — 규칙 텍스트 전용 codex 표결은 **미완(진행중, 용량 소진)**. '닫힘' 아님 |
-| 사실 앵커 경계(프레이밍) | `eop/cover-letter.md` §2 step4 | claude 3모델 만장일치 **+ R7에서 `r7-cover-letter`가 이 경계를 강화**('범위·채널·주체 그대로'·파생수치 금지)해 cross-vendor PASS로 **간접 지지** — 규칙 텍스트 전용 codex 표결 **미완(진행중)**. '닫힘' 아님 |
+| P4 STAR 앵커-우선 | `eop/cover-letter.md` §2 step4 | ✅ **닫힘(2026-06-20)** — codex 규칙-텍스트 전용 표결 **agree**(4/4: codex + claude opus/sonnet/haiku) + claude 3모델 만장일치(2026-06-18) + R7 cross-vendor 산출물 PASS 간접지지(cl-s1=94 opus생성·codex채점 / cl-s2 codex생성 90 PASS) |
+| 사실 앵커 경계(프레이밍) | `eop/cover-letter.md` §2 step4 | ✅ **닫힘(2026-06-20)** — codex 규칙-텍스트 전용 표결 **agree**(4/4) + claude 3모델 만장일치 + R7에서 `r7-cover-letter`가 경계 강화('범위·채널·주체 그대로'·파생수치 금지)해 cross-vendor PASS 간접지지 |
