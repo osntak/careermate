@@ -801,6 +801,7 @@ export const TOOLS: ToolDef[] = [
           'write_career_description',
           'manage_application_status',
           'prepare_interview',
+          'build_personal_brand',
         ])
         .optional(),
     },

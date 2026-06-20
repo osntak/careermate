@@ -154,6 +154,14 @@ export const CAREER_ROUTES: Record<string, CareerRoute> = {
     ],
     verifierSequence: ['truthfulness', 'consistency'],
   },
+  // R7 후속: linkedin-profile·portfolio는 onboarding(이력서 임포트)과 단계 의미가
+  // 달라(개인 브랜드 자산 *생성*) 전용 워크플로우로 분리(consensus 권고). networking은
+  // manage_application_status에 이미 정박. 저장은 add_resume(kind=portfolio); linkedin
+  // 전용 저장/검증은 Phase B.
+  build_personal_brand: {
+    expertSequence: ['linkedin-profile', 'portfolio'],
+    verifierSequence: ['truthfulness', 'human-voice', 'consistency'],
+  },
 };
 
 export function getRoute(id: string): CareerRoute | undefined {

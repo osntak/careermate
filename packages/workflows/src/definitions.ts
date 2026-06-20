@@ -126,4 +126,21 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '준비 내용을 사용자의 언어로 쉽게 요약해 전달하고, 모의 면접/추가 질문 연습이나 상태 업데이트(`update_application_status`로 interview/final_passed)를 제안한다.',
     ],
   },
+  {
+    id: 'build_personal_brand',
+    title: '퍼스널 브랜드 (LinkedIn·포트폴리오)',
+    description:
+      'LinkedIn 프로필과 포트폴리오 같은 자기표현 자산을 직무에 맞춰 작성·최적화하는 흐름. 이력서 임포트(온보딩)와 분리된 별도 작업.',
+    trigger:
+      '사용자가 "링크드인 프로필 봐줘 / 포트폴리오 정리해줘 / 퍼스널 브랜딩 도와줘"라고 요청할 때.',
+    steps: [
+      '`get_application_context`(가능하면 대상 job_id 포함)를 호출해 프로필·경력·프로젝트·스킬·대표 이력서·글쓰기 선호를 가져온다. 타깃 공고가 있으면 그 키워드를 사전 입력으로 쓴다.',
+      '`get_workflow_guide({ workflow_id: "build_personal_brand" })`가 안내하는 전문가 절차를 따른다. 작성 직전 `get_playbook({ domain: "linkedin-profile" })`·`get_playbook({ domain: "portfolio" })`를 받아 헤드라인·About·Featured·3막(problem→approach→impact) 규범을 적용한다.',
+      '무엇을 만들지 확인한다(LinkedIn 프로필만/포트폴리오만/둘 다, 타깃 직무, 강조 포인트). 저장된 실제 경험·성과만 쓰고, 없는 수치·고유명사는 추측하지 말고 `[확인 필요]`로 표시해 사용자에게 묻는다.',
+      'LinkedIn: 헤드라인(핵심 키워드를 앞 120자에 front-load, 하드 상한 220자)·About 첫 문장 훅·정량 성과·직무 키워드를 작성. 포트폴리오: 직무에 맞는 3~6개 항목을 problem→approach→impact 3막으로 구성하고 본인 기여(my_role)와 정량 임팩트를 명시한다.',
+      '저장 직전 `get_verifier({ id: "human-voice" })`·`get_verifier({ id: "truthfulness" })`·`get_verifier({ id: "consistency" })`를 받아 당신이 직접 점검한다(AI 티·환각·사실 보존). 키워드 사전이 비면 키워드 체크는 보류한다.',
+      '포트폴리오 본문은 `add_resume`(kind=portfolio)로 저장한다. LinkedIn 프로필 초안은 사용자가 복사해 쓰도록 제시하고(전용 저장·검증 도구 validate_linkedin_profile은 Phase B 미구현), 원하면 파일로 내보낸다.',
+      '저장 결과를 사용자의 언어로 알리고 대시보드 링크를 안내하며, 네트워킹(추천 경로)이나 공고 지원으로 이어갈지 제안한다.',
+    ],
+  },
 ];
