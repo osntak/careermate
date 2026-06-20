@@ -52,3 +52,47 @@
 
 ## 6. 미커밋
 모든 변경 미커밋(git). 다음 세션에서 커밋 여부 결정.
+
+---
+
+# 라운드 7 (2026-06-20, 진행 중 — 보정-델타 + 지식 표면 감사 + 출처 보강)
+
+> 정본 상세: [runs/r7/ROUND7.md](runs/r7/ROUND7.md)(L1·L2 결과), [runs/r7/FIXES.md](runs/r7/FIXES.md)(수정 스펙),
+> [runs/r7/research-raw.json](runs/r7/research-raw.json)(출처 보강 원본). 사용자 정의 목적: **지침/지식/EOP가 LLM을 보정하는지** 검증.
+
+## 7.1 하니스 개선 (정본 = bin/run.sh)
+- **블라인드 클린룸**: codex를 `/tmp` + 격리 `CODEX_HOME=/tmp/codex-clean`(auth만)으로 실행 → 프로젝트 AGENTS.md(CareerMate)·전역 OMX·hooks·MCP 제거(검증: "no AGENTS.md/project instructions loaded", 25k→9k tok). **라운드 1~6 codex는 AGENTS.md 오염 상태였음**(블라인드 위반) — R7부터 해소.
+- claude도 `--model` 지원(opus/haiku). gemini=**IneligibleTier(개인티어 단종)** 보류. **agy(Antigravity 1.0.10, `-p` 헤드리스) 사용 가능** — 단 기동 느림. 이번 수렴=**codex+claude 2-vendor**.
+- 신규 하니스: `bin/ab_one.sh`(시나리오 A/B 토너먼트), `bin/ab_summarize.mjs`, `bin/l2_audit.wf.js`, `bin/consensus.wf.js`, `bin/research_enrich.wf.js`, `bin/research_enrich2.wf.js`.
+
+## 7.2 L1 보정-델타 (무지침 A vs 지침 B, codex 클린 채점) — 12 시나리오, 6기능+커버리지
+- **강한 모델(opus): 지침이 강력·일관 보정** — 진짜 케이스 avg ≈ +19, fail→pass 5건(fit-s1/s2/s3·profile-s1·cd-s1), cross-vendor(codex생성→claude채점) 88~90 재현. **6기능 전부 + 신규 career-description 입증.**
+- **약한 모델(haiku): 역효과** — 풍부한 EOP에 과생성·환각(없는 날짜·%·NCS코드·신뢰도 날조, 거짓 자가검증). 보정은 모델 능력 의존.
+- **저점수(보정 미완, 재측정 대상)**: interview-s2 B58·interview-s1 B62·cl-s1 B55·job-s1 B72. cl-s2(−17)·cd-s2(−10)는 **채점 헤더 버그**(메모를 제출물로 오인 + 파생수치 과엄격)로 인한 아티팩트 → 헤더 수정 후 재측정.
+
+## 7.3 L2 지식 표면 감사 (28문서: EOP6+knowledge16+verifier6) — broken 0
+- **A1 ✅(코드)**: `eop/fit-analysis`가 런타임 미serve(DEAD)였음 — analyze_job 라우트가 job-analysis만 줌. → `eop`를 배열화하고 analyze_job에 fit-analysis 추가. **L1 최고 보정 기능이 드디어 프로덕션 도달.** (packages/knowledge/src/index.ts, typecheck 0)
+- **A2 ✅(코드)**: `manage_application_status` 라우트 신설(rejection-triage·offer·salary) + prepare_interview에 recruiter-screen. 고아 지식 일부 해소. (남은 고아=linkedin·portfolio·networking·onboarding → 새 워크플로우 id 필요, 후속)
+- **B(텍스트, 합의 대상)**: analyze_job 임계값 3중충돌(fit-matching/job-analysis/responsiveness), ats vs ats-compat 모순, 도메인 소유권 충돌(offer/onboarding/rejection/portfolio), human-voice σ 게이트 불일치.
+- **C(정직성)**: ats-compat·cover-letter(lint)·fit-matching·linkedin·portfolio·interview-behavioral이 미구현 런타임 검증을 사실처럼 표기 → "Phase B" 정직화.
+
+## 7.4 합의 게이트 1차 (codex+claude opus/sonnet/haiku) — 8건 전부 MODIFY(반대 0)
+패널이 스코프·증거·문구 정밀화. 핵심 정정: P1 "메모 위치는 미재현 — 진짜는 내부 어휘 누출+C4 발명". 정밀화 스펙=FIXES.md. **적용 전 재확인(reconfirm) 라운드 필요.**
+
+## 7.5 출처 보강 리서치 (전문가화)
+- **pass-1**(14문서, gov/대학/공식): enrich 92·출처 176, `runs/r7/research-raw.json` 저장. interview-prep 결함(confabulation) 정조준 자료 확보.
+- **pass-2**(사기업 실전·직군별 7문서): 사람인·잡코리아·캐치·헤드헌터·실제 면접질문/합격자소서 패턴(일화는 [참고] 등급), NCS=공공트랙 라벨. **진행 중.**
+
+## 7.6 다음 (이어가기)
+1. pass-2 수신 → pass-1+2 enrichment를 문서별로 통합(출처 등급 보존·날조 금지).
+2. **재확인 패널**(FIXES.md 정밀화안 + C4 발명 하드닝 + 약한모델 대응) → 만장일치 agree만 적용.
+3. 정본 수정(EOP/knowledge/verifier/채점헤더) + APPLIED.md 대장 + 본문 인라인 마커.
+4. 저점수(interview·cl·job + cd 재측정) A/B **재측정** → B가 PASS(≈85+) 도달 확인.
+5. STATUS 갱신 + **커밋**(라운드6부터 누적 미커밋).
+
+## 7.7 interview 보정 완료 (2-트랙 + 발명차단 출력형식) ✅
+- **결과: interview-s1·s2 둘 다 B 82 / PASS / 치명결함 0** (s1: 58→62→72→82, s2: 12→…→82). 최악 함수가 fail→pass.
+- **방법**: ① 제품의 2-트랙(기술/실무 ↔ 인성·컬처핏)으로 EOP 재편 ② 답변 출력형식을 '저장사실 앵커 골격 + `[확인 필요]`/`[면접 전 채우기]` 슬롯'으로 강제 → **유창한 거짓 서사 생성 차단**(발명=C4 제거). pass1+2 출처보강(34 enrich·89 출처)도 통합.
+- **핵심 통찰**: 발명(치명·위험) → 정직한 빈칸(경미·올바름) 트레이드오프. 잔여 major는 대부분 '슬롯이 비어 미완성'으로 읽힌 것 — fixture 데이터가 얇아서지 킷 결함 아님(실제 사용자 풍부 데이터면 채워짐). **빈칸 메우려 발명 허용 금지.**
+- 편집 문서: eop/interview-prep.md(+P1/P4/P8·2트랙·발명차단), knowledge/interview-behavioral.md(+P8 Phase-A 정직화), interview-technical.md. 하니스: bin/apply_interview.wf.js·iterate_interview.wf.js.
+- **다음 적용 대상(같은 레시피)**: cl-s1(B55)·job-s1(B72) 등 저점수 + L2 weak 지식.
