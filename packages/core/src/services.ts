@@ -48,6 +48,7 @@ import {
   activityRepo,
   timelineRepo,
   getVerifyStrict,
+  tx,
 } from '@careermate/db';
 import { lintArtifact, type VerifyCorpus, type LintReport } from './verify/index.ts';
 
@@ -331,57 +332,63 @@ export function updateApplicationStatus(
   const job = jobRepo.get(jobId);
   if (!job) throw notFound('공고를 찾을 수 없습니다.');
   const before = applicationRepo.getByJob(jobId);
-  let application = applicationRepo.setStatus(jobId, status, note);
-  const submittedDocs = (submission?.document_ids ?? [])
-    .map((docId) => documentRepo.get(docId))
-    .filter((doc): doc is DocumentRecord => !!doc);
-  const submittedCoverLetter = submission?.cover_letter_id
-    ? coverLetterRepo.get(submission.cover_letter_id, true)
-    : null;
-  if (status === 'applied' && submission) {
-    const resumeLike =
-      submittedDocs.find((doc) => doc.kind === 'resume' || doc.kind === 'career_description') ??
-      submittedDocs[0] ??
-      null;
-    application = applicationRepo.upsert({
-      job_id: jobId,
-      resume_id: resumeLike?.id ?? application.resume_id ?? undefined,
-      cover_letter_id: submittedCoverLetter?.id ?? application.cover_letter_id ?? undefined,
-      applied_at: submission.submitted_at ?? application.applied_at ?? undefined,
-    });
-  }
-  activityRepo.log(
-    'application_status_changed',
-    `${job.company} · ${job.position} 상태를 '${APPLICATION_STATUS_LABELS[status]}'(으)로 변경했습니다.`,
-    'application',
-    application.id,
-  );
-  const submittedAt = submission?.submitted_at?.trim();
-  const channel = submission?.channel?.trim();
-  const submissionPayload =
-    submission && (submittedAt || channel || submittedCoverLetter || submittedDocs.length > 0)
-      ? {
-          submitted_at: submittedAt || null,
-          channel: channel || null,
-          cover_letter: submittedCoverLetter
-            ? coverLetterTimelineRef(submittedCoverLetter, null, submission.cover_letter_version_id)
-            : null,
-          documents: submittedDocs.map(documentTimelineRef),
-        }
+  // Status change, submission upsert, activity log, and timeline entry must land
+  // together: if any write throws (e.g. a bad bind), roll back so we never leave
+  // the status changed but the submission/timeline missing.
+  const application = tx(() => {
+    let application = applicationRepo.setStatus(jobId, status, note);
+    const submittedDocs = (submission?.document_ids ?? [])
+      .map((docId) => documentRepo.get(docId))
+      .filter((doc): doc is DocumentRecord => !!doc);
+    const submittedCoverLetter = submission?.cover_letter_id
+      ? coverLetterRepo.get(submission.cover_letter_id, true)
       : null;
-  timelineRepo.add({
-    job_id: job.id,
-    type: 'application_status_changed',
-    title: APPLICATION_STATUS_LABELS[status],
-    summary: channel && status === 'applied' ? `${channel}로 제출` : note ?? undefined,
-    payload: {
-      from_status: before?.status ?? null,
-      status,
-      status_label: APPLICATION_STATUS_LABELS[status],
-      note: note ?? null,
-      submission: submissionPayload,
-    },
-    occurred_at: submittedAtToOccurrence(submittedAt),
+    if (status === 'applied' && submission) {
+      const resumeLike =
+        submittedDocs.find((doc) => doc.kind === 'resume' || doc.kind === 'career_description') ??
+        submittedDocs[0] ??
+        null;
+      application = applicationRepo.upsert({
+        job_id: jobId,
+        resume_id: resumeLike?.id ?? application.resume_id ?? undefined,
+        cover_letter_id: submittedCoverLetter?.id ?? application.cover_letter_id ?? undefined,
+        applied_at: submission.submitted_at ?? application.applied_at ?? undefined,
+      });
+    }
+    activityRepo.log(
+      'application_status_changed',
+      `${job.company} · ${job.position} 상태를 '${APPLICATION_STATUS_LABELS[status]}'(으)로 변경했습니다.`,
+      'application',
+      application.id,
+    );
+    const submittedAt = submission?.submitted_at?.trim();
+    const channel = submission?.channel?.trim();
+    const submissionPayload =
+      submission && (submittedAt || channel || submittedCoverLetter || submittedDocs.length > 0)
+        ? {
+            submitted_at: submittedAt || null,
+            channel: channel || null,
+            cover_letter: submittedCoverLetter
+              ? coverLetterTimelineRef(submittedCoverLetter, null, submission.cover_letter_version_id)
+              : null,
+            documents: submittedDocs.map(documentTimelineRef),
+          }
+        : null;
+    timelineRepo.add({
+      job_id: job.id,
+      type: 'application_status_changed',
+      title: APPLICATION_STATUS_LABELS[status],
+      summary: channel && status === 'applied' ? `${channel}로 제출` : note ?? undefined,
+      payload: {
+        from_status: before?.status ?? null,
+        status,
+        status_label: APPLICATION_STATUS_LABELS[status],
+        note: note ?? null,
+        submission: submissionPayload,
+      },
+      occurred_at: submittedAtToOccurrence(submittedAt),
+    });
+    return application;
   });
 
   const interview_unlocked = INTERVIEW_UNLOCK_STATUSES.includes(status);
