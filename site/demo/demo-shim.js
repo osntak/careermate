@@ -11,6 +11,7 @@
 // patched before any page code calls it.
 // =============================================================================
 import { buildSeed } from './seed.js';
+import { buildSeedEn } from './seed.en.js';
 import { t, getLang } from '/demo/i18n.js';
 
 /* ------------------------------------------------------------- demo-only strings */
@@ -185,7 +186,7 @@ const INTERVIEW_UNLOCK = ['document_passed', 'interview', 'final_passed'];
 const ACTIVE = ['draft', 'planned', 'applied', 'document_passed', 'interview'];
 
 /* --------------------------------------------------------------- the DB */
-let db = buildSeed();
+let db = getLang() === 'en' ? buildSeedEn() : buildSeed();
 let seq = 1000;
 const nid = (p) => `${p}${++seq}`;
 const nowIso = () => new Date().toISOString();
@@ -722,7 +723,7 @@ const ROUTES = [
   }],
   ['POST', /^\/api\/settings\/reset$/, (_p, body) => {
     if (body.confirm !== 'DELETE') return { __status: 400, error: d('err_reset_confirm') };
-    db = buildSeed(); // demo "reset" = back to the seed
+    db = getLang() === 'en' ? buildSeedEn() : buildSeed(); // demo "reset" = back to the seed
     return { ok: true };
   }],
 
