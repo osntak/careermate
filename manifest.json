@@ -40,7 +40,7 @@
     },
     {
       "name": "open_inbox",
-      "description": "이력서 인입 폴더 열기"
+      "description": "문서 인입 폴더 열기"
     },
     {
       "name": "read_inbox",

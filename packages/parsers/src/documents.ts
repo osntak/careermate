@@ -124,7 +124,18 @@ export async function extractDocument(input: string, baseDir?: string): Promise<
   });
 
   // Decline secrets/credentials before touching the file (see SENSITIVE_PATH_RE).
-  if (SENSITIVE_PATH_RE.test(filePath)) {
+  // Check the literal path AND the fully-resolved real path: a benign-named
+  // symlink (e.g. inbox/resume.pdf → ~/.ssh/id_rsa) would otherwise slip the
+  // deny-list and leak the target's contents. realpathSync follows every link
+  // and `..` segment to the final on-disk target. It throws for a
+  // missing/broken path — that's fine, statSync below reports it cleanly.
+  let realPath = filePath;
+  try {
+    realPath = fs.realpathSync.native(filePath);
+  } catch {
+    /* not yet resolvable — leave realPath as the literal path */
+  }
+  if (SENSITIVE_PATH_RE.test(filePath) || SENSITIVE_PATH_RE.test(realPath)) {
     return base('unsupported', {
       warnings: [
         '보안상 민감할 수 있는 파일(개인 키·자격증명 등)은 읽지 않습니다. 이력서·경력기술서·자기소개서 같은 문서 파일을 지정해 주세요.',

@@ -161,7 +161,7 @@ npx -y careermate init
 | 대시보드/활동 | `open_dashboard` · `open_application` · `list_recent_activity` · `get_workflow_guide` |
 | 업데이트 | `check_for_update` · `update_careermate` |
 
-이 도구들 위에 6종의 워크플로우(`onboarding`, `analyze_job`, `write_cover_letter`, `write_career_description`, `manage_application_status`, `prepare_interview`)가 정의되어 있어, AI가 단계별로 자연스럽게 안내합니다.
+이 도구들 위에 7종의 워크플로우가 정의되어 있어 AI가 단계별로 자연스럽게 안내합니다: 핵심 6종(`onboarding`, `analyze_job`, `write_cover_letter`, `write_career_description`, `manage_application_status`, `prepare_interview`)과 LinkedIn·포트폴리오용 `build_personal_brand`.
 
 ---
 
@@ -302,7 +302,7 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 
 ## Key features
 
-- **Everything through conversation with AI** — 35 MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
+- **Everything through conversation with AI** — 37 MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
 - **8-stage application status** — `draft` · `planned` · `applied` · `document_passed` · `interview` · `final_passed` · `rejected` · `on_hold`. Interview prep is suggested at `document_passed` or later.
 - **Cover-letter versioning** — Stack versions per posting, compare on a timeline, export to a file.
 - **Job-posting parsing** — Turn pasted posting text into structured records.
@@ -318,7 +318,7 @@ Two local processes share the same database.
 | Process | Run | Role |
 | --- | --- | --- |
 | **Dashboard web server** | `npm start` | `http://127.0.0.1:4319` — view and manage your data. Binds to `127.0.0.1` only. |
-| **MCP server** | `npm run mcp` | stdio-based. Usually launched automatically by the AI client. Provides 35 tools. |
+| **MCP server** | `npm run mcp` | stdio-based. Usually launched automatically by the AI client. Provides 37 tools. |
 
 ---
 
@@ -414,7 +414,7 @@ Dark mode is supported.
 
 ---
 
-## MCP tools at a glance (35)
+## MCP tools at a glance (37)
 
 | Category | Tools |
 | --- | --- |
@@ -422,8 +422,8 @@ Dark mode is supported.
 | Profile | `save_profile` · `get_profile` |
 | Resume | `read_document` · `add_resume` · `get_resumes` · `open_inbox` · `read_inbox` |
 | Experience / projects / skills | `add_experience` · `get_experiences` · `add_project` · `get_projects` · `add_skill` · `get_skills` |
-| Cover letter | `get_cover_letters` · `save_cover_letter_version` · `export_cover_letter` |
-| Job posting | `save_job_posting` · `get_job_posting` · `list_jobs` |
+| Cover letter | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
+| Job posting | `save_job_posting` · `get_job_posting` · `list_jobs` · `delete_job_posting` |
 | Core context | **`get_application_context`** (gathers all context needed for an application in one call) |
 | Fit analysis | `save_fit_analysis` |
 | Application status | `update_application_status` |
@@ -434,7 +434,7 @@ Dark mode is supported.
 | Dashboard / activity | `open_dashboard` · `open_application` · `list_recent_activity` · `get_workflow_guide` |
 | Update | `check_for_update` · `update_careermate` |
 
-On top of these tools, six workflows (`onboarding`, `analyze_job`, `write_cover_letter`, `write_career_description`, `manage_application_status`, `prepare_interview`) are defined so the AI can guide you naturally, step by step.
+On top of these tools, seven workflows are defined so the AI can guide you naturally, step by step: the six core flows (`onboarding`, `analyze_job`, `write_cover_letter`, `write_career_description`, `manage_application_status`, `prepare_interview`) plus `build_personal_brand` for LinkedIn/portfolio assets.
 
 ---
 
@@ -449,7 +449,7 @@ CareerMate/
 │  ├─ shared/         # Shared types, zod schemas, utils
 │  ├─ db/             # node:sqlite DB access, schema, migrations
 │  ├─ core/           # Domain use cases
-│  ├─ mcp-tools/      # The 35 MCP tool definitions
+│  ├─ mcp-tools/      # The 37 MCP tool definitions
 │  ├─ knowledge/      # Career-OS expert playbooks & verifier rubrics (serve)
 │  ├─ exporters/      # Exporters (cover letters, etc.)
 │  ├─ parsers/        # Job-posting parsing

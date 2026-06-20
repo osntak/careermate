@@ -77,7 +77,7 @@ get_onboarding_status
 5. **분석 저장** — 도출한 분석 결과를 `save_fit_analysis`로 저장한다(`job_id`, `score`, `summary`, `strengths`, `gaps`, `matched_keywords`, `missing_keywords`, `recommendations`).
 6. **사용자 설명** — 분석 결과를 사용자의 언어로 쉽게 설명한다(잘 맞는 점, 보완할 점, 추천 전략). 기술 용어는 빼고 전달한다.
 7. **자소서 선택 제안** — 분석 뒤 곧장 자기소개서를 쓰지 말고 "이 공고에 맞춘 자기소개서를 써드릴까요?"라고 묻고 선택지를 제시한다: ① "네, 이 공고에 맞춘 자기소개서를 써줘" ② "아니요, 분석만 저장해줘".
-8. **동의 시 자소서 저장** — 사용자가 ①을 선택하면 적합도 분석과 글쓰기 선호를 반영해 자기소개서를 작성하고 `save_cover_letter_version`으로 저장한다(`job_id` 연결, `note`에 작성 의도 요약). ②를 선택하면 자소서 작성 없이 멈추고 저장 결과와 대시보드 확인만 안내한다.
+8. **동의 시 자소서 저장** — 사용자가 ①을 선택하면 자기소개서를 작성하기 직전 `get_writing_style_guide`로 "AI 티 안 나는 글쓰기 규칙"을 가져와, 적합도 분석·글쓰기 선호와 함께 반영해 자기소개서를 작성하고 `save_cover_letter_version`으로 저장한다(`job_id` 연결, `note`에 작성 의도 요약). ②를 선택하면 자소서 작성 없이 멈추고 저장 결과와 대시보드 확인만 안내한다.
 9. **지원 건 열기** — `open_application`으로 해당 지원 건을 열어 사용자가 결과를 확인하게 하고, 지원 상태 변경(예: 지원 예정/지원 완료)을 제안한다.
 
 **도구 호출 순서 요약(정식 흐름):**
@@ -108,16 +108,18 @@ get_onboarding_status
 
 1. `get_application_context`(가능하면 `job_id` 포함)를 호출해 프로필·경력·프로젝트·스킬·기존 자기소개서·이전 적합도 분석·글쓰기 선호(`preferred_tone`, `emphasis_points`)를 가져온다.
 2. 작성 전에 대상 공고, 강조할 포인트, 톤, 분량을 사용자에게 확인한다(확인 없이 큰 작업을 진행하지 않는다).
-3. 저장된 실제 경험·성과만으로 자기소개서를 작성한다. 빈칸이나 확인이 필요한 부분은 추측하지 말고 표시해 사용자에게 묻는다.
-4. 완성본을 `save_cover_letter_version`으로 저장한다(기존 자기소개서면 `cover_letter_id`, 새로 만들면 `title`, 공고용이면 `job_id`, 변경 요약은 `note`, `source=ai`).
-5. 사용자가 원하면 `export_cover_letter`로 파일로 내보내고, 추가 수정 요청이 있으면 새 버전으로 다시 저장한다.
-6. 저장 결과를 사용자의 언어로 알리고, 지원 상태 업데이트(`update_application_status`)나 면접 준비 등 다음 단계를 제안한다.
+3. `get_writing_style_guide`를 호출해 "AI 티 안 나는 글쓰기 규칙"(번역투·클리셰·기계적 병렬·상투적 연결어·균일한 문장 리듬 제거)을 가져온다.
+4. 저장된 실제 경험·성과만으로 자기소개서를 작성하되, 위 글쓰기 규칙을 적용해 사람이 쓴 듯 자연스럽게 쓴다(사실·수치·고유명사는 그대로). 빈칸이나 확인이 필요한 부분은 추측하지 말고 표시해 사용자에게 묻는다.
+5. 완성본을 `save_cover_letter_version`으로 저장한다(기존 자기소개서면 `cover_letter_id`, 새로 만들면 `title`, 공고용이면 `job_id`, 변경 요약은 `note`, `source=ai`).
+6. 사용자가 원하면 `export_cover_letter`로 파일로 내보내고, 추가 수정 요청이 있으면 새 버전으로 다시 저장한다.
+7. 저장 결과를 사용자의 언어로 알리고, 지원 상태 업데이트(`update_application_status`)나 면접 준비 등 다음 단계를 제안한다.
 
 **도구 호출 순서 요약:**
 
 ```
 get_application_context               # job_id 있으면 함께 전달
   → (대상·강조점·톤·분량 확인)
+  → get_writing_style_guide           # 작성 직전, AI 티 안 나는 글쓰기 규칙
   → save_cover_letter_version         # cover_letter_id 또는 title, job_id, note, source=ai
   → export_cover_letter (선택)
   → (다음 단계 제안: update_application_status 등)

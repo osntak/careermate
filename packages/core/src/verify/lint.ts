@@ -198,6 +198,10 @@ export function lintArtifact(
   const strict = !!opts.strict;
 
   const blocking: LintReport['blocking'] = [];
+  // Save-gate currently fires for cover letters only. The other `kind`s
+  // ('resume' | 'fit' | 'interview') are accepted and linted (signals/provenance
+  // still computed) but not yet hard-gated — that's the deferred B-2 scope, not a
+  // dead branch. See docs/career-os EOP B-2.
   if (corpusAvailable && kind === 'cover_letter') {
     // Always block suspected fabrication (numbers tracing to nothing).
     if (provenance.fabricated.length > 0) {

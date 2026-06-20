@@ -12,7 +12,7 @@
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { getDb, getDataDir } from '@careermate/db';
+import { getDb, getDataDir, closeDb } from '@careermate/db';
 import { TOOLS, toCallToolResult } from '@careermate/mcp-tools';
 import { APP_VERSION } from '@careermate/shared';
 
@@ -56,6 +56,23 @@ async function main(): Promise<void> {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
+
+  // On client disconnect / shutdown, checkpoint and close the SQLite connection
+  // cleanly instead of leaving it to abrupt process death. WAL makes an unclean
+  // exit safe, but an explicit close flushes the checkpoint and releases the file.
+  let closing = false;
+  const shutdown = (): void => {
+    if (closing) return;
+    closing = true;
+    try {
+      closeDb();
+    } catch {
+      /* best-effort */
+    }
+    process.exit(0);
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
 
   // IMPORTANT: never write to stdout — it is the MCP transport. Logs go to stderr.
   console.error(`[careermate-mcp] 연결됨 · 도구 ${TOOLS.length}개 · 데이터: ${getDataDir()}`);

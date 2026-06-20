@@ -94,15 +94,28 @@ function listInboxFiles(dir: string): { name: string; path: string }[] {
   } catch {
     return [];
   }
+  // Resolve the inbox itself once so we can confine listed files to it: a symlink
+  // dropped in the inbox whose real target escapes the inbox (e.g. → ~/.ssh/id_rsa
+  // or a private doc elsewhere) must not be listed or later read by read_inbox.
+  let realDir: string;
+  try {
+    realDir = fs.realpathSync.native(dir);
+  } catch {
+    realDir = dir;
+  }
   const SKIP = /^[.~]|^(thumbs\.db|desktop\.ini)$/i;
   const out: { name: string; path: string }[] = [];
   for (const name of names) {
     if (SKIP.test(name)) continue;
     const p = path.join(dir, name);
     try {
-      if (fs.statSync(p).isFile()) out.push({ name, path: p });
+      if (!fs.statSync(p).isFile()) continue;
+      const real = fs.realpathSync.native(p);
+      const rel = path.relative(realDir, real);
+      if (rel.startsWith('..') || path.isAbsolute(rel)) continue; // escapes the inbox — skip
+      out.push({ name, path: p });
     } catch {
-      /* unreadable entry — skip */
+      /* unreadable entry / broken link — skip */
     }
   }
   return out;

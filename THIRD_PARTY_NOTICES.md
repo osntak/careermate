@@ -17,6 +17,8 @@ CareerMate에 포함된 일부 콘텐츠는 제3자 오픈소스에서 파생되
 ```
 MIT License
 
+Copyright (c) 2026 epoko77-ai
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -35,9 +37,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
-> 참고: 원 저장소의 정확한 저작권자 표기(`Copyright (c) <year> <holder>`)를 확인해
-> 위 전문 상단에 그대로 채워 넣는 것을 권장합니다.
 
 ---
 
