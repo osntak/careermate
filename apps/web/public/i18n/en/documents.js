@@ -15,7 +15,7 @@ export default {
   'documents.loading': 'Loading…',
 
   // create actions
-  'documents.action.coverCreate': 'New cover letter',
+  'documents.action.coverCreate': 'Add cover letter',
   'documents.action.careerCreate': 'Add career description',
   'documents.action.docCreate': 'Add document',
 

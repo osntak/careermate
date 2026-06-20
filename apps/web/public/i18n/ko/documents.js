@@ -15,7 +15,7 @@ export default {
   'documents.loading': '불러오는 중…',
 
   // create actions
-  'documents.action.coverCreate': '새 자기소개서',
+  'documents.action.coverCreate': '자기소개서 추가',
   'documents.action.careerCreate': '경력기술서 추가',
   'documents.action.docCreate': '문서 추가',
 
