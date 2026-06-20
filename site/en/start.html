@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    (function () {
+      try {
+        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
+        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : 'dark');
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+  </script>
+  <title>New here? — Getting started with CareerMate</title>
+  <meta name="description" content="No idea what a terminal is? That's fine. Pick the AI you use and your computer, and we'll walk you through the one install path that fits — from the very start." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://careermate.life/en/start" />
+  <link rel="alternate" hreflang="ko" href="https://careermate.life/start" />
+  <link rel="alternate" hreflang="en" href="https://careermate.life/en/start" />
+  <link rel="alternate" hreflang="x-default" href="https://careermate.life/start" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)" />
+  <link rel="preload" href="/fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/style.css" />
+  <!-- Privacy-friendly analytics for the marketing site only (never the local 127.0.0.1 app). -->
+  <script src="/analytics.js" defer></script>
+  <style>
+    /* Choice wizard — start.html only. Reuses style.css tokens. */
+    .wizard { max-width: 920px; margin: 0; }
+    .q { margin: 0 0 1.6rem; }
+    .q__label { font-weight: 650; margin: 0 0 .7rem; font-size: 1.02rem; }
+    .q__label .num { color: var(--accent); margin-right: .4rem; }
+    .choices { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .choice { position: relative; display: block; cursor: pointer; border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius); background: var(--surface); padding: .85rem 1rem; transition: border-color .12s, background .12s; }
+    .choice:hover { background: var(--surface-hover); }
+    .choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .choice.is-sel { border-color: var(--accent); background: var(--accent-soft); }
+    .choice__t { font-weight: 600; display: block; }
+    .choice__s { color: var(--text-tertiary); font-size: .85rem; display: block; margin-top: .15rem; }
+    .result { display: none; margin-top: 2rem; padding-top: 1.6rem; border-top: 1px solid var(--border); }
+    .result.show { display: block; }
+    .path { display: none; }
+    .path.show { display: block; }
+    .os-win, .os-mac { display: none; }
+    .result[data-os="win"] .os-win { display: revert; }
+    .result[data-os="mac"] .os-mac { display: revert; }
+    li.step.os-win, li.step.os-mac { display: none; }
+    .result[data-os="win"] li.step.os-win { display: flex; }
+    .result[data-os="mac"] li.step.os-mac { display: flex; }
+    .path__tag { display: inline-block; font-size: .78rem; font-weight: 650; color: var(--accent);
+      background: var(--accent-soft); border: 1px solid var(--accent-border); border-radius: 999px; padding: .15rem .6rem; margin-bottom: .5rem; }
+    .filenote { margin-top: .9rem; font-size: .9rem; color: var(--text-secondary);
+      background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .7rem .9rem; }
+    .wizard .acc, .wizard .steps { max-width: none; }
+    .hint { color: var(--text-tertiary); font-size: .9rem; }
+    .start-hero { max-width: var(--maxw); padding-top: 54px; padding-bottom: 30px; }
+    .start-hero .hero__main { max-width: 920px; }
+    .start-hero .hero__title { font-size: 2.45rem; max-width: 16em; }
+    .start-hero .hero__lede { margin-top: 12px; max-width: 34rem; font-size: 1.05rem; }
+    @media (max-width: 820px) {
+      .start-hero { padding-top: 42px; padding-bottom: 24px; }
+      .start-hero .hero__title { font-size: 2.15rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="nav__brand" href="/en#top">
+      <span class="nav__logo" aria-hidden="true">C</span>
+      <span class="nav__name">CareerMate</span>
+    </a>
+    <div class="nav__links">
+      <a href="/en#how">How it works</a>
+      <a href="/en#install">Quick install</a>
+    </div>
+    <div class="nav__actions">
+      <a class="nav__lang" href="/start" hreflang="ko" lang="ko" aria-label="한국어로 보기" title="한국어">한국어</a>
+      <a class="nav__icon" href="https://github.com/osntak/careermate" target="_blank" rel="noopener" aria-label="GitHub repository" title="View source on GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main id="top">
+    <header class="hero hero--solo start-hero">
+      <div class="hero__main">
+        <span class="pill-badge"><span class="pill-badge__dot" aria-hidden="true"></span> New here?</span>
+        <h1 class="hero__title">No terminal knowledge needed</h1>
+        <p class="hero__lede">
+          Just pick the <strong>AI you use</strong> and your <strong>computer</strong>, and we'll show you the <strong>one</strong> install path that fits — from the very start.
+        </p>
+      </div>
+    </header>
+
+    <section class="section" style="padding-top:0">
+      <div class="wizard">
+        <!-- Q1 -->
+        <div class="q">
+          <p class="q__label"><span class="num">1</span>Which AI are you using?</p>
+          <div class="choices" id="q-sub" role="radiogroup" aria-label="AI you use">
+            <label class="choice"><input type="radio" name="sub" value="claude" />
+              <span class="choice__t">Claude (paid)</span><span class="choice__s">Pro or Max plan</span></label>
+            <label class="choice"><input type="radio" name="sub" value="chatgpt" />
+              <span class="choice__t">ChatGPT (paid)</span><span class="choice__s">Plus or higher</span></label>
+            <label class="choice"><input type="radio" name="sub" value="free" />
+              <span class="choice__t">Other (another AI)</span><span class="choice__s">Not Claude/ChatGPT, or not sure</span></label>
+          </div>
+        </div>
+        <!-- Q2 -->
+        <div class="q">
+          <p class="q__label"><span class="num">2</span>And your computer?</p>
+          <div class="choices" id="q-os" role="radiogroup" aria-label="Operating system" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+            <label class="choice"><input type="radio" name="os" value="win" />
+              <span class="choice__t">Windows</span></label>
+            <label class="choice"><input type="radio" name="os" value="mac" />
+              <span class="choice__t">Mac</span></label>
+          </div>
+        </div>
+
+        <p class="hint" id="prompt-pick">Pick the two above and the path that fits you appears below.</p>
+
+        <!-- ============ result ============ -->
+        <div class="result" id="result" aria-live="polite">
+
+          <!-- ===== Claude → app / CLI ===== -->
+          <div class="path" data-sub="claude">
+            <span class="path__tag">For you — Claude</span>
+            <h2>Connect with Claude</h2>
+            <p>There's a path that stays inside the Claude Desktop app, and one that uses the terminal. For most people, <strong>Option 1</strong> is enough.</p>
+
+            <details class="acc">
+              <summary>Option 1 — Claude Desktop app, Code tab <span class="acc__hint">Recommended</span></summary>
+              <div class="acc__body">
+              <p class="hint" style="margin:.3rem 0 .8rem">You open a working folder inside the Claude Desktop app and go from there. No separate terminal needed.</p>
+              <ol class="steps">
+                <li class="step"><div class="step__no">1</div><div class="step__body">
+                  <h3>Install the Claude Desktop app → sign in</h3>
+                  <p>Download it from <a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a>, install, and sign in with your account.</p>
+                </div></li>
+                <li class="step"><div class="step__no">2</div><div class="step__body">
+                  <h3>Pick an empty folder in the Code tab</h3>
+                  <p>Click the <strong>Code</strong> tab at the top and choose a new folder (e.g. Documents/CareerMate) as your working folder.<br />This folder becomes your CareerMate workspace.</p>
+                  <p class="step__tip os-win">On Windows, only if you see <strong>"Git is required"</strong>, install <a href="https://git-scm.com/download/win" rel="noopener" target="_blank">Git for Windows</a> and restart the Claude Desktop app.</p>
+                </div></li>
+                <li class="step"><div class="step__no">3</div><div class="step__body">
+                  <h3>Paste this one line</h3>
+                  <p class="paste-note">💬 Paste it into the <strong>chat</strong> in the Code tab — it's not a terminal command. This line only reads a public guide page to install, and <strong>your resume and personal info are never uploaded.</strong></p>
+                  <div class="code"><button class="copy-btn" type="button" data-copy-target="p-claude">Copy</button>
+                    <pre id="p-claude">Read https://careermate.life/llms-install.txt and follow it to install and connect CareerMate in this folder. Store the data in this folder under .cm/data, and if anything needs changing on my system (like installing Node), tell me before you run it. When it's done, tell me how to restart the app, how to give you my resume, and the dashboard address (http://127.0.0.1:4319).</pre></div>
+                  <p class="step__tip"><strong>You don't need Node already installed.</strong> If it's needed, Claude checks first and helps install it. Approve any permission prompts that appear during install.</p>
+                </div></li>
+                <li class="step"><div class="step__no">4</div><div class="step__body">
+                  <h3>Restart the app → confirm</h3>
+                  <p>Fully quit and reopen the Claude Desktop app (approve the one-time MCP prompt the first time), then say <strong>"check whether CareerMate is connected"</strong> — done.</p>
+                  <p class="recover"><strong>Don't see the tools?</strong> <strong>Fully quit</strong> the app (down to the tray) and reopen it, and make sure you approved the permission prompt that appeared the first time.</p>
+                </div></li>
+              </ol>
+              <div class="filenote">📎 <strong>How to add your resume:</strong> attaching the file in the Code tab chat is easiest. If you can't attach, put the file in your working folder and say <em>"read resume.pdf and register it"</em>, or paste the text in.</div>
+              </div>
+            </details>
+
+            <details class="acc">
+              <summary>Option 2 — Claude Code CLI <span class="acc__hint">If you're comfortable with a terminal</span></summary>
+              <div class="acc__body">
+              <p class="hint" style="margin:.3rem 0 .8rem">You run Claude directly in a terminal. If the terminal is new to you, use Option 1.</p>
+              <ol class="steps">
+                <li class="step"><div class="step__no">1</div><div class="step__body">
+                  <h3>Install Node.js</h3>
+                  <p class="os-win">Windows: paste into PowerShell →</p>
+                  <div class="code os-win"><button class="copy-btn" type="button" data-copy-target="p-node-win-cl">Copy</button><pre id="p-node-win-cl">winget install OpenJS.NodeJS.LTS</pre></div>
+                  <p class="os-mac">Mac: paste into Terminal (no Homebrew? install LTS from nodejs.org) →</p>
+                  <div class="code os-mac"><button class="copy-btn" type="button" data-copy-target="p-node-mac-cl">Copy</button><pre id="p-node-mac-cl">brew install node</pre></div>
+                  <p class="step__tip">If the command is tricky, you can also <strong>download the installer and double-click</strong> it (keep clicking "Next") from <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a>. <strong>See the help below</strong> for how to open a terminal.</p>
+                  <p class="step__tip os-win">On Windows, Git for Windows isn't a required CLI step. Install it only if you hit a Bash-related error.</p>
+                </div></li>
+                <li class="step"><div class="step__no">2</div><div class="step__body">
+                  <h3>Install Claude Code → sign in</h3>
+                  <div class="code"><button class="copy-btn" type="button" data-copy-target="p-cc-install">Copy</button><pre id="p-cc-install">npm install -g @anthropic-ai/claude-code</pre></div>
+                  <p class="step__tip">After installing, run <code>claude</code> and a sign-in window opens (your Pro/Max account).</p>
+                </div></li>
+                <li class="step"><div class="step__no">3</div><div class="step__body">
+                  <h3>Run claude in an empty folder → this line</h3>
+                  <p class="paste-note">💬 Paste it <strong>inside the running claude</strong> — it's a message to the AI (not a shell command). It only reads a public guide to install, and <strong>your data is never uploaded.</strong></p>
+                  <div class="code"><button class="copy-btn" type="button" data-copy-target="p-claude-cli">Copy</button>
+                    <pre id="p-claude-cli">Read https://careermate.life/llms-install.txt and follow it to install and connect CareerMate in this folder. Store the data in this folder under .cm/data, and if anything needs changing on my system (like installing Node), tell me before you run it. When it's done, tell me how to restart the app, how to give you my resume, and the dashboard address (http://127.0.0.1:4319).</pre></div>
+                  <p class="step__tip">If it asks about <strong>network or permissions</strong> during install, approve once (it's for the npm download).</p>
+                </div></li>
+                <li class="step"><div class="step__no">4</div><div class="step__body">
+                  <h3>Confirm</h3>
+                  <p>Inside claude, type <code>/mcp</code>; if you see <code>careermate</code>, you're connected.</p>
+                  <p class="recover"><strong>Not showing up?</strong> Check that <code>node --version</code> is v22.5 or higher, and that you restarted claude.</p>
+                </div></li>
+              </ol>
+              <div class="filenote">📎 <strong>How to add your resume:</strong> if you can attach files, attach it in chat. If attaching is hard in the terminal, put the file in your working folder and say <em>"read resume.pdf and register it"</em>.</div>
+              </div>
+            </details>
+          </div>
+
+          <!-- ===== ChatGPT paid → Codex app / CLI ===== -->
+          <div class="path" data-sub="chatgpt">
+            <span class="path__tag">For you — Codex</span>
+            <h2>Connect with Codex</h2>
+            <p>There's a path that stays inside the Codex app, and one that uses the terminal. For most people, <strong>Option 1</strong> is enough.</p>
+
+            <details class="acc">
+              <summary>Option 1 — Codex app <span class="acc__hint">Recommended</span></summary>
+              <div class="acc__body">
+                <p class="hint" style="margin:.3rem 0 .8rem">Open a working folder in the Codex app and paste the line below.</p>
+                <ol class="steps">
+                  <li class="step"><div class="step__no">1</div><div class="step__body">
+                    <h3>Install the Codex app → sign in</h3>
+                    <p>Install the <a href="https://developers.openai.com/codex/app" rel="noopener" target="_blank">Codex app</a> and sign in with your ChatGPT account.</p>
+                  </div></li>
+                  <li class="step"><div class="step__no">2</div><div class="step__body">
+                    <h3>Open a working folder</h3>
+                    <p>Create a new folder and open it as a project in the Codex app. This folder becomes your CareerMate workspace.</p>
+                  </div></li>
+                  <li class="step"><div class="step__no">3</div><div class="step__body">
+                    <h3>Paste this line</h3>
+                    <p class="paste-note">💬 Paste it into the <strong>chat</strong> in the Codex app. It only reads a public guide to install, and <strong>your data is never uploaded.</strong></p>
+                    <div class="code"><button class="copy-btn" type="button" data-copy-target="p-codex">Copy</button>
+                      <pre id="p-codex">Read https://careermate.life/llms-install.txt and follow it to install and connect CareerMate in this folder. Store the data in this folder under .cm/data, and if anything needs changing on my system (like installing Node), tell me before you run it. When it's done, tell me how to restart the app, how to give you my resume, and the dashboard address (http://127.0.0.1:4319).</pre></div>
+                  </div></li>
+                  <li class="step"><div class="step__no">4</div><div class="step__body">
+                    <h3>Confirm</h3>
+                    <p>Reopen Codex and say <strong>"check whether CareerMate is connected"</strong> — done.</p>
+                  </div></li>
+                </ol>
+                <div class="filenote">📎 <strong>How to add your resume:</strong> put the file in your working folder and say <em>"read resume.pdf and register it"</em>, or paste the text into the chat.</div>
+              </div>
+            </details>
+
+            <details class="acc">
+              <summary>Option 2 — Codex CLI <span class="acc__hint">If you're comfortable with a terminal</span></summary>
+              <div class="acc__body">
+                <ol class="steps">
+                  <li class="step"><div class="step__no">1</div><div class="step__body">
+                    <h3>Install Node.js</h3>
+                    <p>Install the LTS from <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a>.</p>
+                  </div></li>
+                  <li class="step"><div class="step__no">2</div><div class="step__body">
+                    <h3>Run Codex in an empty folder</h3>
+                    <div class="code"><button class="copy-btn" type="button" data-copy-target="p-codex-install">Copy</button><pre id="p-codex-install">npm install -g @openai/codex</pre></div>
+                  </div></li>
+                  <li class="step"><div class="step__no">3</div><div class="step__body">
+                    <h3>Paste the line above</h3>
+                    <p>Paste the install line above into the running <code>codex</code>, then confirm with <code>/mcp</code> after it connects.</p>
+                  </div></li>
+                </ol>
+                <div class="filenote">📎 <strong>How to add your resume:</strong> put the file in your working folder and say <em>"read resume.pdf and register it"</em>, or paste the text into the chat.</div>
+              </div>
+            </details>
+          </div>
+
+          <!-- ===== Other (Agent) → paste into any locally-capable AI chat ===== -->
+          <div class="path" data-sub="free">
+            <span class="path__tag">For you — Other (Agent)</span>
+            <h2>In any locally-capable AI chat</h2>
+            <p>It doesn't have to be Claude or ChatGPT — any <strong>AI agent that can run commands on your computer</strong> works. Grab an empty folder and paste the one line below into that AI's chat.</p>
+            <p class="hint" style="margin:.2rem 0 0">⚠️ <strong>Free or weaker models may have quality and usage limits.</strong> For the best results we recommend <strong>Claude Pro or ChatGPT Plus</strong>. <strong>CareerMate itself stays free.</strong></p>
+
+            <ol class="steps">
+              <li class="step"><div class="step__no">1</div><div class="step__body">
+                <h3>Open a command-capable AI in an empty folder</h3>
+                <p>Get an AI agent that can work with files and commands on your computer (desktop app or CLI), and pick a new folder as your working folder.</p>
+              </div></li>
+              <li class="step"><div class="step__no">2</div><div class="step__body">
+                <h3>Paste this line</h3>
+                <p class="paste-note">💬 Paste it into that AI's <strong>chat</strong> — it's not a terminal command. It only reads a public guide to install, and <strong>your data is never uploaded.</strong></p>
+                <div class="code"><button class="copy-btn" type="button" data-copy-target="p-other">Copy</button>
+                  <pre id="p-other">Read https://careermate.life/llms-install.txt and follow it to install and connect CareerMate in this folder. Store the data in this folder under .cm/data, and if anything needs changing on my system (like installing Node), tell me before you run it. When it's done, tell me how to restart the app, how to give you my resume, and the dashboard address (http://127.0.0.1:4319).</pre></div>
+              </div></li>
+              <li class="step"><div class="step__no">3</div><div class="step__body">
+                <h3>Confirm</h3>
+                <p>Fully quit and reopen that AI (approve the prompt if it asks the first time), then check with <strong>"check whether CareerMate is connected"</strong> or <code>/mcp</code>.</p>
+                <p class="recover"><strong>Not showing up?</strong> Check that <code>node --version</code> is v22.5 or higher and that you fully quit and reopened the app.</p>
+              </div></li>
+            </ol>
+            <div class="filenote">📎 <strong>How to add your resume:</strong> put the file in your working folder and point to it by name/path. If it won't read, paste the text in.</div>
+          </div>
+
+        </div><!-- /result -->
+
+        <!-- ===== beginner help (always expandable) ===== -->
+        <div class="help" style="margin-top:2.4rem">
+          <p class="q__label" style="margin-bottom:.6rem">Need more help?</p>
+
+          <details class="acc">
+            <summary>New to the terminal (command window)? — how to open it <span class="acc__hint">When using the CLI</span></summary>
+            <div class="acc__body">
+              <p>The <strong>terminal</strong> is a window where you type commands one line at a time. Here's how to open it:</p>
+              <ul>
+                <li><strong>Windows</strong> — Start button → search <code>PowerShell</code> → run <strong>Windows PowerShell</strong>. Paste with <strong>right-click</strong> or <kbd>Ctrl</kbd>+<kbd>V</kbd>, run with <kbd>Enter</kbd>.</li>
+                <li><strong>Mac</strong> — <kbd>⌘</kbd>+<kbd>Space</kbd> (Spotlight) → type <code>Terminal</code> → run. Paste with <kbd>⌘</kbd>+<kbd>V</kbd>, run with <kbd>Return</kbd>.</li>
+              </ul>
+              <p class="hint">The order is always the same: <strong>[Copy]</strong> the command → <strong>paste</strong> into the terminal → <strong>Enter</strong>.</p>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary>Getting the programs you need <span class="acc__hint">Node · Claude · Codex</span></summary>
+            <div class="acc__body">
+              <ul>
+                <li><strong>Node.js (LTS)</strong> — <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a> · download the installer and double-click (keep clicking "Next"). Needed for the terminal/CLI paths.</li>
+                <li><strong>Claude Desktop app</strong> — <a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a> · used to open a working folder in the Code tab.</li>
+                <li><strong>Codex app</strong> — <a href="https://developers.openai.com/codex/app" rel="noopener" target="_blank">developers.openai.com/codex/app</a> · used to open a working folder and paste the prompt.</li>
+                <li><strong>Git for Windows</strong> — <a href="https://git-scm.com/download/win" rel="noopener" target="_blank">git-scm.com/download/win</a> · only when the Claude Desktop Code tab on Windows blocks you with <em>"Git is required"</em>.</li>
+              </ul>
+              <p class="hint">What to do after downloading is in the steps of "the path that fits me" you picked above.</p>
+            </div>
+          </details>
+        </div>
+
+        <p class="hint" style="margin-top:2rem">Back to the main page → <a href="/en#install">see quick install</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__brand"><span class="nav__logo" aria-hidden="true">C</span> CareerMate</div>
+    <p>A local, MCP-based career workspace. All data stays on this computer.</p>
+    <div class="foot__links"><a href="/en">Home</a><a href="/en#install">Quick install</a><a href="https://github.com/osntak/careermate" target="_blank" rel="noopener">GitHub</a></div>
+  </footer>
+
+  <div class="sr-only" role="status" aria-live="polite" id="copy-status"></div>
+
+  <script src="/landing.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      // --- wizard ---
+      var result = document.getElementById('result');
+      var pickHint = document.getElementById('prompt-pick');
+      var sub = null, os = null;
+      function markSel(groupId) {
+        document.querySelectorAll('#' + groupId + ' .choice').forEach(function (c) {
+          c.classList.toggle('is-sel', !!c.querySelector('input').checked);
+        });
+      }
+      function render() {
+        if (!sub || !os) return;
+        if (pickHint) pickHint.style.display = 'none';
+        result.setAttribute('data-os', os);
+        result.querySelectorAll('.path').forEach(function (p) { p.classList.toggle('show', p.getAttribute('data-sub') === sub); });
+        result.classList.add('show');
+      }
+      document.querySelectorAll('input[name="sub"]').forEach(function (r) {
+        r.addEventListener('change', function () { sub = r.value; markSel('q-sub'); render(); });
+      });
+      document.querySelectorAll('input[name="os"]').forEach(function (r) {
+        r.addEventListener('change', function () { os = r.value; markSel('q-os'); render(); });
+      });
+    })();
+  </script>
+</body>
+</html>

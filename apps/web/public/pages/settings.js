@@ -4,6 +4,7 @@ import {
   el, get, post, icon, navigate, Card, Btn, IconBtn, Input,
   openModal, copyText, downloadUrl, fmtRelative, toastOk, toastError, mount,
 } from '/lib.js';
+import { getLang, setLang, onLangChange } from '/i18n.js';
 
 const COUNT_LABELS = {
   profile: '프로필', experiences: '경력', projects: '프로젝트', skills: '기술',
@@ -25,6 +26,7 @@ export async function render(ctx) {
     DataLocation(info),
     Connection(info),
     Theme(),
+    LanguageSwitcher(),
     VerifyMode(info),
     MyData(info.counts),
     Backup(backups, async () => { await ctx.refreshNav(); await render(ctx); }),
@@ -166,6 +168,35 @@ function Theme() {
   return Card({
     title: '테마',
     sub: '시스템 설정을 따르거나 직접 고를 수 있어요',
+    body: row,
+  });
+}
+
+/* ------------------------------------------------------------- 언어 / Language */
+function LanguageSwitcher() {
+  // 테마 컴포넌트와 동일 패턴: localStorage 영속 + paint() + 변경 시 재페인트.
+  // 카탈로그가 채워지는 Phase 2부터 페이지 텍스트가 실제로 전환된다.
+  const options = [
+    { value: 'ko', label: '한국어' },
+    { value: 'en', label: 'English' },
+  ];
+  const row = el('div', { class: 'flex gap-2 wrap' });
+
+  function paint() {
+    const active = getLang();
+    mount(row, ...options.map((o) => {
+      const b = Btn(o.label, { variant: 'ghost', onClick: () => setLang(o.value) });
+      b.setAttribute('aria-pressed', String(o.value === active));
+      if (o.value === active) b.classList.add('is-selected');
+      return b;
+    }));
+  }
+  paint();
+  onLangChange(paint);
+
+  return Card({
+    title: '언어 / Language',
+    sub: '대시보드 표시 언어',
     body: row,
   });
 }
