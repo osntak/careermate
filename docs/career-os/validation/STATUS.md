@@ -118,4 +118,4 @@
 2. **L2 문서간 정합/정직화**(생성 기능 PASS와 무관, 문서 위생): analyze_job 임계값 단일화(B1)·ats↔ats-compat(B2)·도메인 소유권(B3)·human-voice σ 게이트(B4)·Phase-A 과대주장 정직화(C, ~10문서). FIXES.md P5~P8.
 3. **최종 교차 정리(consolidation)**: interview 등 반복된 발명차단 규칙을 §0.1 한 곳으로 통합 → 전체 재측정으로 PASS 유지 확인(린이 더 높을 수 있음).
 4. **약한 모델(haiku)**: 발명차단 형식이 haiku 환각도 줄이는지 재확인(선택).
-5. **빌드·배포**: 정본 docs 변경 → `npm run build`(docs→dist 복사) 후 배포 반영.
+5. **빌드·검증 ✅ green(2026-06-20)**: `npm run typecheck`(0)·`npm run build`(0, dist/career-os에 개선 EOP 반영)·`npm test`(67통과·0실패). 변경이 런타임에 고정됨. 실제 npm/.mcpb **배포(publish)는 별도**.
