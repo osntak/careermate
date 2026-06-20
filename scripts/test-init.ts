@@ -21,8 +21,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { createRequire } from 'node:module';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 let pass = 0;
 let fail = 0;
@@ -38,8 +37,11 @@ function ok(name: string, condition: unknown): void {
 }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-// Absolute tsx loader so the child `init` can load TS regardless of its cwd.
-const tsxLoader = pathToFileURL(createRequire(import.meta.url).resolve('tsx')).href;
+const repoRoot = path.resolve(here, '..');
+// 실제 배포 진입점(bin/careermate.mjs)을 그대로 호출한다. bin이 자식 cwd를 패키지 루트로 고정하되
+// 사용자 작업 폴더를 CAREERMATE_INIT_CWD로 넘기므로, init이 .mcp.json·권한 설정을 작업 폴더(workspace)에
+// 써야 한다. 이 경로로 호출해야 "init이 패키지 루트에 써버리던" cwd 회귀를 잡을 수 있다.
+const binPath = path.join(repoRoot, 'bin', 'careermate.mjs');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-init-'));
 const workspace = path.join(tmp, 'workspace');
@@ -48,10 +50,9 @@ fs.mkdirSync(workspace, { recursive: true });
 
 console.log('\ninit 설치 동작');
 try {
-  // init.ts는 sqlite를 쓰지 않으므로 --experimental-sqlite는 붙이지 않는다.
   const res = spawnSync(
     process.execPath,
-    ['--no-warnings', '--import', tsxLoader, path.join(here, 'init.ts'), '--client', 'claude-code', '--npx'],
+    ['--no-warnings', binPath, 'init', '--client', 'claude-code', '--npx'],
     {
       cwd: workspace,
       encoding: 'utf8',
@@ -79,6 +80,50 @@ try {
     ok('npx 실행 명령 등록', false);
     ok('careermate mcp 인자 등록', false);
     console.log((res.stdout || '') + (res.stderr || ''));
+  }
+
+  // 사전허용: .mcp.json 옆(작업 폴더)에 .claude/settings.local.json이 생기고, SAFE만 허용·민감은 제외인지.
+  const settingsPath = path.join(workspace, '.claude', 'settings.local.json');
+  const settingsExist = fs.existsSync(settingsPath);
+  ok('작업 폴더에 .claude/settings.local.json 생성', settingsExist);
+  if (settingsExist) {
+    const s = JSON.parse(fs.readFileSync(settingsPath, 'utf8')) as {
+      enabledMcpjsonServers?: unknown;
+      permissions?: { allow?: unknown };
+    };
+    const enabled = Array.isArray(s.enabledMcpjsonServers) ? (s.enabledMcpjsonServers as string[]) : [];
+    const allow = new Set(Array.isArray(s.permissions?.allow) ? (s.permissions?.allow as string[]) : []);
+
+    ok('careermate 서버 신뢰 등록(enabledMcpjsonServers)', enabled.includes('careermate'));
+    ok('SAFE 도구 사전허용(get_onboarding_status)', allow.has('mcp__careermate__get_onboarding_status'));
+    ok('SAFE 도구 사전허용(save_fit_analysis)', allow.has('mcp__careermate__save_fit_analysis'));
+
+    // 민감/파괴 도구는 사전허용에서 제외 → 프롬프트 유지.
+    const MUST_PROMPT = [
+      'read_document', 'read_inbox', 'open_inbox', 'open_dashboard',
+      'open_application', 'update_careermate', 'delete_cover_letter', 'delete_job_posting',
+    ];
+    const leaked = MUST_PROMPT.filter((t) => allow.has(`mcp__careermate__${t}`));
+    ok(`민감/파괴 도구는 사전허용 제외 (누출: ${leaked.join(', ') || '없음'})`, leaked.length === 0);
+
+    // 다른 서버/Bash/와일드카드가 섞이지 않고 careermate 네임스페이스로만 한정.
+    const offServer = [...allow].filter((r) => !r.startsWith('mcp__careermate__'));
+    ok(`사전허용은 careermate 네임스페이스로만 한정 (이탈: ${offServer.join(', ') || '없음'})`, offServer.length === 0);
+
+    // 드리프트 가드: manifest(레지스트리에서 생성)의 모든 도구가 SAFE(허용) 또는 MUST_PROMPT로 분류돼야 한다.
+    const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'manifest.json'), 'utf8')) as {
+      tools?: { name: string }[];
+    };
+    const manifestTools = (manifest.tools ?? []).map((t) => t.name);
+    const unclassified = manifestTools.filter(
+      (t) => !allow.has(`mcp__careermate__${t}`) && !MUST_PROMPT.includes(t),
+    );
+    ok(`새 도구 분류 누락 없음 (미분류: ${unclassified.join(', ') || '없음'})`, unclassified.length === 0);
+
+    // 사전허용 항목은 모두 실재하는 도구여야 한다(오타/유령 방지).
+    const allowedNames = [...allow].map((r) => r.replace('mcp__careermate__', ''));
+    const phantom = allowedNames.filter((n) => !manifestTools.includes(n));
+    ok(`사전허용 도구는 모두 실재 (유령/오타: ${phantom.join(', ') || '없음'})`, phantom.length === 0);
   }
 } catch (e) {
   fail += 1;
