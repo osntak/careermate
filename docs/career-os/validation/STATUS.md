@@ -114,8 +114,20 @@
 - 편집 제품 문서(커밋됨): eop/{interview-prep,cover-letter,job-analysis,career-description}.md + knowledge/{interview-behavioral,interview-technical}.md + packages/knowledge/src/index.ts(A1·A2).
 
 ## 7.9 남은 일 (생성 기능 보정과 별개 — 우선순위 낮음)
-1. **재확인(reconfirm) 패널**: 적용된 EOP 변경을 cross-vendor 만장일치로 ratify → APPLIED.md 대장 + 인라인 마커.
-2. **L2 문서간 정합/정직화**(생성 기능 PASS와 무관, 문서 위생): analyze_job 임계값 단일화(B1)·ats↔ats-compat(B2)·도메인 소유권(B3)·human-voice σ 게이트(B4)·Phase-A 과대주장 정직화(C, ~10문서). FIXES.md P5~P8.
-3. **최종 교차 정리(consolidation)**: interview 등 반복된 발명차단 규칙을 §0.1 한 곳으로 통합 → 전체 재측정으로 PASS 유지 확인(린이 더 높을 수 있음).
-4. **약한 모델(haiku)**: 발명차단 형식이 haiku 환각도 줄이는지 재확인(선택).
-5. **빌드·검증 ✅ green(2026-06-20)**: `npm run typecheck`(0)·`npm run build`(0, dist/career-os에 개선 EOP 반영)·`npm test`(67통과·0실패). 변경이 런타임에 고정됨. 실제 npm/.mcpb **배포(publish)는 별도**.
+1. ✅ **재확인(reconfirm) 패널 완료(2026-06-20)**: R7 생성기능 변경을 cross-vendor consensus(codex 클린룸 + claude opus/sonnet/haiku) R1→R3 수렴으로 ratify → APPLIED.md 대장 4행 + EOP 인라인 마커. 증거 종류 정직화(산출물 수준 cross-vendor PASS ≠ 결함-규칙 전용 표결). 커밋 52539a4.
+2. ✅ **L2 문서간 정합/정직화 완료(2026-06-20)**: B1 임계값 경계(fit-matching·responsiveness, e3b530b)·B2 ats↔ats-compat 0.70 단일·advisory(d206d90)·B3 도메인 소유권 위임(2c86c19)·B4 human-voice σ게이트→advisory + C Phase-A 정직화(b77722b). FIXES.md P5~P8. 고아 라우팅 onboarding-90·networking → manage_application_status(173d1c4; linkedin/portfolio는 후속 예약).
+3. ✅ **최종 교차 정리 완료**: interview 발명차단 규칙을 §0.1 단일 원본으로 통합(커밋 c523c19, PASS 유지).
+4. **약한 모델(haiku)**: 발명차단 형식이 haiku 환각도 줄이는지 재확인(선택, 미수행).
+5. **빌드·검증 ✅ green(2026-06-20, 재확인)**: `npm run typecheck`(0)·`npm run build`(0, dist/career-os에 개선 EOP 반영)·`npm test`(67통과·0실패). 변경이 런타임에 고정됨. 실제 npm/.mcpb **배포(publish)는 별도**.
+
+## 7.10 라운드7 마무리 세션 (2026-06-20) — L2 위생 적용 + consensus 3라운드 수렴
+
+§7.9 남은 항목을 fair-panel consensus 게이트(codex 클린룸 + claude opus/sonnet/haiku)로 ratify 후 적용. **3라운드 84표 disagree 0**으로 수렴(R1=방향 합의 → R2/R3=문구 정밀화). 패널이 오케스트레이터의 증거 오기 2건을 잡아냄: (a) cl-s1=94는 **opus 생성·codex 채점**이고 codex 직접 생성 cl-s2는 **90 PASS**(94 아님, 모든 94는 opus 생성), (b) AGENTS.md L22는 **지원-상태 enum**이지 탈락-단계 enum이 아니다. 커밋: 52539a4(reconfirm)·e3b530b(B1)·d206d90(B2)·2c86c19(B3)·b77722b(B4+C)·173d1c4(orphan). 빌드·회귀 재확인: typecheck 0·build 0·test 67통과·0실패.
+
+**남은 후속(follow-up — 본 라운드 스코프 밖):**
+- **codex P4 규칙-텍스트 전용 표결**: P4 STAR 앵커·사실앵커 경계는 R7 cross-vendor 생성-채점 PASS로 *간접 지지*만 확보(닫힘 아님). codex 용량 회복 시 규칙 텍스트 전용 표결로 닫을 것.
+- **human-voice C4·C5 게이트 정렬**: C4(시작어 반복)·C5(rule-of-three)가 검증기 종료조건에선 게이트인데 human-writing.md 게이트 집합(R5/R6/R9/R11)엔 없음 — 이번엔 σ(C3)만 정렬, C4/C5는 후속.
+- **linkedin/portfolio 전용 워크플로우 id**: 두 personal-brand 도메인은 on-demand 유지 중. get_workflow_guide enum + definitions.ts에 전용 id 신설(예: build_personal_brand) 시 onboarding/networking의 manage 중복 잔존 여부도 함께 결정.
+- **약한 모델(haiku)·풍부 fixture 재측정**: 선택 항목, 미수행.
+
+§7.8 보정: 스코어보드의 cl-s2=94는 **opus 생성·codex 채점**(블라인드 cross-vendor) 점수다. codex 직접 생성 cl-s2는 90 PASS(claude 채점) — 둘 다 PASS이나 생성/채점 주체가 다르다.
