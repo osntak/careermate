@@ -5,9 +5,14 @@ export default {
   'interview.empty.body': '공고 화면에서 AI에게 면접 준비를 요청하면 여기에 저장돼요.',
   'interview.empty.cta': '공고 보러 가기',
 
+  // question tabs (기술 1차 / 인성·컬처핏 2차)
+  'interview.tab.technical': '기술',
+  'interview.tab.behavioral': '인성·컬처핏',
+
   // job card
   'interview.card.summary': '{{q}} · {{s}} · 1분 자기소개 {{intro}}',
   'interview.card.questionsCount': '예상 질문 {{count}}개',
+  'interview.card.questionsSplit': '기술 {{tech}} · 인성·컬처핏 {{beh}}',
   'interview.card.starCount': 'STAR 가이드 {{count}}개',
   'interview.card.introYes': '있음',
   'interview.card.introNo': '없음',
@@ -19,6 +24,7 @@ export default {
   'interview.modal.title': '{{company}} 면접 준비',
   'interview.modal.questionsTitle': '예상 질문 & 꼬리 질문',
   'interview.modal.questionsEmpty': '등록된 예상 질문이 없습니다.',
+  'interview.modal.questionsEmptyTab': '이 갈래에 등록된 질문이 없습니다.',
   'interview.modal.starTitle': 'STAR 답변 가이드',
   'interview.modal.starEmpty': '등록된 STAR 가이드가 없습니다.',
   'interview.modal.introTitle': '1분 자기소개',
@@ -49,6 +55,7 @@ export default {
   'interview.edit.questionNum': '질문 {{n}}',
   'interview.edit.delete': '삭제',
   'interview.edit.fieldQuestion': '질문',
+  'interview.edit.fieldCategory': '면접 갈래',
   'interview.edit.fieldAnswer': '답변 가이드',
   'interview.edit.introLabel': '1분 자기소개',
   'interview.edit.notesLabel': '메모',

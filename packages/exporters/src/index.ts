@@ -284,23 +284,34 @@ export function interviewPrepToMarkdown(
     ? joinBlocks(['## 1분 자기소개', prep.self_introduction.trim()])
     : '';
 
-  const questionsBlock = prep.questions?.length
-    ? joinBlocks([
-        '## 예상 질문',
-        ...prep.questions.map((q, idx) =>
-          joinBlocks([
-            `### Q${idx + 1}. ${q.question}`,
-            q.intent?.trim() ? kv('의도', q.intent) : '',
-            q.answer_outline?.trim()
-              ? joinBlocks(['**답변 가이드**', q.answer_outline.trim()])
-              : '',
-            q.followups?.length
-              ? joinBlocks(['**예상 꼬리 질문**', bulletList(q.followups)])
-              : '',
-          ]),
-        ),
-      ])
-    : '';
+  const renderQuestion = (q: InterviewPrepRecord['questions'][number], idx: number, level: string) =>
+    joinBlocks([
+      `${level} Q${idx + 1}. ${q.question}`,
+      q.intent?.trim() ? kv('의도', q.intent) : '',
+      q.answer_outline?.trim()
+        ? joinBlocks(['**답변 가이드**', q.answer_outline.trim()])
+        : '',
+      q.followups?.length
+        ? joinBlocks(['**예상 꼬리 질문**', bulletList(q.followups)])
+        : '',
+    ]);
+
+  let questionsBlock = '';
+  if (prep.questions?.length) {
+    const technical = prep.questions.filter((q) => (q.category ?? 'technical') === 'technical');
+    const behavioral = prep.questions.filter((q) => q.category === 'behavioral');
+    // Split into 기술 / 인성·컬처핏 sub-sections only when both tracks are present;
+    // a single-track sheet stays flat (backward-compatible output).
+    questionsBlock = behavioral.length
+      ? joinBlocks([
+          '## 예상 질문',
+          technical.length
+            ? joinBlocks(['### 기술 면접', ...technical.map((q, i) => renderQuestion(q, i, '####'))])
+            : '',
+          joinBlocks(['### 인성·컬처핏 면접', ...behavioral.map((q, i) => renderQuestion(q, i, '####'))]),
+        ])
+      : joinBlocks(['## 예상 질문', ...prep.questions.map((q, i) => renderQuestion(q, i, '###'))]);
+  }
 
   const starBlock = prep.star_guides?.length
     ? joinBlocks([

@@ -5,9 +5,14 @@ export default {
   'interview.empty.body': 'Ask the AI to prepare you for an interview from a posting, and it shows up here.',
   'interview.empty.cta': 'Go to postings',
 
+  // question tabs (technical 1st round / personality & culture fit 2nd round)
+  'interview.tab.technical': 'Technical',
+  'interview.tab.behavioral': 'Personality & fit',
+
   // job card
   'interview.card.summary': '{{q}} · {{s}} · 1-minute intro: {{intro}}',
   'interview.card.questionsCount': { one: '{{count}} likely question', other: '{{count}} likely questions' },
+  'interview.card.questionsSplit': '{{tech}} technical · {{beh}} personality & fit',
   'interview.card.starCount': { one: '{{count}} STAR guide', other: '{{count}} STAR guides' },
   'interview.card.introYes': 'Yes',
   'interview.card.introNo': 'No',
@@ -19,6 +24,7 @@ export default {
   'interview.modal.title': '{{company}} interview prep',
   'interview.modal.questionsTitle': 'Likely questions & follow-ups',
   'interview.modal.questionsEmpty': 'No likely questions added yet.',
+  'interview.modal.questionsEmptyTab': 'No questions in this track yet.',
   'interview.modal.starTitle': 'STAR answer guide',
   'interview.modal.starEmpty': 'No STAR guides added yet.',
   'interview.modal.introTitle': '1-minute intro',
@@ -49,6 +55,7 @@ export default {
   'interview.edit.questionNum': 'Question {{n}}',
   'interview.edit.delete': 'Delete',
   'interview.edit.fieldQuestion': 'Question',
+  'interview.edit.fieldCategory': 'Interview track',
   'interview.edit.fieldAnswer': 'Answer guide',
   'interview.edit.introLabel': '1-minute intro',
   'interview.edit.notesLabel': 'Notes',

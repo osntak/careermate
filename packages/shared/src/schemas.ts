@@ -443,8 +443,16 @@ export const StarGuideSchema = z.object({
 });
 export type StarGuide = z.infer<typeof StarGuideSchema>;
 
+/** Interview round/track a question belongs to (drives the 기술/인성·컬처핏 tabs). */
+export const INTERVIEW_CATEGORIES = ['technical', 'behavioral'] as const;
+export type InterviewCategory = (typeof INTERVIEW_CATEGORIES)[number];
+
 export const InterviewQuestionSchema = z.object({
   question: z.string().max(MAX_NOTE),
+  category: z
+    .enum(INTERVIEW_CATEGORIES)
+    .optional()
+    .describe("질문 갈래: 'technical'(기술·직무 1차) | 'behavioral'(인성·컬처핏·임원 2차, 자기소개서 기반). 생략 시 기술로 간주."),
   intent: z.string().max(MAX_NOTE).optional().describe('질문 의도'),
   followups: strList.optional().describe('예상 꼬리 질문'),
   answer_outline: optBody.describe('답변 가이드/핵심 포인트'),

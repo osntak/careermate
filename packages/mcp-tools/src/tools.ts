@@ -691,12 +691,19 @@ export const TOOLS: ToolDef[] = [
     name: 'save_interview_prep',
     title: '면접 준비 자료 저장',
     description:
-      '예상 면접 질문, 꼬리 질문, STAR 답변 가이드, 1분 자기소개 초안 등 해당 공고 기준 면접 준비 자료를 저장합니다. 공고/직무/자기소개서를 근거로 당신(AI)이 생성한 자료를 저장하는 데 사용합니다. job_id는 필수입니다. 같은 공고에 다시 저장하면 갱신됩니다.',
+      '예상 면접 질문, 꼬리 질문, STAR 답변 가이드, 1분 자기소개 초안 등 해당 공고 기준 면접 준비 자료를 저장합니다. 공고/직무/자기소개서를 근거로 당신(AI)이 생성한 자료를 저장하는 데 사용합니다. ' +
+      "질문은 두 갈래로 준비하세요 — 각 질문의 category를 'technical'(기술·직무 1차 면접) 또는 'behavioral'(인성·컬처핏·임원 2차 면접, 자기소개서·프로필 기반)로 지정합니다. 가능하면 두 갈래 모두 채워 한 번에 저장하세요(대시보드가 기술/인성·컬처핏 탭으로 나눠 보여줍니다). " +
+      'job_id는 필수입니다. 같은 공고에 다시 저장하면 갱신됩니다.',
     inputSchema: InterviewPrepInputSchema.shape,
     handler: (args) => {
       try {
         const prep = saveInterviewPrep(args);
-        const user_message = `면접 준비 자료를 저장했어요. 예상 질문 ${prep.questions.length}개가 준비되어 있습니다.`;
+        const tech = prep.questions.filter((q) => (q.category ?? 'technical') === 'technical').length;
+        const behavioral = prep.questions.filter((q) => q.category === 'behavioral').length;
+        const user_message =
+          `면접 준비 자료를 저장했어요. 예상 질문 ${prep.questions.length}개` +
+          (behavioral > 0 ? ` (기술 ${tech}개 · 인성·컬처핏 ${behavioral}개)` : '') +
+          '가 준비되어 있습니다.';
         return ok(user_message, { ...prep, user_message });
       } catch (e) {
         return fail(e instanceof Error ? e.message : '저장 실패');
