@@ -2,10 +2,11 @@
 // (no horizontal scroll). Change a status inline to move an item between groups.
 import {
   el, get, put, navigate, EmptyState, Btn, ListRow,
-  Select, scoreClass, statusColor, mount, toast, toastOk, toastError, meta,
+  Select, scoreClass, statusColor, mount, toast, toastOk, toastError,
 } from '/lib.js';
+import { t } from '/i18n.js';
 
-// deadline(YYYY-MM-DD) → "마감 D-7" / "마감 D-day" / "마감 지남" (null if absent/invalid)
+// deadline(YYYY-MM-DD) → "Due in 7d" / "Due today" / "Overdue" (null if absent/invalid)
 function ddayLabel(deadline) {
   if (!deadline) return null;
   const d = new Date(`${deadline}T00:00:00`);
@@ -13,9 +14,9 @@ function ddayLabel(deadline) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const days = Math.round((d.getTime() - today.getTime()) / 86400000);
-  if (days > 0) return `마감 D-${days}`;
-  if (days === 0) return '마감 D-day';
-  return '마감 지남';
+  if (days > 0) return t('applications.dday.future', { n: days });
+  if (days === 0) return t('applications.dday.today');
+  return t('applications.dday.past');
 }
 
 export async function render(ctx) {
@@ -27,20 +28,15 @@ export async function render(ctx) {
   if (!applications.length) {
     mount(ctx.view, el('div', { class: 'stack-4' }, EmptyState({
       iconName: 'layers',
-      title: '아직 지원 내역이 없어요',
-      body: '공고를 추가하면 지원이 상태별로 정리됩니다.',
-      action: Btn('공고 보러 가기', { icon: 'briefcase', variant: 'primary', onClick: () => navigate('/jobs') }),
+      title: t('applications.empty.title'),
+      body: t('applications.empty.body'),
+      action: Btn(t('applications.empty.action'), { icon: 'briefcase', variant: 'primary', onClick: () => navigate('/jobs') }),
     })));
     return;
   }
 
-  // Status labels: board_order is authoritative for ordering; fall back to meta() labels.
-  const labelByCode = {};
-  for (const a of applications) if (a.status && a.status_label) labelByCode[a.status] = a.status_label;
-  let metaStatuses = [];
-  try { metaStatuses = (await meta()).statuses || []; } catch { /* labels fall back to codes */ }
-  for (const s of metaStatuses) if (!labelByCode[s.value]) labelByCode[s.value] = s.label;
-  const statusOptions = boardOrder.map((code) => ({ value: code, label: labelByCode[code] || code }));
+  // Status labels are localized client-side from the status CODE (board_order is the code list).
+  const statusOptions = boardOrder.map((code) => ({ value: code, label: t('status.' + code) }));
 
   // Group by status.
   const byStatus = {};
@@ -57,8 +53,8 @@ export async function render(ctx) {
     return el('div', {},
       el('div', { class: 'app-group__head' },
         el('span', { class: 'app-group__dot', style: { background: statusColor(code) } }),
-        el('span', { class: 'app-group__title' }, labelByCode[code] || code),
-        el('span', { class: 'app-group__count tnum' }, `${apps.length}건`)),
+        el('span', { class: 'app-group__title' }, t('status.' + code)),
+        el('span', { class: 'app-group__count tnum' }, t('applications.group.count', { count: apps.length }))),
       el('div', {}, ...apps.map(AppRow)));
   }
 
@@ -71,7 +67,7 @@ export async function render(ctx) {
       statusOptions.map((o) => ({ ...o, selected: o.value === app.status })),
       {
         class: 'select select--sm row-action',
-        title: '상태 변경',
+        title: t('applications.statusSelect.title'),
         onClick: (e) => e.stopPropagation(),
         onChange: (e) => { e.stopPropagation(); changeStatus(app, e.target.value, e.target); },
       },
@@ -81,7 +77,7 @@ export async function render(ctx) {
       sub: subBits.join(' · '),
       trailing: [
         app.fit_score != null
-          ? el('span', { class: `strong tnum ${scoreClass(app.fit_score)}` }, `${app.fit_score}점`)
+          ? el('span', { class: `strong tnum ${scoreClass(app.fit_score)}` }, t('applications.row.score', { score: app.fit_score }))
           : null,
         sel,
       ],
@@ -94,8 +90,8 @@ export async function render(ctx) {
     selectEl.disabled = true;
     try {
       const res = await put(`/api/applications/${app.job_id}/status`, { status: newValue });
-      toastOk('지원 상태를 변경했어요.');
-      if (res && res.hint) toast(res.hint, { title: '면접 준비', type: 'default' });
+      toastOk(t('applications.toast.statusChanged'));
+      if (res && res.hint) toast(res.hint, { title: t('applications.hint.title'), type: 'default' });
       await ctx.refreshNav();
       await render(ctx); // refetch + re-render so the item moves to its new group
     } catch (err) {

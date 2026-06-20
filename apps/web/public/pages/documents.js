@@ -5,9 +5,7 @@ import {
   Field, Input, Textarea, Select, openModal, confirmDialog,
   toastOk, toastError, copyText, downloadUrl, fmtRelative, mount, meta,
 } from '/lib.js';
-
-const SOURCE_LABELS = { manual: '직접 입력', upload: '파일 업로드', ai: 'AI 생성', edit: '직접 수정' };
-const sourceLabel = (s) => SOURCE_LABELS[s] || s || '';
+import { t } from '/i18n.js';
 
 // Module-scoped on purpose: remember the last-viewed tab ('cover' | 'career' | 'docs') across
 // navigations so returning to Documents reopens where the user left off. The search
@@ -23,9 +21,9 @@ export async function render(ctx) {
   const root = el('div', { class: 'stack-4' });
 
   const panel = el('div', {});
-  const tabCover = el('div', { class: `tab${tab === 'cover' ? ' is-active' : ''}`, onClick: () => selectTab('cover') }, '자기소개서');
-  const tabCareer = el('div', { class: `tab${tab === 'career' ? ' is-active' : ''}`, onClick: () => selectTab('career') }, '경력기술서');
-  const tabDocs = el('div', { class: `tab${tab === 'docs' ? ' is-active' : ''}`, onClick: () => selectTab('docs') }, '이력서·포트폴리오');
+  const tabCover = el('div', { class: `tab${tab === 'cover' ? ' is-active' : ''}`, onClick: () => selectTab('cover') }, t('documents.tab.cover'));
+  const tabCareer = el('div', { class: `tab${tab === 'career' ? ' is-active' : ''}`, onClick: () => selectTab('career') }, t('documents.tab.career'));
+  const tabDocs = el('div', { class: `tab${tab === 'docs' ? ' is-active' : ''}`, onClick: () => selectTab('docs') }, t('documents.tab.docs'));
   root.append(el('div', { class: 'tabs' }, tabCover, tabCareer, tabDocs), panel);
 
   let query = '';
@@ -54,8 +52,8 @@ export async function render(ctx) {
     if (existing) existing.remove();
     if (q && cards.length && shown === 0) {
       panel.append(el('div', { class: 'search-empty empty' },
-        el('p', { class: 'muted', style: { margin: '0 0 12px' } }, `‘${query.trim()}’에 맞는 항목이 없어요.`),
-        Btn('필터 초기화', { sm: true, variant: 'ghost', onClick: () => { query = ''; if (searchInput) searchInput.value = ''; applyFilter(); } })));
+        el('p', { class: 'muted', style: { margin: '0 0 12px' } }, t('documents.search.empty', { query: query.trim() })),
+        Btn(t('documents.search.clear'), { sm: true, variant: 'ghost', onClick: () => { query = ''; if (searchInput) searchInput.value = ''; applyFilter(); } })));
     }
   }
 
@@ -65,7 +63,7 @@ export async function render(ctx) {
   }
 
   async function renderPanel() {
-    mount(panel, el('div', { class: 'muted text-sm' }, '불러오는 중…'));
+    mount(panel, el('div', { class: 'muted text-sm' }, t('documents.loading')));
     try {
       if (tab === 'cover') mount(panel, await CoverLettersTab(reload));
       else if (tab === 'career') mount(panel, await CareerDescriptionsTab(reload));
@@ -89,21 +87,21 @@ export async function render(ctx) {
       return;
     }
     const m = await meta();
-    const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, k.label]));
+    const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, t('kind.' + k.value)]));
     await openDocDetail(requestedId, kindLabels, m, reload);
   }
 
   // topbar: search (filters the active tab) + the tab's create action
   function setActions() {
-    const placeholder = tab === 'cover' ? '자기소개서 검색' : tab === 'career' ? '경력기술서 검색' : '이력서·포트폴리오 검색';
-    const search = Input({ type: 'search', placeholder, value: query, attrs: { 'aria-label': '검색' } });
+    const placeholder = tab === 'cover' ? t('documents.search.cover') : tab === 'career' ? t('documents.search.career') : t('documents.search.docs');
+    const search = Input({ type: 'search', placeholder, value: query, attrs: { 'aria-label': t('documents.search.aria') } });
     search.classList.add('input--inline');
     searchInput = search;
     search.addEventListener('input', () => { query = search.value; applyFilter(); });
     let createBtn;
-    if (tab === 'cover') createBtn = Btn('새 자기소개서', { icon: 'plus', variant: 'primary', onClick: () => openCoverCreate(reload) });
-    else if (tab === 'career') createBtn = Btn('경력기술서 추가', { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload, 'career_description') });
-    else createBtn = Btn('문서 추가', { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload) });
+    if (tab === 'cover') createBtn = Btn(t('documents.action.coverCreate'), { icon: 'plus', variant: 'primary', onClick: () => openCoverCreate(reload) });
+    else if (tab === 'career') createBtn = Btn(t('documents.action.careerCreate'), { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload, 'career_description') });
+    else createBtn = Btn(t('documents.action.docCreate'), { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload) });
     ctx.setActions([search, createBtn]);
   }
 
@@ -121,9 +119,9 @@ async function CoverLettersTab(reload) {
   if (!list.length) {
     return mountInto(wrap, EmptyState({
       iconName: 'file',
-      title: '아직 자기소개서가 없어요',
-      body: '작성하거나 붙여넣어 버전과 함께 보관하세요.',
-      action: Btn('새 자기소개서', { icon: 'plus', variant: 'primary', onClick: () => openCoverCreate(reload) }),
+      title: t('documents.cover.empty.title'),
+      body: t('documents.cover.empty.body'),
+      action: Btn(t('documents.action.coverCreate'), { icon: 'plus', variant: 'primary', onClick: () => openCoverCreate(reload) }),
     }));
   }
 
@@ -133,17 +131,17 @@ async function CoverLettersTab(reload) {
 
 function CoverRow(cl, reload) {
   const metaRow = el('div', { class: 'flex gap-2 wrap', style: { marginTop: '4px' } },
-    el('span', { class: 'chip' }, `버전 ${cl.version_count}개`),
-    cl.is_primary ? Badge('accent', '대표') : null,
+    el('span', { class: 'chip' }, t('documents.cover.versionCount', { count: cl.version_count })),
+    cl.is_primary ? Badge('accent', t('documents.cover.primary')) : null,
   );
 
   const actions = el('div', { class: 'flex gap-2 wrap' },
-    Btn('열기', { sm: true, icon: 'external', onClick: () => openCoverDetail(cl.id, reload) }),
-    Btn('복사', { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(cl.current_content || ''), disabled: !cl.current_content }),
-    Btn('MD', { sm: true, variant: 'ghost', icon: 'download', title: 'Markdown 내보내기', onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=md`) }),
-    Btn('HTML', { sm: true, variant: 'ghost', icon: 'download', title: 'HTML 내보내기', onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=html`) }),
-    cl.is_primary ? null : Btn('대표 지정', { sm: true, variant: 'ghost', icon: 'check', onClick: () => setPrimaryCover(cl.id, reload) }),
-    IconBtn('trash', { variant: 'danger', title: '삭제', onClick: () => removeCover(cl, reload) }),
+    Btn(t('documents.cover.open'), { sm: true, icon: 'external', onClick: () => openCoverDetail(cl.id, reload) }),
+    Btn(t('documents.cover.copy'), { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(cl.current_content || ''), disabled: !cl.current_content }),
+    Btn(t('documents.cover.exportMd'), { sm: true, variant: 'ghost', icon: 'download', title: t('documents.cover.exportMdTitle'), onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=md`) }),
+    Btn(t('documents.cover.exportHtml'), { sm: true, variant: 'ghost', icon: 'download', title: t('documents.cover.exportHtmlTitle'), onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=html`) }),
+    cl.is_primary ? null : Btn(t('documents.cover.setPrimary'), { sm: true, variant: 'ghost', icon: 'check', onClick: () => setPrimaryCover(cl.id, reload) }),
+    IconBtn('trash', { variant: 'danger', title: t('documents.cover.delete'), onClick: () => removeCover(cl, reload) }),
   );
 
   return Card({
@@ -152,7 +150,7 @@ function CoverRow(cl, reload) {
       metaRow,
       cl.current_content
         ? el('p', { class: 'text-secondary text-sm truncate', style: { margin: '8px 0 0', maxWidth: '100%' } }, firstLine(cl.current_content))
-        : el('p', { class: 'muted text-sm', style: { margin: '8px 0 0' } }, '아직 내용이 없습니다.'),
+        : el('p', { class: 'muted text-sm', style: { margin: '8px 0 0' } }, t('documents.cover.noContent')),
       el('div', { class: 'divider' }),
       actions,
     ],
@@ -162,21 +160,21 @@ function CoverRow(cl, reload) {
 async function setPrimaryCover(id, reload) {
   try {
     await put(`/api/cover-letters/${id}/primary`, {});
-    toastOk('대표 자기소개서로 지정했어요.');
+    toastOk(t('documents.cover.setPrimaryToast'));
     await reload();
   } catch (err) { toastError(err); }
 }
 
 async function removeCover(cl, reload) {
   const ok = await confirmDialog({
-    title: '자기소개서 삭제',
-    message: `"${cl.title}"을(를) 삭제할까요? 모든 버전 기록이 함께 삭제됩니다.`,
-    confirmLabel: '삭제', danger: true,
+    title: t('documents.cover.deleteTitle'),
+    message: t('documents.cover.deleteConfirm', { title: cl.title }),
+    confirmLabel: t('documents.cover.deleteConfirmLabel'), danger: true,
   });
   if (!ok) return;
   try {
     await del(`/api/cover-letters/${cl.id}`);
-    toastOk('자기소개서를 삭제했어요.');
+    toastOk(t('documents.cover.deleteToast'));
     await reload();
   } catch (err) { toastError(err); }
 }
@@ -185,32 +183,32 @@ async function openCoverCreate(reload) {
   // Let the user PICK the job to link instead of typing an internal ID they've never seen.
   let jobs = [];
   try { ({ jobs } = await get('/api/jobs')); } catch { /* dropdown falls back to "연결 안 함" */ }
-  const title = Input({ placeholder: '예: 백엔드 개발자 자기소개서', attrs: { maxlength: '200' } });
-  const content = Textarea({ placeholder: '내용을 붙여넣으세요. 비워 두면 빈 자기소개서가 만들어집니다.', style: { minHeight: '200px' } });
+  const title = Input({ placeholder: t('documents.coverCreate.titlePlaceholder'), attrs: { maxlength: '200' } });
+  const content = Textarea({ placeholder: t('documents.coverCreate.contentPlaceholder'), style: { minHeight: '200px' } });
   const jobPick = Select([
-    { value: '', label: '연결 안 함', selected: true },
+    { value: '', label: t('documents.coverCreate.jobNone'), selected: true },
     ...jobs.map((j) => ({ value: j.id, label: `${j.company} · ${j.position}` })),
   ]);
 
   openModal({
-    title: '새 자기소개서',
+    title: t('documents.coverCreate.title'),
     size: 'lg',
     body: el('div', { class: 'stack-3' },
-      Field('제목 (필수)', title),
-      Field('내용 (선택)', content, '내용을 입력하면 첫 버전으로 저장됩니다.'),
-      Field('연결할 공고 (선택)', jobPick,
-        jobs.length ? '특정 공고에 연결하면 그 공고 화면에서 함께 보여요.' : '저장된 공고가 아직 없어요.'),
+      Field(t('documents.coverCreate.fieldTitle'), title),
+      Field(t('documents.coverCreate.fieldContent'), content, t('documents.coverCreate.fieldContentHint')),
+      Field(t('documents.coverCreate.fieldJob'), jobPick,
+        jobs.length ? t('documents.coverCreate.fieldJobHint') : t('documents.coverCreate.fieldJobHintEmpty')),
     ),
     footer: (close) => [
-      Btn('취소', { onClick: close }),
-      SubmitBtn('자기소개서 저장', async () => {
-        const t = title.value.trim();
-        if (!t) { title.focus(); throw new Error('제목을 입력해 주세요.'); }
-        const body = { title: t, source: 'manual' };
+      Btn(t('documents.coverCreate.cancel'), { onClick: close }),
+      SubmitBtn(t('documents.coverCreate.submit'), async () => {
+        const tv = title.value.trim();
+        if (!tv) { title.focus(); throw new Error(t('documents.coverCreate.titleRequired')); }
+        const body = { title: tv, source: 'manual' };
         if (content.value.trim()) body.content = content.value;
         if (jobPick.value) body.job_id = jobPick.value;
         await post('/api/cover-letters', body);
-        toastOk('자기소개서를 추가했어요.');
+        toastOk(t('documents.coverCreate.toast'));
         close();
         await reload();
       }),
@@ -253,25 +251,25 @@ function CoverDetailBody(cl, { refresh }) {
   // header meta + export
   wrap.append(el('div', { class: 'flex between wrap gap-2' },
     el('div', { class: 'flex gap-2 wrap' },
-      el('span', { class: 'chip' }, `버전 ${cl.version_count}개`),
-      cl.is_primary ? Badge('accent', '대표') : null,
+      el('span', { class: 'chip' }, t('documents.cover.versionCount', { count: cl.version_count })),
+      cl.is_primary ? Badge('accent', t('documents.cover.primary')) : null,
     ),
     el('div', { class: 'flex gap-2 wrap' },
-      Btn('MD 내보내기', { sm: true, variant: 'ghost', icon: 'download', onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=md`) }),
-      Btn('HTML 내보내기', { sm: true, variant: 'ghost', icon: 'download', onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=html`) }),
+      Btn(t('documents.coverDetail.exportMd'), { sm: true, variant: 'ghost', icon: 'download', onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=md`) }),
+      Btn(t('documents.coverDetail.exportHtml'), { sm: true, variant: 'ghost', icon: 'download', onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=html`) }),
     ),
   ));
 
   // preview — defaults to current content; can be swapped per-version
   const previewLabel = el('div', { class: 'flex between center' },
-    el('h3', { style: { fontSize: '14px', margin: 0 } }, '현재 버전'),
-    Btn('복사', { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(preview.textContent || '') }),
+    el('h3', { style: { fontSize: '14px', margin: 0 } }, t('documents.coverDetail.currentVersion')),
+    Btn(t('documents.coverDetail.copy'), { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(preview.textContent || '') }),
   );
-  const preview = el('div', { class: 'doc-preview' }, cl.current_content || '내용이 없습니다.');
+  const preview = el('div', { class: 'doc-preview' }, cl.current_content || t('documents.coverDetail.noContent'));
 
   const setPreview = (label, text) => {
     previewLabel.firstChild.textContent = label;
-    mount(preview, text || '내용이 없습니다.');
+    mount(preview, text || t('documents.coverDetail.noContent'));
   };
 
   wrap.append(el('div', { class: 'stack-2' }, previewLabel, preview));
@@ -281,11 +279,11 @@ function CoverDetailBody(cl, { refresh }) {
 
   // version history timeline
   wrap.append(el('div', { class: 'stack-2' },
-    el('h3', { style: { fontSize: '14px', margin: 0 } }, '버전 기록'),
+    el('h3', { style: { fontSize: '14px', margin: 0 } }, t('documents.coverDetail.history')),
     versions.length
       ? el('div', { class: 'timeline' }, ...versions.map((v) =>
           VersionItem(cl, v, { isCurrent: v.id === cl.current_version_id, setPreview, refresh })))
-      : el('p', { class: 'muted', style: { margin: 0 } }, '아직 버전 기록이 없습니다.'),
+      : el('p', { class: 'muted', style: { margin: 0 } }, t('documents.coverDetail.historyEmpty')),
   ));
 
   return wrap;
@@ -294,9 +292,9 @@ function CoverDetailBody(cl, { refresh }) {
 function VersionItem(cl, v, { isCurrent, setPreview, refresh }) {
   const head = el('div', { class: 'flex between wrap gap-2 center' },
     el('div', { class: 'flex gap-2 center wrap' },
-      el('span', { class: 'strong' }, `v${v.version_no}`),
-      isCurrent ? Badge('applied', '현재 버전') : null,
-      el('span', { class: 'chip' }, sourceLabel(v.source)),
+      el('span', { class: 'strong' }, t('documents.version.label', { n: v.version_no })),
+      isCurrent ? Badge('applied', t('documents.version.current')) : null,
+      el('span', { class: 'chip' }, t('source.' + v.source)),
     ),
     el('span', { class: 'muted text-sm' }, fmtRelative(v.created_at)),
   );
@@ -304,9 +302,9 @@ function VersionItem(cl, v, { isCurrent, setPreview, refresh }) {
   const note = v.note ? el('div', { class: 'text-secondary text-sm', style: { marginTop: '4px' } }, v.note) : null;
 
   const actions = el('div', { class: 'flex gap-2 wrap', style: { marginTop: '8px' } },
-    Btn('이 버전 보기', { sm: true, variant: 'ghost', icon: 'external', onClick: () => setPreview(`v${v.version_no} 보기`, v.content) }),
-    isCurrent ? null : Btn('현재 버전으로 지정', { sm: true, variant: 'ghost', icon: 'check', onClick: () => makeCurrent(cl.id, v.id, refresh) }),
-    Btn('복사', { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(v.content || '') }),
+    Btn(t('documents.version.view'), { sm: true, variant: 'ghost', icon: 'external', onClick: () => setPreview(t('documents.version.viewLabel', { n: v.version_no }), v.content) }),
+    isCurrent ? null : Btn(t('documents.version.makeCurrent'), { sm: true, variant: 'ghost', icon: 'check', onClick: () => makeCurrent(cl.id, v.id, refresh) }),
+    Btn(t('documents.version.copy'), { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(v.content || '') }),
   );
 
   return el('div', { class: `tl-item${isCurrent ? ' is-current' : ''}` },
@@ -321,7 +319,7 @@ function VersionItem(cl, v, { isCurrent, setPreview, refresh }) {
 async function makeCurrent(id, versionId, refresh) {
   try {
     await put(`/api/cover-letters/${id}/current-version`, { version_id: versionId });
-    toastOk('현재 버전을 변경했어요.');
+    toastOk(t('documents.version.makeCurrentToast'));
     await refresh();
   } catch (err) { toastError(err); }
 }
@@ -330,25 +328,25 @@ function EditNewVersion(cl, refresh) {
   const editor = el('div', { class: 'stack-3', style: { display: 'none' } });
   const content = Textarea({ style: { minHeight: '220px' } });
   content.value = cl.current_content || '';
-  const note = Input({ placeholder: '예: 지원동기 보강, 문장 다듬기' });
+  const note = Input({ placeholder: t('documents.editVersion.notePlaceholder') });
 
   editor.append(
-    Field('내용', content),
-    Field('변경 메모 (선택)', note),
+    Field(t('documents.editVersion.fieldContent'), content),
+    Field(t('documents.editVersion.fieldNote'), note),
     el('div', { class: 'flex gap-2' },
-      SubmitBtn('새 버전으로 저장', async () => {
-        if (!content.value.trim()) { content.focus(); throw new Error('내용을 입력해 주세요.'); }
+      SubmitBtn(t('documents.editVersion.submit'), async () => {
+        if (!content.value.trim()) { content.focus(); throw new Error(t('documents.editVersion.contentRequired')); }
         await post(`/api/cover-letters/${cl.id}/versions`, {
           content: content.value, note: note.value.trim() || undefined, source: 'edit',
         });
-        toastOk('새 버전을 저장했어요.');
+        toastOk(t('documents.editVersion.toast'));
         await refresh();
       }, { icon: 'check' }),
-      Btn('취소', { variant: 'ghost', onClick: () => { editor.style.display = 'none'; toggle.style.display = ''; } }),
+      Btn(t('documents.editVersion.cancel'), { variant: 'ghost', onClick: () => { editor.style.display = 'none'; toggle.style.display = ''; } }),
     ),
   );
 
-  const toggle = Btn('수정하여 새 버전 저장', {
+  const toggle = Btn(t('documents.editVersion.toggle'), {
     variant: 'primary', icon: 'edit',
     onClick: () => {
       content.value = cl.current_content || '';
@@ -365,15 +363,15 @@ function EditNewVersion(cl, refresh) {
 
 async function CareerDescriptionsTab(reload) {
   const [{ documents: list }, m] = await Promise.all([get('/api/documents?kind=career_description'), meta()]);
-  const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, k.label]));
+  const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, t('kind.' + k.value)]));
   const wrap = el('div', { class: 'stack-3' });
 
   if (!list.length) {
     return mountInto(wrap, EmptyState({
       iconName: 'file',
-      title: '아직 경력기술서가 없어요',
-      body: 'AI에게 경력기술서 작성을 요청하면 여기에 저장돼요.',
-      action: Btn('직접 추가', { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload, 'career_description') }),
+      title: t('documents.career.empty.title'),
+      body: t('documents.career.empty.body'),
+      action: Btn(t('documents.career.empty.action'), { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload, 'career_description') }),
     }));
   }
 
@@ -386,15 +384,15 @@ async function CareerDescriptionsTab(reload) {
 async function DocumentsTab(reload) {
   const [{ documents }, m] = await Promise.all([get('/api/documents'), meta()]);
   const list = (documents || []).filter((doc) => doc.kind !== 'career_description');
-  const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, k.label]));
+  const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, t('kind.' + k.value)]));
   const wrap = el('div', { class: 'stack-3' });
 
   if (!list.length) {
     return mountInto(wrap, EmptyState({
       iconName: 'file',
-      title: '저장된 문서가 없어요',
-      body: '이력서·포트폴리오·기타 문서를 보관하세요.',
-      action: Btn('문서 추가', { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload) }),
+      title: t('documents.docs.empty.title'),
+      body: t('documents.docs.empty.body'),
+      action: Btn(t('documents.docs.empty.action'), { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload) }),
     }));
   }
 
@@ -407,7 +405,7 @@ function DocRow(doc, kindLabels, m, reload) {
     el('div', { class: 'flex gap-2 wrap center' },
       el('span', { class: 'strong' }, doc.title),
       el('span', { class: 'chip' }, kindLabels[doc.kind] || doc.kind),
-      doc.is_primary ? Badge('accent', '대표') : null,
+      doc.is_primary ? Badge('accent', t('documents.cover.primary')) : null,
     ),
     el('span', { class: 'muted text-sm' }, fmtRelative(doc.updated_at)),
   );
@@ -440,22 +438,22 @@ async function openDocDetail(id, kindLabels, m, reload) {
     body: el('div', { class: 'stack-3' },
       el('div', { class: 'flex gap-2 wrap center' },
         el('span', { class: 'chip' }, kindLabels[doc.kind] || doc.kind),
-        doc.is_primary ? Badge('accent', '대표') : null,
-        el('span', { class: 'chip' }, sourceLabel(doc.source)),
-        el('span', { class: 'muted text-sm' }, `수정 ${fmtRelative(doc.updated_at)}`),
+        doc.is_primary ? Badge('accent', t('documents.cover.primary')) : null,
+        el('span', { class: 'chip' }, t('source.' + doc.source)),
+        el('span', { class: 'muted text-sm' }, t('documents.docDetail.updated', { when: fmtRelative(doc.updated_at) })),
       ),
-      el('div', { class: 'doc-preview' }, doc.content || '내용이 없습니다.'),
+      el('div', { class: 'doc-preview' }, doc.content || t('documents.docDetail.noContent')),
     ),
     footer: (close) => [
-      Btn('복사', { variant: 'ghost', icon: 'copy', onClick: () => copyText(doc.content || '') }),
-      Btn('내보내기', { variant: 'ghost', icon: 'download', title: 'Markdown 내보내기', onClick: () => downloadUrl(`/api/export/document/${doc.id}?format=md`) }),
-      Btn('삭제', { variant: 'danger', icon: 'trash', onClick: async () => {
-        const ok = await confirmDialog({ title: '문서 삭제', message: `"${doc.title}"을(를) 삭제할까요?`, confirmLabel: '삭제', danger: true });
+      Btn(t('documents.docDetail.copy'), { variant: 'ghost', icon: 'copy', onClick: () => copyText(doc.content || '') }),
+      Btn(t('documents.docDetail.export'), { variant: 'ghost', icon: 'download', title: t('documents.docDetail.exportTitle'), onClick: () => downloadUrl(`/api/export/document/${doc.id}?format=md`) }),
+      Btn(t('documents.docDetail.delete'), { variant: 'danger', icon: 'trash', onClick: async () => {
+        const ok = await confirmDialog({ title: t('documents.docDetail.deleteTitle'), message: t('documents.docDetail.deleteConfirm', { title: doc.title }), confirmLabel: t('documents.docDetail.deleteConfirmLabel'), danger: true });
         if (!ok) return;
-        try { await del(`/api/documents/${doc.id}`); toastOk('문서를 삭제했어요.'); close(); await reload(); }
+        try { await del(`/api/documents/${doc.id}`); toastOk(t('documents.docDetail.deleteToast')); close(); await reload(); }
         catch (err) { toastError(err); }
       } }),
-      Btn('수정', { variant: 'primary', icon: 'edit', onClick: () => { close(); openDocEdit(doc, m, reload); } }),
+      Btn(t('documents.docDetail.edit'), { variant: 'primary', icon: 'edit', onClick: () => { close(); openDocEdit(doc, m, reload); } }),
     ],
   });
 }
@@ -469,33 +467,33 @@ function openDocEdit(doc, m, reload) {
 }
 
 function docForm(doc, m, reload, defaultKind = 'resume') {
-  const kindLabel = (m.document_kinds || []).find((k) => k.value === defaultKind)?.label || '문서';
-  const kinds = (m.document_kinds || []).map((k) => ({ value: k.value, label: k.label, selected: doc ? doc.kind === k.value : k.value === defaultKind }));
+  const kindLabel = (m.document_kinds || []).some((k) => k.value === defaultKind) ? t('kind.' + defaultKind) : t('documents.docForm.defaultKind');
+  const kinds = (m.document_kinds || []).map((k) => ({ value: k.value, label: t('kind.' + k.value), selected: doc ? doc.kind === k.value : k.value === defaultKind }));
   const kind = Select(kinds);
-  const title = Input({ value: doc?.title || '', placeholder: defaultKind === 'career_description' ? '예: 마스터 경력기술서' : '예: 2026 이력서', attrs: { maxlength: '200' } });
-  const content = Textarea({ placeholder: defaultKind === 'career_description' ? '경력기술서 본문을 붙여넣으세요.' : '이력서·포트폴리오 본문을 붙여넣으세요.', style: { minHeight: '300px' } });
+  const title = Input({ value: doc?.title || '', placeholder: defaultKind === 'career_description' ? t('documents.docForm.titlePlaceholderCareer') : t('documents.docForm.titlePlaceholderDefault'), attrs: { maxlength: '200' } });
+  const content = Textarea({ placeholder: defaultKind === 'career_description' ? t('documents.docForm.contentPlaceholderCareer') : t('documents.docForm.contentPlaceholderDefault'), style: { minHeight: '300px' } });
   content.value = doc?.content || '';
   const primary = el('input', { type: 'checkbox', checked: !!doc?.is_primary });
 
   openModal({
-    title: doc ? '문서 수정' : `${kindLabel} 추가`,
+    title: doc ? t('documents.docForm.editTitle') : t('documents.docForm.createTitle', { kind: kindLabel }),
     size: 'lg',
     body: el('div', { class: 'stack-3' },
-      Field('종류', kind),
-      Field('제목 (필수)', title),
-      Field('내용 (필수)', content),
-      Field(null, el('label', { class: 'flex gap-2 center', style: { cursor: 'pointer' } }, primary, el('span', {}, '대표 문서로 지정'))),
+      Field(t('documents.docForm.fieldKind'), kind),
+      Field(t('documents.docForm.fieldTitle'), title),
+      Field(t('documents.docForm.fieldContent'), content),
+      Field(null, el('label', { class: 'flex gap-2 center', style: { cursor: 'pointer' } }, primary, el('span', {}, t('documents.docForm.markPrimary')))),
     ),
     footer: (close) => [
-      Btn('취소', { onClick: close }),
-      SubmitBtn('문서 저장', async () => {
-        const t = title.value.trim();
-        if (!t) { title.focus(); throw new Error('제목을 입력해 주세요.'); }
-        if (!content.value.trim()) { content.focus(); throw new Error('내용을 입력해 주세요.'); }
-        const body = { kind: kind.value, title: t, content: content.value, is_primary: primary.checked };
+      Btn(t('documents.docForm.cancel'), { onClick: close }),
+      SubmitBtn(t('documents.docForm.submit'), async () => {
+        const tv = title.value.trim();
+        if (!tv) { title.focus(); throw new Error(t('documents.docForm.titleRequired')); }
+        if (!content.value.trim()) { content.focus(); throw new Error(t('documents.docForm.contentRequired')); }
+        const body = { kind: kind.value, title: tv, content: content.value, is_primary: primary.checked };
         if (doc) await put(`/api/documents/${doc.id}`, body);
         else await post('/api/documents', { ...body, source: 'manual' });
-        toastOk(doc ? '문서를 수정했어요.' : '문서를 추가했어요.');
+        toastOk(doc ? t('documents.docForm.editToast') : t('documents.docForm.createToast'));
         close();
         await reload();
       }),

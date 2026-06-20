@@ -8,6 +8,7 @@ import {
   openModal, closeModal, confirmDialog, toastOk, toastError,
   fmtDate, scoreClass, mount, meta, linesToArray, csvToArray,
 } from '/lib.js';
+import { t } from '/i18n.js';
 
 export async function render(ctx) {
   if (ctx.params[0]) return renderDetail(ctx, ctx.params[0]);
@@ -24,16 +25,16 @@ async function renderList(ctx) {
     ctx.setActions([]); // 단일 1차 액션은 빈 상태에만 둔다
     wrap.append(EmptyState({
       iconName: 'briefcase',
-      title: '저장된 공고가 없어요',
-      body: '관심 있는 채용공고를 추가해 적합도와 진행 상태를 관리해 보세요.',
-      action: Btn('공고 추가', { icon: 'plus', variant: 'primary', onClick: () => openJobModal(ctx) }),
+      title: t('jobs.list.empty.title'),
+      body: t('jobs.list.empty.body'),
+      action: Btn(t('jobs.list.addJob'), { icon: 'plus', variant: 'primary', onClick: () => openJobModal(ctx) }),
     }));
     mount(ctx.view, wrap);
     return;
   }
 
-  const addBtn = Btn('공고 추가', { icon: 'plus', variant: 'primary', sm: true, onClick: () => openJobModal(ctx) });
-  const search = Input({ type: 'search', placeholder: '회사·직무 검색', attrs: { 'aria-label': '공고 검색' } });
+  const addBtn = Btn(t('jobs.list.addJob'), { icon: 'plus', variant: 'primary', sm: true, onClick: () => openJobModal(ctx) });
+  const search = Input({ type: 'search', placeholder: t('jobs.list.searchPlaceholder'), attrs: { 'aria-label': t('jobs.list.searchAria') } });
   search.classList.add('input--inline');
   ctx.setActions([search, addBtn]);
 
@@ -45,30 +46,30 @@ async function renderList(ctx) {
         el('a', { class: 'cell-link strong', href: `#/jobs/${j.id}` }, j.company),
         el('div', { class: 'muted text-sm' }, j.position)),
       el('td', {},
-        el('div', {}, j.location || el('span', { class: 'muted' }, '위치 미정')),
-        el('div', { class: 'muted text-sm' }, j.deadline ? `마감 ${fmtDate(j.deadline)}` : '마감일 없음')),
+        el('div', {}, j.location || el('span', { class: 'muted' }, t('jobs.list.locationUnset'))),
+        el('div', { class: 'muted text-sm' }, j.deadline ? t('jobs.list.deadline', { date: fmtDate(j.deadline) }) : t('jobs.list.noDeadline'))),
       el('td', { style: { textAlign: 'right' } },
         j.fit_score != null
-          ? el('span', { class: `strong tnum ${scoreClass(j.fit_score)}` }, `${j.fit_score}점`)
+          ? el('span', { class: `strong tnum ${scoreClass(j.fit_score)}` }, t('jobs.list.score', { score: j.fit_score }))
           : el('span', { class: 'muted' }, '—')),
-      el('td', {}, Badge(j.status, j.status_label))),
+      el('td', {}, Badge(j.status, t('status.' + j.status)))),
     text: `${j.company} ${j.position} ${j.location || ''} ${(j.keywords || []).join(' ')}`.toLowerCase(),
   }));
 
   const tbody = el('tbody', {}, ...rowData.map((r) => r.tr));
   const noResult = el('tr', { class: 'hide' },
-    el('td', { attrs: { colspan: '4' }, class: 'muted', style: { textAlign: 'center', padding: '24px 16px' } }, '검색 결과가 없어요.'));
+    el('td', { attrs: { colspan: '4' }, class: 'muted', style: { textAlign: 'center', padding: '24px 16px' } }, t('jobs.list.noResult')));
   tbody.append(noResult);
 
   wrap.append(Card({
-    title: '저장된 공고',
-    sub: `${jobs.length}개`,
+    title: t('jobs.list.cardTitle'),
+    sub: t('jobs.list.cardSub', { count: jobs.length }),
     body: el('div', { class: 'table-scroll' }, el('table', { class: 'table table--jobs' },
       el('thead', {}, el('tr', {},
-        el('th', {}, '회사 · 직무'),
-        el('th', {}, '위치 · 마감일'),
-        el('th', { style: { textAlign: 'right' } }, '적합도'),
-        el('th', {}, '상태'))),
+        el('th', {}, t('jobs.list.col.companyRole')),
+        el('th', {}, t('jobs.list.col.locationDeadline')),
+        el('th', { style: { textAlign: 'right' } }, t('jobs.list.col.fit')),
+        el('th', {}, t('jobs.list.col.status')))),
       tbody)),
   }));
 
@@ -91,35 +92,35 @@ async function renderList(ctx) {
  */
 function jobForm(ctx, { job, onSaved }) {
   const v = job || {};
-  const company = Input({ value: v.company || '', placeholder: '회사명', attrs: { required: 'required' } });
-  const position = Input({ value: v.position || '', placeholder: '직무 / 포지션명', attrs: { required: 'required' } });
-  const url = Input({ value: v.url || '', placeholder: 'https://…', type: 'url' });
-  const location = Input({ value: v.location || '', placeholder: '서울 / 재택 등' });
-  const employment = Input({ value: v.employment_type || '', placeholder: '정규직 / 계약직 / 인턴 등' });
-  const deadline = Input({ value: v.deadline || '', placeholder: 'YYYY-MM-DD' });
-  const source = Input({ value: v.source || '', placeholder: '사람인 / 원티드 / 직접 입력 등' });
+  const company = Input({ value: v.company || '', placeholder: t('jobs.form.companyPlaceholder'), attrs: { required: 'required' } });
+  const position = Input({ value: v.position || '', placeholder: t('jobs.form.positionPlaceholder'), attrs: { required: 'required' } });
+  const url = Input({ value: v.url || '', placeholder: t('jobs.form.urlPlaceholder'), type: 'url' });
+  const location = Input({ value: v.location || '', placeholder: t('jobs.form.locationPlaceholder') });
+  const employment = Input({ value: v.employment_type || '', placeholder: t('jobs.form.employmentPlaceholder') });
+  const deadline = Input({ value: v.deadline || '', placeholder: t('jobs.form.deadlinePlaceholder') });
+  const source = Input({ value: v.source || '', placeholder: t('jobs.form.sourcePlaceholder') });
   const description = Textarea({
-    value: v.description || '', placeholder: '공고 원문 또는 정리된 내용을 붙여넣으세요.',
+    value: v.description || '', placeholder: t('jobs.form.descriptionPlaceholder'),
     style: { minHeight: '160px' },
   });
-  const keywords = Input({ value: (v.keywords || []).join(', '), placeholder: '핵심 키워드 (쉼표로 구분)' });
+  const keywords = Input({ value: (v.keywords || []).join(', '), placeholder: t('jobs.form.keywordsPlaceholder') });
   const requirements = Textarea({
-    value: (v.requirements || []).join('\n'), placeholder: '자격요건/우대사항을 한 줄에 하나씩',
+    value: (v.requirements || []).join('\n'), placeholder: t('jobs.form.requirementsPlaceholder'),
     style: { minHeight: '90px' },
   });
 
   // "붙여넣은 텍스트 정리" — server-side clean + best-effort field extraction.
   // Deterministic text parsing — NOT AI (CareerMate has no LLM). Use a neutral icon and
   // show "정리 중…" so a slow parse of a long posting doesn't look frozen.
-  const tidyBtn = Btn('붙여넣은 텍스트 정리', {
+  const tidyBtn = Btn(t('jobs.form.tidy'), {
     icon: 'edit', sm: true, variant: 'ghost',
     onClick: async () => {
       const raw = description.value.trim();
-      if (!raw) { toastError('먼저 공고 원문을 붙여넣어 주세요.'); return; }
+      if (!raw) { toastError(t('jobs.form.tidyNeedsText')); return; }
       const labelEl = tidyBtn.querySelector('span');
       const origLabel = labelEl ? labelEl.textContent : '';
       tidyBtn.disabled = true;
-      if (labelEl) labelEl.textContent = '정리 중…';
+      if (labelEl) labelEl.textContent = t('jobs.form.tidyBusy');
       try {
         const r = await post('/api/parse/job', { raw });
         if (r.text) description.value = r.text;
@@ -131,7 +132,7 @@ function jobForm(ctx, { job, onSaved }) {
           const merged = [...new Set([...existing, ...r.keywords])];
           keywords.value = merged.join(', ');
         }
-        toastOk('붙여넣은 텍스트를 정리하고 일부 항목을 채웠어요.');
+        toastOk(t('jobs.form.tidyDone'));
       } catch (e) { toastError(e); }
       finally { tidyBtn.disabled = false; if (labelEl) labelEl.textContent = origLabel; }
     },
@@ -139,20 +140,20 @@ function jobForm(ctx, { job, onSaved }) {
 
   const form = el('form', { class: 'stack-3' },
     el('div', { class: 'grid grid--2' },
-      Field('회사 *', company),
-      Field('직무 *', position)),
-    Field('공고 URL', url),
+      Field(t('jobs.form.field.company'), company),
+      Field(t('jobs.form.field.position'), position)),
+    Field(t('jobs.form.field.url'), url),
     el('div', { class: 'grid grid--3' },
-      Field('위치', location),
-      Field('고용형태', employment),
-      Field('마감일', deadline, 'YYYY-MM-DD')),
-    Field('출처', source),
+      Field(t('jobs.form.field.location'), location),
+      Field(t('jobs.form.field.employment'), employment),
+      Field(t('jobs.form.field.deadline'), deadline, t('jobs.form.field.deadlineHint'))),
+    Field(t('jobs.form.field.source'), source),
     Field(
-      el('div', { class: 'flex between center' }, el('span', {}, '공고 원문'), tidyBtn),
+      el('div', { class: 'flex between center' }, el('span', {}, t('jobs.form.field.description')), tidyBtn),
       description,
-      '원문을 붙여넣고 "정리"를 누르면 회사·직무·키워드·마감일을 자동으로 채워봅니다.'),
-    Field('핵심 키워드', keywords, '쉼표로 구분'),
-    Field('자격요건 · 우대사항', requirements, '한 줄에 하나씩'),
+      t('jobs.form.field.descriptionHint')),
+    Field(t('jobs.form.field.keywords'), keywords, t('jobs.form.field.keywordsHint')),
+    Field(t('jobs.form.field.requirements'), requirements, t('jobs.form.field.requirementsHint')),
   );
 
   // Throws on validation/API failure so the SubmitBtn shows it inline.
@@ -169,11 +170,11 @@ function jobForm(ctx, { job, onSaved }) {
       keywords: csvToArray(keywords.value),
       requirements: linesToArray(requirements.value),
     };
-    if (!body.company || !body.position) throw new Error('회사와 직무는 필수입니다.');
+    if (!body.company || !body.position) throw new Error(t('jobs.form.validationRequired'));
     const res = job
       ? await put(`/api/jobs/${job.id}`, body)
       : await post('/api/jobs', body);
-    toastOk(job ? '공고를 수정했어요.' : '공고를 저장했어요.');
+    toastOk(job ? t('jobs.form.savedEdit') : t('jobs.form.savedNew'));
     closeModal();
     await onSaved(res);
   }
@@ -193,14 +194,14 @@ function openJobModal(ctx) {
       navigate(`/jobs/${res.job.id}`);
     },
   });
-  const saveBtn = SubmitBtn('공고 저장', built.submit);
+  const saveBtn = SubmitBtn(t('jobs.form.save'), built.submit);
   built.bindSubmit(saveBtn);
   openModal({
-    title: '공고 추가',
+    title: t('jobs.modal.addTitle'),
     size: 'lg',
     body: built.form,
     footer: (close) => [
-      Btn('취소', { onClick: close }),
+      Btn(t('jobs.form.cancel'), { onClick: close }),
       saveBtn,
     ],
   });
@@ -211,14 +212,14 @@ function openEditModal(ctx, job, remount) {
     job,
     onSaved: async () => { await ctx.refreshNav(); await remount(); },
   });
-  const saveBtn = SubmitBtn('공고 저장', built.submit);
+  const saveBtn = SubmitBtn(t('jobs.form.save'), built.submit);
   built.bindSubmit(saveBtn);
   openModal({
-    title: '공고 수정',
+    title: t('jobs.modal.editTitle'),
     size: 'lg',
     body: built.form,
     footer: (close) => [
-      Btn('취소', { onClick: close }),
+      Btn(t('jobs.form.cancel'), { onClick: close }),
       saveBtn,
     ],
   });
@@ -231,13 +232,13 @@ async function renderDetail(ctx, jobId) {
   try {
     ({ job } = await get(`/api/jobs/${jobId}`));
   } catch (err) {
-    ctx.setTitle('공고를 찾을 수 없음');
+    ctx.setTitle(t('jobs.detail.notFoundTitle'));
     const notFound = el('div', { class: 'stack-4' },
       EmptyState({
         iconName: 'briefcase',
-        title: '공고를 찾을 수 없어요',
-        body: err instanceof Error ? err.message : '요청한 공고가 삭제되었거나 존재하지 않습니다.',
-        action: Btn('공고 목록으로', { icon: 'chevronRight', variant: 'primary', onClick: () => navigate('/jobs') }),
+        title: t('jobs.detail.notFoundCardTitle'),
+        body: err instanceof Error ? err.message : t('jobs.detail.notFoundBody'),
+        action: Btn(t('jobs.detail.backToList'), { icon: 'chevronRight', variant: 'primary', onClick: () => navigate('/jobs') }),
       }));
     mount(ctx.view, notFound);
     ctx.setActions(null);
@@ -247,19 +248,19 @@ async function renderDetail(ctx, jobId) {
   const remount = () => renderDetail(ctx, jobId);
   const m = await meta();
 
-  ctx.setTitle(`${job.company} · ${job.position}`);
+  ctx.setTitle(t('jobs.detail.title', { company: job.company, position: job.position }));
 
   // --- Header actions (also mirrored into the topbar) -----------------------
   async function changeStatus(status, extra = {}) {
     const res = await put(`/api/applications/${jobId}/status`, { status, ...extra });
-    toastOk('상태를 변경했어요.');
+    toastOk(t('jobs.detail.statusChanged'));
     if (res && res.hint) toastOk(res.hint);
     await ctx.refreshNav();
     await remount();
   }
 
   const statusSelect = Select(
-    m.statuses.map((s) => ({ value: s.value, label: s.label, selected: s.value === job.status })),
+    m.statuses.map((s) => ({ value: s.value, label: t('status.' + s.value), selected: s.value === job.status })),
     {
       onChange: async (e) => {
         const status = e.target.value;
@@ -287,19 +288,19 @@ async function renderDetail(ctx, jobId) {
   );
   statusSelect.classList.add('select--sm');
 
-  const editBtn = Btn('수정', { icon: 'edit', sm: true, variant: 'ghost', onClick: () => openEditModal(ctx, job, remount) });
-  const delBtn = Btn('삭제', {
+  const editBtn = Btn(t('jobs.detail.edit'), { icon: 'edit', sm: true, variant: 'ghost', onClick: () => openEditModal(ctx, job, remount) });
+  const delBtn = Btn(t('jobs.detail.delete'), {
     icon: 'trash', sm: true, variant: 'danger',
     onClick: async () => {
       const ok = await confirmDialog({
-        title: '공고 삭제',
-        message: `'${job.company} · ${job.position}' 공고를 삭제할까요? 연결된 지원 기록도 함께 사라집니다.`,
-        confirmLabel: '삭제', danger: true,
+        title: t('jobs.detail.deleteTitle'),
+        message: t('jobs.detail.deleteMessage', { company: job.company, position: job.position }),
+        confirmLabel: t('jobs.detail.deleteConfirm'), danger: true,
       });
       if (!ok) return;
       try {
         await del(`/api/jobs/${jobId}`);
-        toastOk('공고를 삭제했어요.');
+        toastOk(t('jobs.detail.deleted'));
         await ctx.refreshNav();
         navigate('/jobs');
       } catch (err) { toastError(err); }
@@ -307,15 +308,15 @@ async function renderDetail(ctx, jobId) {
   });
 
   ctx.setActions([
-    Btn('목록', { icon: 'chevronRight', sm: true, variant: 'ghost', onClick: () => navigate('/jobs') }),
+    Btn(t('jobs.detail.list'), { icon: 'chevronRight', sm: true, variant: 'ghost', onClick: () => navigate('/jobs') }),
     editBtn,
   ]);
 
   // --- Page head ------------------------------------------------------------
   // 수정은 상단바(ctx.setActions)에만 둔다 — 여기엔 상태 변경·원문·삭제만.
   const headActions = el('div', { class: 'flex gap-2 center wrap' },
-    Field('상태', statusSelect),
-    job.url ? el('a', { class: 'btn btn--ghost btn--sm', href: job.url, attrs: { target: '_blank', rel: 'noopener noreferrer' } }, icon('external'), el('span', {}, '공고 원문 열기')) : null,
+    Field(t('jobs.detail.statusLabel'), statusSelect),
+    job.url ? el('a', { class: 'btn btn--ghost btn--sm', href: job.url, attrs: { target: '_blank', rel: 'noopener noreferrer' } }, icon('external'), el('span', {}, t('jobs.detail.openPosting'))) : null,
     delBtn,
   );
 
@@ -323,7 +324,7 @@ async function renderDetail(ctx, jobId) {
     el('div', { class: 'page-head__text' },
       el('div', { class: 'flex gap-3 center wrap' },
         el('h1', {}, job.company),
-        Badge(job.status, job.status_label)),
+        Badge(job.status, t('status.' + job.status))),
       el('p', {}, job.position)),
     el('div', { class: 'page-head__actions' }, headActions),
   );
@@ -351,21 +352,21 @@ function PostingCard(job) {
   const body = [];
 
   body.push(el('dl', { class: 'kv' },
-    el('dt', {}, '위치'), el('dd', {}, job.location || el('span', { class: 'muted' }, '미정')),
-    el('dt', {}, '고용형태'), el('dd', {}, job.employment_type || el('span', { class: 'muted' }, '미정')),
-    el('dt', {}, '마감일'), el('dd', {}, job.deadline ? fmtDate(job.deadline) : el('span', { class: 'muted' }, '없음')),
-    el('dt', {}, '출처'), el('dd', {}, job.source || el('span', { class: 'muted' }, '직접 입력')),
+    el('dt', {}, t('jobs.posting.location')), el('dd', {}, job.location || el('span', { class: 'muted' }, t('jobs.posting.unset'))),
+    el('dt', {}, t('jobs.posting.employment')), el('dd', {}, job.employment_type || el('span', { class: 'muted' }, t('jobs.posting.unset'))),
+    el('dt', {}, t('jobs.posting.deadline')), el('dd', {}, job.deadline ? fmtDate(job.deadline) : el('span', { class: 'muted' }, t('jobs.posting.none'))),
+    el('dt', {}, t('jobs.posting.source')), el('dd', {}, job.source || el('span', { class: 'muted' }, t('jobs.posting.sourceManual'))),
   ));
 
   if (job.keywords && job.keywords.length) {
     body.push(el('div', { class: 'mt-3' },
-      el('div', { class: 'muted text-sm mb-2' }, '핵심 키워드'),
+      el('div', { class: 'muted text-sm mb-2' }, t('jobs.posting.keywords')),
       Chips(job.keywords, { accent: true })));
   }
 
   if (job.requirements && job.requirements.length) {
     body.push(el('div', { class: 'mt-3' },
-      el('div', { class: 'muted text-sm mb-2' }, '자격요건 · 우대사항'),
+      el('div', { class: 'muted text-sm mb-2' }, t('jobs.posting.requirements')),
       el('ul', { class: 'stack-2', style: { margin: 0, paddingLeft: '18px' } },
         ...job.requirements.map((r) => el('li', {}, r)))));
   }
@@ -375,18 +376,18 @@ function PostingCard(job) {
     body.push(el('details', { class: 'disclosure mt-3' },
       el('summary', { class: 'disclosure__summary' },
         icon('chevronRight', 'disclosure__chevron'),
-        el('span', {}, '공고 원문')),
+        el('span', {}, t('jobs.posting.rawText'))),
       el('div', { class: 'doc-preview mt-2' }, job.description)));
   }
 
-  return Card({ title: '공고 정보', body });
+  return Card({ title: t('jobs.posting.title'), body });
 }
 
 function FitCard(fit) {
   if (!fit) {
     return Card({
-      title: '적합도 분석',
-      body: el('p', { class: 'muted', style: { margin: 0 } }, '아직 분석 전이에요. 이 공고와 내 프로필을 비교한 결과가 여기에 표시됩니다.'),
+      title: t('jobs.fit.title'),
+      body: el('p', { class: 'muted', style: { margin: 0 } }, t('jobs.fit.emptyBody')),
     });
   }
 
@@ -396,7 +397,7 @@ function FitCard(fit) {
     fit.score != null
       ? el('div', { class: `tnum ${scoreClass(fit.score)}`, style: { fontSize: '40px', fontWeight: '700', lineHeight: '1' } }, String(fit.score))
       : el('div', { class: 'muted', style: { fontSize: '28px' } }, '—'),
-    el('div', { class: 'muted text-sm' }, fit.score != null ? '종합 적합도 (100점 만점)' : '점수 미산정'),
+    el('div', { class: 'muted text-sm' }, fit.score != null ? t('jobs.fit.overall') : t('jobs.fit.notScored')),
   ));
 
   if (fit.summary) {
@@ -405,7 +406,7 @@ function FitCard(fit) {
 
   if (fit.strengths && fit.strengths.length) {
     body.push(el('div', {},
-      el('div', { class: 'muted text-sm mb-2' }, '강점'),
+      el('div', { class: 'muted text-sm mb-2' }, t('jobs.fit.strengths')),
       el('div', { class: 'stack-2' },
         ...fit.strengths.map((s) => el('div', { class: 'flex gap-2', style: { alignItems: 'flex-start' } },
           icon('check', 'score-strong'),
@@ -414,44 +415,44 @@ function FitCard(fit) {
 
   if (fit.gaps && fit.gaps.length) {
     body.push(el('div', {},
-      el('div', { class: 'muted text-sm mb-2' }, '보완할 부분'),
+      el('div', { class: 'muted text-sm mb-2' }, t('jobs.fit.gaps')),
       el('ul', { class: 'stack-2', style: { margin: 0, paddingLeft: '18px' } },
         ...fit.gaps.map((g) => el('li', { class: 'text-secondary' }, g)))));
   }
 
   if (fit.matched_keywords && fit.matched_keywords.length) {
     body.push(el('div', {},
-      el('div', { class: 'muted text-sm mb-2' }, '일치하는 키워드'),
+      el('div', { class: 'muted text-sm mb-2' }, t('jobs.fit.matchedKeywords')),
       Chips(fit.matched_keywords, { accent: true })));
   }
   if (fit.missing_keywords && fit.missing_keywords.length) {
     body.push(el('div', {},
-      el('div', { class: 'muted text-sm mb-2' }, '부족한 키워드'),
+      el('div', { class: 'muted text-sm mb-2' }, t('jobs.fit.missingKeywords')),
       Chips(fit.missing_keywords)));
   }
 
   if (fit.recommendations && fit.recommendations.length) {
     body.push(el('div', {},
-      el('div', { class: 'muted text-sm mb-2' }, '추천 전략'),
+      el('div', { class: 'muted text-sm mb-2' }, t('jobs.fit.recommendations')),
       el('ul', { class: 'stack-2', style: { margin: 0, paddingLeft: '18px' } },
         ...fit.recommendations.map((r) => el('li', { class: 'text-secondary' }, r)))));
   }
 
-  return Card({ title: '적합도 분석', body: el('div', { class: 'stack-3' }, ...body) });
+  return Card({ title: t('jobs.fit.title'), body: el('div', { class: 'stack-3' }, ...body) });
 }
 
 function CoverLettersCard(coverLetters) {
   const list = coverLetters || [];
   if (!list.length) {
     return Card({
-      title: '자기소개서',
+      title: t('jobs.cover.title'),
       body: el('p', { class: 'muted', style: { margin: 0, lineHeight: '1.6' } },
-        '아직 이 공고의 자기소개서가 없어요. AI에게 작성을 요청하면 여기에 저장돼요.'),
+        t('jobs.cover.empty')),
     });
   }
   return Card({
-    title: '자기소개서',
-    sub: `${list.length}개`,
+    title: t('jobs.cover.title'),
+    sub: t('jobs.cover.cardSub', { count: list.length }),
     body: el('div', { class: 'stack-2' },
       ...list.map((cl) => el('div', {
         class: 'flex between center is-clickable',
@@ -462,7 +463,7 @@ function CoverLettersCard(coverLetters) {
           icon('file', 'muted'),
           el('div', {},
             el('div', { class: 'strong' }, cl.title),
-            el('div', { class: 'muted text-sm' }, `버전 ${cl.version_count ?? 1}개`))),
+            el('div', { class: 'muted text-sm' }, t('jobs.cover.versions', { count: cl.version_count ?? 1 })))),
         icon('chevronRight', 'muted')))),
   });
 }
@@ -472,22 +473,22 @@ function InterviewCard(job) {
   if (interview) {
     const count = (interview.questions || []).length;
     return Card({
-      title: '면접 준비',
-      actions: Btn('면접 준비 보기', { sm: true, variant: 'ghost', onClick: () => navigate('/interview') }),
+      title: t('jobs.interview.title'),
+      actions: Btn(t('jobs.interview.viewPrep'), { sm: true, variant: 'ghost', onClick: () => navigate('/interview') }),
       body: el('div', { class: 'stack-2' },
         el('div', { class: 'flex gap-2 center' },
           icon('mic', 'muted'),
-          el('span', { class: 'text-secondary' }, count ? `예상 질문 ${count}개가 준비되어 있어요.` : '면접 준비 자료가 저장되어 있어요.')),
+          el('span', { class: 'text-secondary' }, count ? t('jobs.interview.questions', { count }) : t('jobs.interview.saved'))),
         interview.self_introduction
-          ? el('div', { class: 'muted text-sm' }, '1분 자기소개 초안도 함께 저장되어 있습니다.')
+          ? el('div', { class: 'muted text-sm' }, t('jobs.interview.introSaved'))
           : null),
     });
   }
 
   return Card({
-    title: '면접 준비',
+    title: t('jobs.interview.title'),
     body: el('p', { class: 'muted', style: { margin: 0, lineHeight: '1.6' } },
-      '아직 이 공고의 면접 준비가 없어요. AI에게 준비를 요청하면 여기에 저장돼요.'),
+      t('jobs.interview.empty')),
   });
 }
 
@@ -496,12 +497,11 @@ async function openAppliedModal({ job, metaInfo, changeStatus }) {
     get('/api/cover-letters'),
     get('/api/documents'),
   ]);
-  const kindLabels = Object.fromEntries((metaInfo.document_kinds || []).map((k) => [k.value, k.label]));
   const jobCoverIds = new Set((job.cover_letters || []).map((cl) => cl.id));
   const today = new Date().toISOString().slice(0, 10);
   const submittedAt = Input({ type: 'date', value: job.application?.applied_at?.slice(0, 10) || today });
-  const channel = Input({ placeholder: '예: 원티드, 사람인, 회사 채용페이지' });
-  const note = Textarea({ placeholder: '상태 변경 메모를 남길 수 있어요.', style: { minHeight: '76px' } });
+  const channel = Input({ placeholder: t('jobs.applied.channelPlaceholder') });
+  const note = Textarea({ placeholder: t('jobs.applied.notePlaceholder'), style: { minHeight: '76px' } });
   const coverList = el('div', {});
   const docList = el('div', { class: 'pick-list' });
   const selectedDocIds = new Set(job.application?.resume_id ? [job.application.resume_id] : []);
@@ -530,8 +530,8 @@ async function openAppliedModal({ job, metaInfo, changeStatus }) {
           checked: !selectedCoverId,
           onChange: () => { selectedCoverId = ''; drawCoverList(); },
         }),
-        title: '선택 안 함',
-        sub: '자기소개서를 제출 자료로 기록하지 않음',
+        title: t('jobs.applied.coverNone'),
+        sub: t('jobs.applied.coverNoneSub'),
       }),
       ...list.map((cl) => pickRow({
         input: el('input', {
@@ -542,14 +542,14 @@ async function openAppliedModal({ job, metaInfo, changeStatus }) {
         }),
         title: cl.title,
         sub: [
-          `버전 ${cl.version_count ?? 1}개`,
-          cl.job_id && cl.job_id !== job.id ? '다른 공고 연결' : null,
-          cl.is_primary ? '대표' : null,
+          t('jobs.applied.versions', { count: cl.version_count ?? 1 }),
+          cl.job_id && cl.job_id !== job.id ? t('jobs.applied.otherJob') : null,
+          cl.is_primary ? t('jobs.applied.primary') : null,
         ].filter(Boolean).join(' · '),
       })),
     ];
     if (!showAllCovers && !scoped.length) {
-      rows.push(el('p', { class: 'muted text-sm', style: { margin: '2px 0 0' } }, '이 공고의 자기소개서가 아직 없어요.'));
+      rows.push(el('p', { class: 'muted text-sm', style: { margin: '2px 0 0' } }, t('jobs.applied.noCovers')));
     }
     mount(coverList, ...rows);
   }
@@ -557,7 +557,7 @@ async function openAppliedModal({ job, metaInfo, changeStatus }) {
   function drawDocuments() {
     const docs = documents || [];
     if (!docs.length) {
-      mount(docList, el('p', { class: 'muted text-sm', style: { margin: 0 } }, '문서함에 저장된 이력서·경력기술서·포트폴리오가 없어요.'));
+      mount(docList, el('p', { class: 'muted text-sm', style: { margin: 0 } }, t('jobs.applied.noDocs')));
       return;
     }
     mount(docList, ...docs.map((doc) => pickRow({
@@ -571,18 +571,18 @@ async function openAppliedModal({ job, metaInfo, changeStatus }) {
       }),
       title: doc.title,
       sub: [
-        kindLabels[doc.kind] || doc.kind,
-        doc.is_primary ? '대표' : null,
+        t('kind.' + doc.kind),
+        doc.is_primary ? t('jobs.applied.primary') : null,
       ].filter(Boolean).join(' · '),
     })));
   }
 
-  const toggleCovers = Btn('다른 자기소개서', {
+  const toggleCovers = Btn(t('jobs.applied.toggleOther'), {
     sm: true,
     variant: 'ghost',
     onClick: () => {
       showAllCovers = !showAllCovers;
-      toggleCovers.querySelector('span').textContent = showAllCovers ? '이 공고 자기소개서만' : '다른 자기소개서';
+      toggleCovers.querySelector('span').textContent = showAllCovers ? t('jobs.applied.toggleScoped') : t('jobs.applied.toggleOther');
       drawCoverList();
     },
   });
@@ -591,23 +591,23 @@ async function openAppliedModal({ job, metaInfo, changeStatus }) {
   drawDocuments();
 
   openModal({
-    title: '지원 완료 기록',
+    title: t('jobs.applied.title'),
     size: 'lg',
     body: el('div', { class: 'stack-3' },
       el('div', { class: 'grid grid--2' },
-        Field('제출일', submittedAt),
-        Field('제출 채널', channel)),
-      Field(el('div', { class: 'flex between center' }, el('span', {}, '자기소개서'), toggleCovers), coverList),
-      Field('제출 문서', docList),
-      Field('메모', note),
+        Field(t('jobs.applied.fieldSubmittedAt'), submittedAt),
+        Field(t('jobs.applied.fieldChannel'), channel)),
+      Field(el('div', { class: 'flex between center' }, el('span', {}, t('jobs.applied.fieldCover')), toggleCovers), coverList),
+      Field(t('jobs.applied.fieldDocs'), docList),
+      Field(t('jobs.applied.fieldNote'), note),
     ),
     footer: (close) => [
-      Btn('취소', { onClick: close }),
-      SubmitBtn('상태만 변경', async () => {
+      Btn(t('jobs.applied.cancel'), { onClick: close }),
+      SubmitBtn(t('jobs.applied.statusOnly'), async () => {
         await changeStatus('applied');
         close();
       }, { variant: 'ghost' }),
-      SubmitBtn('기록하고 완료', async () => {
+      SubmitBtn(t('jobs.applied.recordAndDone'), async () => {
         const submission = {
           submitted_at: submittedAt.value || undefined,
           channel: channel.value.trim() || undefined,
@@ -628,8 +628,8 @@ function TimelineCard(timeline) {
   const list = timeline || [];
   if (!list.length) return null;
   return Card({
-    title: '타임라인',
-    sub: `${list.length}개`,
+    title: t('jobs.timeline.title'),
+    sub: t('jobs.timeline.cardSub', { count: list.length }),
     body: el('div', { class: 'timeline timeline--job' },
       ...list.map((event, idx) => TimelineItem(event, idx === list.length - 1))),
   });
@@ -651,34 +651,24 @@ function TimelineItem(event, isCurrent) {
 function TimelinePayload(event) {
   const payload = event.payload || {};
   const rows = [];
-  if (payload.cover_letter) rows.push(TimelineRef('자기소개서', payload.cover_letter));
+  if (payload.cover_letter) rows.push(TimelineRef(t('jobs.timeline.coverLetter'), payload.cover_letter));
   if (payload.submission) {
     const s = payload.submission;
     const submittedMeta = [s.submitted_at ? fmtDate(s.submitted_at) : null, s.channel].filter(Boolean).join(' · ');
     if (submittedMeta) rows.push(el('div', { class: 'timeline-event__meta' }, submittedMeta));
-    if (s.cover_letter) rows.push(TimelineRef('자기소개서', s.cover_letter));
+    if (s.cover_letter) rows.push(TimelineRef(t('jobs.timeline.coverLetter'), s.cover_letter));
     if (Array.isArray(s.documents) && s.documents.length) {
       rows.push(el('div', { class: 'timeline-docs' },
-        ...s.documents.map((doc) => TimelineRef(documentKindLabel(doc), doc))));
+        ...s.documents.map((doc) => TimelineRef(t('kind.' + (doc.document_kind || 'other')), doc))));
     }
   }
   if (!rows.length) return null;
   return el('div', { class: 'timeline-event__extra' }, ...rows);
 }
 
-function documentKindLabel(ref) {
-  const labels = {
-    resume: '이력서',
-    career_description: '경력기술서',
-    portfolio: '포트폴리오',
-    other: '문서',
-  };
-  return labels[ref.document_kind] || '문서';
-}
-
 function TimelineRef(label, ref) {
   const version = ref.version_no ? ` v${ref.version_no}` : '';
-  const title = `${ref.title || '삭제된 문서'}${version}`;
+  const title = `${ref.title || t('jobs.timeline.deletedDoc')}${version}`;
   if (ref.exists && ref.route) {
     return el('div', { class: 'timeline-ref' },
       el('span', { class: 'timeline-ref__label' }, label),
@@ -687,15 +677,15 @@ function TimelineRef(label, ref) {
   return el('div', { class: 'timeline-ref timeline-ref--missing' },
     el('span', { class: 'timeline-ref__label' }, label),
     el('span', { class: 'timeline-ref__missing' }, title),
-    el('span', { class: 'timeline-ref__deleted' }, '삭제됨'));
+    el('span', { class: 'timeline-ref__deleted' }, t('jobs.timeline.deleted')));
 }
 
 function RelatedCard(related) {
   const list = related || [];
   if (!list.length) return null;
   return Card({
-    title: '관련 기록',
-    sub: '같은 회사 · 직무',
+    title: t('jobs.related.title'),
+    sub: t('jobs.related.sub'),
     body: el('div', { class: 'stack-2' },
       ...list.map((r) => el('div', {
         class: 'flex between center is-clickable',
@@ -704,7 +694,7 @@ function RelatedCard(related) {
       },
         el('div', {},
           el('div', { class: 'strong' }, r.position),
-          el('div', { class: 'muted text-sm' }, [r.company, r.deadline ? `마감 ${fmtDate(r.deadline)}` : null].filter(Boolean).join(' · '))),
-        Badge(r.status, r.status_label)))),
+          el('div', { class: 'muted text-sm' }, [r.company, r.deadline ? t('jobs.related.deadline', { date: fmtDate(r.deadline) }) : null].filter(Boolean).join(' · '))),
+        Badge(r.status, t('status.' + r.status))))),
   });
 }

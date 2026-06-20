@@ -7,6 +7,7 @@ import {
   el, get, icon, navigate, Card, Badge, Btn, ListRow, CheckRow,
   Stat, PageHead, fmtDate, fmtRelative, scoreClass, STATUS_COLOR, statusColor, mount,
 } from '/lib.js';
+import { t } from '/i18n.js';
 
 const PIPE_ORDER = ['draft', 'planned', 'applied', 'document_passed', 'interview', 'final_passed', 'on_hold', 'rejected'];
 
@@ -28,7 +29,7 @@ export async function render(ctx) {
   const name = profileRes.profile?.name;
 
   // exactly one primary action per screen, pinned to the topbar
-  ctx.setActions([Btn('공고 추가', { icon: 'plus', variant: 'primary', onClick: () => navigate('/jobs') })]);
+  ctx.setActions([Btn(t('home.action.addJob'), { icon: 'plus', variant: 'primary', onClick: () => navigate('/jobs') })]);
 
   // day one: nothing saved yet → just greeting + the single getting-started card
   // (skip the pipeline + a wall of empty cards).
@@ -57,25 +58,25 @@ export async function render(ctx) {
 /* ----------------------------------------------------------------- greeting band */
 function Greeting(name, s, firstRun) {
   let focus;
-  if (firstRun) focus = '시작해 볼까요 — 먼저 기본 정보를 채워 주세요.';
-  else if (s.interview_todo.length) focus = `면접 준비가 필요한 지원 ${s.interview_todo.length}건이 있어요.`;
-  else if (s.in_progress.length) focus = `진행 중인 지원 ${s.in_progress.length}건이 있어요.`;
-  else if (s.counts.jobs) focus = `저장된 공고 ${s.counts.jobs}건 · 새 적합도 분석을 받아보세요.`;
-  else focus = '오늘도 한 걸음 나아가 볼까요.';
-  return PageHead({ title: name ? `${name}님, 안녕하세요` : '환영합니다', desc: focus });
+  if (firstRun) focus = t('home.greeting.firstRun');
+  else if (s.interview_todo.length) focus = t('home.greeting.interviewTodo', { count: s.interview_todo.length });
+  else if (s.in_progress.length) focus = t('home.greeting.inProgress', { count: s.in_progress.length });
+  else if (s.counts.jobs) focus = t('home.greeting.jobsSaved', { count: s.counts.jobs });
+  else focus = t('home.greeting.idle');
+  return PageHead({ title: name ? t('home.greeting.title', { name }) : t('home.greeting.welcome'), desc: focus });
 }
 
 /* ----------------------------------------------- getting started (the one guidance surface) */
 function GettingStarted(o) {
   const steps = [
-    { done: o.has_profile, label: '기본 프로필 작성', to: '/profile' },
-    { done: o.has_resume, label: '경력기술서 또는 이력서 추가', to: '/documents/career' },
-    { done: o.has_cover_letter, label: '기존 자기소개서 등록', to: '/documents' },
-    { done: o.has_job, label: '관심 공고 저장', to: '/jobs' },
+    { done: o.has_profile, label: t('home.start.step.profile'), to: '/profile' },
+    { done: o.has_resume, label: t('home.start.step.resume'), to: '/documents/career' },
+    { done: o.has_cover_letter, label: t('home.start.step.coverLetter'), to: '/documents' },
+    { done: o.has_job, label: t('home.start.step.job'), to: '/jobs' },
   ];
   return Card({
-    title: '시작하기',
-    sub: `프로필 완성도 ${o.profile_completeness}%`,
+    title: t('home.start.title'),
+    sub: t('home.start.completeness', { pct: o.profile_completeness }),
     body: [
       // The one place (per DESIGN_GUIDE rule 4) that teaches the core mental model:
       // CareerMate stores; your own AI does the thinking. Without this, first-run users
@@ -83,12 +84,12 @@ function GettingStarted(o) {
       el('div', { class: 'callout mb-3' },
         icon('info'),
         el('div', {},
-          el('div', { class: 'callout__title' }, '두뇌는 당신의 AI, 보관은 CareerMate'),
+          el('div', { class: 'callout__title' }, t('home.start.calloutTitle')),
           el('div', { class: 'callout__body' },
-            '공고 분석·자기소개서·경력기술서·면접 준비는 평소 쓰던 AI에게 말로 시키면, 결과가 이 대시보드에 쌓여요.'))),
+            t('home.start.calloutBody')))),
       el('div', { class: 'progress' }, el('div', { class: 'progress__bar', style: { width: `${o.profile_completeness}%` } })),
       el('p', { class: 'text-secondary text-sm mt-3 mb-2' },
-        '완성할수록 AI의 적합도 분석과 자기소개서 품질이 좋아져요.'),
+        t('home.start.note')),
       el('div', {}, ...steps.map((it) => CheckRow({ done: it.done, label: it.label, onClick: () => navigate(it.to) }))),
     ],
   });
@@ -102,10 +103,10 @@ function StatTile(label, value, iconName, to) {
 }
 function StatRow(counts) {
   return el('div', { class: 'grid grid--4' },
-    StatTile('저장 공고', counts.jobs, 'briefcase', '/jobs'),
-    StatTile('진행 중 지원', counts.active_applications, 'layers', '/applications'),
-    StatTile('자기소개서', counts.cover_letters, 'file', '/documents'),
-    StatTile('면접 준비', counts.interview_pending, 'mic', '/interview'),
+    StatTile(t('home.stat.jobs'), counts.jobs, 'briefcase', '/jobs'),
+    StatTile(t('home.stat.activeApplications'), counts.active_applications, 'layers', '/applications'),
+    StatTile(t('home.stat.coverLetters'), counts.cover_letters, 'file', '/documents'),
+    StatTile(t('home.stat.interviewPending'), counts.interview_pending, 'mic', '/interview'),
   );
 }
 
@@ -119,13 +120,13 @@ function Pipeline(breakdown) {
   let body;
   if (total === 0) {
     body = el('p', { class: 'muted', style: { margin: 0 } },
-      '아직 지원 단계가 없어요. 공고에 지원 상태를 표시하면 여기에 파이프라인이 채워져요.');
+      t('home.pipeline.empty'));
   } else {
     const segs = PIPE_ORDER.filter((st) => c(st) > 0).map((st) =>
       el('div', {
         class: 'pipebar__seg',
         style: { flexGrow: String(c(st)), background: STATUS_COLOR[st] },
-        title: `${breakdown.find((b) => b.status === st).label} ${c(st)}`,
+        title: `${t('status.' + st)} ${c(st)}`,
         onClick: open,
       }));
 
@@ -134,13 +135,13 @@ function Pipeline(breakdown) {
     const intv = c('interview') + c('final_passed');
     const fin = c('final_passed');
     const pct = (num, den) => (den > 0 ? Math.round((num / den) * 100) : null);
-    const conv = (num, den, label) => (pct(num, den) != null ? `${label} ${pct(num, den)}%` : null);
+    const conv = (num, den, key) => (pct(num, den) != null ? t(key, { pct: pct(num, den) }) : null);
 
     const tiles = [
-      { st: 'applied', label: '지원', value: reached, conv: total ? `전체 ${total}건` : null },
-      { st: 'document_passed', label: '서류 합격', value: docPass, conv: conv(docPass, reached, '지원 대비') },
-      { st: 'interview', label: '면접', value: intv, conv: conv(intv, reached, '지원 대비') },
-      { st: 'final_passed', label: '최종 합격', value: fin, conv: conv(fin, intv, '면접 대비') || conv(fin, reached, '지원 대비') },
+      { st: 'applied', label: t('home.pipeline.stage.applied'), value: reached, conv: total ? t('home.pipeline.conv.total', { count: total }) : null },
+      { st: 'document_passed', label: t('home.pipeline.stage.documentPassed'), value: docPass, conv: conv(docPass, reached, 'home.pipeline.conv.vsApplied') },
+      { st: 'interview', label: t('home.pipeline.stage.interview'), value: intv, conv: conv(intv, reached, 'home.pipeline.conv.vsApplied') },
+      { st: 'final_passed', label: t('home.pipeline.stage.finalPassed'), value: fin, conv: conv(fin, intv, 'home.pipeline.conv.vsInterview') || conv(fin, reached, 'home.pipeline.conv.vsApplied') },
     ];
 
     body = [
@@ -155,8 +156,8 @@ function Pipeline(breakdown) {
   }
 
   return Card({
-    title: '지원 파이프라인',
-    actions: Btn('보드 열기', { sm: true, variant: 'ghost', onClick: open }),
+    title: t('home.pipeline.title'),
+    actions: Btn(t('home.pipeline.openBoard'), { sm: true, variant: 'ghost', onClick: open }),
     body,
   });
 }
@@ -173,7 +174,7 @@ function ActionLane(interviewTodo, inProgress) {
       leading: statusDot('document_passed'),
       title: it.job.company,
       sub: it.job.position,
-      trailing: el('span', { class: 'badge badge--accent' }, el('span', { class: 'dot' }), '면접 준비'),
+      trailing: el('span', { class: 'badge badge--accent' }, el('span', { class: 'dot' }), t('home.actionLane.interviewPrep')),
       onClick: () => navigate(`/jobs/${it.job.id}`),
     }));
   }
@@ -181,18 +182,18 @@ function ActionLane(interviewTodo, inProgress) {
     if (rows.length >= 6) break;
     rows.push(ListRow({
       leading: statusDot(it.application.status),
-      title: it.job?.company || '—',
+      title: it.job?.company || t('home.placeholder.dash'),
       sub: it.job?.position || '',
-      trailing: Badge(it.application.status, it.status_label),
+      trailing: Badge(it.application.status, t('status.' + it.application.status)),
       onClick: it.job ? () => navigate(`/jobs/${it.job.id}`) : null,
     }));
   }
   return Card({
-    title: '이번에 할 일',
-    actions: rows.length ? Btn('전체 보기', { sm: true, variant: 'ghost', onClick: () => navigate('/applications') }) : null,
+    title: t('home.actionLane.title'),
+    actions: rows.length ? Btn(t('home.actionLane.viewAll'), { sm: true, variant: 'ghost', onClick: () => navigate('/applications') }) : null,
     body: rows.length
       ? el('div', {}, ...rows)
-      : el('p', { class: 'muted', style: { margin: 0 } }, '지금 처리할 일이 없어요. 새 공고를 분석해 보세요.'),
+      : el('p', { class: 'muted', style: { margin: 0 } }, t('home.actionLane.empty')),
   });
 }
 
@@ -200,8 +201,8 @@ function ActionLane(interviewTodo, inProgress) {
 function RecentJobs(jobs) {
   if (!jobs.length) {
     return Card({
-      title: '최근 공고',
-      body: el('p', { class: 'muted', style: { margin: 0 } }, '저장된 공고가 아직 없어요. 새 공고를 추가해 보세요.'),
+      title: t('home.recentJobs.title'),
+      body: el('p', { class: 'muted', style: { margin: 0 } }, t('home.recentJobs.empty')),
     });
   }
   const rows = jobs.map((j) => ListRow({
@@ -209,15 +210,15 @@ function RecentJobs(jobs) {
     sub: j.position,
     trailing: [
       j.fit_score != null
-        ? el('span', { class: `strong tnum ${scoreClass(j.fit_score)}` }, `${j.fit_score}점`)
-        : el('span', { class: 'muted text-sm' }, '—'),
-      Badge(j.status, j.status_label),
+        ? el('span', { class: `strong tnum ${scoreClass(j.fit_score)}` }, t('home.recentJobs.score', { score: j.fit_score }))
+        : el('span', { class: 'muted text-sm' }, t('home.placeholder.dash')),
+      Badge(j.status, t('status.' + j.status)),
     ],
     onClick: () => navigate(`/jobs/${j.id}`),
   }));
   return Card({
-    title: '최근 공고',
-    actions: Btn('전체 보기', { sm: true, variant: 'ghost', onClick: () => navigate('/jobs') }),
+    title: t('home.recentJobs.title'),
+    actions: Btn(t('home.recentJobs.viewAll'), { sm: true, variant: 'ghost', onClick: () => navigate('/jobs') }),
     body: el('div', {}, ...rows),
   });
 }
@@ -226,8 +227,8 @@ function RecentJobs(jobs) {
 function Activity(acts) {
   if (!acts.length) {
     return Card({
-      title: '최근 활동',
-      body: el('p', { class: 'muted', style: { margin: 0 } }, '아직 활동 내역이 없어요. 공고를 저장하거나 분석하면 여기에 기록돼요.'),
+      title: t('home.activity.title'),
+      body: el('p', { class: 'muted', style: { margin: 0 } }, t('home.activity.empty')),
     });
   }
   const body = [];
@@ -242,7 +243,7 @@ function Activity(acts) {
           el('time', { class: 'feed-item__time', title: fmtDate(a.created_at), attrs: { datetime: a.created_at } }, fmtRelative(a.created_at)))));
     }
   }
-  return Card({ title: '최근 활동', body: el('div', {}, ...body) });
+  return Card({ title: t('home.activity.title'), body: el('div', {}, ...body) });
 }
 
 function groupByDay(acts) {
@@ -253,7 +254,7 @@ function groupByDay(acts) {
   const buckets = new Map();
   for (const a of acts) {
     const day = midnight(a.created_at);
-    const label = day === today ? '오늘' : day === yesterday ? '어제' : fmtDate(a.created_at);
+    const label = day === today ? t('home.activity.today') : day === yesterday ? t('home.activity.yesterday') : fmtDate(a.created_at);
     if (!buckets.has(label)) { buckets.set(label, []); order.push(label); }
     buckets.get(label).push(a);
   }
