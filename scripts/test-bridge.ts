@@ -83,9 +83,18 @@ try {
     await waitUntil(() => !isProcessAlive(dashboardPid!), 5000);
   }
   clearRuntimeInfo();
-  try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* ignore */ }
+  // No recursive `fs.rmSync` cleanup: on Node 25 / Windows it hard-crashes the
+  // process (0xC0000409), which would drop the still-buffered verdict line below.
+  // The unique mkdtemp dir is left for the OS temp sweep (same as test.ts).
 }
 
-console.log(`\n결과: ${pass} 통과 · ${fail} 실패`);
-console.log(fail === 0 ? 'BRIDGE_TEST_VERDICT PASS' : `BRIDGE_TEST_VERDICT FAIL ${fail}`);
+// Emit the summary as ONE write and wait for its OS-pipe flush callback before
+// exiting. process.exit() on Node 25 / Windows can trigger a libuv teardown crash
+// that drops still-buffered stdout — and run.mjs derives pass/fail by grepping the
+// child's stdout for the BRIDGE_TEST_VERDICT line. Awaiting the write callback
+// guarantees the verdict reached the pipe (and run.mjs's capture) first.
+const summary =
+  `\n결과: ${pass} 통과 · ${fail} 실패\n` +
+  `${fail === 0 ? 'BRIDGE_TEST_VERDICT PASS' : `BRIDGE_TEST_VERDICT FAIL ${fail}`}\n`;
+await new Promise<void>((r) => process.stdout.write(summary, () => r()));
 process.exit(fail === 0 ? 0 : 1);
