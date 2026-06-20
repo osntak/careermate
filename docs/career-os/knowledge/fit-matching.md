@@ -63,17 +63,17 @@
 | ID | 검사 항목 | 합격 기준 | 측정 방법(LLM 없이 셀 수 있게) |
 |----|-----------|-----------|--------------------------------|
 | R1 | 모든 요건에 [필수/우대] 라벨 + 복합 요건 분해 | 라벨 누락 0개; 쉼표·'및'·'and/or'로 묶인 줄이 개별 항목으로 분리됨 | 추출 항목 수를 세고 각 항목에 'must'/'nice' 토큰 존재 확인(누락==0). 원문에서 구분자 포함 줄 수 대비 분해 항목 수가 ≥ 구분자+1 인지 검사 |
-| R2 | 충족·부분충족 판정에 출처 ID + evidence 존재 | status가 met·partial인데 evidence[] 배열이 빈 항목 0개 | (서버 검증 가능) met·partial 항목 수 대비 `evidence.length>0` 항목 수 비율 == 100% |
-| R3 | quotedBullet/quotedMetric이 원문 substring (환각·수치변형 차단) | 인용 문자열이 해당 sourceId 입력 텍스트의 부분문자열이 아닌 항목 0개 | (서버 검증 가능) 각 evidence의 quotedBullet을 입력 이력서/경력 텍스트에 대해 indexOf/`includes` 문자열 검색 → 미발견 개수 == 0 |
+| R2 | 충족·부분충족 판정에 출처 ID + evidence 존재 | status가 met·partial인데 evidence[] 배열이 빈 항목 0개 | (AI 셀프체크 기준으로 유효; **서버 강제는 Phase B** — 현재 save_fit_analysis 스키마에 requirements[]/evidence 필드 없음) met·partial 항목 수 대비 `evidence.length>0` 항목 수 비율 == 100% |
+| R3 | quotedBullet/quotedMetric이 원문 substring (환각·수치변형 차단) | 인용 문자열이 해당 sourceId 입력 텍스트의 부분문자열이 아닌 항목 0개 | (AI 셀프체크 기준으로 유효; **서버 강제는 Phase B** — 입력 구조 부재, 현재 연결 AI가 substring 수동 대조) 각 evidence의 quotedBullet을 입력 이력서/경력 텍스트에 대해 indexOf/`includes` 문자열 검색 → 미발견 개수 == 0 |
 | R4 | gap 표기 + must-have 미충족마다 완화 전략 | 미충족 must 중 mitigation 문장이 없는 항목 0개 | 미충족 must 개수 == mitigation 문장 개수 비교 |
 | R5 | must-have 충족률 수치 제시 + partial 제외 규칙 | 'met must 수 / 전체 must 수' 분수·% 1개 이상; 분자에 partial 미포함 | 분수/% 정규식(예: `\d+/\d+`, `\d+%`)이 must 문맥과 함께 1회 이상; 분자 == status=='met' 개수와 일치 확인 |
-| R6 | critical·hardGate gap 시 '권장 불가' 병기 (게이트 단독 우선) | hardGate 또는 critical이 gap인데 verdict가 'recommend'인 사례 0개 | (서버 검증 가능 — 경고 아닌 **거부**) `requirements`에 `hardGate&&status==gap` 또는 `critical&&status==gap`이 1개라도 있으면 `verdict=='recommend'` 금지 |
+| R6 | critical·hardGate gap 시 '권장 불가' 병기 (게이트 단독 우선) | hardGate 또는 critical이 gap인데 verdict가 'recommend'인 사례 0개 | (AI 셀프체크 기준으로 유효; **서버 강제는 Phase B** — verdict/requirements 필드 부재, 현재 연결 AI가 수동으로 '권장 불가' 강제) `requirements`에 `hardGate&&status==gap` 또는 `critical&&status==gap`이 1개라도 있으면 `verdict=='recommend'` 금지 |
 | R7 | 키워드 표면 존재가 의미 매칭과 분리 보고 | JD 핵심 키워드별 'O/X' 표기 1개 이상, 의미 매칭 충족 판정과 별도 필드 | 출력에 `keywordSurfacePresent` 또는 'O/X·있음/없음' 항목 카운트 ≥ 1 |
 | R8 | partial 남용 방지 (사유 강제) | partial 항목 중 '왜 full이 아닌지' 사유 문장이 없는 항목 0개 | partial 항목 수 == partialReason 문장 수 비교 |
 | R9 | gap 과소평가(false-negative) 방지 | gap으로 분류한 must마다 인접 증거 탐색 시도 흔적 존재 | gap must 개수 대비 `transferAttempt` 표기(예: "인접 검토: …") 항목 수 == 100% |
 | R10 | 신선도 추적 | 분석에 근거가 된 이력서 버전 ID·JD 식별자가 기록됨 | 출력/페이로드에 `resumeVersionId`·`jobId`(또는 JD 해시) 필드 존재 여부 == 있음 |
 
-**의미 매칭·전이가능성은 LLM 없이 검증 불가** → R2·R3·R5·R6은 CareerMate 서버가 LLM 없이 강제(존재 여부·substring·산술·게이트). 반면 '의역 동의어 매칭이 타당한가', '전이가능성 판단이 옳은가', '요건 추출이 빠짐없는가'는 **외부 AI의 셀프체크 책임**이며 서버가 보증하지 않는다(R1·R4·R8·R9는 형식 카운트만 강제, 내용 타당성은 AI 책임).
+**의미 매칭·전이가능성은 LLM 없이 검증 불가** → R2·R3·R5·R6은 **Phase B에서** CareerMate 서버가 LLM 없이 강제하도록 *설계*된 항목이다(존재 여부·substring·산술·게이트). **Phase A 현재 save_fit_analysis는 구조화 requirements[]를 받지 않고 자유텍스트만 저장하므로 이 서버 강제는 미구현이며, 연결 AI가 셀프체크로 적용한다.** 반면 '의역 동의어 매칭이 타당한가', '전이가능성 판단이 옳은가', '요건 추출이 빠짐없는가'는 **외부 AI의 셀프체크 책임**이며 서버가 보증하지 않는다(R1·R4·R8·R9는 형식 카운트만 강제, 내용 타당성은 AI 책임).
 
 **주요 실패 모드:**
 - (과대평가) 의역 인용으로 충족 위장 → R3 substring 강제로 차단.
@@ -94,7 +94,7 @@
 
 ## 5. Phase B 힌트 (아키텍처로 연결)
 
-- **MCP 도구 아이디어:** `get_fit_analysis_guide` — 연결된 AI가 적합도 분석 직전 호출하면 (1) 요건 분해·복합 요건 분리 체크리스트, (2) 증거-매핑 템플릿(substring 인용 규칙 포함), (3) R1~R10 셀프-체크 루브릭, (4) 60% '맥락 신호' 규칙·critical/hardGate 단독 게이트 규칙을 구조화 JSON으로 반환. `save_fit_analysis`는 `requirements[]` 구조를 입력받아 **LLM 없이** 충족률·갭 개수를 서버측에서 재계산·검증한다.
+- **MCP 도구 아이디어:** `get_fit_analysis_guide` — 연결된 AI가 적합도 분석 직전 호출하면 (1) 요건 분해·복합 요건 분리 체크리스트, (2) 증거-매핑 템플릿(substring 인용 규칙 포함), (3) R1~R10 셀프-체크 루브릭, (4) 60% '맥락 신호' 규칙·critical/hardGate 단독 게이트 규칙을 구조화 JSON으로 반환. (Phase B) `save_fit_analysis`가 `requirements[]` 구조를 입력받으면 **LLM 없이** 충족률·갭 개수를 서버측에서 재계산·검증하도록 *설계*한다(현재 스키마는 자유텍스트만 — 미구현).
 - **데이터 형태 힌트:**
   ```
   {
@@ -118,4 +118,4 @@
     generatedBy: 'claude'|'gpt'|'gemini'
   }
   ```
-  **서버측 검증(LLM 불요):** ① `status∈{met,partial}`인데 `evidence[]` 빈 항목 → **거부**(R2). ② 각 `quotedBullet`이 해당 sourceId 입력 텍스트의 부분문자열이 아니면 → **거부**(R3). ③ `mustHaveMet`를 status=='met' 개수로 재계산(클라이언트 자기보고 불신, R5). ④ `hardGate&&status==gap` 또는 `critical&&status==gap`이 1개라도 있는데 `verdict=='recommend'` → **거부**(경고 아님, R6). ⑤ partial인데 `partialReason` 없음(R8)·gap must인데 `transferAttempt` 없음(R9)·미충족 must인데 `mitigation` 없음(R4) → 거부.
+  **서버측 검증(Phase B 설계 — 현재 미구현):** 아래는 `save_fit_analysis`가 구조화 `requirements[]`를 받게 될 Phase B의 강제 *설계안*이다. **Phase A 현재 스키마는 자유텍스트만 받으므로 이 검증은 동작하지 않으며, 연결 AI가 셀프체크로 적용한다.** ① `status∈{met,partial}`인데 `evidence[]` 빈 항목 → **거부**(R2). ② 각 `quotedBullet`이 해당 sourceId 입력 텍스트의 부분문자열이 아니면 → **거부**(R3). ③ `mustHaveMet`를 status=='met' 개수로 재계산(클라이언트 자기보고 불신, R5). ④ `hardGate&&status==gap` 또는 `critical&&status==gap`이 1개라도 있는데 `verdict=='recommend'` → **거부**(경고 아님, R6). ⑤ partial인데 `partialReason` 없음(R8)·gap must인데 `transferAttempt` 없음(R9)·미충족 must인데 `mitigation` 없음(R4) → 거부.

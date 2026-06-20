@@ -31,7 +31,7 @@
 - 약점·실패·갈등 문항은 정량 성과가 아니라 **성찰·개선 행동**으로 답하라(이 문항에 'quantified ≥2'를 강요하지 마라).
 - 글자수 제한을 적용할 때 **count_mode(공백포함/공백제외/byte)** 를 먼저 확인하라.
 - 클로징에 명확한 다음 단계(면접 요청/연락 가능 시점)를 한 문장으로 넣어라(로케일상 가능할 때).
-- 저장 전 lint(루브릭 자동 검사)를 통과시킨 뒤 save_cover_letter_version으로 보관하라.
+- 저장 전 `validate_cover_letter`(현재 구현: 수치 출처·문체 신호 자동 검사 / 글자수 게이트·키워드 커버리지는 Phase B 미구현 — 연결 AI 수동)를 적용한 뒤 save_cover_letter_version으로 보관하라.
 - 초안은 get_writing_style_guide의 문체를 적용해 사람이 쓴 듯 자연스럽게 다듬어라.
 
 ### Don't
@@ -65,7 +65,7 @@
 
 ## 3. 검증 루브릭 (연결된 AI가 산출물을 이 기준으로 자가검증)
 
-각 항목의 `measure.type`을 정직하게 표기한다 — **`regex`/`count`/`ratio`** 는 LLM 없이 lint로 자동 검사 가능, **`ai-judge`** 는 연결 AI의 의미 판단이 필요(정규식 불가). lint_cover_letter는 `regex`/`count`/`ratio` 항목만 자동 채점하고, `ai-judge` 항목은 연결 AI에게 위임 표시한다.
+각 항목의 `measure.type`을 정직하게 표기한다 — **`regex`/`count`/`ratio`** 는 LLM 없이 lint로 자동 검사 가능, **`ai-judge`** 는 연결 AI의 의미 판단이 필요(정규식 불가). 현재 실재하는 정적 검사기는 `validate_cover_letter`(→lintArtifact)이며 **수치 출처(fabricated 차단) + 문체 신호**만 자동 채점한다 — 글자수 상·하한 게이트·키워드 커버리지 카운트는 **Phase B 미구현**이라 연결 AI가 수동(advisory) 적용한다. `ai-judge` 항목은 연결 AI에게 위임한다. (문서의 `lint_cover_letter`는 Phase B 도구 아이디어 명칭이다.)
 
 | ID | 검사 항목 | 합격 기준 | 측정 방법(type · LLM 없이 셀 수 있게) |
 |----|-----------|-----------|--------------------------------|
@@ -77,8 +77,8 @@
 | R6 | 회사 고유성 | 회사명/제품/미션 고유명사 ≥2회 + 비종속 검사 | `count`(부분 자동) + `ai-judge`(완전 판정) — 토큰 등장 횟수 ≥2는 카운트 가능. '회사명 placeholder 치환 시 어색해지는 문장 ≥1'은 **연결 AI 판정(위임)** |
 | R7 | 이력서 비반복 | locale별 임계 이하 | `ratio` — 영문: 단어 5-gram 중복 ≤20%. **한국어: 어절 n-gram은 교착어 특성상 부정확 → 임계 신뢰 낮음, 의미 중복은 `ai-judge` 보조 필요(한계 명시)** |
 | R8 | STAR 행동+성과 동반 | 행동동사 단락 중 결과 절 동반 ≥1, 단 '규모≠성과' | `regex`(약) + `ai-judge` — 행동동사+결과신호 동시출현은 카운트되나 '우연 동시출현·규모 수치'를 구분하려면 연결 AI가 'R이 본인 행동의 변화량인가' 판정 |
-| R9 | 분량/글자수 | locale·count_mode별 상·하한 이내 | `count` — 영문 word_count ≤400. 한국: char_count가 지정 limit 이내 **그리고 하한 이상**. **count_mode(with_space\|no_space\|byte) 입력 필수**(미지정 시 fail-safe로 가장 빡빡한 기준 사용) |
-| R10 | 공고 요구 매핑 | 공고 키워드 ≥3개가 증거와 함께 등장 | `count`+`ai-judge` — 토큰 매치 카운트는 가능하나 '증거 동반' 판정은 의미 판단. **`job.requirements`/`keywords`가 비면 skip(N/A)** — 데이터 부재 시 통과/실패 강제 금지 |
+| R9 | 분량/글자수 | locale·count_mode별 상·하한 이내 | `count` — 영문 word_count ≤400. 한국: char_count가 지정 limit 이내 **그리고 하한 이상**. **count_mode(with_space\|no_space\|byte) 입력 필수**(미지정 시 fail-safe로 가장 빡빡한 기준 사용). **⚠ 현재 validate_cover_letter는 charCount 계산만 하고 max/min 게이트는 Phase B 미구현 — 글자수 상·하한 판정은 연결 AI 수동(advisory).** |
+| R10 | 공고 요구 매핑 | 공고 키워드 ≥3개가 증거와 함께 등장 | `ai-judge`(+count는 설계) — '증거 동반' 판정은 의미 판단이라 위임. **⚠ 키워드 토큰 매치 카운트는 현재 validate_cover_letter에 미구현(Phase B) — 키워드 커버리지·증거 동반 모두 연결 AI 수동.** **`job.requirements`/`keywords`가 비면 skip(N/A)** — 데이터 부재 시 통과/실패 강제 금지 |
 | R11 | 블라인드 가드레일 | 직무무관 개인정보 패턴 0건 | `regex` — `/(\d{2,3}\s?세|남자|여자|아버지|어머니|출신|본적|사진 첨부)/` 등 NCS 금지정보 매치 = 0(locale='ko') |
 | R12 | 1인칭 과다 | '저는/I'로 시작하는 문장 비율 ≤40% | `ratio` — 문장 분리 후 시작 토큰이 (저는\|제가\|^I\b)인 비율 계산 ≤0.40 |
 
