@@ -262,6 +262,7 @@ async function renderDetail(ctx, jobId) {
   const statusSelect = Select(
     m.statuses.map((s) => ({ value: s.value, label: t('status.' + s.value), selected: s.value === job.status })),
     {
+      attrs: { 'aria-label': t('jobs.detail.statusLabel') },
       onChange: async (e) => {
         const status = e.target.value;
         if (status === job.status) return;
@@ -315,7 +316,7 @@ async function renderDetail(ctx, jobId) {
   // --- Page head ------------------------------------------------------------
   // 수정은 상단바(ctx.setActions)에만 둔다 — 여기엔 상태 변경·원문·삭제만.
   const headActions = el('div', { class: 'flex gap-2 center wrap' },
-    Field(t('jobs.detail.statusLabel'), statusSelect),
+    statusSelect,
     job.url ? el('a', { class: 'btn btn--ghost btn--sm', href: job.url, attrs: { target: '_blank', rel: 'noopener noreferrer' } }, icon('external'), el('span', {}, t('jobs.detail.openPosting'))) : null,
     delBtn,
   );

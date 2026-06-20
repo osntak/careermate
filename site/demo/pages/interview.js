@@ -1,10 +1,15 @@
 // Interview — preparation materials saved for jobs, plus timely interview-stage to-dos.
 import {
   el, get, put, icon, navigate, Card, Badge, Btn, SubmitBtn, EmptyState, Field, Input,
-  Textarea, openModal, closeModal, toastOk, copyText,
+  Textarea, Select, openModal, closeModal, toastOk, copyText,
   downloadUrl, mount,
 } from '/demo/lib.js';
 import { t } from '/demo/i18n.js';
+
+// Interview questions split into two tabs: 기술(1차) / 인성·컬처핏(2차). A question
+// with no category is treated as technical (back-compat with preps saved before tabs).
+const CATEGORIES = ['technical', 'behavioral'];
+const catOf = (q) => (q && q.category === 'behavioral' ? 'behavioral' : 'technical');
 
 export async function render(ctx) {
   const data = await get('/api/interview');
@@ -40,12 +45,16 @@ export async function render(ctx) {
 
     const body = [];
     if (hasPrep) {
-      const qCount = (prep.questions || []).length;
+      const qs = prep.questions || [];
+      const techN = qs.filter((q) => catOf(q) === 'technical').length;
+      const behN = qs.filter((q) => catOf(q) === 'behavioral').length;
       const sCount = (prep.star_guides || []).length;
       const hasIntro = !!(prep.self_introduction && prep.self_introduction.trim());
       body.push(el('p', { class: 'text-secondary', style: { margin: 0 } },
         t('interview.card.summary', {
-          q: t('interview.card.questionsCount', { count: qCount }),
+          q: behN > 0
+            ? t('interview.card.questionsSplit', { tech: techN, beh: behN })
+            : t('interview.card.questionsCount', { count: qs.length }),
           s: t('interview.card.starCount', { count: sCount }),
           intro: hasIntro ? t('interview.card.introYes') : t('interview.card.introNo'),
         })));
@@ -75,12 +84,12 @@ export async function render(ctx) {
     const jobId = prep.job_id;
     const sections = el('div', { class: 'stack-4' });
 
-    // 예상 질문 & 꼬리 질문
+    // 예상 질문 & 꼬리 질문 — 기술 / 인성·컬처핏 탭
     const questions = prep.questions || [];
     sections.append(Card({
       title: t('interview.modal.questionsTitle'),
       body: questions.length
-        ? el('div', { class: 'stack-3' }, ...questions.map(QuestionBlock))
+        ? QuestionTabs(questions)
         : el('p', { class: 'muted', style: { margin: 0 } }, t('interview.modal.questionsEmpty')),
     }));
 
@@ -121,6 +130,33 @@ export async function render(ctx) {
         Btn(t('interview.modal.edit'), { icon: 'edit', variant: 'primary', onClick: () => { close(); openEditModal(entry, prep); } }),
       ],
     });
+  }
+
+  // Two-tab view over the question list. Opens on the first tab that has content.
+  function QuestionTabs(questions) {
+    const groups = {
+      technical: questions.filter((q) => catOf(q) === 'technical'),
+      behavioral: questions.filter((q) => catOf(q) === 'behavioral'),
+    };
+    let active = groups.technical.length === 0 && groups.behavioral.length ? 'behavioral' : 'technical';
+    const tabEls = {};
+    const panel = el('div', {});
+    function draw() {
+      const list = groups[active];
+      mount(panel, list.length
+        ? el('div', { class: 'stack-3' }, ...list.map(QuestionBlock))
+        : el('p', { class: 'muted', style: { margin: 0 } }, t('interview.modal.questionsEmptyTab')));
+      for (const c of CATEGORIES) tabEls[c].classList.toggle('is-active', c === active);
+    }
+    const tabs = el('div', { class: 'tabs' }, ...CATEGORIES.map((c) => {
+      const n = groups[c].length;
+      const tabEl = el('div', { class: 'tab', onClick: () => { active = c; draw(); } },
+        n ? `${t('interview.tab.' + c)} (${n})` : t('interview.tab.' + c));
+      tabEls[c] = tabEl;
+      return tabEl;
+    }));
+    draw();
+    return el('div', { class: 'stack-3' }, tabs, panel);
   }
 
   function QuestionBlock(q) {
@@ -178,13 +214,20 @@ export async function render(ctx) {
       q = q || {};
       const qInput = Input({ value: q.question || '', placeholder: t('interview.edit.questionPlaceholder') });
       const aInput = Textarea({ value: q.answer_outline || '', rows: 2, placeholder: t('interview.edit.answerPlaceholder') });
+      const catSelect = Select(
+        CATEGORIES.map((c) => ({ value: c, label: t('interview.tab.' + c), selected: catOf(q) === c })),
+        { attrs: { 'aria-label': t('interview.edit.fieldCategory') } },
+      );
+      catSelect.classList.add('select--sm');
       const row = el('div', { class: 'subcard stack-2' },
         el('div', { class: 'flex between center' },
           el('span', { class: 'text-sm muted' }, t('interview.edit.questionNum', { n: qRows.length + 1 })),
-          Btn(t('interview.edit.delete'), { icon: 'trash', sm: true, variant: 'ghost', onClick: () => { entryRef.removed = true; row.remove(); } })),
+          el('div', { class: 'flex gap-2 center' },
+            catSelect,
+            Btn(t('interview.edit.delete'), { icon: 'trash', sm: true, variant: 'ghost', onClick: () => { entryRef.removed = true; row.remove(); } }))),
         Field(t('interview.edit.fieldQuestion'), qInput),
         Field(t('interview.edit.fieldAnswer'), aInput));
-      const entryRef = { qInput, aInput, removed: false };
+      const entryRef = { qInput, aInput, catSelect, removed: false };
       qRows.push(entryRef);
       qList.append(row);
     }
@@ -214,7 +257,11 @@ export async function render(ctx) {
     async function save(id) {
       const questions = qRows
         .filter((r) => !r.removed)
-        .map((r) => ({ question: r.qInput.value.trim(), answer_outline: r.aInput.value.trim() }))
+        .map((r) => ({
+          question: r.qInput.value.trim(),
+          category: r.catSelect.value,
+          answer_outline: r.aInput.value.trim(),
+        }))
         .filter((q) => q.question);
       // Preserve any richer star_guides authored elsewhere (AI/MCP).
       const payload = {

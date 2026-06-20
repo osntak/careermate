@@ -154,6 +154,27 @@ const tool = (name: string) => {
   if (!t) throw new Error(`tool not found: ${name}`);
   return t;
 };
+/* 이력서/프로필 내보내기 — 자소서와 동일한 패리티(도구 + API HTML) */
+const exResumeDoc = await tool('add_resume').handler({ title: '내보내기용 이력서', kind: 'resume', content: '5년차 백엔드 엔지니어 이력서 본문' });
+const exResumeId = (exResumeDoc.data as any).id;
+const exportResumeRes = await tool('export_resume').handler({ document_id: exResumeId });
+ok(
+  'MCP 이력서 내보내기: 파일 경로 + 본문 반환',
+  exportResumeRes.isError !== true &&
+    typeof (exportResumeRes.data as any).path === 'string' &&
+    String((exportResumeRes.data as any).content).includes('5년차 백엔드'),
+);
+const exportProfileRes = await tool('export_profile').handler({});
+ok(
+  'MCP 프로필 이력서 내보내기: 프로필 이름 포함',
+  exportProfileRes.isError !== true && String((exportProfileRes.data as any).content).includes('김커리어'),
+);
+// 웹 API: format=html 은 실제 HTML(text/html)이어야 한다(md 가 아니라).
+const docHtmlExp = await reqRaw('GET', `/api/export/document/${exResumeId}?format=html`);
+ok('문서 내보내기 HTML 은 text/html', String(docHtmlExp.headers['content-type'] || '').includes('text/html'));
+const profHtmlExp = await reqRaw('GET', '/api/export/profile?format=html');
+ok('프로필 내보내기 HTML 은 text/html', String(profHtmlExp.headers['content-type'] || '').includes('text/html'));
+
 const savedJobToolRes = await tool('save_job_posting').handler({ company: '친화회사', position: '친화직무' });
 ok(
   'MCP 공고 저장 메시지: 내부 ID 노출 없음 + 사용자용 문장 제공',

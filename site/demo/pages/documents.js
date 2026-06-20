@@ -447,6 +447,7 @@ async function openDocDetail(id, kindLabels, m, reload) {
     footer: (close) => [
       Btn(t('documents.docDetail.copy'), { variant: 'ghost', icon: 'copy', onClick: () => copyText(doc.content || '') }),
       Btn(t('documents.docDetail.export'), { variant: 'ghost', icon: 'download', title: t('documents.docDetail.exportTitle'), onClick: () => downloadUrl(`/api/export/document/${doc.id}?format=md`) }),
+      Btn(t('documents.docDetail.exportHtml'), { variant: 'ghost', icon: 'download', title: t('documents.docDetail.exportHtmlTitle'), onClick: () => downloadUrl(`/api/export/document/${doc.id}?format=html`) }),
       Btn(t('documents.docDetail.delete'), { variant: 'danger', icon: 'trash', onClick: async () => {
         const ok = await confirmDialog({ title: t('documents.docDetail.deleteTitle'), message: t('documents.docDetail.deleteConfirm', { title: doc.title }), confirmLabel: t('documents.docDetail.deleteConfirmLabel'), danger: true });
         if (!ok) return;

@@ -1,6 +1,6 @@
 # CareerMate
 
-[![npm](https://img.shields.io/npm/v/careermate?logo=npm&color=cb3837)](https://www.npmjs.com/package/careermate) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/node/v/careermate)](https://nodejs.org)
+[![npm](https://img.shields.io/npm/v/careermate?logo=npm&color=cb3839)](https://www.npmjs.com/package/careermate) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![node](https://img.shields.io/node/v/careermate)](https://nodejs.org)
 
 **한국어** · [English](#careermate-english)
 
@@ -30,7 +30,7 @@
 
 ## 주요 기능
 
-- **AI와 대화로 모든 작업** — MCP 도구 37개로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
+- **AI와 대화로 모든 작업** — MCP 도구로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
 - **지원 상태 8단계 관리** — `draft`(작성 중) · `planned`(지원 예정) · `applied`(지원 완료) · `document_passed`(서류 합격) · `interview`(면접 진행) · `final_passed`(최종 합격) · `rejected`(불합격) · `on_hold`(보류). `document_passed` 이상에서는 면접 준비를 다음 행동으로 제안합니다.
 - **자기소개서 버전 관리** — 공고별로 자소서 버전을 쌓고 타임라인으로 비교, 파일로 내보내기.
 - **채용공고 파싱** — 붙여넣은 공고 텍스트를 구조화해 저장.
@@ -46,7 +46,7 @@
 | 프로세스 | 실행 | 역할 |
 | --- | --- | --- |
 | **대시보드 웹 서버** | `npm start` | `http://127.0.0.1:4319` — 내 데이터를 눈으로 확인·관리. `127.0.0.1`에만 바인딩. |
-| **MCP 서버** | `npm run mcp` | stdio 기반. 보통 AI 클라이언트가 자동 실행. 도구 37개 제공. |
+| **MCP 서버** | `npm run mcp` | stdio 기반. 보통 AI 클라이언트가 자동 실행. 커리어 작업 도구 제공. |
 
 ---
 
@@ -141,13 +141,13 @@ npx -y careermate init
 
 ---
 
-## MCP 도구 한눈에 (37개)
+## MCP 도구 한눈에
 
 | 분류 | 도구 |
 | --- | --- |
 | 온보딩 | `get_onboarding_status` |
-| 프로필 | `save_profile` · `get_profile` |
-| 이력서 | `read_document` · `add_resume` · `get_resumes` · `open_inbox` · `read_inbox` |
+| 프로필 | `save_profile` · `get_profile` · `export_profile` |
+| 이력서 | `read_document` · `add_resume` · `get_resumes` · `export_resume` · `open_inbox` · `read_inbox` |
 | 경력·프로젝트·스킬 | `add_experience` · `get_experiences` · `add_project` · `get_projects` · `add_skill` · `get_skills` |
 | 자기소개서 | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
 | 채용공고 | `save_job_posting` · `get_job_posting` · `list_jobs` · `delete_job_posting` |
@@ -176,7 +176,7 @@ CareerMate/
 │  ├─ shared/         # 공용 타입·zod 스키마·유틸
 │  ├─ db/             # node:sqlite DB 접근·스키마·마이그레이션
 │  ├─ core/           # 도메인 유스케이스
-│  ├─ mcp-tools/      # MCP 도구 37개 정의
+│  ├─ mcp-tools/      # MCP 도구 정의
 │  ├─ knowledge/      # Career-OS 전문가 플레이북·검증 루브릭 serve
 │  ├─ exporters/      # 내보내기(자소서 등)
 │  ├─ parsers/        # 채용공고 파싱
@@ -302,7 +302,7 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 
 ## Key features
 
-- **Everything through conversation with AI** — 37 MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
+- **Everything through conversation with AI** — MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
 - **8-stage application status** — `draft` · `planned` · `applied` · `document_passed` · `interview` · `final_passed` · `rejected` · `on_hold`. Interview prep is suggested at `document_passed` or later.
 - **Cover-letter versioning** — Stack versions per posting, compare on a timeline, export to a file.
 - **Job-posting parsing** — Turn pasted posting text into structured records.
@@ -318,7 +318,7 @@ Two local processes share the same database.
 | Process | Run | Role |
 | --- | --- | --- |
 | **Dashboard web server** | `npm start` | `http://127.0.0.1:4319` — view and manage your data. Binds to `127.0.0.1` only. |
-| **MCP server** | `npm run mcp` | stdio-based. Usually launched automatically by the AI client. Provides 37 tools. |
+| **MCP server** | `npm run mcp` | stdio-based. Usually launched automatically by the AI client. Provides the career tools. |
 
 ---
 
@@ -414,13 +414,13 @@ Dark mode is supported.
 
 ---
 
-## MCP tools at a glance (37)
+## MCP tools at a glance
 
 | Category | Tools |
 | --- | --- |
 | Onboarding | `get_onboarding_status` |
-| Profile | `save_profile` · `get_profile` |
-| Resume | `read_document` · `add_resume` · `get_resumes` · `open_inbox` · `read_inbox` |
+| Profile | `save_profile` · `get_profile` · `export_profile` |
+| Resume | `read_document` · `add_resume` · `get_resumes` · `export_resume` · `open_inbox` · `read_inbox` |
 | Experience / projects / skills | `add_experience` · `get_experiences` · `add_project` · `get_projects` · `add_skill` · `get_skills` |
 | Cover letter | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
 | Job posting | `save_job_posting` · `get_job_posting` · `list_jobs` · `delete_job_posting` |
@@ -449,7 +449,7 @@ CareerMate/
 │  ├─ shared/         # Shared types, zod schemas, utils
 │  ├─ db/             # node:sqlite DB access, schema, migrations
 │  ├─ core/           # Domain use cases
-│  ├─ mcp-tools/      # The 37 MCP tool definitions
+│  ├─ mcp-tools/      # The MCP tool definitions
 │  ├─ knowledge/      # Career-OS expert playbooks & verifier rubrics (serve)
 │  ├─ exporters/      # Exporters (cover letters, etc.)
 │  ├─ parsers/        # Job-posting parsing

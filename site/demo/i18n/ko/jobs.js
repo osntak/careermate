@@ -70,7 +70,7 @@ export default {
   'jobs.detail.deleted': '공고를 삭제했어요.',
   'jobs.detail.list': '목록',
   'jobs.detail.statusLabel': '상태',
-  'jobs.detail.openPosting': '공고 원문 열기',
+  'jobs.detail.openPosting': '공고 원문',
 
   // ---- posting card ----
   'jobs.posting.title': '공고 정보',
@@ -98,17 +98,17 @@ export default {
 
   // ---- cover letters card ----
   'jobs.cover.title': '자기소개서',
-  'jobs.cover.empty': '아직 이 공고의 자기소개서가 없어요. AI에게 작성을 요청하면 여기에 저장돼요.',
+  'jobs.cover.empty': 'AI에게 작성을 요청하면 여기에 저장돼요.',
   'jobs.cover.cardSub': '{{count}}개',
   'jobs.cover.versions': '버전 {{count}}개',
 
   // ---- interview card ----
   'jobs.interview.title': '면접 준비',
-  'jobs.interview.viewPrep': '면접 준비 보기',
+  'jobs.interview.viewPrep': '자세히',
   'jobs.interview.questions': '예상 질문 {{count}}개가 준비되어 있어요.',
   'jobs.interview.saved': '면접 준비 자료가 저장되어 있어요.',
   'jobs.interview.introSaved': '1분 자기소개 초안도 함께 저장되어 있습니다.',
-  'jobs.interview.empty': '아직 이 공고의 면접 준비가 없어요. AI에게 준비를 요청하면 여기에 저장돼요.',
+  'jobs.interview.empty': 'AI에게 준비를 요청하면 여기에 저장돼요.',
 
   // ---- applied modal ----
   'jobs.applied.title': '지원 완료 기록',

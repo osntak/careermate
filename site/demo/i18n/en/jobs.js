@@ -70,7 +70,7 @@ export default {
   'jobs.detail.deleted': 'Posting deleted.',
   'jobs.detail.list': 'Postings',
   'jobs.detail.statusLabel': 'Status',
-  'jobs.detail.openPosting': 'Open original posting',
+  'jobs.detail.openPosting': 'Original posting',
 
   // ---- posting card ----
   'jobs.posting.title': 'Posting details',
@@ -98,17 +98,17 @@ export default {
 
   // ---- cover letters card ----
   'jobs.cover.title': 'Cover letters',
-  'jobs.cover.empty': "There's no cover letter for this posting yet. Ask your AI to write one and it will be saved here.",
+  'jobs.cover.empty': 'Ask your AI to write one and it will be saved here.',
   'jobs.cover.cardSub': { one: '{{count}} letter', other: '{{count}} letters' },
   'jobs.cover.versions': { one: '{{count}} version', other: '{{count}} versions' },
 
   // ---- interview card ----
   'jobs.interview.title': 'Interview prep',
-  'jobs.interview.viewPrep': 'View interview prep',
+  'jobs.interview.viewPrep': 'Details',
   'jobs.interview.questions': { one: '{{count}} likely question is ready.', other: '{{count}} likely questions are ready.' },
   'jobs.interview.saved': 'Interview prep is saved.',
   'jobs.interview.introSaved': 'A 1-minute intro draft is saved too.',
-  'jobs.interview.empty': "There's no interview prep for this posting yet. Ask your AI to prepare it and it will be saved here.",
+  'jobs.interview.empty': 'Ask your AI to prepare it and it will be saved here.',
 
   // ---- applied modal ----
   'jobs.applied.title': 'Record application',

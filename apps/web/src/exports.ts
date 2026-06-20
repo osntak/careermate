@@ -7,8 +7,11 @@ import {
   coverLetterToMarkdown,
   coverLetterToHtml,
   resumeToMarkdown,
+  resumeToHtml,
   profileToMarkdown,
+  profileToHtml,
   interviewPrepToMarkdown,
+  interviewPrepToHtml,
   type ExportResult,
 } from '@careermate/exporters';
 import {
@@ -49,20 +52,25 @@ export function exportCoverLetter(id: string, format: ExportFormat): ExportResul
 export function exportDocument(id: string, format: ExportFormat): ExportResult {
   const doc = documentRepo.get(id);
   if (!doc) throw new HttpError(404, '문서를 찾을 수 없습니다.');
-  return asFormat(resumeToMarkdown(doc, profileRepo.get()), format);
+  const profile = profileRepo.get();
+  if (format === 'html') return resumeToHtml(doc, profile);
+  return asFormat(resumeToMarkdown(doc, profile), format);
 }
 
 export function exportProfile(format: ExportFormat): ExportResult {
   const profile = profileRepo.get();
   if (!profile) throw new HttpError(404, '프로필이 없습니다.');
-  return asFormat(
-    profileToMarkdown(profile, experienceRepo.list(), projectRepo.list(), skillRepo.list()),
-    format,
-  );
+  const experiences = experienceRepo.list();
+  const projects = projectRepo.list();
+  const skills = skillRepo.list();
+  if (format === 'html') return profileToHtml(profile, experiences, projects, skills);
+  return asFormat(profileToMarkdown(profile, experiences, projects, skills), format);
 }
 
 export function exportInterview(jobId: string, format: ExportFormat): ExportResult {
   const prep = interviewRepo.getByJob(jobId);
   if (!prep) throw new HttpError(404, '면접 준비 자료가 없습니다.');
-  return asFormat(interviewPrepToMarkdown(prep, jobRepo.get(jobId)), format);
+  const job = jobRepo.get(jobId);
+  if (format === 'html') return interviewPrepToHtml(prep, job);
+  return asFormat(interviewPrepToMarkdown(prep, job), format);
 }

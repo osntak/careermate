@@ -15,7 +15,7 @@ export default {
   'documents.loading': '불러오는 중…',
 
   // create actions
-  'documents.action.coverCreate': '새 자기소개서',
+  'documents.action.coverCreate': '자기소개서 추가',
   'documents.action.careerCreate': '경력기술서 추가',
   'documents.action.docCreate': '문서 추가',
 
@@ -101,8 +101,10 @@ export default {
   'documents.docDetail.updated': '수정 {{when}}',
   'documents.docDetail.noContent': '내용이 없습니다.',
   'documents.docDetail.copy': '복사',
-  'documents.docDetail.export': '내보내기',
+  'documents.docDetail.export': 'MD',
   'documents.docDetail.exportTitle': 'Markdown 내보내기',
+  'documents.docDetail.exportHtml': 'HTML',
+  'documents.docDetail.exportHtmlTitle': 'HTML 내보내기',
   'documents.docDetail.delete': '삭제',
   'documents.docDetail.deleteTitle': '문서 삭제',
   'documents.docDetail.deleteConfirm': '"{{title}}"을(를) 삭제할까요?',

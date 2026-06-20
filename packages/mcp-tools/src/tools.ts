@@ -76,7 +76,14 @@ import {
   type ExpertDomain,
   type VerifierId,
 } from '@careermate/knowledge';
-import { coverLetterToMarkdown, coverLetterToHtml } from '@careermate/exporters';
+import {
+  coverLetterToMarkdown,
+  coverLetterToHtml,
+  resumeToMarkdown,
+  resumeToHtml,
+  profileToMarkdown,
+  profileToHtml,
+} from '@careermate/exporters';
 import { extractDocument } from '@careermate/parsers';
 import { ok, fail, type ToolDef } from './result.ts';
 import { resolveDashboardUrl, openInBrowser, openInFileManager } from './bridge.ts';
@@ -749,6 +756,68 @@ export const TOOLS: ToolDef[] = [
         return fail(`파일 저장 실패: ${e instanceof Error ? e.message : e}`);
       }
       return ok(`'${cl.title}'를 ${format.toUpperCase()}로 내보냈습니다.\n저장 위치: ${filePath}`, {
+        path: filePath,
+        filename: result.filename,
+        content: result.content,
+      });
+    },
+  },
+  {
+    name: 'export_resume',
+    title: '이력서/경력기술서 내보내기',
+    description:
+      '저장된 이력서·경력기술서 등 문서를 Markdown 또는 인쇄용 HTML(브라우저에서 PDF로 저장) 파일로 내보내 데이터 폴더의 exports에 저장하고, 파일 경로와 본문을 돌려줍니다. 사용자가 공고에 맞춰 정리한 이력서를 먼저 add_resume로 저장한 뒤, "이력서 파일로 받고 싶어"라고 할 때 사용하세요. document_id는 get_resumes로 확인할 수 있습니다. 대시보드에서 직접 다운로드할 수도 있습니다.',
+    inputSchema: {
+      document_id: z.string(),
+      format: z.enum(['md', 'html']).optional().describe('기본 md'),
+    },
+    handler: (args) => {
+      const doc = documentRepo.get(args.document_id);
+      if (!doc) return fail('문서를 찾을 수 없습니다.');
+      const profile = profileRepo.get();
+      const format = args.format ?? 'md';
+      const result = format === 'html' ? resumeToHtml(doc, profile) : resumeToMarkdown(doc, profile);
+      const dir = getExportsDir();
+      const filePath = path.join(dir, result.filename);
+      try {
+        fs.writeFileSync(filePath, result.content, 'utf8');
+      } catch (e) {
+        return fail(`파일 저장 실패: ${e instanceof Error ? e.message : e}`);
+      }
+      return ok(`'${doc.title}'를 ${format.toUpperCase()}로 내보냈습니다.\n저장 위치: ${filePath}`, {
+        path: filePath,
+        filename: result.filename,
+        content: result.content,
+      });
+    },
+  },
+  {
+    name: 'export_profile',
+    title: '프로필을 이력서로 내보내기',
+    description:
+      '저장된 프로필·경력·프로젝트·보유 기술을 한 장의 이력서 형식으로 모아 Markdown 또는 인쇄용 HTML(브라우저에서 PDF로 저장) 파일로 내보내 데이터 폴더의 exports에 저장하고, 파일 경로와 본문을 돌려줍니다. 사용자가 "내 프로필을 이력서로 뽑아줘"처럼 구조화된 데이터 전체를 이력서로 받고 싶을 때 사용하세요. 특정 공고 맞춤 이력서는 add_resume로 정리·저장한 뒤 export_resume를 쓰세요. 대시보드에서 직접 다운로드할 수도 있습니다.',
+    inputSchema: {
+      format: z.enum(['md', 'html']).optional().describe('기본 md'),
+    },
+    handler: (args) => {
+      const profile = profileRepo.get();
+      if (!profile) return fail('프로필이 없습니다. 먼저 프로필을 저장하세요.');
+      const format = args.format ?? 'md';
+      const experiences = experienceRepo.list();
+      const projects = projectRepo.list();
+      const skills = skillRepo.list();
+      const result =
+        format === 'html'
+          ? profileToHtml(profile, experiences, projects, skills)
+          : profileToMarkdown(profile, experiences, projects, skills);
+      const dir = getExportsDir();
+      const filePath = path.join(dir, result.filename);
+      try {
+        fs.writeFileSync(filePath, result.content, 'utf8');
+      } catch (e) {
+        return fail(`파일 저장 실패: ${e instanceof Error ? e.message : e}`);
+      }
+      return ok(`프로필을 이력서(${format.toUpperCase()})로 내보냈습니다.\n저장 위치: ${filePath}`, {
         path: filePath,
         filename: result.filename,
         content: result.content,

@@ -15,7 +15,7 @@ export default {
   'documents.loading': 'Loading…',
 
   // create actions
-  'documents.action.coverCreate': 'New cover letter',
+  'documents.action.coverCreate': 'Add cover letter',
   'documents.action.careerCreate': 'Add career description',
   'documents.action.docCreate': 'Add document',
 
@@ -101,8 +101,10 @@ export default {
   'documents.docDetail.updated': 'Updated {{when}}',
   'documents.docDetail.noContent': 'No content.',
   'documents.docDetail.copy': 'Copy',
-  'documents.docDetail.export': 'Export',
+  'documents.docDetail.export': 'MD',
   'documents.docDetail.exportTitle': 'Export as Markdown',
+  'documents.docDetail.exportHtml': 'HTML',
+  'documents.docDetail.exportHtmlTitle': 'Export as HTML',
   'documents.docDetail.delete': 'Delete',
   'documents.docDetail.deleteTitle': 'Delete document',
   'documents.docDetail.deleteConfirm': 'Delete "{{title}}"?',
