@@ -31,6 +31,19 @@ CareerMate는 LLM이 없는 **로컬 MCP 도구**입니다. *내 컴퓨터에서
 ### 동작하지 않는 것
 **ChatGPT · Gemini · Claude의 웹·모바일 앱은 안 됩니다.** 클라우드에서 실행되어 **원격 URL 기반 MCP만** 지원하므로, 내 컴퓨터의 로컬 stdio 서버에 직접 닿을 수 없습니다.
 
+### 첫 사용 마찰 — 도구 사전허용 (자동)
+`careermate init`은 **연결한 클라이언트에만**(감지된/`--client`로 지정한 것) 커리어 데이터 도구를 미리 허용해, 첫 사용 때 도구마다 뜨는 승인 프롬프트를 없앱니다. **민감/파괴 4개(`read_document`·`update_careermate`·`delete_cover_letter`·`delete_job_posting`)는 어느 클라이언트에서도 자동승인하지 않고 그때그때 확인**을 받습니다. `--no-allow-tools`로 전체를 끌 수 있습니다.
+
+| 앱 | 사전허용 방식 | 쓰는 파일 |
+|---|---|---|
+| **Claude Code** | `permissions.allow` + 서버 신뢰(`enabledMcpjsonServers`) | 작업 폴더 `.claude/settings.local.json` |
+| **Codex CLI** | 서버 도구 자동승인(`default_tools_approval_mode = "auto"`) + 민감 4개만 `approval_mode = "prompt"` | `~/.codex/config.toml` |
+| **Cursor (≥3.6)** | `mcpAllowlist`에 SAFE 도구만(`"careermate:<tool>"`) | `~/.cursor/permissions.json` |
+| **Gemini CLI · Antigravity** | (자동 안 함) — 도구별 사전허용이 없고 서버 단위 일괄 신뢰만 있어, 민감 도구까지 자동승인되는 걸 피하려고 **첫 사용 1회 "허용"**만 받습니다 | — |
+| **Claude Desktop "채팅"** | (자동 안 함) — 앱이 세션 UI에서 "항상 허용"으로 기억 | — |
+
+> 폴더를 처음 "신뢰"하는 1회 다이얼로그(Claude Code의 폴더 신뢰, Codex의 워크스페이스 신뢰)는 클라이언트가 강제하는 보안 게이트라 사라지지 않습니다 — 한 번만 승인하면 됩니다.
+
 ---
 
 ## 구독·준비물 (2026)

@@ -81,6 +81,15 @@ function cursorConfigPath(): string {
 }
 
 /**
+ * Cursor 도구 사전허용 파일(연결용 mcp.json과 별개). Cursor ≥3.6는 `permissions.json`의
+ * `mcpAllowlist`("server:tool")로 특정 MCP 도구를 프롬프트 없이 결정적으로 자동 실행한다.
+ * 전역 mcp.json에 서버를 등록하므로 전역 permissions.json에 맞춰 쓴다(careermate: 네임스페이스로만 한정).
+ */
+function cursorPermissionsPath(): string {
+  return path.join(os.homedir(), '.cursor', 'permissions.json');
+}
+
+/**
  * 사용자가 init을 실행한 '작업 폴더'. bin/careermate.mjs는 tsx 해석을 위해 자식 cwd를 패키지
  * 루트로 고정하므로, 원래 폴더를 CAREERMATE_INIT_CWD로 받아 우선한다(없으면 process.cwd()).
  * Claude Code는 사용자가 실제로 여는 폴더의 .mcp.json·.claude 설정만 읽으므로 이 폴더가 기준이다.
@@ -238,10 +247,16 @@ function tomlString(s: string): string {
   return JSON.stringify(s);
 }
 
-/** Codex 설정의 careermate 블록(헤더 + command + args). 우리가 형태를 통제하므로 단순하다. */
-function codexBlock(server: ServerEntry): string {
+/**
+ * Codex 설정의 careermate 블록(헤더 + command + args). 우리가 형태를 통제하므로 단순하다.
+ * autoApprove면 `default_tools_approval_mode = "auto"`를 더해 이 서버 도구를 프롬프트 없이 실행한다
+ * (SENSITIVE 도구는 별도 [..tools.<tool>] 서브테이블에서 "prompt"로 되돌린다 — writeCodexToml 참고).
+ */
+function codexBlock(server: ServerEntry, autoApprove: boolean): string {
   const args = server.args.map(tomlString).join(', ');
-  return [`[mcp_servers.${PKG}]`, `command = ${tomlString(server.command)}`, `args = [${args}]`].join('\n');
+  const lines = [`[mcp_servers.${PKG}]`, `command = ${tomlString(server.command)}`, `args = [${args}]`];
+  if (autoApprove) lines.push('default_tools_approval_mode = "auto"');
+  return lines.join('\n');
 }
 
 /**
@@ -275,8 +290,46 @@ function upsertCodexBlock(raw: string, block: string): { next: string; found: bo
   return { next, found: true };
 }
 
-/** Codex CLI: `~/.codex/config.toml` 의 `[mcp_servers.careermate]` 테이블. */
-function writeCodexToml(target: ClientTarget, server: ServerEntry): WriteResult {
+/** 점 표기 TOML 테이블 헤더(`a.b.c`)를 공백 허용 정규식으로(우리가 만든 테이블만 안전 교체). */
+function tomlTableHeaderRe(dotted: string): RegExp {
+  const parts = dotted.split('.').map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(`^\\s*\\[\\s*${parts.join('\\s*\\.\\s*')}\\s*\\]\\s*$`);
+}
+
+/**
+ * 이름이 정확한 TOML 테이블 하나를 멱등 삽입/교체한다(`upsertCodexBlock`의 일반화).
+ * 블록 경계는 "다음 `[` 테이블 헤더"까지 → 우리 테이블만 건드리고 사용자의 다른 테이블은 보존.
+ * SENSITIVE 도구의 `[mcp_servers.careermate.tools.<tool>]` 프롬프트 복원 서브테이블에 쓴다.
+ */
+function upsertTomlTable(raw: string, dotted: string, body: string[]): string {
+  const lines = raw.length ? raw.split(/\r?\n/) : [];
+  const headerRe = tomlTableHeaderRe(dotted);
+  const tableRe = /^\s*\[/;
+  const block = [`[${dotted}]`, ...body];
+  const start = lines.findIndex((l) => headerRe.test(l));
+  if (start === -1) {
+    const trimmed = raw.replace(/\s+$/, '');
+    return (trimmed.length ? `${trimmed}\n\n` : '') + `${block.join('\n')}\n`;
+  }
+  let end = lines.length;
+  for (let j = start + 1; j < lines.length; j++) {
+    if (tableRe.test(lines[j])) {
+      end = j;
+      break;
+    }
+  }
+  let next = [...lines.slice(0, start), ...block, ...lines.slice(end)].join('\n');
+  if (!next.endsWith('\n')) next += '\n';
+  return next;
+}
+
+/**
+ * Codex CLI: `~/.codex/config.toml` 의 `[mcp_servers.careermate]` 테이블.
+ * allowTools면 서버 블록에 `default_tools_approval_mode = "auto"`를 넣어 careermate 도구를 자동승인하고,
+ * SENSITIVE 4개만 `[mcp_servers.careermate.tools.<tool>] approval_mode = "prompt"`로 되돌린다
+ * (Claude Code 사전허용과 같은 보안 분리). 전역 approval_policy/sandbox/trust는 건드리지 않는다.
+ */
+function writeCodexToml(target: ClientTarget, server: ServerEntry, allowTools: boolean): WriteResult {
   const existed = fs.existsSync(target.configPath);
   let raw = '';
   if (existed) {
@@ -286,7 +339,13 @@ function writeCodexToml(target: ClientTarget, server: ServerEntry): WriteResult 
       raw = '';
     }
   }
-  const { next, found } = upsertCodexBlock(raw, codexBlock(server));
+  const { next: afterBlock, found } = upsertCodexBlock(raw, codexBlock(server, allowTools));
+  let next = afterBlock;
+  if (allowTools) {
+    for (const tool of SENSITIVE_TOOLS) {
+      next = upsertTomlTable(next, `mcp_servers.${PKG}.tools.${tool}`, ['approval_mode = "prompt"']);
+    }
+  }
   const changed = next.trim() !== raw.trim();
 
   let backedUp: string | null = null;
@@ -296,8 +355,10 @@ function writeCodexToml(target: ClientTarget, server: ServerEntry): WriteResult 
   return { changed, backedUp, replacedExisting: found && changed };
 }
 
-function writeTarget(target: ClientTarget, server: ServerEntry): WriteResult {
-  return target.format === 'codex-toml' ? writeCodexToml(target, server) : writeMcpJson(target, server);
+function writeTarget(target: ClientTarget, server: ServerEntry, allowTools: boolean): WriteResult {
+  return target.format === 'codex-toml'
+    ? writeCodexToml(target, server, allowTools)
+    : writeMcpJson(target, server);
 }
 
 /**
@@ -412,6 +473,36 @@ function writeClaudeAllowlist(): WriteResult {
   return { changed, backedUp, replacedExisting: false };
 }
 
+/**
+ * Cursor(≥3.6) 도구 사전허용: `~/.cursor/permissions.json`의 `mcpAllowlist`에 SAFE 도구를
+ * "careermate:<tool>"로 병합한다(기존 항목·다른 서버는 보존). SENSITIVE는 어떤 경우에도 넣지 않아
+ * Claude Code와 같은 보안 분리를 유지한다. 구버전 Cursor는 이 파일을 무시할 뿐 해롭지 않다.
+ */
+function writeCursorAllowlist(): WriteResult {
+  const file = cursorPermissionsPath();
+  const existed = fs.existsSync(file);
+  const json = existed ? readJsonObject(file) : {};
+  const before = JSON.stringify(json);
+
+  const list = new Set<string>(
+    Array.isArray(json.mcpAllowlist)
+      ? (json.mcpAllowlist as unknown[]).filter((x): x is string => typeof x === 'string')
+      : [],
+  );
+  for (const tool of SAFE_TOOLS) {
+    if (SENSITIVE_TOOLS.includes(tool)) continue; // 방어: 민감 도구는 절대 자동승인하지 않음
+    list.add(`${PKG}:${tool}`);
+  }
+  json.mcpAllowlist = [...list];
+
+  const changed = JSON.stringify(json) !== before;
+  let backedUp: string | null = null;
+  if (existed && changed) backedUp = backupFile(file);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(json, null, 2)}\n`, 'utf8');
+  return { changed, backedUp, replacedExisting: false };
+}
+
 function flagValue(argv: string[], name: string): string | undefined {
   const i = argv.indexOf(name);
   return i >= 0 && argv[i + 1] ? argv[i + 1] : undefined;
@@ -439,7 +530,11 @@ function printConfigs(server: ServerEntry): void {
   console.log(`  · 또는 명령으로:  ${shellJoin(['claude', 'mcp', 'add', '--scope', 'project', '--transport', 'stdio', PKG, '--', ...cmd])}`);
 
   console.log('\n② Codex CLI — ~/.codex/config.toml 에 추가:');
-  console.log(codexBlock(server));
+  console.log(codexBlock(server, true));
+  console.log('  · default_tools_approval_mode = "auto" 는 careermate 도구를 자동승인합니다(민감/파괴 4개는 아래로 프롬프트 유지).');
+  for (const tool of SENSITIVE_TOOLS) {
+    console.log(`[mcp_servers.${PKG}.tools.${tool}]\napproval_mode = "prompt"`);
+  }
   console.log(`\n  · 또는 명령으로:  ${shellJoin(['codex', 'mcp', 'add', PKG, '--', ...cmd])}`);
 }
 
@@ -467,7 +562,8 @@ function main(): void {
   const connectedIds = new Set<string>();
   for (const t of targets) {
     try {
-      const { changed, backedUp, replacedExisting } = writeTarget(t, server);
+      // Codex는 등록과 동시에 도구 사전허용(default auto + SENSITIVE prompt)을 같은 toml에 쓴다.
+      const { changed, backedUp, replacedExisting } = writeTarget(t, server, !skipAllow);
       connected += 1;
       connectedIds.add(t.id);
       console.log(
@@ -503,6 +599,32 @@ function main(): void {
     } catch (e) {
       console.log(`• Claude Code 사전허용은 건너뜁니다(설치는 계속): ${e instanceof Error ? e.message : e}`);
     }
+  }
+
+  // Codex: 사전허용은 위 writeCodexToml(config.toml)에서 이미 처리됨 — 사용자에게만 한 줄 안내.
+  if (connectedIds.has('codex') && !skipAllow) {
+    console.log('• Codex CLI 도구 사전허용 기록됨(config.toml) — 커리어 데이터 도구는 자동승인, 민감/파괴 작업은 확인을 받습니다');
+  }
+
+  // Cursor(≥3.6): 연결용 mcp.json과 별개인 permissions.json에 SAFE 도구만 자동승인 등록.
+  if (connectedIds.has('cursor') && !skipAllow) {
+    try {
+      const r = writeCursorAllowlist();
+      console.log(
+        `• Cursor 도구 사전허용 ${r.changed ? '기록됨' : '이미 최신'}: ${cursorPermissionsPath()}` +
+          (r.backedUp ? `\n    (기존 설정 백업: ${r.backedUp})` : ''),
+      );
+      console.log('    (Cursor 3.6+ 에서 적용 — 커리어 데이터 도구 자동승인, 민감/파괴 작업은 확인. 구버전은 무시됩니다)');
+    } catch (e) {
+      console.log(`• Cursor 사전허용은 건너뜁니다(설치는 계속): ${e instanceof Error ? e.message : e}`);
+    }
+  }
+
+  // Gemini CLI·Antigravity: 도구 사전허용은 의도적으로 건드리지 않는다. 둘 다 per-tool 자동승인이 없고
+  // 서버 단위 trust(전부 자동승인)뿐이라, SENSITIVE(파일읽기·삭제·업데이트)를 함께 자동승인하게 되어
+  // Claude/Codex/Cursor에서 지킨 보안 분리가 깨진다. 안전하게 기본(프롬프트 유지)을 둔다.
+  if ((connectedIds.has('gemini') || connectedIds.has('antigravity')) && !skipAllow) {
+    console.log('• Gemini CLI/Antigravity는 도구별 사전허용이 없어, 첫 도구 사용 때 1회 "허용"만 눌러주세요(보안상 일괄 자동승인은 피했습니다)');
   }
 
   console.log('\n✅ 거의 끝났습니다. 다음만 해주세요:');

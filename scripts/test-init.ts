@@ -130,6 +130,87 @@ try {
   console.log(`  ❌ 예외 발생: ${e instanceof Error ? e.message : String(e)}`);
 }
 
+// 정말로 밖으로 나가거나(임의 파일읽기·npm) 비가역(삭제)인 4개는 모든 클라이언트에서 사전허용 제외.
+const MUST_PROMPT = ['read_document', 'update_careermate', 'delete_cover_letter', 'delete_job_posting'];
+
+// ── Codex: config.toml 에 도구 사전허용(default auto + SENSITIVE prompt) 이 기록되는지 ──
+console.log('\ninit Codex 사전허용');
+try {
+  const codexHome = path.join(tmp, 'codex-home');
+  const res = spawnSync(
+    process.execPath,
+    ['--no-warnings', binPath, 'init', '--client', 'codex', '--npx'],
+    {
+      cwd: workspace,
+      encoding: 'utf8',
+      env: { ...process.env, CAREERMATE_DATA_DIR: dataDir, CODEX_HOME: codexHome },
+      timeout: 30000,
+    },
+  );
+  ok('codex init 성공', res.status === 0);
+  const tomlPath = path.join(codexHome, 'config.toml');
+  const tomlExists = fs.existsSync(tomlPath);
+  ok('~/.codex/config.toml 생성', tomlExists);
+  if (tomlExists) {
+    const toml = fs.readFileSync(tomlPath, 'utf8');
+    ok('careermate 서버 블록 등록', /\[mcp_servers\.careermate\]/.test(toml));
+    ok('서버 도구 자동승인(default_tools_approval_mode = "auto")', /default_tools_approval_mode\s*=\s*"auto"/.test(toml));
+    // SENSITIVE 4개는 prompt 서브테이블로 되돌려져야 한다.
+    const missingPrompt = MUST_PROMPT.filter(
+      (t) =>
+        !new RegExp(`\\[mcp_servers\\.careermate\\.tools\\.${t}\\][\\s\\S]*?approval_mode\\s*=\\s*"prompt"`).test(toml),
+    );
+    ok(`민감/파괴 도구는 prompt 유지 (누락: ${missingPrompt.join(', ') || '없음'})`, missingPrompt.length === 0);
+    // SAFE 도구에는 개별 prompt override 가 붙으면 안 된다(자동승인 그대로).
+    const safeOverridden = ['get_onboarding_status', 'save_fit_analysis', 'open_dashboard'].filter((t) =>
+      new RegExp(`\\[mcp_servers\\.careermate\\.tools\\.${t}\\]`).test(toml),
+    );
+    ok(`SAFE 도구는 자동승인 유지 (잘못된 override: ${safeOverridden.join(', ') || '없음'})`, safeOverridden.length === 0);
+  } else {
+    console.log((res.stdout || '') + (res.stderr || ''));
+  }
+} catch (e) {
+  fail += 1;
+  console.log(`  ❌ 예외 발생: ${e instanceof Error ? e.message : String(e)}`);
+}
+
+// ── Cursor: ~/.cursor/permissions.json 의 mcpAllowlist 에 SAFE 만, SENSITIVE 제외 ──
+console.log('\ninit Cursor 사전허용');
+try {
+  const cursorHome = path.join(tmp, 'cursor-home');
+  fs.mkdirSync(cursorHome, { recursive: true });
+  const res = spawnSync(
+    process.execPath,
+    ['--no-warnings', binPath, 'init', '--client', 'cursor', '--npx'],
+    {
+      cwd: workspace,
+      encoding: 'utf8',
+      // os.homedir()는 Windows에서 USERPROFILE, POSIX에서 HOME 을 본다 — 임시 홈으로 리다이렉트.
+      env: { ...process.env, CAREERMATE_DATA_DIR: dataDir, USERPROFILE: cursorHome, HOME: cursorHome },
+      timeout: 30000,
+    },
+  );
+  ok('cursor init 성공', res.status === 0);
+  const permPath = path.join(cursorHome, '.cursor', 'permissions.json');
+  const permExists = fs.existsSync(permPath);
+  ok('~/.cursor/permissions.json 생성', permExists);
+  if (permExists) {
+    const perm = JSON.parse(fs.readFileSync(permPath, 'utf8')) as { mcpAllowlist?: unknown };
+    const list = new Set(Array.isArray(perm.mcpAllowlist) ? (perm.mcpAllowlist as string[]) : []);
+    ok('SAFE 도구 자동승인(careermate:get_onboarding_status)', list.has('careermate:get_onboarding_status'));
+    ok('SAFE 도구 자동승인(careermate:save_fit_analysis)', list.has('careermate:save_fit_analysis'));
+    const leaked = MUST_PROMPT.filter((t) => list.has(`careermate:${t}`));
+    ok(`민감/파괴 도구는 자동승인 제외 (누출: ${leaked.join(', ') || '없음'})`, leaked.length === 0);
+    const offServer = [...list].filter((r) => !r.startsWith('careermate:'));
+    ok(`자동승인은 careermate 네임스페이스로만 한정 (이탈: ${offServer.join(', ') || '없음'})`, offServer.length === 0);
+  } else {
+    console.log((res.stdout || '') + (res.stderr || ''));
+  }
+} catch (e) {
+  fail += 1;
+  console.log(`  ❌ 예외 발생: ${e instanceof Error ? e.message : String(e)}`);
+}
+
 console.log(`\n결과: ${pass} 통과 · ${fail} 실패`);
 console.log(fail === 0 ? 'INIT_TEST_VERDICT PASS' : `INIT_TEST_VERDICT FAIL ${fail}`);
 process.exit(fail === 0 ? 0 : 1);
