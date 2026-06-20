@@ -635,16 +635,39 @@ function TimelineCard(timeline) {
   });
 }
 
+// Timeline title is enum-derivable from event.type, so render it client-side
+// (like status badges) instead of the server-provided event.title — keeps the
+// timeline localized in both the real app and the demo. Unknown types fall back
+// to the server title.
+function timelineTitle(event) {
+  if (event.type === 'application_status_changed') {
+    const st = event.payload?.status;
+    return st ? t('status.' + st) : event.title;
+  }
+  const key = 'jobs.timeline.type.' + event.type;
+  const label = t(key);
+  return label === key ? event.title : label;
+}
+// Summaries are mostly free-form user data (company·position, cover-letter title,
+// notes) → keep as-is; only the count/score ones are derivable from the payload.
+function timelineSummary(event) {
+  const p = event.payload || {};
+  if (event.type === 'fit_analysis_saved' && p.score != null) return t('jobs.timeline.fitScore', { score: p.score });
+  if (event.type === 'interview_prep_saved' && typeof p.question_count === 'number' && p.question_count > 0)
+    return t('jobs.timeline.questionCount', { count: p.question_count });
+  return event.summary;
+}
 function TimelineItem(event, isCurrent) {
+  const summary = timelineSummary(event);
   return el('div', { class: `tl-item${isCurrent ? ' is-current' : ''}` },
     el('div', { class: 'tl-item__rail' },
       el('div', { class: 'tl-item__dot' }),
       el('div', { class: 'tl-item__line' })),
     el('div', { class: 'tl-item__body timeline-event' },
       el('div', { class: 'timeline-event__head' },
-        el('div', { class: 'timeline-event__title' }, event.title),
+        el('div', { class: 'timeline-event__title' }, timelineTitle(event)),
         el('time', { class: 'muted text-sm', attrs: { datetime: event.occurred_at || '' } }, fmtDate(event.occurred_at))),
-      event.summary ? el('div', { class: 'timeline-event__summary' }, event.summary) : null,
+      summary ? el('div', { class: 'timeline-event__summary' }, summary) : null,
       TimelinePayload(event)));
 }
 

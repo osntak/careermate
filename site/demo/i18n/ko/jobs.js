@@ -138,6 +138,12 @@ export default {
   'jobs.timeline.coverLetter': '자기소개서',
   'jobs.timeline.deletedDoc': '삭제된 문서',
   'jobs.timeline.deleted': '삭제됨',
+  'jobs.timeline.type.job_saved': '공고 등록',
+  'jobs.timeline.type.fit_analysis_saved': '적합도 분석',
+  'jobs.timeline.type.cover_letter_version_saved': '자기소개서 작성',
+  'jobs.timeline.type.interview_prep_saved': '면접 준비',
+  'jobs.timeline.fitScore': '종합 {{score}}점',
+  'jobs.timeline.questionCount': '예상 질문 {{count}}개',
 
   // ---- related card ----
   'jobs.related.title': '관련 기록',

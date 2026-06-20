@@ -138,6 +138,12 @@ export default {
   'jobs.timeline.coverLetter': 'Cover letter',
   'jobs.timeline.deletedDoc': 'Deleted document',
   'jobs.timeline.deleted': 'Deleted',
+  'jobs.timeline.type.job_saved': 'Posting added',
+  'jobs.timeline.type.fit_analysis_saved': 'Fit analysis',
+  'jobs.timeline.type.cover_letter_version_saved': 'Cover letter written',
+  'jobs.timeline.type.interview_prep_saved': 'Interview prep',
+  'jobs.timeline.fitScore': 'Overall {{score}}/100',
+  'jobs.timeline.questionCount': { one: '{{count}} likely question', other: '{{count}} likely questions' },
 
   // ---- related card ----
   'jobs.related.title': 'Related records',
