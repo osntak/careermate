@@ -131,6 +131,20 @@ ok(
   '지원 완료 타임라인: 삭제된 제출 문서는 정적 삭제 표시용 데이터',
   deletedDocRef?.exists === false && deletedDocRef.title === '제출용 경력기술서' && deletedDocRef.route === null,
 );
+// 회귀: 제출 자료(문서/자소서) 없이 채널·날짜만 담은 submission으로 '지원 완료'를 기록해도
+// 크래시 없이 저장돼야 한다(undefined → node:sqlite 바인딩 거부 방지).
+const bareJob = (await json('POST', '/api/jobs', { company: '쿠팡', position: '플랫폼 엔지니어' }, { 'x-careermate-token': SESSION_TOKEN })).job;
+const bareApplied = await authed('PUT', `/api/applications/${bareJob.id}/status`, {
+  status: 'applied',
+  submission: { submitted_at: '2026-06-20', channel: '사람인' },
+});
+ok('지원 완료(제출 문서 없이 채널만)도 크래시 없이 저장', bareApplied.status === 200);
+const bareTimeline = (await json('GET', `/api/jobs/${bareJob.id}`)).job.timeline;
+ok(
+  '문서 없는 지원 완료도 타임라인에 기록(채널만)',
+  bareTimeline.some((e: any) => e.type === 'application_status_changed' && e.payload?.submission?.channel === '사람인'),
+);
+
 const exp = await reqRaw('GET', `/api/export/cover-letter/${cl.id}?format=md`);
 ok('자소서 내보내기(MD)', String(exp.headers['content-disposition'] || '').includes('attachment'));
 

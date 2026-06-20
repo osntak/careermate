@@ -850,7 +850,10 @@ export const applicationRepo = {
       .prepare(
         `UPDATE applications SET status=?,resume_id=?,cover_letter_id=?,applied_at=?,notes=?,updated_at=? WHERE id=?`,
       )
-      .run(m.status, m.resume_id, m.cover_letter_id, m.applied_at, m.notes, now(), app.id);
+      // Coerce undefined → null: node:sqlite rejects undefined bindings, and a
+      // caller that spreads explicit `undefined` fields (e.g. updateApplicationStatus
+      // with a doc-less submission) would otherwise crash here mid-write.
+      .run(m.status, m.resume_id ?? null, m.cover_letter_id ?? null, m.applied_at ?? null, m.notes ?? null, now(), app.id);
     return this.get(app.id)!;
   },
   setStatus(jobId: string, status: ApplicationStatus, note?: string): ApplicationRecord {
