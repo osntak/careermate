@@ -914,7 +914,7 @@ export const TOOLS: ToolDef[] = [
     inputSchema: {},
     readOnly: true,
     handler: async () => {
-      const u = await getUpdateStatusAsync();
+      const u = await getUpdateStatusAsync(true); // "지금 확인" — 신선한 캐시 무시하고 재조회
       if (u.latest === null) return ok('업데이트 확인에 실패했습니다(오프라인이거나 일시적 오류). 잠시 후 다시 시도하세요.', u);
       const user_message = u.update_available
         ? `새 버전 v${u.latest}이 나왔어요. 현재 버전은 v${u.current}입니다. 원하시면 지금 업데이트할 수 있습니다.`

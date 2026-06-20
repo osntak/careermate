@@ -70,7 +70,7 @@ async function main(): Promise<void> {
 
   // Update available?
   try {
-    const u = await getUpdateStatusAsync();
+    const u = await getUpdateStatusAsync(true); // "지금 점검" — 신선한 캐시 무시하고 재조회
     if (u.latest === null) info(`버전 v${u.current} (업데이트 확인 생략 — 오프라인이거나 일시적 오류)`);
     else if (u.update_available) warn(`새 버전 v${u.latest} 있음 (현재 v${u.current}). 업데이트: ${u.update_command}`);
     else ok(`최신 버전 v${u.current}`);

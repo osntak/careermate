@@ -268,11 +268,62 @@ section('8) strList 코어션: 문자열 → 배열');
   ok('API: 문자열 keywords로 저장 → 배열로 보관', Array.isArray(strJob.keywords) && strJob.keywords.length === 2);
 }
 
-console.log(`\n${'='.repeat(40)}`);
-console.log(`결과: ${pass} 통과 · ${fail} 실패`);
-console.log(fail === 0 ? '✅ 전체 통과' : '❌ 실패 있음');
-console.log(fail === 0 ? 'TEST_VERDICT PASS' : `TEST_VERDICT FAIL ${fail}`);
+/* ------------------ 9. 업데이트 확인: "지금 확인"은 신선한 캐시를 무시 (회귀) */
+// check_for_update·doctor·update_careermate 는 "지금 확인" 의미다. 24h 성공 캐시가
+// 아직 신선해도 레지스트리를 새로 조회해야 한다. (회귀: 0.0.4 설치 후에도 1.86h 전
+// 캐시에 남은 0.0.3을 'latest'로 돌려줘 설치본보다 오래된 값을 보고했음.)
+section('9) 업데이트 확인: "지금 확인"은 캐시 무시');
+{
+  const { getUpdateStatusAsync, compareVersions } = await import('../packages/mcp-tools/src/update.ts');
+  const cachePath = path.join(process.env.CAREERMATE_DATA_DIR!, '.update-check.json');
+  const origFetch = globalThis.fetch;
+
+  // 비교기 핵심 불변식 (자릿수 비교 + 정식 > 프리릴리스)
+  ok('compareVersions: 0.0.4 > 0.0.3', compareVersions('0.0.4', '0.0.3') > 0);
+  ok('compareVersions: 0.1.0 > 0.0.4', compareVersions('0.1.0', '0.0.4') > 0);
+  ok('compareVersions: 1.0.0 > 1.0.0-rc.1 (정식>프리)', compareVersions('1.0.0', '1.0.0-rc.1') > 0);
+  ok('compareVersions: 같으면 0', compareVersions('0.0.4', '0.0.4') === 0);
+
+  try {
+    // 레지스트리가 9.9.9를 보고하도록 fetch 스텁
+    (globalThis as { fetch: unknown }).fetch = async () => ({ ok: true, json: async () => ({ version: '9.9.9' }) });
+    // 신선한(만료 전) 캐시에 설치본보다 오래된 latest를 심는다
+    fs.writeFileSync(cachePath, JSON.stringify({ checkedAt: Date.now(), latest: '0.0.1' }), 'utf8');
+
+    // 비강제 경로(비차단 신호)는 기존대로 신선한 캐시를 존중한다(네트워크 안 침)
+    ok('비강제: 신선한 캐시 존중', (await getUpdateStatusAsync(false)).latest === '0.0.1');
+
+    // 강제 경로("지금 확인")는 캐시를 무시하고 레지스트리를 새로 읽는다 ← 버그 수정 지점
+    const fresh = await getUpdateStatusAsync(true);
+    ok('강제: 신선한 캐시 무시하고 재조회(9.9.9)', fresh.latest === '9.9.9', `(${fresh.latest})`);
+    ok('강제: 재조회 결과가 캐시에 반영됨', JSON.parse(fs.readFileSync(cachePath, 'utf8')).latest === '9.9.9');
+
+    // 강제 조회가 네트워크 실패하면 확인 실패로 보고하되 멀쩡한 캐시를 null로 덮지 않는다
+    (globalThis as { fetch: unknown }).fetch = async () => ({ ok: false });
+    ok('강제+네트워크 실패: 확인 실패로 보고(latest=null)', (await getUpdateStatusAsync(true)).latest === null);
+    ok('강제+네트워크 실패: 기존 캐시(9.9.9) 보존', JSON.parse(fs.readFileSync(cachePath, 'utf8')).latest === '9.9.9');
+  } finally {
+    globalThis.fetch = origFetch;
+    // Don't fs.rmSync the cache file: even single-file rmSync hard-crashes on Node 25 /
+    // Windows. It lives in the throwaway CAREERMATE_DATA_DIR, left for the OS temp sweep.
+  }
+}
 
 await new Promise<void>((r) => server.close(() => r()));
-try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* ignore */ }
+
+// Emit the summary as ONE write and wait for its OS-pipe flush callback before
+// exiting. process.exit() on Node 25 / Windows can trigger a libuv teardown crash
+// (0xC0000409) that drops still-buffered stdout — and run.mjs derives pass/fail by
+// grepping the child's stdout for the TEST_VERDICT line. If that line is lost, a
+// fully green run reads as a failure. Awaiting the write callback guarantees the
+// verdict reached the pipe (and thus run.mjs's spawnSync capture) first.
+const summary =
+  `\n${'='.repeat(40)}\n` +
+  `결과: ${pass} 통과 · ${fail} 실패\n` +
+  `${fail === 0 ? '✅ 전체 통과' : '❌ 실패 있음'}\n` +
+  `${fail === 0 ? 'TEST_VERDICT PASS' : `TEST_VERDICT FAIL ${fail}`}\n`;
+await new Promise<void>((r) => process.stdout.write(summary, () => r()));
+
+// No recursive `fs.rmSync` cleanup: on Node 25 / Windows it hard-crashes the
+// process. The unique mkdtemp dir is left for the OS temp sweep (same as test-init.ts).
 process.exit(fail === 0 ? 0 : 1);

@@ -193,17 +193,34 @@ export function getUpdateStatus(): UpdateStatus {
 }
 
 /**
- * 즉시(바운드) 업데이트 확인. 캐시가 만료면 레지스트리를 한 번 await하고 캐시를 갱신한다.
- * doctor·check_for_update처럼 "지금 확인" 의미가 분명한 일회성 호출에서 사용.
+ * 즉시(바운드) 업데이트 확인. doctor·check_for_update처럼 "지금 확인" 의미가 분명한
+ * 일회성 호출에서 사용.
+ *
+ * `force=true`("지금 확인")면 신선한 24h 캐시여도 무시하고 레지스트리를 새로 읽는다 —
+ * 캐시가 직전 릴리스(예: 0.0.3) 시점에 채워진 채 새 버전(0.0.4)이 나오면, 설치본보다
+ * 오래된 `latest`를 돌려주던 버그를 막는다. 강제 조회가 네트워크 오류로 실패하면 멀쩡한
+ * 기존 캐시를 null로 덮지 않고(비차단 신호 getUpdateStatus 보호) "확인 실패"로만 보고한다.
+ *
+ * `force=false`(기본, 만료 재확인)면 기존대로 캐시를 존중하고, 실패는 짧은 TTL의 null로
+ * 기록해 잦은 재시도를 막는다.
  */
-export async function getUpdateStatusAsync(): Promise<UpdateStatus> {
+export async function getUpdateStatusAsync(force = false): Promise<UpdateStatus> {
   if (checkDisabled()) return buildStatus(null);
-  let cache = readCache();
-  if (cacheExpired(cache)) {
-    cache = { checkedAt: Date.now(), latest: await fetchLatest() };
-    writeCache(cache);
+  const cache = readCache();
+  if (!force && !cacheExpired(cache)) return buildStatus(cache);
+
+  const latest = await fetchLatest();
+  if (latest !== null) {
+    const fresh = { checkedAt: Date.now(), latest };
+    writeCache(fresh);
+    return buildStatus(fresh);
   }
-  return buildStatus(cache);
+  // fetch 실패. 강제("지금 확인")는 정직하게 실패로 보고하되 멀쩡한 기존 캐시는 보존한다.
+  if (force) return buildStatus(null);
+  // 비강제(만료 재확인)는 기존처럼 null을 짧은 TTL로 기록해 잦은 재시도를 막는다.
+  const failed = { checkedAt: Date.now(), latest: null };
+  writeCache(failed);
+  return buildStatus(failed);
 }
 
 export interface UpdateResult {
@@ -288,13 +305,11 @@ export async function runSelfUpdate(): Promise<UpdateResult> {
       manual: manualCommand(),
     };
   }
-  // 최신 버전: 신선한 캐시가 있으면 재사용하고, 없으면 한 번만 조회한다(레지스트리 중복 호출 방지).
-  let cache = readCache();
-  if (cacheExpired(cache)) {
-    cache = { checkedAt: Date.now(), latest: await fetchLatest() };
-    writeCache(cache);
-  }
-  const latest = cache?.latest ?? null;
+  // 최신 버전: "업데이트해줘"는 명시적 사용자 행동이라 신선한 캐시여도 새로 조회한다 —
+  // 직전 릴리스 시점에 채워진 캐시가 'already latest'로 오판해 실제 업데이트를 건너뛰지 않게.
+  // 실패(null)면 아래 가드가 안내로 빠지며, 멀쩡한 기존 캐시는 덮지 않는다.
+  const latest = await fetchLatest();
+  if (latest !== null) writeCache({ checkedAt: Date.now(), latest });
   // 최신 버전을 확인하지 못함(오프라인/레지스트리 오류): 무엇을 설치할지 모른 채 실행 중인
   // 설치를 덮어쓰면 반파 위험이 있으므로 시도하지 않고 안내한다.
   if (latest === null) {
