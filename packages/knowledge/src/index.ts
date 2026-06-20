@@ -136,8 +136,22 @@ export const CAREER_ROUTES: Record<string, CareerRoute> = {
   // R7 A2: manage_application_status had no route → rejection-triage / offer-evaluation /
   // salary-negotiation were orphaned (served only on-demand via get_playbook). Route the
   // decision-stage playbooks so they are pushed when the user manages application outcomes.
+  // R7 A4: A2 routed the decision-stage playbooks, but the EOP-free lifecycle domains
+  // onboarding-first-90-days and networking-referrals were still on-demand-only. Anchor them
+  // here (the only EOP-free lifecycle route). NOTE: networking's strongest lever is *before*
+  // applied (pre-referral, networking-referrals §2) — this route is the surfacing point, not
+  // the recommended timing, so surface networking early when the user is pre-application.
+  // linkedin-profile/portfolio stay on-demand pending a dedicated personal-brand workflow id
+  // (FIXES.md / STATUS §7.9 follow-up — onboarding EOP is résumé-import-only, so brand-
+  // creation playbooks would blur its stage meaning). Additive wiring (A1/A2 precedent).
   manage_application_status: {
-    expertSequence: ['rejection-triage-iteration', 'offer-evaluation-decision', 'salary-negotiation'],
+    expertSequence: [
+      'rejection-triage-iteration',
+      'offer-evaluation-decision',
+      'salary-negotiation',
+      'onboarding-first-90-days',
+      'networking-referrals',
+    ],
     verifierSequence: ['truthfulness', 'consistency'],
   },
 };
