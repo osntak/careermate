@@ -67,12 +67,20 @@
       "description": "이력서 목록 조회"
     },
     {
+      "name": "delete_resume",
+      "description": "이력서/문서 삭제"
+    },
+    {
       "name": "add_experience",
       "description": "경력 추가"
     },
     {
       "name": "get_experiences",
       "description": "경력 목록 조회"
+    },
+    {
+      "name": "delete_experience",
+      "description": "경력 항목 삭제"
     },
     {
       "name": "add_project",
@@ -83,12 +91,20 @@
       "description": "프로젝트 목록 조회"
     },
     {
+      "name": "delete_project",
+      "description": "프로젝트 항목 삭제"
+    },
+    {
       "name": "add_skill",
       "description": "기술스택 추가"
     },
     {
       "name": "get_skills",
       "description": "기술스택 목록 조회"
+    },
+    {
+      "name": "delete_skill",
+      "description": "기술스택 항목 삭제"
     },
     {
       "name": "get_cover_letters",
@@ -137,6 +153,14 @@
     {
       "name": "export_cover_letter",
       "description": "자기소개서 내보내기"
+    },
+    {
+      "name": "export_resume",
+      "description": "이력서/문서 내보내기"
+    },
+    {
+      "name": "export_profile",
+      "description": "프로필을 이력서로 내보내기"
     },
     {
       "name": "open_dashboard",

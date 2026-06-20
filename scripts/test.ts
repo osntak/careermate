@@ -195,6 +195,22 @@ ok(
     sumFuture.followups.some((f: any) => f.job.company === '후속테스트회사' && f.days_since >= 11 && f.days_since <= 13),
 );
 
+/* 구조화 항목·문서 삭제 (MCP) — confirm 게이트 */
+const exExpRec = (await tool('add_experience').handler({ experiences: [{ company: '삭제할경력', role: '직무' }] })).data as any;
+const exExpId = exExpRec[0].id;
+ok('MCP 경력 삭제: 확인값 없으면 차단', (await tool('delete_experience').handler({ experience_id: exExpId })).isError === true);
+const delExp = await tool('delete_experience').handler({ experience_id: exExpId, confirm: 'DELETE' });
+ok('MCP 경력 삭제', delExp.isError !== true && !((await tool('get_experiences').handler({})).data as any[]).some((e) => e.id === exExpId));
+const exSkillRec = (await tool('add_skill').handler({ skills: [{ name: '삭제할스킬' }] })).data as any;
+const delSkill = await tool('delete_skill').handler({ skill_id: exSkillRec[0].id, confirm: 'DELETE' });
+ok('MCP 스킬 삭제', delSkill.isError !== true && !((await tool('get_skills').handler({})).data as any[]).some((s) => s.id === exSkillRec[0].id));
+const exProjRec = (await tool('add_project').handler({ projects: [{ name: '삭제할프로젝트' }] })).data as any;
+const delProj = await tool('delete_project').handler({ project_id: exProjRec[0].id, confirm: 'DELETE' });
+ok('MCP 프로젝트 삭제', delProj.isError !== true && !((await tool('get_projects').handler({})).data as any[]).some((p) => p.id === exProjRec[0].id));
+const exDocRec = (await tool('add_resume').handler({ title: '삭제할문서', kind: 'resume', content: 'tmp' })).data as any;
+const delDoc = await tool('delete_resume').handler({ document_id: exDocRec.id, confirm: 'DELETE' });
+ok('MCP 문서 삭제', delDoc.isError !== true && !((await tool('get_resumes').handler({})).data as any[]).some((d) => d.id === exDocRec.id));
+
 const savedJobToolRes = await tool('save_job_posting').handler({ company: '친화회사', position: '친화직무' });
 ok(
   'MCP 공고 저장 메시지: 내부 ID 노출 없음 + 사용자용 문장 제공',

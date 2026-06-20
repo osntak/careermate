@@ -326,7 +326,7 @@ function upsertTomlTable(raw: string, dotted: string, body: string[]): string {
 /**
  * Codex CLI: `~/.codex/config.toml` 의 `[mcp_servers.careermate]` 테이블.
  * allowTools면 서버 블록에 `default_tools_approval_mode = "auto"`를 넣어 careermate 도구를 자동승인하고,
- * SENSITIVE 4개만 `[mcp_servers.careermate.tools.<tool>] approval_mode = "prompt"`로 되돌린다
+ * SENSITIVE 도구만 `[mcp_servers.careermate.tools.<tool>] approval_mode = "prompt"`로 되돌린다
  * (Claude Code 사전허용과 같은 보안 분리). 전역 approval_policy/sandbox/trust는 건드리지 않는다.
  */
 function writeCodexToml(target: ClientTarget, server: ServerEntry, allowTools: boolean): WriteResult {
@@ -367,12 +367,13 @@ function writeTarget(target: ClientTarget, server: ServerEntry, allowTools: bool
  * 폴더의 .claude/settings.local.json에 SAFE 도구를 미리 허용하면 그 프롬프트가 사라진다.
  * 거의 모든 도구는 ~/.careermate 안에서만 읽고 쓰거나 careermate 자신의 폴더·대시보드(127.0.0.1)만
  * 여는 로컬 동작이라 SAFE다(인박스 폴더·대시보드 열기, 인박스 안 문서 읽기 포함 — 모두 careermate 내부).
- * SENSITIVE는 정말로 손이 careermate 밖으로 나가거나 되돌릴 수 없는 4개뿐이고, 이것만 확인을 유지한다:
+ * SENSITIVE는 정말로 손이 careermate 밖으로 나가거나 되돌릴 수 없는 것들이고, 이것만 확인을 유지한다:
  *   - read_document    : 사용자가 준 임의 절대경로 파일 읽기(careermate 밖). 인젝션 시 민감 파일 탈취
  *                        증폭 — packages/parsers의 denylist는 ~/.ssh·.env 등 일부만 막는다.
  *   - update_careermate: npm install 실행(외부 프로세스·네트워크·공급망 표면).
- *   - delete_cover_letter / delete_job_posting : 되돌릴 수 없는 데이터 삭제. 내부 데이터지만 비가역이라
- *                        권한 프롬프트(=사용자 본인의 확인)에 가치가 있다(코드의 confirm='DELETE'는 모델 자가확인).
+ *   - delete_* (cover_letter/job_posting/resume/experience/project/skill) : 되돌릴 수 없는 데이터 삭제.
+ *                        내부 데이터지만 비가역이라 권한 프롬프트(=사용자 본인의 확인)에 가치가 있다
+ *                        (코드의 confirm='DELETE'는 모델 자가확인일 뿐, 사용자 확인이 아니다).
  * 새 MCP 도구를 추가하면 둘 중 하나로 분류해야 한다(scripts/test-init.ts가 manifest와 대조해 누락을 잡는다).
  */
 const SENSITIVE_TOOLS: readonly string[] = [
@@ -380,6 +381,10 @@ const SENSITIVE_TOOLS: readonly string[] = [
   'update_careermate',
   'delete_cover_letter',
   'delete_job_posting',
+  'delete_resume',
+  'delete_experience',
+  'delete_project',
+  'delete_skill',
 ];
 
 const SAFE_TOOLS: readonly string[] = [
@@ -387,7 +392,7 @@ const SAFE_TOOLS: readonly string[] = [
   'add_experience', 'get_experiences', 'add_project', 'get_projects', 'add_skill', 'get_skills',
   'get_cover_letters', 'save_cover_letter_version', 'save_job_posting', 'get_job_posting', 'list_jobs',
   'get_application_context', 'save_fit_analysis', 'update_application_status', 'save_interview_prep',
-  'export_cover_letter', 'list_recent_activity', 'get_workflow_guide', 'get_playbook', 'get_verifier',
+  'export_cover_letter', 'export_resume', 'export_profile', 'list_recent_activity', 'get_workflow_guide', 'get_playbook', 'get_verifier',
   'validate_cover_letter', 'set_verify_mode', 'get_writing_style_guide', 'check_for_update',
   // careermate 자신의 인박스 폴더·대시보드(127.0.0.1)만 여는 로컬 동작 + 인박스 내부 문서 읽기 → 사전허용 안전.
   'read_inbox', 'open_inbox', 'open_dashboard', 'open_application',
@@ -531,7 +536,7 @@ function printConfigs(server: ServerEntry): void {
 
   console.log('\n② Codex CLI — ~/.codex/config.toml 에 추가:');
   console.log(codexBlock(server, true));
-  console.log('  · default_tools_approval_mode = "auto" 는 careermate 도구를 자동승인합니다(민감/파괴 4개는 아래로 프롬프트 유지).');
+  console.log('  · default_tools_approval_mode = "auto" 는 careermate 도구를 자동승인합니다(민감/파괴 도구는 아래로 프롬프트 유지).');
   for (const tool of SENSITIVE_TOOLS) {
     console.log(`[mcp_servers.${PKG}.tools.${tool}]\napproval_mode = "prompt"`);
   }

@@ -372,6 +372,24 @@ export const TOOLS: ToolDef[] = [
       return ok(`문서 ${docs.length}건`, docs);
     },
   },
+  {
+    name: 'delete_resume',
+    title: '이력서/문서 삭제',
+    description:
+      '저장된 이력서·경력기술서·포트폴리오 등 문서를 삭제합니다. 사용자가 명확히 삭제를 요청했을 때만 사용하세요. 먼저 get_resumes로 목록을 확인하고 어떤 문서인지 사용자와 확인한 뒤 호출합니다. confirm에는 DELETE를 넣으세요.',
+    inputSchema: {
+      document_id: z.string(),
+      confirm: z.string().describe('삭제 확인값. 정확히 DELETE를 넣어야 삭제됩니다.'),
+    },
+    handler: (args) => {
+      if (args?.confirm !== DELETE_CONFIRMATION) return fail('삭제하려면 confirm에 DELETE를 넣어 다시 호출하세요.');
+      const doc = documentRepo.get(args.document_id);
+      if (!doc) return fail('문서를 찾을 수 없습니다.');
+      if (!documentRepo.remove(doc.id)) return fail('문서를 삭제하지 못했습니다.');
+      const user_message = `'${doc.title}' 문서를 삭제했어요.`;
+      return ok(user_message, { deleted: true, document_id: doc.id, user_message });
+    },
+  },
 
   /* ----------------------------------------------------------- experiences */
   {
@@ -445,6 +463,60 @@ export const TOOLS: ToolDef[] = [
     handler: () => {
       const list = skillRepo.list();
       return ok(`기술 ${list.length}건`, list);
+    },
+  },
+  {
+    name: 'delete_experience',
+    title: '경력 항목 삭제',
+    description:
+      '구조화된 경력(직장) 항목 하나를 삭제합니다. 잘못 추출/입력된 경력을 지울 때 사용하세요. 먼저 get_experiences로 목록과 id를 확인하고 사용자와 확인한 뒤 호출합니다. (내용 수정은 add_experience로 같은 항목을 다시 저장하면 갱신됩니다.) confirm에는 DELETE를 넣으세요.',
+    inputSchema: {
+      experience_id: z.string(),
+      confirm: z.string().describe('삭제 확인값. 정확히 DELETE를 넣어야 삭제됩니다.'),
+    },
+    handler: (args) => {
+      if (args?.confirm !== DELETE_CONFIRMATION) return fail('삭제하려면 confirm에 DELETE를 넣어 다시 호출하세요.');
+      const exp = experienceRepo.get(args.experience_id);
+      if (!exp) return fail('해당 경력 항목을 찾을 수 없습니다.');
+      if (!experienceRepo.remove(exp.id)) return fail('경력 항목을 삭제하지 못했습니다.');
+      const user_message = `'${exp.company}' 경력을 삭제했어요.`;
+      return ok(user_message, { deleted: true, experience_id: exp.id, user_message });
+    },
+  },
+  {
+    name: 'delete_project',
+    title: '프로젝트 항목 삭제',
+    description:
+      '구조화된 프로젝트 항목 하나를 삭제합니다. 잘못 추출/입력된 프로젝트를 지울 때 사용하세요. 먼저 get_projects로 목록과 id를 확인하고 사용자와 확인한 뒤 호출합니다. (내용 수정은 add_project로 같은 항목을 다시 저장하면 갱신됩니다.) confirm에는 DELETE를 넣으세요.',
+    inputSchema: {
+      project_id: z.string(),
+      confirm: z.string().describe('삭제 확인값. 정확히 DELETE를 넣어야 삭제됩니다.'),
+    },
+    handler: (args) => {
+      if (args?.confirm !== DELETE_CONFIRMATION) return fail('삭제하려면 confirm에 DELETE를 넣어 다시 호출하세요.');
+      const proj = projectRepo.get(args.project_id);
+      if (!proj) return fail('해당 프로젝트 항목을 찾을 수 없습니다.');
+      if (!projectRepo.remove(proj.id)) return fail('프로젝트 항목을 삭제하지 못했습니다.');
+      const user_message = `'${proj.name}' 프로젝트를 삭제했어요.`;
+      return ok(user_message, { deleted: true, project_id: proj.id, user_message });
+    },
+  },
+  {
+    name: 'delete_skill',
+    title: '기술스택 항목 삭제',
+    description:
+      '구조화된 기술스택 항목 하나를 삭제합니다. 잘못 추출/입력된 기술을 지울 때 사용하세요. 먼저 get_skills로 목록과 id를 확인하고 사용자와 확인한 뒤 호출합니다. (내용 수정은 add_skill로 같은 항목을 다시 저장하면 갱신됩니다.) confirm에는 DELETE를 넣으세요.',
+    inputSchema: {
+      skill_id: z.string(),
+      confirm: z.string().describe('삭제 확인값. 정확히 DELETE를 넣어야 삭제됩니다.'),
+    },
+    handler: (args) => {
+      if (args?.confirm !== DELETE_CONFIRMATION) return fail('삭제하려면 confirm에 DELETE를 넣어 다시 호출하세요.');
+      const skill = skillRepo.get(args.skill_id);
+      if (!skill) return fail('해당 기술 항목을 찾을 수 없습니다.');
+      if (!skillRepo.remove(skill.id)) return fail('기술 항목을 삭제하지 못했습니다.');
+      const user_message = `'${skill.name}' 기술을 삭제했어요.`;
+      return ok(user_message, { deleted: true, skill_id: skill.id, user_message });
     },
   },
 
