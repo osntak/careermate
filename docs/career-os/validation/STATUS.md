@@ -96,3 +96,26 @@
 - **핵심 통찰**: 발명(치명·위험) → 정직한 빈칸(경미·올바름) 트레이드오프. 잔여 major는 대부분 '슬롯이 비어 미완성'으로 읽힌 것 — fixture 데이터가 얇아서지 킷 결함 아님(실제 사용자 풍부 데이터면 채워짐). **빈칸 메우려 발명 허용 금지.**
 - 편집 문서: eop/interview-prep.md(+P1/P4/P8·2트랙·발명차단), knowledge/interview-behavioral.md(+P8 Phase-A 정직화), interview-technical.md. 하니스: bin/apply_interview.wf.js·iterate_interview.wf.js.
 - **다음 적용 대상(같은 레시피)**: cl-s1(B55)·job-s1(B72) 등 저점수 + L2 weak 지식.
+
+## 7.8 전 생성 기능 PASS 달성 (린 구조 규칙) ✅✅
+**6개 기능 12 시나리오 전부 PASS·치명결함 0** (opus B, 블라인드 cross-vendor codex):
+
+| 기능 | 시나리오 | B | 판정 |
+|---|---|---|---|
+| 자소서 | cl-s1 / cl-s2 | 94 / 94 | PERFECT / PERFECT |
+| 경력기술서 | cd-s1 / cd-s2 | 82 / 92 | PASS / PERFECT |
+| 면접 | interview-s1 / s2 | 82 / 82 | PASS / PASS |
+| 적합도 | fit-s1/s2/s3 | 86/84/86 | PASS×3 |
+| 공고분석 | job-s1 | 84 | PASS |
+| 기본정보 | profile-s1/s2 | 88/86 | PASS / PASS |
+
+- **핵심 교훈(사용자 원칙 입증)**: 점수는 *내용 양*이 아니라 **린한 load-bearing 구조 규칙**에서 온다. cl-s1은 앵커 규칙 2줄로 55→94 PERFECT, cl-s2/cd-s2 음수는 채점 헤더 아티팩트(메모를 제출물로 오인+허용 파생 과엄격)였고 헤더 교정 후 94/92 PERFECT. → **interview의 두꺼운 가드도 추후 lean 정리 시 점수가 오를 여지**.
+- 잔여는 전부 minor(톤·가독성·약한 추론 라벨링). cd 잔여 minor: 제출 본문 메타 주석 경계·원인 단정·도구 구체화.
+- 편집 제품 문서(커밋됨): eop/{interview-prep,cover-letter,job-analysis,career-description}.md + knowledge/{interview-behavioral,interview-technical}.md + packages/knowledge/src/index.ts(A1·A2).
+
+## 7.9 남은 일 (생성 기능 보정과 별개 — 우선순위 낮음)
+1. **재확인(reconfirm) 패널**: 적용된 EOP 변경을 cross-vendor 만장일치로 ratify → APPLIED.md 대장 + 인라인 마커.
+2. **L2 문서간 정합/정직화**(생성 기능 PASS와 무관, 문서 위생): analyze_job 임계값 단일화(B1)·ats↔ats-compat(B2)·도메인 소유권(B3)·human-voice σ 게이트(B4)·Phase-A 과대주장 정직화(C, ~10문서). FIXES.md P5~P8.
+3. **최종 교차 정리(consolidation)**: interview 등 반복된 발명차단 규칙을 §0.1 한 곳으로 통합 → 전체 재측정으로 PASS 유지 확인(린이 더 높을 수 있음).
+4. **약한 모델(haiku)**: 발명차단 형식이 haiku 환각도 줄이는지 재확인(선택).
+5. **빌드·배포**: 정본 docs 변경 → `npm run build`(docs→dist 복사) 후 배포 반영.
