@@ -126,7 +126,7 @@
 
 **남은 후속(follow-up — 본 라운드 스코프 밖):**
 - **codex P4 규칙-텍스트 전용 표결**: P4 STAR 앵커·사실앵커 경계는 R7 cross-vendor 생성-채점 PASS로 *간접 지지*만 확보(닫힘 아님). codex 용량 회복 시 규칙 텍스트 전용 표결로 닫을 것.
-- **human-voice C4·C5 게이트 정렬**: C4(시작어 반복)·C5(rule-of-three)가 검증기 종료조건에선 게이트인데 human-writing.md 게이트 집합(R5/R6/R9/R11)엔 없음 — 이번엔 σ(C3)만 정렬, C4/C5는 후속.
+- ✅ **human-voice C4·C5 게이트 정렬 완료(2026-06-20)**: C3·C4·C5(단조성 신호)를 모두 advisory(권고 신호)로 통일 — human-writing.md 게이트 집합 R5/R6/R9/R11과 정합. 뚜렷한 위반(연속 3문장 동일 시작어·단락 내 3단 병렬 2회 초과)엔 구체 수정 제안 유지(재작성 강제는 아님). consensus 2라운드 수렴(codex agree). cross-verifier 근거 구분(C5=Wikipedia / C3·C4=burstiness)은 §4 보존. (P4 codex 규칙-전용 표결도 2026-06-20 닫힘.)
 - **linkedin/portfolio 전용 워크플로우 id**: 두 personal-brand 도메인은 on-demand 유지 중. get_workflow_guide enum + definitions.ts에 전용 id 신설(예: build_personal_brand) 시 onboarding/networking의 manage 중복 잔존 여부도 함께 결정.
 - **약한 모델(haiku)·풍부 fixture 재측정**: 선택 항목, 미수행.
 
