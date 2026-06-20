@@ -96,7 +96,7 @@ export function getEop(feature: EopFeature): string {
 
 /** A goal → which EOP, expert playbooks, and verifiers to apply, in order. */
 export interface CareerRoute {
-  eop?: EopFeature;
+  eop?: EopFeature | EopFeature[];
   expertSequence: ExpertDomain[];
   verifierSequence: VerifierId[];
   loop?: 'draft_verify_revise';
@@ -110,7 +110,7 @@ export const CAREER_ROUTES: Record<string, CareerRoute> = {
     verifierSequence: ['truthfulness', 'consistency'],
   },
   analyze_job: {
-    eop: 'job-analysis',
+    eop: ['job-analysis', 'fit-analysis'],
     expertSequence: ['fit-matching', 'company-research'],
     verifierSequence: ['truthfulness', 'consistency', 'responsiveness-on-target'],
     loop: 'draft_verify_revise',
@@ -129,9 +129,16 @@ export const CAREER_ROUTES: Record<string, CareerRoute> = {
   },
   prepare_interview: {
     eop: 'interview-prep',
-    expertSequence: ['interview-behavioral', 'interview-technical', 'company-research'],
+    expertSequence: ['recruiter-screen', 'interview-behavioral', 'interview-technical', 'company-research'],
     verifierSequence: ['truthfulness', 'consistency'],
     loop: 'draft_verify_revise',
+  },
+  // R7 A2: manage_application_status had no route → rejection-triage / offer-evaluation /
+  // salary-negotiation were orphaned (served only on-demand via get_playbook). Route the
+  // decision-stage playbooks so they are pushed when the user manages application outcomes.
+  manage_application_status: {
+    expertSequence: ['rejection-triage-iteration', 'offer-evaluation-decision', 'salary-negotiation'],
+    verifierSequence: ['truthfulness', 'consistency'],
   },
 };
 
@@ -149,12 +156,15 @@ export function renderRouteGuide(id: string): string | undefined {
   const route = CAREER_ROUTES[id];
   if (!route) return undefined;
   const lines: string[] = [];
-  if (route.eop) {
+  const eops = route.eop ? (Array.isArray(route.eop) ? route.eop : [route.eop]) : [];
+  if (eops.length) {
     lines.push('---', '');
     lines.push('## 전문가 실행 절차 (EOP) — 즉답하지 말고 이 절차를 따르세요');
     lines.push('');
-    lines.push(getEop(route.eop));
-    lines.push('');
+    for (const e of eops) {
+      lines.push(getEop(e));
+      lines.push('');
+    }
   }
   lines.push('## 이 작업에 적용할 전문가 플레이북');
   lines.push('작성 직전, 아래 도메인의 깊은 지식을 받아 적용하세요:');
