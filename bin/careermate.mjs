@@ -65,7 +65,14 @@ const runArgs =
     ? ['--no-warnings', '--experimental-sqlite', bundle, ...rest]
     : ['--no-warnings', '--experimental-sqlite', '--import', 'tsx', path.join(ROOT, ENTRIES[cmd]), ...rest];
 
-const child = spawn(process.execPath, runArgs, { cwd: ROOT, stdio: 'inherit' });
+// 자식 cwd는 tsx/tsconfig(paths 별칭) 해석을 위해 ROOT로 고정한다. 하지만 init은 사용자가
+// 명령을 친 '작업 폴더'에 .mcp.json·권한 설정을 써야 하므로, 원래 cwd를 env로 함께 넘긴다
+// (init.ts의 userCwd()가 이 값을 우선한다). 다른 명령에는 무해하다.
+const child = spawn(process.execPath, runArgs, {
+  cwd: ROOT,
+  stdio: 'inherit',
+  env: { ...process.env, CAREERMATE_INIT_CWD: process.cwd() },
+});
 
 child.on('exit', (code, signal) => {
   if (signal) process.kill(process.pid, signal);

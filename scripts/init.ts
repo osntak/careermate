@@ -81,14 +81,24 @@ function cursorConfigPath(): string {
 }
 
 /**
+ * 사용자가 init을 실행한 '작업 폴더'. bin/careermate.mjs는 tsx 해석을 위해 자식 cwd를 패키지
+ * 루트로 고정하므로, 원래 폴더를 CAREERMATE_INIT_CWD로 받아 우선한다(없으면 process.cwd()).
+ * Claude Code는 사용자가 실제로 여는 폴더의 .mcp.json·.claude 설정만 읽으므로 이 폴더가 기준이다.
+ */
+function userCwd(): string {
+  const fromBin = process.env.CAREERMATE_INIT_CWD?.trim();
+  return fromBin && fromBin.length > 0 ? fromBin : process.cwd();
+}
+
+/**
  * Claude Code project scope 설정: 사용자가 지금 작업 중인 폴더에 둔다.
  *
  * `npx -y careermate init`은 패키지를 임시 캐시에 풀어 실행하므로 ROOT는 사용자의
  * 프로젝트가 아니라 설치물 위치다. Claude Code는 실제로 열 폴더의 `.mcp.json`만
- * 승인/로드하므로 cwd를 프로젝트 루트로 삼는다.
+ * 승인/로드하므로 사용자의 작업 폴더(userCwd)를 기준으로 한다.
  */
 function claudeCodeConfigPath(): string {
-  return path.join(process.cwd(), '.mcp.json');
+  return path.join(userCwd(), '.mcp.json');
 }
 
 /** Codex CLI 글로벌 설정(CODEX_HOME 우선). */
@@ -290,6 +300,116 @@ function writeTarget(target: ClientTarget, server: ServerEntry): WriteResult {
   return target.format === 'codex-toml' ? writeCodexToml(target, server) : writeMcpJson(target, server);
 }
 
+/**
+ * Claude Code 도구 사전허용 분류.
+ * 첫 사용 마찰의 핵심은 careermate MCP 도구를 처음 부를 때마다 뜨는 승인 프롬프트다. init이 작업
+ * 폴더의 .claude/settings.local.json에 아래 SAFE 도구를 미리 허용하면 그 프롬프트가 사라진다.
+ * SENSITIVE는 의도적으로 제외해 사용자 확인을 유지한다 — 데이터는 어차피 ~/.careermate 로컬이라
+ * SAFE는 외부 유출·시스템 변경이 없지만, SENSITIVE는 다음과 같이 손이 밖으로 나가기 때문이다:
+ *   read_document/read_inbox = 임의 파일경로 읽기 · open_* = 외부 프로세스/브라우저 실행 ·
+ *   update_careermate = npm 실행 · delete_* = 파괴적 삭제.
+ * 새 MCP 도구를 추가하면 둘 중 하나로 분류해야 한다(scripts/test-init.ts가 manifest와 대조해 누락을 잡는다).
+ */
+const SENSITIVE_TOOLS: readonly string[] = [
+  'read_document',
+  'read_inbox',
+  'open_inbox',
+  'open_dashboard',
+  'open_application',
+  'update_careermate',
+  'delete_cover_letter',
+  'delete_job_posting',
+];
+
+const SAFE_TOOLS: readonly string[] = [
+  'get_onboarding_status', 'get_profile', 'save_profile', 'add_resume', 'get_resumes',
+  'add_experience', 'get_experiences', 'add_project', 'get_projects', 'add_skill', 'get_skills',
+  'get_cover_letters', 'save_cover_letter_version', 'save_job_posting', 'get_job_posting', 'list_jobs',
+  'get_application_context', 'save_fit_analysis', 'update_application_status', 'save_interview_prep',
+  'export_cover_letter', 'list_recent_activity', 'get_workflow_guide', 'get_playbook', 'get_verifier',
+  'validate_cover_letter', 'set_verify_mode', 'get_writing_style_guide', 'check_for_update',
+];
+
+/** Claude Code 작업 폴더의 로컬(비공유) 설정 파일. 권한·신뢰는 머신/사용자 로컬 산출물이다. */
+function claudeSettingsLocalPath(): string {
+  return path.join(userCwd(), '.claude', 'settings.local.json');
+}
+
+/**
+ * 작업 폴더가 git repo이거나 이미 .gitignore가 있으면 주어진 경로를 무시 목록에 보장한다(best-effort).
+ * settings.local.json은 머신 로컬 권한이라 공유 대상이 아니므로 실수로 커밋되지 않게 한다.
+ */
+function ensureGitignored(file: string): void {
+  const cwd = userCwd();
+  const gitignorePath = path.join(cwd, '.gitignore');
+  const isRepo = fs.existsSync(path.join(cwd, '.git'));
+  if (!isRepo && !fs.existsSync(gitignorePath)) return;
+  const rel = path.relative(cwd, file).split(path.sep).join('/');
+  let body = '';
+  try {
+    body = fs.existsSync(gitignorePath) ? fs.readFileSync(gitignorePath, 'utf8') : '';
+  } catch {
+    return;
+  }
+  const already = body.split(/\r?\n/).some((l) => {
+    const t = l.trim();
+    return t === rel || t === `/${rel}`;
+  });
+  if (already) return;
+  const prefix = body.length && !body.endsWith('\n') ? '\n' : '';
+  try {
+    fs.appendFileSync(gitignorePath, `${prefix}${rel}\n`, 'utf8');
+  } catch {
+    /* best-effort: 무시 등록 실패해도 설치는 계속 */
+  }
+}
+
+/**
+ * Claude Code 사전허용: 작업 폴더의 .claude/settings.local.json에
+ *   (1) enabledMcpjsonServers: ["careermate"] — 재시작 후 'project 서버 신뢰' 1회 프롬프트 제거
+ *   (2) permissions.allow에 SAFE 도구(mcp__careermate__<tool>) — 데이터 도구 첫 호출 프롬프트 제거
+ * 를 병합 기록한다(기존 키·사용자 설정 보존, 변경 시 타임스탬프 백업). 폴더를 처음 '신뢰'하는
+ * 1회 다이얼로그는 Claude Code가 강제하므로 사라지지 않는다(보안 게이트 유지).
+ */
+function writeClaudeAllowlist(): WriteResult {
+  const file = claudeSettingsLocalPath();
+  const existed = fs.existsSync(file);
+  const json = existed ? readJsonObject(file) : {};
+  const before = JSON.stringify(json);
+
+  // (1) 우리가 방금 쓴 .mcp.json의 careermate 서버를 미리 신뢰(다른 서버는 건드리지 않음).
+  const enabled = Array.isArray(json.enabledMcpjsonServers)
+    ? (json.enabledMcpjsonServers as unknown[]).filter((x): x is string => typeof x === 'string')
+    : [];
+  if (!enabled.includes(PKG)) enabled.push(PKG);
+  json.enabledMcpjsonServers = enabled;
+
+  // (2) SAFE 도구만 사전허용에 추가. 기존 사용자 allow는 보존하고, 어떤 경우에도 SENSITIVE는 추가하지 않는다.
+  const perms =
+    json.permissions && typeof json.permissions === 'object' && !Array.isArray(json.permissions)
+      ? (json.permissions as Record<string, unknown>)
+      : {};
+  const allow = new Set<string>(
+    Array.isArray(perms.allow)
+      ? (perms.allow as unknown[]).filter((x): x is string => typeof x === 'string')
+      : [],
+  );
+  for (const tool of SAFE_TOOLS) {
+    if (SENSITIVE_TOOLS.includes(tool)) continue; // 방어: 분류 실수로 SAFE에 민감 도구가 섞여도 추가하지 않음
+    allow.add(`mcp__${PKG}__${tool}`);
+  }
+  perms.allow = [...allow];
+  json.permissions = perms;
+
+  const changed = JSON.stringify(json) !== before;
+  let backedUp: string | null = null;
+  if (existed && changed) backedUp = backupFile(file);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(json, null, 2)}\n`, 'utf8');
+  ensureGitignored(file);
+  return { changed, backedUp, replacedExisting: false };
+}
+
 function flagValue(argv: string[], name: string): string | undefined {
   const i = argv.indexOf(name);
   return i >= 0 && argv[i + 1] ? argv[i + 1] : undefined;
@@ -326,6 +446,7 @@ function main(): void {
   const useNpx = argv.includes('--npx') || runningUnderNpx();
   const printOnly = argv.includes('--print');
   const forceAll = argv.includes('--all-clients');
+  const skipAllow = argv.includes('--no-allow-tools');
   const which = flagValue(argv, '--client') ?? 'all';
 
   const server = serverEntry(useNpx);
@@ -365,10 +486,31 @@ function main(): void {
     return;
   }
 
+  // Claude Code: 도구 사전허용을 작업 폴더에 함께 써, 재시작 후 도구별 승인 프롬프트를 없앤다.
+  // (민감/파괴 도구는 SAFE 목록에서 제외돼 그대로 확인을 받는다. --no-allow-tools로 끌 수 있다.)
+  let allowlisted = false;
+  if (connectedIds.has('claude-code') && !skipAllow) {
+    try {
+      const r = writeClaudeAllowlist();
+      allowlisted = true;
+      console.log(
+        `• Claude Code 도구 사전허용 ${r.changed ? '기록됨' : '이미 최신'}: ${claudeSettingsLocalPath()}` +
+          (r.backedUp ? `\n    (기존 설정 백업: ${r.backedUp})` : ''),
+      );
+      console.log('    (커리어 데이터 도구는 미리 허용 — 파일 읽기·업데이트 등 민감한 작업은 그때그때 확인을 받습니다)');
+    } catch (e) {
+      console.log(`• Claude Code 사전허용은 건너뜁니다(설치는 계속): ${e instanceof Error ? e.message : e}`);
+    }
+  }
+
   console.log('\n✅ 거의 끝났습니다. 다음만 해주세요:');
   console.log('  1) 연결한 AI 클라이언트를 완전히 종료했다가 다시 켜기');
   if (connectedIds.has('claude-code')) {
-    console.log('     (Claude Code는 이 명령을 실행한 폴더의 .mcp.json을 처음 띄울 때 1회 "승인"을 물어봅니다 — 승인해 주세요.)');
+    console.log(
+      allowlisted
+        ? '     (Claude Code: 이 폴더를 처음 열 때 "신뢰"만 한 번 확인하면 됩니다 — 커리어 데이터 도구는 미리 허용해 두었습니다.)'
+        : '     (Claude Code는 이 명령을 실행한 폴더의 .mcp.json을 처음 띄울 때 1회 "승인"을 물어봅니다 — 승인해 주세요.)',
+    );
   }
   console.log('  2) AI에게: "get_onboarding_status 호출해서 연결됐는지 확인해줘"');
   console.log('  3) 내 데이터 대시보드 열기:  careermate start');
