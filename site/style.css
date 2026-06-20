@@ -236,6 +236,9 @@ code { font-family: var(--mono); }
 .pill-badge__dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); }
 /* heavy display weight + tight tracking — strong contrast against the 400 lede */
 .hero__title { font-size: 3.05rem; font-weight: 800; margin: 20px 0 0; letter-spacing: 0; line-height: 1.12; }
+/* English headline is longer than the Korean two-liner; smaller size keeps it on
+   one line in the desktop two-column hero, and it wraps cleanly on narrow screens. */
+html[lang="en"] .hero__title { font-size: 2.4rem; }
 .hero__lede {
   font-size: 1.11rem; color: var(--text-secondary);
   margin: 18px 0 0; max-width: 33rem; line-height: 1.62;
