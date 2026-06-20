@@ -55,9 +55,14 @@ site/careermate.zip
 # Each user regenerates this with `npm run init`; never commit it.
 .mcp.json
 
-# Career-OS 교차검증 테스트 스크래치 (재생성 가능; npm·git 모두 미포함).
-# 증거로 남기는 것: validation/runs/ledger.jsonl, validation/runs/consensus/**(reconfirm 룰링),
-# validation/{MANDATE,PROTOCOL,STATUS,README,APPLIED}.md, validation/research/**.
+# Career-OS 교차검증은 R6/R7로 종료된 내부 R&D 로그다. 결론은 서술형 md로 증류해 git에 남기고,
+# 기계 생성 원증거(JSON 영수증)와 재생성 가능한 하네스 입출력은 추적하지 않는다.
+# git에 남기는 것(증류된 결정 기록): validation/{MANDATE,PROTOCOL,STATUS,README,APPLIED}.md,
+#   validation/research/**, validation/runs/r7/{FIXES,ROUND7}.md.
+# 추적 안 함(원증거·스크래치):
+docs/career-os/validation/runs/consensus/
+docs/career-os/validation/runs/ledger.jsonl
+docs/career-os/validation/runs/r7/research-raw*.json
 docs/career-os/validation/runs/out/
 docs/career-os/validation/runs/calib/
 docs/career-os/validation/runs/calib2/
@@ -66,4 +71,5 @@ docs/career-os/validation/runs/negatives/
 docs/career-os/validation/runs/bin/
 docs/career-os/validation/runs/prompts/
 docs/career-os/validation/runs/schema/
+docs/career-os/validation/runs/_probe/
 # (.omc/, .omx/, *.log 는 위 전역 규칙으로 이미 무시됨)
