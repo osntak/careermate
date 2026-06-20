@@ -3,7 +3,8 @@
  *
  * Step-by-step workflows the AI should follow, encoded as DATA + helper text.
  * Each step references concrete MCP tool names so the AI knows exactly which
- * tool to call. Korean-first (read by the AI and surfaced to users).
+ * tool to call. Authored in Korean, but language-adaptive: the AI surfaces
+ * these to users in the user's own language (see AGENTS.md output-language rule).
  */
 
 export interface WorkflowDefinition {
@@ -29,7 +30,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '사용자가 처음 CareerMate에 연결했거나, "시작하자 / 셋업해줘 / 프로필 등록"이라고 요청할 때.',
     steps: [
       '`get_onboarding_status`를 호출해 현재 등록 상태(has_profile, has_resume, has_cover_letter, has_experience, has_skills, profile_completeness, next_steps)를 확인한다.',
-      '비어 있는 항목을 사용자에게 쉬운 한국어로 안내하고, 먼저 "기존에 작성해 둔 이력서·경력기술서·자기소개서 파일이 있는지" 묻는다(hwp/docx/pdf 모두 가능).',
+      '비어 있는 항목을 사용자의 언어로 쉽게 안내하고, 먼저 "기존에 작성해 둔 이력서·경력기술서·자기소개서 파일이 있는지" 묻는다(hwp/docx/pdf 모두 가능).',
       '파일 입력 분기: ① 사용자가 "파일이 있다"고 하면 `open_inbox`로 인입 폴더를 열어 파일을 넣게 하고, "다 넣었다"고 하면 `read_inbox`로 본문을 읽는다(pdf·이미지는 read_inbox가 경로만 주므로 클라이언트의 파일 읽기로 직접 읽는다). ② 사용자가 파일 경로를 직접 알려주면 `read_document`로 읽는다. ③ "없다/직접 입력/텍스트로 붙여넣기"면 폴더를 열지 말고 받은 텍스트를 그대로 쓴다. (묻지도 않고 open_inbox로 폴더를 자동으로 열지 않는다.)',
       '수집한 정보를 구조화해 `save_profile`로 저장한다(이름·연락처·headline·summary·desired_roles·desired_conditions, 그리고 글쓰기 선호인 preferred_tone과 emphasis_points 포함). 파일 출처는 source=upload, 직접 입력은 manual.',
       '업로드한 이력서/경력기술서/포트폴리오 본문을 `add_resume`로 저장한다(kind·title 지정, 대표 문서는 is_primary=true).',
@@ -52,7 +53,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '공고 요구사항과 사용자 경력/스킬/프로젝트를 비교한다: 일치하는 강점(strengths)과 부족한 부분(gaps), 매칭 키워드(matched_keywords)와 누락 키워드(missing_keywords)를 도출하고, 종합 적합도 점수(score 0~100)와 요약(summary), 지원 전략 제안(recommendations)을 정리한다. 없는 경험을 지어내지 않는다.',
       '아직 저장되지 않은 공고라면 `save_job_posting`으로 공고를 저장하고 job_id를 확보한다.',
       '도출한 분석 결과를 `save_fit_analysis`로 저장한다(job_id, score, summary, strengths, gaps, matched_keywords, missing_keywords, recommendations).',
-      '분석 결과를 사용자에게 쉬운 한국어로 설명한다(잘 맞는 점, 보완할 점, 추천 전략). 기술 용어는 빼고 전달한다.',
+      '분석 결과를 사용자의 언어로 쉽게 설명한다(잘 맞는 점, 보완할 점, 추천 전략). 기술 용어는 빼고 전달한다.',
       '분석 뒤 곧장 자기소개서를 쓰지 말고, "이 공고에 맞춘 자기소개서를 써드릴까요?"라고 묻고 선택지를 제시한다: ① "네, 이 공고에 맞춘 자기소개서를 써줘" ② "아니요, 분석만 저장해줘".',
       '사용자가 ①을 선택하면 자기소개서를 작성하기 직전에 `get_writing_style_guide`를 호출해 "AI 티 안 나는 글쓰기 규칙"을 가져온다. ②를 선택하면 자소서 작성 없이 멈추고 저장 결과와 대시보드 확인만 안내한다.',
       '적합도 분석·글쓰기 선호와 글쓰기 규칙을 함께 반영해 자기소개서를 작성하고(번역투·클리셰·기계적 병렬 제거, 사실·수치는 그대로), `save_cover_letter_version`으로 저장한다(job_id 연결, note에 작성 의도 요약).',
@@ -73,7 +74,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '저장된 실제 경험·성과만으로 자기소개서를 작성하되, 위 글쓰기 규칙을 적용해 사람이 쓴 듯 자연스럽게 쓴다(사실·수치·고유명사는 그대로). 빈칸이나 확인이 필요한 부분은 추측하지 말고 표시해 사용자에게 묻는다.',
       '완성본을 `save_cover_letter_version`으로 저장한다(기존 자기소개서면 cover_letter_id, 새로 만들면 title, 공고용이면 job_id, 변경 요약은 note, source=ai).',
       '사용자가 원하면 `export_cover_letter`로 파일로 내보내고, 추가 수정 요청이 있으면 새 버전으로 다시 저장한다.',
-      '저장 결과를 쉬운 한국어로 알리고, 지원 상태 업데이트(`update_application_status`)나 면접 준비 등 다음 단계를 제안한다.',
+      '저장 결과를 사용자의 언어로 알리고, 지원 상태 업데이트(`update_application_status`)나 면접 준비 등 다음 단계를 제안한다.',
     ],
   },
   {
@@ -92,7 +93,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '무경력/비개발자라면 경력을 날조하지 말고 교육·프로젝트·운영 경험·업무 도구·협업 경험·성과 증거 중심의 "역량기술서"로 구성한다.',
       '저장 직전 `get_verifier({ id: "truthfulness" })`, `get_verifier({ id: "consistency" })`, `get_verifier({ id: "ats-compat" })`를 받아 당신이 직접 점검하고, 허위·상충·키워드 누락을 고친다. 확인이 필요한 사실은 본문에 표시하고 사용자에게 묻는다.',
       '완성본을 `add_resume`으로 저장한다(kind=career_description, source=ai, title은 사용 목적이 드러나게 작성, tags에 직무/용도 키워드 포함). 대표 문서로 삼아도 되는지 확인된 경우에만 is_primary=true를 쓴다.',
-      '저장 결과를 쉬운 한국어로 알리고, 문서 탭에서 확인할 수 있음을 안내한다. 특정 공고용으로 작성했다면 이어서 자기소개서나 면접 준비를 제안한다.',
+      '저장 결과를 사용자의 언어로 알리고, 문서 탭에서 확인할 수 있음을 안내한다. 특정 공고용으로 작성했다면 이어서 자기소개서나 면접 준비를 제안한다.',
     ],
   },
   {
@@ -105,7 +106,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
     steps: [
       '필요하면 `get_application_context` 또는 `get_job_posting`으로 대상 지원 건과 공고를 확인한다.',
       '적절한 상태로 `update_application_status`를 호출한다. 8단계: draft(작성 중), planned(지원 예정), applied(지원 완료), document_passed(서류 합격), interview(면접 진행), final_passed(최종 합격), rejected(불합격), on_hold(보류). 변경 사유는 note에 남긴다.',
-      '변경 결과를 사용자에게 쉬운 한국어로 알린다.',
+      '변경 결과를 사용자의 언어로 쉽게 알린다.',
       '상태에 맞는 다음 단계를 제안한다: applied → 결과 기다리기 안내, document_passed/interview → 면접 준비(prepare_interview) 제안, final_passed → 축하 및 마무리, rejected/on_hold → 회고 또는 다른 공고 탐색 제안.',
       '필요하면 `open_application`으로 해당 지원 건을 열어 보여준다.',
     ],
@@ -122,7 +123,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '공고와 사용자 경험을 바탕으로 예상 면접 질문(question, intent, followups, answer_outline)을 도출한다.',
       '핵심 경험에 대한 STAR 가이드(question, situation, task, action, result)와 1분 자기소개(self_introduction) 초안을 작성한다. 실제 경험만 사용한다.',
       '준비 내용을 `save_interview_prep`로 저장한다(job_id, questions, star_guides, self_introduction, notes).',
-      '준비 내용을 사용자에게 쉬운 한국어로 요약해 전달하고, 모의 면접/추가 질문 연습이나 상태 업데이트(`update_application_status`로 interview/final_passed)를 제안한다.',
+      '준비 내용을 사용자의 언어로 쉽게 요약해 전달하고, 모의 면접/추가 질문 연습이나 상태 업데이트(`update_application_status`로 interview/final_passed)를 제안한다.',
     ],
   },
 ];
