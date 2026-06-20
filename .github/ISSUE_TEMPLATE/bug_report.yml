@@ -1,0 +1,72 @@
+name: 버그 신고 / Bug report
+description: 동작이 잘못됐을 때 알려주세요. / Report something that isn't working.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        CareerMate는 로컬 도구입니다. **개인 데이터(이력서·자소서 본문 등)는 붙여넣지 마세요.**
+        CareerMate runs locally. **Do not paste personal data (resume/cover-letter text, etc.).**
+  - type: textarea
+    id: what
+    attributes:
+      label: 무슨 일이 있었나요? / What happened?
+      description: 무엇을 하려다가 무엇이 잘못됐는지. / What you tried to do and what went wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 단계 / Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: expected
+    attributes:
+      label: 기대한 결과 / Expected
+    validations:
+      required: false
+  - type: dropdown
+    id: client
+    attributes:
+      label: 사용 중인 AI 클라이언트 / AI client
+      options:
+        - Claude Desktop
+        - Claude Code
+        - Codex
+        - Cursor
+        - Gemini
+        - 기타 / Other
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: 운영체제 / OS
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: CareerMate 버전 · Node 버전 / CareerMate & Node version
+      description: "CareerMate 버전은 check_for_update로, Node 버전은 `node -v`로 확인할 수 있어요. / CareerMate version via check_for_update; Node via `node -v`."
+      placeholder: "예 / e.g. CareerMate 0.0.5, Node v22.14.0"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 오류 메시지·로그 / Error message or logs
+      description: 민감 정보는 가린 채 붙여넣어 주세요. / Redact anything sensitive before pasting.
+      render: shell
+    validations:
+      required: false

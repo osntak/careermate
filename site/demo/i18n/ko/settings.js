@@ -117,4 +117,11 @@ export default {
   'settings.danger.sub': '이 작업은 되돌릴 수 없습니다',
   'settings.danger.resetTitle': '모든 데이터 초기화',
   'settings.danger.resetBody': '이 컴퓨터에 저장된 모든 CareerMate 데이터를 삭제합니다. 초기화 전에 자동으로 백업이 생성됩니다.',
+
+  // help / report a problem
+  'settings.support.title': '도움말·문제 신고',
+  'settings.support.sub': '버그는 GitHub 이슈로, 사용법 질문은 Discussions로, 그 밖의 문의는 이메일로 보내 주세요.',
+  'settings.support.report': '문제 신고',
+  'settings.support.ask': '질문하기',
+  'settings.support.email': '이메일 문의',
 };

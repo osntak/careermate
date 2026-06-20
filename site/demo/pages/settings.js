@@ -22,6 +22,7 @@ export async function render(ctx) {
     VerifyMode(info),
     MyData(info.counts),
     Backup(backups, async () => { await ctx.refreshNav(); await render(ctx); }),
+    Support(),
     DangerZone(ctx),
   );
 
@@ -406,6 +407,22 @@ function openImportModal({ fileName, backup, preview, rerender }) {
 }
 
 /* -------------------------------------------------- 위험 구역 (Danger zone) */
+/* ----------------------------------------------------- 도움말 · 문제 신고 */
+function Support() {
+  const ext = (href, iconName, label) =>
+    el('a', { class: 'btn btn--ghost btn--sm', href, attrs: { target: '_blank', rel: 'noopener noreferrer' } },
+      icon(iconName), el('span', {}, label));
+  return Card({
+    title: t('settings.support.title'),
+    sub: t('settings.support.sub'),
+    body: el('div', { class: 'flex gap-2 wrap' },
+      ext('https://github.com/osntak/careermate/issues/new?template=bug_report.yml', 'external', t('settings.support.report')),
+      ext('https://github.com/osntak/careermate/discussions', 'external', t('settings.support.ask')),
+      el('a', { class: 'btn btn--ghost btn--sm', href: 'mailto:osntak@gmail.com' }, icon('mail'), el('span', {}, t('settings.support.email'))),
+    ),
+  });
+}
+
 function DangerZone(ctx) {
   function openResetModal() {
     let confirmBtn;

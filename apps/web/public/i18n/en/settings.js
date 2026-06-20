@@ -117,4 +117,11 @@ export default {
   'settings.danger.sub': "This action can't be undone",
   'settings.danger.resetTitle': 'Reset all data',
   'settings.danger.resetBody': 'Deletes all CareerMate data stored on this computer. A backup is created automatically before the reset.',
+
+  // help / report a problem
+  'settings.support.title': 'Help & report a problem',
+  'settings.support.sub': 'Report bugs on GitHub Issues, ask how-to questions in Discussions, or email us for anything else.',
+  'settings.support.report': 'Report a problem',
+  'settings.support.ask': 'Ask a question',
+  'settings.support.email': 'Email us',
 };

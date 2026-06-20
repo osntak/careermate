@@ -50,8 +50,8 @@
 
 확정·보완이 필요한 알려진 공백. 잊지 않도록 기록한다.
 
-- **npm 게시(예정)** — `careermate@0.0.1`로 게시 예정. `npx -y careermate init` 경로. (소스 기반 `npm install` → `npm run init`도 그대로 유효.)
-- **.mcpb GitHub Release(예정)** — `v0.0.1` Release에 `careermate.mcpb` 첨부 예정. careermate.life·GitHub Release에서 다운로드.
-- **공개 repo URL 확정** — git remote 기준 정본은 `osntak/careermate`. 공개 전환 시 GitHub repo 이름을 소문자 `careermate`로 변경(도메인 `careermate.life`와 일치).
-- **THIRD_PARTY_NOTICES — `im-not-ai`(MIT)** 항목의 저작권자/연도가 비어 있다. 실제 저작권자·연도로 채우기.
+- ~~**npm 게시**~~ — **완료: `careermate`로 npm 공개 게시(릴리스마다 `release.yml`이 자동 게시). `npx -y careermate init` 경로. 소스 기반 `npm install` → `npm run init`도 유효.**
+- ~~**.mcpb GitHub Release**~~ — **완료: `release.yml`이 `v*` 태그에서 `careermate.mcpb`·`careermate.zip`을 빌드·검증·첨부.**
+- ~~**공개 repo URL 확정**~~ — **완료: 공개 repo는 소문자 `osntak/careermate`(도메인 `careermate.life`와 일치).**
+- ~~**THIRD_PARTY_NOTICES — `im-not-ai`(MIT)**~~ — **완료: 저작권자·연도 채움(`THIRD_PARTY_NOTICES.md`).**
 - ~~**`install-page/` 폴더명 변경**~~ — **완료(2026-06-18): `install-page/` → `site/`.** 코드 참조(`apps/web/src/server.ts`·`scripts/{build-dist,build-mcpb,build-demo,gen-og,shots}`)·`.gitignore`·문서 모두 갱신. ⚠️ **남은 수동 작업: Vercel 대시보드 프로젝트 Settings → Root Directory를 `install-page` → `site`로 변경해야 다음 배포부터 반영된다(안 바꾸면 배포만 실패하고 기존 사이트는 그대로 유지).**
