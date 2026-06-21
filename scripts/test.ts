@@ -179,6 +179,15 @@ ok(
   'tenure: 재직중 = updated_at(=오늘) 기준 연차 + data_age 0 (방금 입력이라 신선)',
   !!tCur && tCur.is_current === true && tCur.months === ((() => { const [y, m] = new Date().toISOString().slice(0, 7).split('-'); return Number(y) * 12 + Number(m); })() - (2020 * 12 + 1)) && tCur.data_age_months === 0,
 );
+/* tenure 엣지: 파싱 불가/모순 데이터는 안전 제외(silent drop — 발명·쓰레기 행 방지) */
+await tool('add_experience').handler({ experiences: [{ company: '연차연도만', start_date: '2019' }] });
+await tool('add_experience').handler({ experiences: [{ company: '연차역전', start_date: '2022-01', end_date: '2020-01' }] });
+const ctxTenEdge = await tool('get_application_context').handler({});
+const tenEdge = (ctxTenEdge.data as any).tenure as any[];
+ok(
+  'tenure 엣지: 연도만(YYYY) 입력·종료<시작은 tenure에서 제외',
+  !tenEdge.some((t) => t.company === '연차연도만') && !tenEdge.some((t) => t.company === '연차역전'),
+);
 
 /* 이력서/프로필 내보내기 — 자소서와 동일한 패리티(도구 + API HTML) */
 const exResumeDoc = await tool('add_resume').handler({ title: '내보내기용 이력서', kind: 'resume', content: '5년차 백엔드 엔지니어 이력서 본문' });

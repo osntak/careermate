@@ -708,7 +708,8 @@ export const TOOLS: ToolDef[] = [
             as_of: (asOf ?? '').slice(0, 7), // 재직중=updated_at(정보 확인 시점) / 종료=end_date
             months,
             years: Math.round((months / 12) * 10) / 10,
-            data_age_months: e.is_current ? monthsBetween(e.updated_at, today) : null,
+            // 음수 방지(미래 updated_at·시계 오차) — 0 미만은 0으로 클램프
+            data_age_months: e.is_current ? Math.max(0, monthsBetween(e.updated_at, today) ?? 0) : null,
           };
         })
         .filter((t): t is NonNullable<typeof t> => t != null);
