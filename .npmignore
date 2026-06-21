@@ -1,0 +1,7 @@
+# npm 게시 위생: 내부 스크래치(OMC/OMX 세션 상태)가 files-화이트리스트된 docs/ 하위에
+# 생기면 npm이 .gitignore를 무시하고 패키지에 포함하는 누수가 있다(v0.0.6 직전 적발).
+# 화이트리스트 경로엔 .omc/.omx 외 gitignore 대상이 없어 이 제외만으로 안전.
+**/.omc
+**/.omx
+.omc
+.omx
