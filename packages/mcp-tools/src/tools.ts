@@ -681,18 +681,47 @@ export const TOOLS: ToolDef[] = [
       // 여기에 추천 경로를 실어 전문가 절차로 유도한다. 스키마 변경 없이 반환 JSON만 확장.
       const recommended_route = pickRoute(ctx);
       const route = recommended_route ? getRoute(recommended_route) : undefined;
-      // 오늘 날짜 주입: LLM은 현재 날짜를 신뢰성 있게 모르므로(가정 시 연차·재직기간 발명 위험),
-      // 서버(사용자 PC)가 아는 오늘을 명시 제공한다. 각 경력의 updated_at은 그 정보의 입력 시점(as-of).
+      // 오늘 날짜 주입: LLM은 현재 날짜를 신뢰성 있게 모른다.
       const today = new Date().toISOString().slice(0, 10);
+      // 재직기간/연차는 LLM이 산술하면 회귀하므로(검증됨) 서버가 결정적으로 계산해 제공한다.
+      // 재직중 경력의 확정 연차 = updated_at(정보 입력·확인 시점) − start_date — today가 아님(아직 재직
+      // 중인지 미확인이라 today로 계산하면 과대 산정·명시 연차와 충돌). 종료 경력 = end_date − start_date.
+      // data_age_months = 재직중 정보가 얼마나 오래됐나(크면 '현재도 재직 중인지 확인 필요').
+      const ym = (s: string | null | undefined): number | null => {
+        const m = s ? /^(\d{4})-(\d{2})/.exec(s) : null;
+        return m ? Number(m[1]) * 12 + Number(m[2]) : null;
+      };
+      const monthsBetween = (a: string | null | undefined, b: string | null | undefined): number | null => {
+        const x = ym(a), y = ym(b);
+        return x != null && y != null ? y - x : null;
+      };
+      const tenure = ctx.experiences
+        .map((e) => {
+          if (!e.start_date) return null;
+          const asOf = e.is_current ? (e.updated_at ?? today) : e.end_date;
+          const months = monthsBetween(e.start_date, asOf);
+          if (months == null || months < 0) return null;
+          return {
+            company: e.company,
+            is_current: e.is_current,
+            start_date: e.start_date,
+            as_of: (asOf ?? '').slice(0, 7), // 재직중=updated_at(정보 확인 시점) / 종료=end_date
+            months,
+            years: Math.round((months / 12) * 10) / 10,
+            data_age_months: e.is_current ? monthsBetween(e.updated_at, today) : null,
+          };
+        })
+        .filter((t): t is NonNullable<typeof t> => t != null);
       const enriched = {
         ...ctx,
         today,
+        tenure,
         recommended_route,
         verifier_sequence: route?.verifierSequence ?? [],
         next_tool: recommended_route ? 'get_workflow_guide' : null,
       };
       const summary = [
-        `오늘 날짜: ${today} (경력 연차·재직기간은 이 날짜와 각 경력의 입사일·재직여부로 계산하세요; 각 경력의 updated_at은 그 정보를 입력한 시점=as-of)`,
+        `오늘 날짜: ${today}. 경력 연차·재직기간은 직접 계산하지 말고 제공된 tenure[](서버 계산: 재직중=정보확인일 기준 연차, data_age_months 크면 현재 재직 확인 필요)를 그대로 쓰세요.`,
         `프로필: ${ctx.profile?.name ?? '미입력'}`,
         `이력서 ${ctx.resumes.length} · 경력 ${ctx.experiences.length} · 프로젝트 ${ctx.projects.length} · 스킬 ${ctx.skills.length} · 자소서 ${ctx.cover_letters.length}`,
         ctx.job ? `대상 공고: ${ctx.job.company} · ${ctx.job.position}` : '대상 공고 없음',

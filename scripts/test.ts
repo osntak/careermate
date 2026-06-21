@@ -163,6 +163,23 @@ ok(
     (ctxToday.data as any).today === new Date().toISOString().slice(0, 10),
 );
 
+/* get_application_context: tenure 서버 결정적 계산 — LLM 산술 회귀 방지(R18/R19 검증).
+   종료 경력 = end_date − start_date(완전 결정적). 재직중 = updated_at(정보 확인 시점) 기준. */
+await tool('add_experience').handler({ experiences: [{ company: '연차계산종료', role: '백엔드', start_date: '2019-01', end_date: '2021-01' }] });
+await tool('add_experience').handler({ experiences: [{ company: '연차계산재직', role: '백엔드', start_date: '2020-01', is_current: true }] });
+const ctxTen = await tool('get_application_context').handler({});
+const ten = (ctxTen.data as any).tenure as any[];
+const tEnded = ten.find((t) => t.company === '연차계산종료');
+const tCur = ten.find((t) => t.company === '연차계산재직');
+ok(
+  'tenure: 종료 경력 = end−start (24개월·2.0년·data_age null)',
+  !!tEnded && tEnded.months === 24 && tEnded.years === 2 && tEnded.data_age_months === null && tEnded.is_current === false,
+);
+ok(
+  'tenure: 재직중 = updated_at(=오늘) 기준 연차 + data_age 0 (방금 입력이라 신선)',
+  !!tCur && tCur.is_current === true && tCur.months === ((() => { const [y, m] = new Date().toISOString().slice(0, 7).split('-'); return Number(y) * 12 + Number(m); })() - (2020 * 12 + 1)) && tCur.data_age_months === 0,
+);
+
 /* 이력서/프로필 내보내기 — 자소서와 동일한 패리티(도구 + API HTML) */
 const exResumeDoc = await tool('add_resume').handler({ title: '내보내기용 이력서', kind: 'resume', content: '5년차 백엔드 엔지니어 이력서 본문' });
 const exResumeId = (exResumeDoc.data as any).id;
