@@ -11,7 +11,11 @@ export {
   INSTALL_PROMPT_GENERIC,
 } from './install.ts';
 export { ONBOARDING_PROMPT } from './onboarding.ts';
-export { HUMANIZE_WRITING_GUIDE } from './humanize.ts';
+export {
+  HUMANIZE_WRITING_GUIDE,
+  STRUCTURED_DOC_WRITING_GUIDE,
+  getWritingStyleGuide,
+} from './humanize.ts';
 
 import { CAREERMATE_SYSTEM_PROMPT } from './system.ts';
 import {

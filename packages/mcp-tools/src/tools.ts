@@ -64,7 +64,7 @@ import {
   previewCoverLetter,
   summarizeReport,
 } from '@careermate/core';
-import { HUMANIZE_WRITING_GUIDE } from '@careermate/prompts';
+import { getWritingStyleGuide } from '@careermate/prompts';
 import { getWorkflow, renderWorkflowMarkdown, WORKFLOWS } from '@careermate/workflows';
 import {
   getPlaybook,
@@ -1072,10 +1072,27 @@ export const TOOLS: ToolDef[] = [
     name: 'get_writing_style_guide',
     title: 'AI 티 안 나는 글쓰기 가이드',
     description:
-      '자기소개서·자기 PR·지원 메일 등 사람이 쓴 듯한 글을 작성하기 직전에 호출하세요. "AI가 쓴 티"가 나는 한국어 문장 습관(번역투, 클리셰, 기계적 병렬, 상투적 연결어, 균일한 문장 리듬 등)을 제거하는 작성 규칙과 저장 전 자가 점검 항목을 돌려줍니다. 사실·수치·고유명사는 그대로 두고 문장 결만 다듬도록 안내합니다. write_cover_letter / analyze_job 워크플로우에서 자기소개서를 쓸 때 반드시 함께 적용하세요.',
-    inputSchema: {},
+      '자기소개서·자기 PR·지원 메일 등 사람이 쓴 듯한 글을 작성하기 직전에 호출하세요. "AI가 쓴 티"가 나는 한국어 문장 습관(번역투, 클리셰, 기계적 병렬, 상투적 연결어, 균일한 문장 리듬 등)을 제거하는 작성 규칙과 저장 전 자가 점검 항목을 돌려줍니다. 사실·수치·고유명사는 그대로 두고 문장 결만 다듬도록 안내합니다. 경력기술서·이력서·포트폴리오를 쓸 때는 doc_type을 함께 주면 불릿·번호 성과 같은 구조를 산문으로 평탄화하지 않도록 구조 보존 보정 지침을 더해 돌려줍니다. write_cover_letter / write_career_description / analyze_job 워크플로우에서 글을 쓸 때 반드시 함께 적용하세요.',
+    inputSchema: {
+      doc_type: z
+        .enum([
+          'cover_letter',
+          'self_pr',
+          'application_email',
+          'career_description',
+          'resume',
+          'portfolio',
+        ])
+        .optional()
+        .describe(
+          '작성할 문서 유형. career_description·resume·portfolio는 불릿·구조를 보존하는 보정을 더해 돌려줍니다. 생략하면 자기소개서 등 산문형 기준.',
+        ),
+    },
     readOnly: true,
-    handler: () => ok('AI 티 안 나는 글쓰기 가이드를 적용해 작성하세요.', { guide: HUMANIZE_WRITING_GUIDE }),
+    handler: (args) =>
+      ok('AI 티 안 나는 글쓰기 가이드를 적용해 작성하세요.', {
+        guide: getWritingStyleGuide(args?.doc_type),
+      }),
   },
 
   /* ----------------------------------------------------------------- update */
