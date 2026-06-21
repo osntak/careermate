@@ -744,7 +744,7 @@ export const TOOLS: ToolDef[] = [
       try {
         const fit = saveFitAnalysis(args);
         const suggested_next_action = {
-          prompt: '이 공고에 맞춘 자기소개서를 써드릴까요?',
+          prompt: '이 공고에 맞춘 자기소개서를 써드릴까요? (회사 지정 문항·양식·글자수가 있으면 함께 알려주시면 그에 맞춰 작성합니다)',
           options: [
             {
               label: '네, 이 공고에 맞춘 자기소개서를 써줘',
@@ -764,6 +764,7 @@ export const TOOLS: ToolDef[] = [
             '사용자에게 다음 선택지를 보여주세요:',
             '1. 네, 이 공고에 맞춘 자기소개서를 써줘',
             '2. 아니요, 분석만 저장해줘',
+            '(1번이면, 회사 지정 문항·양식·글자수가 있으면 알려달라고 요청하세요 — 한국 자소서는 문항형이 많습니다. 없으면 일반 양식으로 진행합니다.)',
           ].join('\n'),
           {
             ...fit,
