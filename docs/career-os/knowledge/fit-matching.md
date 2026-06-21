@@ -63,11 +63,11 @@
 | ID | 검사 항목 | 합격 기준 | 측정 방법(LLM 없이 셀 수 있게) |
 |----|-----------|-----------|--------------------------------|
 | R1 | 모든 요건에 [필수/우대] 라벨 + 복합 요건 분해 | 라벨 누락 0개; 쉼표·'및'·'and/or'로 묶인 줄이 개별 항목으로 분리됨 | 추출 항목 수를 세고 각 항목에 'must'/'nice' 토큰 존재 확인(누락==0). 원문에서 구분자 포함 줄 수 대비 분해 항목 수가 ≥ 구분자+1 인지 검사 |
-| R2 | 충족·부분충족 판정에 출처 ID + evidence 존재 | status가 met·partial인데 evidence[] 배열이 빈 항목 0개 | (AI 셀프체크 기준으로 유효; **서버 강제는 Phase B** — 현재 save_fit_analysis 스키마에 requirements[]/evidence 필드 없음) met·partial 항목 수 대비 `evidence.length>0` 항목 수 비율 == 100% |
-| R3 | quotedBullet/quotedMetric이 원문 substring (환각·수치변형 차단) | 인용 문자열이 해당 sourceId 입력 텍스트의 부분문자열이 아닌 항목 0개 | (AI 셀프체크 기준으로 유효; **서버 강제는 Phase B** — 입력 구조 부재, 현재 연결 AI가 substring 수동 대조) 각 evidence의 quotedBullet을 입력 이력서/경력 텍스트에 대해 indexOf/`includes` 문자열 검색 → 미발견 개수 == 0 |
+| R2 | 충족·부분충족 판정에 출처 ID + evidence 존재 | status가 met·partial인데 evidence[] 배열이 빈 항목 0개 | (AI 셀프체크 — 서버 자동검사는 아직 없음) met·partial 항목 수 대비 `evidence.length>0` 항목 수 비율 == 100% |
+| R3 | quotedBullet/quotedMetric이 원문 substring (환각·수치변형 차단) | 인용 문자열이 해당 sourceId 입력 텍스트의 부분문자열이 아닌 항목 0개 | (AI 셀프체크 — 서버 자동검사는 아직 없음) 각 evidence의 quotedBullet을 입력 이력서/경력 텍스트에 대해 indexOf/`includes` 문자열 검색 → 미발견 개수 == 0 |
 | R4 | gap 표기 + must-have 미충족마다 완화 전략 | 미충족 must 중 mitigation 문장이 없는 항목 0개 | 미충족 must 개수 == mitigation 문장 개수 비교 |
 | R5 | must-have 충족률 수치 제시 + partial 제외 규칙 | 'met must 수 / 전체 must 수' 분수·% 1개 이상; 분자에 partial 미포함 | 분수/% 정규식(예: `\d+/\d+`, `\d+%`)이 must 문맥과 함께 1회 이상; 분자 == status=='met' 개수와 일치 확인 |
-| R6 | critical·hardGate gap 시 '권장 불가' 병기 (게이트 단독 우선) | hardGate 또는 critical이 gap인데 verdict가 'recommend'인 사례 0개 | (AI 셀프체크 기준으로 유효; **서버 강제는 Phase B** — verdict/requirements 필드 부재, 현재 연결 AI가 수동으로 '권장 불가' 강제) `requirements`에 `hardGate&&status==gap` 또는 `critical&&status==gap`이 1개라도 있으면 `verdict=='recommend'` 금지 |
+| R6 | critical·hardGate gap 시 '권장 불가' 병기 (게이트 단독 우선) | hardGate 또는 critical이 gap인데 verdict가 'recommend'인 사례 0개 | (AI 셀프체크 — 서버 자동검사는 아직 없음) `requirements`에 `hardGate&&status==gap` 또는 `critical&&status==gap`이 1개라도 있으면 `verdict=='recommend'` 금지 |
 | R7 | 키워드 표면 존재가 의미 매칭과 분리 보고 | JD 핵심 키워드별 'O/X' 표기 1개 이상, 의미 매칭 충족 판정과 별도 필드 | 출력에 `keywordSurfacePresent` 또는 'O/X·있음/없음' 항목 카운트 ≥ 1 |
 | R8 | partial 남용 방지 (사유 강제) | partial 항목 중 '왜 full이 아닌지' 사유 문장이 없는 항목 0개 | partial 항목 수 == partialReason 문장 수 비교 |
 | R9 | gap 과소평가(false-negative) 방지 | gap으로 분류한 must마다 인접 증거 탐색 시도 흔적 존재 | gap must 개수 대비 `transferAttempt` 표기(예: "인접 검토: …") 항목 수 == 100% |
