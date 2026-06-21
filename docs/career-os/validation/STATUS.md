@@ -424,6 +424,15 @@ fit §0a에 '출처 밖 고유명사는 예시로도 금지' 1줄 추가가 fit-
 
 **결론: fit 픽스 효과 robust 확인.** ① (A) 종합점수 누락 = **3시나리오 전부 0으로 제거**(결정적·보편적). ② s1·s2 fail/critical tail 제거(풀링 s1 fail 40%→0%). ③ 분산 축소·바닥 상승. ④ median ~무승부 = *천장 아닌 fail-tail 절단*(예상대로). ⑤ s3 잔존 fail은 (A)(B) 아닌 **녹아웃 흐림**(경력<필수를 '확인필요'로 모호화) — 픽스 미타깃, 후속 후보. **단일 라운드로는 못 봤던 효과가 풀링+paired로 선명** → bea7555은 노이즈 아닌 진짜 개선.
 
-**미커밋 진행 중(별개 작업):** get_application_context에 `today`(오늘 날짜) 주입 = 코드(tools.ts)+테스트(test.ts) 완료·green(79통과), 단 fit/profile EOP의 today-기반 연차환산 규칙은 정본 미적용(R16 변형만; 검증 보류). → today 기능은 코드만 working tree에 있고 EOP/검증/커밋은 후속. 
+**미커밋 진행 중(별개 작업):** get_application_context에 `today`(오늘 날짜) 주입 = 코드(tools.ts; 이후 main에 합류 확인)+테스트(test.ts) 완료·green(79통과). EOP의 연차환산 규칙은 R18/R19에서 검증 후 **기각**(아래).
+
+## 7.23 라운드 18~19 — 연차 환산 EOP 규칙 검증 = **기각**(today·updated_at 둘 다) (2026-06-21)
+"today 주입 + EOP가 연차 환산" 기능을 A/B로 검증. **두 버전 모두 표준 시나리오를 회귀시켜 기각.**
+- **R18 (today-기반 규칙 + 녹아웃 명확화 combined)**: 표준 s1 **86→45**·s3 77→45 대참사. 원인: today로 연차 계산→모델이 명시 '경력 3년'을 무시하고 ~5년 산출→충돌→녹아웃을 '확인필요'로 흐림(judge: 날조+knockout무시 치명). dated(today주입·충돌없음)는 90이라 head는 멀쩡 — *standard 시나리오 특유의 충돌*이 원인.
+- **R19 (updated_at-기반 규칙, 사용자 교정)**: today 대참사는 해소(s1 45→83)하나 **여전히 mild 회귀** — s1 85→83(fail 1→2), s3 86→78(fail 0→2). dated(교정헤더 = updated_at 3년이 정답)는 median 84→89이나 fail 1→3(혼합). 순효과 = 흔한 케이스 손해.
+- **근본 원인(전 세션 일관)**: EOP에 "연차를 *계산*하라"를 넣으면 구조화 날짜 없는 표준 케이스에서도 모델이 산술 시도→명시값 충돌/오류→회귀. **커밋 §0a "기준일 없으면 환산 금지(명시값 사용)"가 공통 케이스에 robust.**
+- **핵심 통찰**: updated_at−start_date 로직 *자체는 옳다*. 단 **LLM에게 시키면 안 됨**(산술 불안정→회귀). **올바른 집 = 결정적 코드** → **구현·커밋 완료(79e9119)**: `get_application_context`가 재직중 경력마다 `tenure = updated_at(정보 확인 시점)−start_date`(종료=end_date−start_date) + `data_age_months = today−updated_at`을 **코드로 계산해 `tenure[]` 구조화 필드로 제공** → LLM은 읽기만(산술 0 → 회귀 불가; 구조화 날짜 없는 시나리오는 필드 비어 무영향). summary도 "직접 계산 말고 tenure[] 쓰라"로 안내. typecheck 0·build 0·test 81통과.
+- **결정: fit/profile EOP에 연차환산 규칙 미적용**(today·asof 변형 전부 기각·스크래치). 대신 결정적 코드가 그 역할. today 코드 주입은 무해(§0a 우아 처리)라 유지. 변형 prompts(r16/r18/r19)는 gitignore 스크래치.
+- **최종 landed(main):** fit §0a+점수계약 픽스(bea7555, R17 검증 fail40%→0%) + today 주입 + **tenure 결정적 계산(79e9119)**. 방법론 문서(STATUS/PROTOCOL §10)는 보류. 
 
 **산출물:** 서비스 영향 커밋 1건(bea7555, fit EOP). 방법론 문서(STATUS/PROTOCOL §10 변동성 규칙)·하니스(variance.sh·loop_watchdog.sh)는 보류(미커밋, 사용자 규칙). 검증 라운드 R8~R15 = 노이즈 정량화→규칙 성문화→3 수정시도(1 채택·2 기각, 회귀 2건 사전 차단).
