@@ -681,13 +681,18 @@ export const TOOLS: ToolDef[] = [
       // 여기에 추천 경로를 실어 전문가 절차로 유도한다. 스키마 변경 없이 반환 JSON만 확장.
       const recommended_route = pickRoute(ctx);
       const route = recommended_route ? getRoute(recommended_route) : undefined;
+      // 오늘 날짜 주입: LLM은 현재 날짜를 신뢰성 있게 모르므로(가정 시 연차·재직기간 발명 위험),
+      // 서버(사용자 PC)가 아는 오늘을 명시 제공한다. 각 경력의 updated_at은 그 정보의 입력 시점(as-of).
+      const today = new Date().toISOString().slice(0, 10);
       const enriched = {
         ...ctx,
+        today,
         recommended_route,
         verifier_sequence: route?.verifierSequence ?? [],
         next_tool: recommended_route ? 'get_workflow_guide' : null,
       };
       const summary = [
+        `오늘 날짜: ${today} (경력 연차·재직기간은 이 날짜와 각 경력의 입사일·재직여부로 계산하세요; 각 경력의 updated_at은 그 정보를 입력한 시점=as-of)`,
         `프로필: ${ctx.profile?.name ?? '미입력'}`,
         `이력서 ${ctx.resumes.length} · 경력 ${ctx.experiences.length} · 프로젝트 ${ctx.projects.length} · 스킬 ${ctx.skills.length} · 자소서 ${ctx.cover_letters.length}`,
         ctx.job ? `대상 공고: ${ctx.job.company} · ${ctx.job.position}` : '대상 공고 없음',

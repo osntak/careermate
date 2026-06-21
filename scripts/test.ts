@@ -154,6 +154,15 @@ const tool = (name: string) => {
   if (!t) throw new Error(`tool not found: ${name}`);
   return t;
 };
+/* get_application_context: 오늘 날짜(today) 주입 — 연차·재직기간 환산 기준일(LLM이 현재일 모름 보정) */
+const ctxToday = await tool('get_application_context').handler({});
+ok(
+  'get_application_context에 오늘 날짜(today) 주입',
+  ctxToday.isError !== true &&
+    /^\d{4}-\d{2}-\d{2}$/.test((ctxToday.data as any).today) &&
+    (ctxToday.data as any).today === new Date().toISOString().slice(0, 10),
+);
+
 /* 이력서/프로필 내보내기 — 자소서와 동일한 패리티(도구 + API HTML) */
 const exResumeDoc = await tool('add_resume').handler({ title: '내보내기용 이력서', kind: 'resume', content: '5년차 백엔드 엔지니어 이력서 본문' });
 const exResumeId = (exResumeDoc.data as any).id;
