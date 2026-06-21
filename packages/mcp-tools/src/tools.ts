@@ -223,7 +223,7 @@ export const TOOLS: ToolDef[] = [
       const files = listInboxFiles(dir);
       const list = files.length ? files.map((f) => `- ${f.name}`).join('\n') : '(아직 비어 있음)';
       return ok(
-        `문서 인입 폴더를 열었습니다:\n${dir}\n\n여기에 이력서·경력기술서·포트폴리오·기존 자기소개서 파일을 넣고 "다 넣었어"라고 알려주세요. (hwp/hwpx/docx는 자동으로 텍스트를 추출하고, pdf·이미지는 제가 직접 읽습니다.)\n\n현재 파일:\n${list}`,
+        `문서 인입 폴더를 열었습니다:\n${dir}\n\n여기에 이력서·경력기술서·포트폴리오·기존 자기소개서 파일을 넣고 "다 넣었어"라고 알려주세요. (hwp·hwpx·docx·pdf는 자동으로 텍스트를 추출하고, 텍스트 레이어가 없는 이미지·스캔 PDF만 제가 직접 읽습니다.)\n\n현재 파일:\n${list}`,
         { dir, files },
       );
     },
@@ -232,7 +232,7 @@ export const TOOLS: ToolDef[] = [
     name: 'read_inbox',
     title: '인입 폴더 파일 읽기',
     description:
-      '인입 폴더(~/.careermate/inbox)에 사용자가 넣어 둔 문서들의 본문을 한 번에 읽어 돌려줍니다. open_inbox로 폴더를 안내한 뒤 사용자가 "다 넣었어"라고 하면 호출하세요. docx/hwp/hwpx/텍스트는 텍스트를 추출하고, pdf·이미지는 추출하지 않고 파일 경로를 돌려주니 AI 클라이언트의 파일 읽기 기능으로 그 경로를 직접 열어 읽으세요. 읽은 내용을 구조화해 프로필은 save_profile, 이력서·경력기술서·포트폴리오는 add_resume, 기존 자기소개서는 save_cover_letter_version으로 저장하세요(파일 내용을 새 파일로 다시 쓰지 마세요). filename을 주면 해당 파일만 읽습니다.',
+      '인입 폴더(~/.careermate/inbox)에 사용자가 넣어 둔 문서들의 본문을 한 번에 읽어 돌려줍니다. open_inbox로 폴더를 안내한 뒤 사용자가 "다 넣었어"라고 하면 호출하세요. docx·hwp·hwpx·pdf·텍스트(.txt/.md)에서 본문 텍스트를 추출해 돌려줍니다(read_document와 동일한 추출 스택). 단 텍스트 레이어가 없는 이미지·스캔 PDF는 추출되지 않아(unsupported=true) 파일 경로만 돌려주니, 그 경로는 AI 클라이언트의 파일 읽기 기능으로 직접 열어 읽으세요. 읽은 내용을 구조화해 프로필은 save_profile, 이력서·경력기술서·포트폴리오는 add_resume, 기존 자기소개서는 save_cover_letter_version으로 저장하세요(파일 내용을 새 파일로 다시 쓰지 마세요). filename을 주면 해당 파일만 읽습니다.',
     inputSchema: {
       filename: z.string().optional().describe('특정 파일만 읽을 때 파일명(대소문자 무시). 생략하면 폴더 안 모든 파일을 읽습니다.'),
       max_chars: z.number().optional().describe('파일별 반환 텍스트 최대 길이(초과 시 잘라냄). 기본 20000자'),
