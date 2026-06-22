@@ -449,3 +449,31 @@ fit §0a에 '출처 밖 고유명사는 예시로도 금지' 1줄 추가가 fit-
 - **#1 효과 ✗**: dated에서 B가 A보다 악화(median 83→75, 연차결함 2→5). 메커니즘: "tenure[] 쓰라" 지시 → AI가 **내부 필드명(`tenure[]`·`as_of`·`data_age_months`)을 사용자 출력에 노출** → judge가 내부어휘 누출로 감점(3년 *값* 자체는 정답 인정). A(지시 없음)는 tenure[]를 자연스럽게 써서 더 나음.
 - **결정: #1 revert**(§0a·§5 → bea7555 복원, 커밋·푸시). 결정적 tenure[] 코드(79e9119)는 **유지** — AI가 지시 없이도 잘 쓰고(A=83), EOP 지시는 누출만 유발. #4(MCP_TOOLS 문서)는 정확하니 유지.
 - **메타교훈 재확인(R18/R19/R20 일관):** EOP 연차 machinery(계산이든 *읽기 지시*든)는 일관되게 역효과 — **결정적 데이터 + AI 자연 추론**이 최선. 코드리뷰의 "정합성 갭"은 실제론 갭이 아니라 *의도된 미니멀*(데이터는 주되 지시는 안 함)이 옳았음.
+
+## 7.25 라운드 21 — 지침 감사 후속(HANDOFF-guidance-followup) §2 즉시수정 + §3 딥다이브 (2026-06-22)
+감사 핸드오프(`runs/HANDOFF-guidance-followup.md`)를 수행. 다중 에이전트 워크플로우로 조사·검증(ground-truth 대조 + adversarial refute). 출력-품질 A/B 게이트는 아래 분류대로 적용.
+
+**§2 즉시수정(배선/문서/사실오류 — 출력-품질 아님, A/B 불요) — 5건 main 푸시(631d19a·873cac5·c6cf009·3bb8b7b):**
+- AGENTS.md: 지원·문의·버그 라우팅 규칙 신설(GitHub Issues·osntak@gmail.com·대시보드 '도움말·문제 신고' 카드·SECURITY.md 비공개 절차·개인정보 경고) + export 패리티(export_resume·export_profile) + 인입폴더 흐름(open_inbox→read_inbox).
+- README career-os: career-description EOP 누락 보정(§1 표·§5 목록·§6 6종 명시).
+- tools.ts: read_inbox/open_inbox 사실오류 수정(PDF도 extractDocument로 추출됨 — '추출 안 함' 단정 제거).
+- verifier C8 충돌: ats-compat(키워드 표면 0.70 advisory) ↔ responsiveness-on-target(필수요건 응답 80% critical) 두 축이 다름을 cross-note(임계값·게이트 무변경).
+- 각 건 adversarial ground-truth 검증 통과(실제 연락처·핸들러 동작·EOP 존재·임계값 보존 확인).
+
+**§3-A — "Phase B" 문구: ① 유지 + 반복만 압축 (결정).**
+- 조사: tools.ts 도구 레지스트리에 §5 "Phase B 힌트"가 가정한 도메인별 도구(validate_linkedin_profile·lint_portfolio·get_behavioral_interview_kit·analyze_ats_fit 등) **0개 구현**. 프레이밍은 stale가 아니라 **현재 사실** → ③(삭제)는 R7 §7.3-C 정직성 회귀 재발이라 기각.
+- 적용: 진짜 중복은 fit-matching.md 뿐(`서버 강제는 Phase B` 3회=R2/R3/R6 inline + L76 footer + L121 §5). **R2/R3/R6 inline 괄호만 압축**해 동일 terse 태그 `(AI 셀프체크 — 서버 자동검사는 아직 없음)`로 통일. 측정 방법(action verb)은 별도 칼럼이라 byte-identical, L76 authoritative footer·L121(§5)·다른 ~9개 파일은 **무변경**(adversarial scope-cut 수용 — 그 파일들은 정당한 per-row advisory/NOT_IMPLEMENTED 라벨).
+- 분류: 구현상태 메타주석의 **의미보존 de-dup**(발명차단·앵커·출력계약·린-구조 규칙 cut 아님) → §2.5와 동격으로 A/B 미트리거. separate-eyes 의미동등성+adversarial 검증 통과(측정 방법 불변·AI 셀프체크 신호·정직성 보존 확인). typecheck/build/test green.
+
+**§3-B — human-voice(검증기) vs human-writing(플레이북): ① 최소(역할경계 1줄) (결정).**
+- 조사(index.ts): get_playbook(human-writing, 작성 직전) vs get_verifier(human-voice, 저장 직전) **독립 serve**. `build_personal_brand`는 human-voice만(human-writing 없이) 당김 + on-demand get_playbook + 검증기 단독 실행 경로 존재 → **단일출처화 UNSAFE**(한쪽만 불려오면 사전 소실). 핸드오프 §5 "의도적 중복"이 입증됨 → ②(단일출처)·③(통합) 기각.
+- 적용: 두 파일 상단에 **역할경계 blockquote 1줄씩 추가(순수 additive)** — write단계 vs verify단계 역할 구분 + 강도 divergence(사실보존 LLM-플래그 vs C8/C9 하드게이트)는 **의도된 것** 명시 + 사전은 keep-both(단일출처/포인터 금지, "정리 예정" 류 deferral 문구 배제). 사전·규칙·예시 무변경.
+- 분류: additive 역할 명료화(생성/검증 규칙 무변경) → A/B 미트리거. separate-eyes 검증 통과(4 insertions/0 deletions).
+
+**§4 저우선순위 발견(판단 후 처리/보류) — 10건 트리아지(에이전트 12개 ground-truth):**
+- **처리(risk-0, 푸시 16bdcd5):** #9 fit§0 vs job§0 — 충돌 아님(다른 분모: 이력서 키워드 밀도 vs 요건 매치 %)이나 같은 숫자대 혼동 소지 → §2.5와 동격 cross-note 1줄(임계값 무변경).
+- **비이슈(전제 거짓/이미 정확 — 무변경):** #4 "사용자 언어로" 3회는 **별개 적용**(출력규칙+캐리오버/보존 / 도구 user_message 번역 / 기술용어 내레이션) — 압축하면 고유 안티패턴 소실. 게다가 라인 26은 언어규칙 아님(데이터 업로드). #10 consistency C8은 §3 line 42에 이미 `(warning)` 라벨. #5 system.ts #9/#10은 **별개 지시**(작성스타일 vs 절차+자가검증; 자가검증은 #10에만) — 병합 금지. #3 CLAIM2(analyze_job이 자소서 작성 중복)=거짓(동의 게이트 UX 규칙). #2 build_personal_brand 라우팅-WHEN은 4곳에 이미 존재.
+- **보류(의도된 설계/§5 보호 — 무변경):** #1 manage_application_status 5도메인=R7 A2/A4 합의 설계(고아 지식 fix). #2 LinkedIn 전용 저장=의도된 Phase B(validate_linkedin_profile 미구현; 표기하면 정직성 회귀). #6 위임선언=파일별 인트로 헤더(§5 독립 serve 보호; "4회"는 형제 핸드오프 라인 혼동). #11 truthfulness C8 ↔ human-writing R7 파생 화이트리스트=**단일출처화 REJECT**(§3-B와 동일 독립-serve 위험: write_career_description·analyze_job이 truthfulness만 당김 → 단일출처 시 사전 소실; HANDOFF §4 line 75 supersede).
+- **출력-품질(A/B 게이트 — 본 라운드 미적용, 사용자 판단/후속):** #3 CLAIM1 get_workflow_guide step 비대칭(이미 renderRouteGuide가 7라우트에 append하니 기능 무결; verbatim 출력이라 A/B+자기참조 회피 필요). #7 career-description §7 자가검증 누락 — ITEM1(출력계약 자가검증 1줄, §6 기존 규칙 배선)은 risk 낮으나 served 루브릭에 게이팅 추가라 보수적으로 B; ITEM2(거짓 자가검증 도장 금지, profile-extraction/interview-prep서 포팅)는 신규 행동 규칙=A/B 필요. #8 신입 연차-녹아웃 §2 승격=verdict 영향(이미 §5 FAIL 게이트로 보편 적용 중이라 일관성/명시화 성격이나 A/B 후 반영; cf. 27f3698 R20 revert).
+
+**산출물:** §2 4커밋(631d19a·873cac5·c6cf009·3bb8b7b) + §3 1커밋(ca68f22) + §4 1커밋(16bdcd5) **main 푸시**. §3 검증=separate-eyes 의미동등성+adversarial(2 PASS+1 low concern, non-regression). 보류 A/B 항목(#3·#7·#8)은 사용자 판단/후속. STATUS(본 노트)는 방법론 문서라 미커밋. 핸드오프 §5 "건드리지 마라"(interview-prep §0.1·verifier/knowledge §5 블록+인트로 헤더·human-voice↔human-writing 사전 중복)는 **전부 의도적으로 유지** — §3-B/§4-11 조사가 독립-serve 필요성을 재확인.
