@@ -348,7 +348,7 @@ export const TOOLS: ToolDef[] = [
     name: 'add_resume',
     title: '이력서/경력기술서 추가',
     description:
-      '이력서, 경력기술서, 포트폴리오 등 문서를 저장합니다. content에는 사용자가 업로드/붙여넣은 텍스트 또는 AI가 전문가 절차로 정리한 Markdown을 넣으세요. 경력기술서를 작성해 저장할 때는 kind=career_description, source=ai를 사용합니다. kind 기본값은 resume입니다. is_primary=true로 대표 문서를 지정하면 get_application_context의 primary_resume로 노출됩니다.',
+      '이력서, 경력기술서, 포트폴리오 등 문서를 저장합니다. content에는 사용자가 업로드/붙여넣은 텍스트 또는 AI가 전문가 절차로 정리한 Markdown을 넣으세요. 경력기술서를 작성해 저장할 때는 kind=career_description, source=ai를 사용합니다. ⚠️ content에는 이 문서 한 종류의 본문만 넣고, 자기소개서 등 다른 종류 문서를 같은 content에 이어붙이지 마세요 — 자기소개서는 save_cover_letter_version으로 따로 저장합니다(한 번에 둘 다 요청받았어도 한 저장 호출에 두 문서를 합치지 않습니다). kind 기본값은 resume입니다. is_primary=true로 대표 문서를 지정하면 get_application_context의 primary_resume로 노출됩니다.',
     // Reuse the shared (length-bounded, whitespace-rejecting) Document schema so
     // the MCP ingestion path — the primary route for résumé text — inherits the
     // same caps as the web API. kind stays optional here (defaults to resume).
@@ -536,7 +536,7 @@ export const TOOLS: ToolDef[] = [
     name: 'save_cover_letter_version',
     title: '자기소개서 버전 저장',
     description:
-      '자기소개서의 새 버전을 저장합니다. CareerMate 자소서 작성 워크플로우의 핵심 저장 단계입니다. cover_letter_id를 주면 기존 자소서에 새 버전을 추가하고, 없으면 새 자소서를 만들어 v1로 저장합니다(이때 title 권장). note에 이 버전의 변경 요약(예: "지원동기 보강")을 남기면 사용자가 대시보드에서 버전 히스토리를 이해하기 쉽습니다. job_id로 공고에 연결하면 지원 항목과 자동 연결됩니다. 저장 직전 자동으로 "근거 없는 수치" 점검을 돌립니다 — 본문의 정량 수치가 저장된 경력·이력서·프로젝트에 근거가 없으면(환각 의심) 저장이 막힙니다. 그때는 원본의 실제 수치로 고치거나, 의도한 값이면 force:true로 다시 저장하세요.',
+      '자기소개서의 새 버전을 저장합니다. CareerMate 자소서 작성 워크플로우의 핵심 저장 단계입니다. ⚠️ content에는 자기소개서 본문만 넣고, 경력기술서 등 다른 종류 문서를 이어붙이지 마세요(경력기술서는 add_resume(kind=career_description)로 따로 저장). cover_letter_id를 주면 기존 자소서에 새 버전을 추가하고, 없으면 새 자소서를 만들어 v1로 저장합니다(이때 title 권장). note에 이 버전의 변경 요약(예: "지원동기 보강")을 남기면 사용자가 대시보드에서 버전 히스토리를 이해하기 쉽습니다. job_id로 공고에 연결하면 지원 항목과 자동 연결됩니다. 저장 직전 자동으로 "근거 없는 수치" 점검을 돌립니다 — 본문의 정량 수치가 저장된 경력·이력서·프로젝트에 근거가 없으면(환각 의심) 저장이 막힙니다. 그때는 원본의 실제 수치로 고치거나, 의도한 값이면 force:true로 다시 저장하세요.',
     inputSchema: CoverLetterVersionInputSchema.shape,
     handler: (args) => {
       try {

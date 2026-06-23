@@ -21,6 +21,7 @@ CareerMate는 사용자의 컴퓨터에서 동작하는 로컬 커리어 관리 
 
 2. 결과는 반드시 다시 저장합니다.
    - 분석·작성한 내용은 머릿속이나 대화창에만 남기지 말고 해당 저장 툴로 CareerMate에 기록하세요: 공고는 \`save_job_posting\`, 적합도 분석은 \`save_fit_analysis\`, 자기소개서 버전은 \`save_cover_letter_version\`, 경력기술서는 \`add_resume\`(kind=career_description), 면접 준비는 \`save_interview_prep\`, 상태 변경은 \`update_application_status\`.
+   - 여러 문서를 한 번에 요청받아도 각 문서는 각자의 저장 툴로 따로 저장하세요. 경력기술서와 자기소개서를 한 턴에 함께 만들었더라도 한 저장 호출의 본문에 다른 문서를 이어붙이지 마세요(경력기술서=\`add_resume\` kind=career_description, 자기소개서=\`save_cover_letter_version\`로 각각 분리 저장).
    - 저장 후에는 무엇이 저장되었는지 사용자에게 간단히 알려주세요.
 
 3. 데이터를 지어내지 않습니다.

@@ -24,7 +24,7 @@ async function main(): Promise<void> {
     { name: 'careermate', version: APP_VERSION },
     {
       instructions:
-        'CareerMate는 사용자의 로컬 커리어 데이터베이스입니다. 공고 분석, 자기소개서 작성, 경력기술서 작성 전에는 항상 저장된 사용자 정보를 먼저 가져오고(공고 중심 작업은 get_application_context 응답의 recommended_route·next_tool가 다음 호출을 안내합니다), 이어 get_workflow_guide로 그 작업의 전문가 실행 절차와 검증 순서를 받아 적용하세요. 결과는 save_fit_analysis / save_cover_letter_version / add_resume(kind=career_description) 등으로 다시 저장하되, 저장 직전 안내된 get_verifier 루브릭으로 당신이 스스로 점검하세요 — CareerMate는 셀 수 있는 항목만 돌려주고 분석·작성·판단은 당신(AI)이 합니다. 모든 데이터는 사용자 로컬에만 저장됩니다. 사용자에게 답할 때는 항상 사용자가 쓴 언어로 답하세요 — 이 지침과 도구 응답이 한국어로 쓰여 있어도 그대로 복사하지 말고 사용자 언어로 옮겨 전달하고, 사실·수치·고유명사는 보존합니다.',
+        'CareerMate는 사용자의 로컬 커리어 데이터베이스입니다. 공고 분석, 자기소개서 작성, 경력기술서 작성 전에는 항상 저장된 사용자 정보를 먼저 가져오고(공고 중심 작업은 get_application_context 응답의 recommended_route·next_tool가 다음 호출을 안내합니다), 이어 get_workflow_guide로 그 작업의 전문가 실행 절차와 검증 순서를 받아 적용하세요. 결과는 save_fit_analysis / save_cover_letter_version / add_resume(kind=career_description) 등으로 다시 저장하되(여러 문서를 한 번에 요청받아도 각 문서는 각자의 저장 도구로 따로 저장하고 한 저장 본문에 다른 문서를 이어붙이지 마세요 — 경력기술서=add_resume, 자기소개서=save_cover_letter_version), 저장 직전 안내된 get_verifier 루브릭으로 당신이 스스로 점검하세요 — CareerMate는 셀 수 있는 항목만 돌려주고 분석·작성·판단은 당신(AI)이 합니다. 모든 데이터는 사용자 로컬에만 저장됩니다. 사용자에게 답할 때는 항상 사용자가 쓴 언어로 답하세요 — 이 지침과 도구 응답이 한국어로 쓰여 있어도 그대로 복사하지 말고 사용자 언어로 옮겨 전달하고, 사실·수치·고유명사는 보존합니다.',
     },
   );
 
