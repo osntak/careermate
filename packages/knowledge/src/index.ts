@@ -115,10 +115,13 @@ export const CAREER_ROUTES: Record<string, CareerRoute> = {
     verifierSequence: ['truthfulness', 'consistency', 'responsiveness-on-target'],
     loop: 'draft_verify_revise',
   },
+  // R22(audit): responsiveness-on-target는 한국 문항형 자소서 전용 검증기(문항별 1:1 응답·
+  // 글자수 상·하한 = "핵심 탈락 사유")인데 analyze_job에만 라우팅돼 있어 정작 자소서 자가검증
+  // 루프에서 빠져 있었다. 동문서답·미응답 문항·글자수 초과를 잡도록 write_cover_letter에 추가.
   write_cover_letter: {
     eop: 'cover-letter',
     expertSequence: ['cover-letter', 'human-writing', 'company-research'],
-    verifierSequence: ['human-voice', 'truthfulness', 'ats-compat', 'consistency'],
+    verifierSequence: ['human-voice', 'truthfulness', 'responsiveness-on-target', 'ats-compat', 'consistency'],
     loop: 'draft_verify_revise',
   },
   write_career_description: {
@@ -130,7 +133,9 @@ export const CAREER_ROUTES: Record<string, CareerRoute> = {
   prepare_interview: {
     eop: 'interview-prep',
     expertSequence: ['recruiter-screen', 'interview-behavioral', 'interview-technical', 'company-research'],
-    verifierSequence: ['truthfulness', 'consistency'],
+    // R22(audit): recency-staleness 추가 — 면접의 "최근 소식"·회사 근황이 낡으면 거짓 신선도가
+    // 되므로(company-research) 저장 전 신선도 점검을 푸시한다.
+    verifierSequence: ['truthfulness', 'consistency', 'recency-staleness'],
     loop: 'draft_verify_revise',
   },
   // R7 A2: manage_application_status had no route → rejection-triage / offer-evaluation /
@@ -152,7 +157,9 @@ export const CAREER_ROUTES: Record<string, CareerRoute> = {
       'onboarding-first-90-days',
       'networking-referrals',
     ],
-    verifierSequence: ['truthfulness', 'consistency'],
+    // R22(audit): recency-staleness 추가 — 연봉 벤치마크·오퍼 비교는 시점이 지나면 낡은 기준이
+    // 되므로(salary-negotiation/offer-evaluation) 저장 전 신선도 점검을 푸시한다.
+    verifierSequence: ['truthfulness', 'consistency', 'recency-staleness'],
   },
   // R7 후속: linkedin-profile·portfolio는 onboarding(이력서 임포트)과 단계 의미가
   // 달라(개인 브랜드 자산 *생성*) 전용 워크플로우로 분리(consensus 권고). networking은
