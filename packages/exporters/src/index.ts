@@ -28,6 +28,7 @@ import {
   slugify,
 } from './markdown.ts';
 import { escapeHtml, toPrintableHtml } from './html.ts';
+import { markdownToDocx, DOCX_MIME } from './docx.ts';
 
 /** The uniform shape every exporter returns. */
 export interface ExportResult {
@@ -35,8 +36,16 @@ export interface ExportResult {
   filename: string;
   /** MIME type, e.g. `text/markdown` or `text/html`. */
   mimeType: string;
-  /** The document body. */
+  /**
+   * The document body as text. For binary formats (`.docx`) this is a short,
+   * human-readable note instead of the payload — write/stream {@link bytes}.
+   */
   content: string;
+  /**
+   * Present only for binary formats (e.g. `.docx`). When set, callers MUST
+   * write/stream these bytes rather than {@link content}.
+   */
+  bytes?: Uint8Array;
 }
 
 export type ExportOptions = {
@@ -46,6 +55,11 @@ export type ExportOptions = {
 
 const MD_MIME = 'text/markdown';
 const HTML_MIME = 'text/html';
+
+/** Stand-in `content` for binary exports — the real payload rides in `bytes`. */
+function docxNote(filename: string): string {
+  return `(Word 문서로 저장됨: ${filename})`;
+}
 
 /* ------------------------------------------------------------- cover letters */
 
@@ -92,6 +106,16 @@ export function coverLetterToHtml(
   };
 }
 
+/** Cover letter → Word (.docx), ATS-friendly single column. */
+export async function coverLetterToDocx(
+  cl: CoverLetterRecord,
+  opts?: ExportOptions,
+): Promise<ExportResult> {
+  const filename = `${slugify(cl.title, 'cover-letter')}.docx`;
+  const bytes = await markdownToDocx(cl.title, coverLetterBody(cl, opts));
+  return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
+}
+
 /* -------------------------------------------------------------------- resume */
 
 /** A stored resume/career document → Markdown. */
@@ -132,6 +156,17 @@ export function resumeToHtml(
     mimeType: HTML_MIME,
     content: toPrintableHtml(doc.title, md.content),
   };
+}
+
+/** A stored resume/career document → Word (.docx). */
+export async function resumeToDocx(
+  doc: DocumentRecord,
+  profile?: ProfileRecord | null,
+): Promise<ExportResult> {
+  const md = resumeToMarkdown(doc, profile);
+  const filename = `${slugify(doc.title, doc.kind)}.docx`;
+  const bytes = await markdownToDocx(doc.title, md.content);
+  return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
 }
 
 /* ------------------------------------------------------------------- profile */
@@ -265,6 +300,20 @@ export function profileToHtml(
   };
 }
 
+/** Full resume-style profile export → Word (.docx). */
+export async function profileToDocx(
+  profile: ProfileRecord,
+  experiences: ExperienceRecord[] = [],
+  projects: ProjectRecord[] = [],
+  skills: SkillRecord[] = [],
+): Promise<ExportResult> {
+  const md = profileToMarkdown(profile, experiences, projects, skills);
+  const title = profile.name?.trim() || '이력서';
+  const filename = `${slugify(title, 'resume')}-resume.docx`;
+  const bytes = await markdownToDocx(title, md.content);
+  return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
+}
+
 /* ------------------------------------------------------------ interview prep */
 
 /** Interview prep record → Markdown study sheet. */
@@ -373,3 +422,4 @@ export {
   markdownToHtml,
   slugify,
 } from './markdown.ts';
+export { DOCX_MIME } from './docx.ts';

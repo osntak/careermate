@@ -83,7 +83,7 @@ function id(ctx: Ctx, key = 'id'): string {
 
 function fmt(ctx: Ctx): ExportFormat {
   const f = (ctx.query.get('format') ?? 'md').toLowerCase();
-  return (['md', 'html', 'txt'].includes(f) ? f : 'md') as ExportFormat;
+  return (['md', 'html', 'txt', 'docx'].includes(f) ? f : 'md') as ExportFormat;
 }
 
 function backupError(e: unknown): HttpError {
@@ -465,9 +465,9 @@ export function registerApiRoutes(router: Router): void {
   });
 
   /* ------------------------------------------------------------- export */
-  router.get('/api/export/cover-letter/:id', (ctx) => download(exportCoverLetter(id(ctx), fmt(ctx))));
-  router.get('/api/export/document/:id', (ctx) => download(exportDocument(id(ctx), fmt(ctx))));
-  router.get('/api/export/profile', (ctx) => download(exportProfile(fmt(ctx))));
+  router.get('/api/export/cover-letter/:id', async (ctx) => download(await exportCoverLetter(id(ctx), fmt(ctx))));
+  router.get('/api/export/document/:id', async (ctx) => download(await exportDocument(id(ctx), fmt(ctx))));
+  router.get('/api/export/profile', async (ctx) => download(await exportProfile(fmt(ctx))));
   router.get('/api/export/interview/:jobId', (ctx) => download(exportInterview(id(ctx, 'jobId'), fmt(ctx))));
 
   /* ----------------------------------------------------------- settings */

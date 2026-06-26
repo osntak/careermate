@@ -75,7 +75,12 @@ export function sendJson(res: ServerResponse, status: number, data: unknown): vo
   res.end(body);
 }
 
-export function sendDownload(res: ServerResponse, filename: string, mimeType: string, content: string): void {
+export function sendDownload(
+  res: ServerResponse,
+  filename: string,
+  mimeType: string,
+  content: string | Uint8Array,
+): void {
   const safe = filename.replace(/[^\w.\-가-힣 ]/g, '_');
   res.writeHead(200, {
     'Content-Type': mimeType,

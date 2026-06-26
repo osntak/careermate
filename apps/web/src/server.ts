@@ -58,7 +58,8 @@ export function createServer(): http.Server {
         if (res.writableEnded) return;
         if (isDownload(result)) {
           const d = result.__download;
-          sendDownload(res, d.filename, d.mimeType, d.content);
+          // Binary formats (.docx) ride in `bytes`; text formats in `content`.
+          sendDownload(res, d.filename, d.mimeType, d.bytes ?? d.content);
         } else {
           sendJson(res, 200, result ?? { ok: true });
         }

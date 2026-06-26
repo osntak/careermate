@@ -6,10 +6,13 @@
 import {
   coverLetterToMarkdown,
   coverLetterToHtml,
+  coverLetterToDocx,
   resumeToMarkdown,
   resumeToHtml,
+  resumeToDocx,
   profileToMarkdown,
   profileToHtml,
+  profileToDocx,
   interviewPrepToMarkdown,
   interviewPrepToHtml,
   type ExportResult,
@@ -26,7 +29,7 @@ import {
 } from '@careermate/db';
 import { HttpError } from './http.ts';
 
-export type ExportFormat = 'md' | 'html' | 'txt';
+export type ExportFormat = 'md' | 'html' | 'txt' | 'docx';
 
 function asFormat(result: ExportResult, format: ExportFormat): ExportResult {
   if (format === 'txt') {
@@ -40,29 +43,32 @@ function asFormat(result: ExportResult, format: ExportFormat): ExportResult {
   return result;
 }
 
-export function exportCoverLetter(id: string, format: ExportFormat): ExportResult {
+export async function exportCoverLetter(id: string, format: ExportFormat): Promise<ExportResult> {
   const cl = coverLetterRepo.get(id, true);
   if (!cl) throw new HttpError(404, '자기소개서를 찾을 수 없습니다.');
   const job = cl.job_id ? jobRepo.get(cl.job_id) : null;
   const profile = profileRepo.get();
+  if (format === 'docx') return coverLetterToDocx(cl, { job, profile });
   if (format === 'html') return coverLetterToHtml(cl, { job, profile });
   return asFormat(coverLetterToMarkdown(cl, { job, profile }), format);
 }
 
-export function exportDocument(id: string, format: ExportFormat): ExportResult {
+export async function exportDocument(id: string, format: ExportFormat): Promise<ExportResult> {
   const doc = documentRepo.get(id);
   if (!doc) throw new HttpError(404, '문서를 찾을 수 없습니다.');
   const profile = profileRepo.get();
+  if (format === 'docx') return resumeToDocx(doc, profile);
   if (format === 'html') return resumeToHtml(doc, profile);
   return asFormat(resumeToMarkdown(doc, profile), format);
 }
 
-export function exportProfile(format: ExportFormat): ExportResult {
+export async function exportProfile(format: ExportFormat): Promise<ExportResult> {
   const profile = profileRepo.get();
   if (!profile) throw new HttpError(404, '프로필이 없습니다.');
   const experiences = experienceRepo.list();
   const projects = projectRepo.list();
   const skills = skillRepo.list();
+  if (format === 'docx') return profileToDocx(profile, experiences, projects, skills);
   if (format === 'html') return profileToHtml(profile, experiences, projects, skills);
   return asFormat(profileToMarkdown(profile, experiences, projects, skills), format);
 }

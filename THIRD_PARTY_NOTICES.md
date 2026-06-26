@@ -42,7 +42,7 @@ SOFTWARE.
 
 ## 번들에 포함되는 npm 의존성 (런타임)
 
-배포 시 `dist/` 번들(esbuild)에 코드가 인라인되는 런타임 의존성입니다. MCP 서버·프로토콜(`@modelcontextprotocol/sdk`)과 입력 스키마 검증(`zod`), 그리고 `read_document`의 문서 텍스트 추출(순수 JS)에 사용합니다. 각 라이선스 고지를 보존하며, 각 라이선스 전문은 설치된 `node_modules/<패키지>/LICENSE` 에 포함됩니다.
+배포 시 `dist/` 번들(esbuild)에 코드가 인라인되는 런타임 의존성입니다. MCP 서버·프로토콜(`@modelcontextprotocol/sdk`)과 입력 스키마 검증(`zod`), `read_document`의 문서 텍스트 추출, 그리고 이력서·자기소개서의 `.docx` 내보내기(`docx`)에 사용합니다(모두 순수 JS). 각 라이선스 고지를 보존하며, 각 라이선스 전문은 설치된 `node_modules/<패키지>/LICENSE` 에 포함됩니다.
 
 | 패키지 | 용도 | 라이선스 | 저작권 |
 | --- | --- | --- | --- |
@@ -52,5 +52,6 @@ SOFTWARE.
 | [`hwp.js`](https://github.com/hahnlee/hwp.js) | `.hwp`(HWP 5.x) → 텍스트 | Apache-2.0 | Copyright Han Lee and other contributors |
 | [`fflate`](https://github.com/101arrowz/fflate) | `.hwpx` 압축 해제 | MIT | Copyright (c) 2023 Arjun Barrett |
 | [`pdfjs-dist`](https://github.com/mozilla/pdf.js) | `.pdf` → 텍스트 | Apache-2.0 | Copyright Mozilla Foundation and contributors |
+| [`docx`](https://github.com/dolanmiu/docx) | 이력서·자기소개서 → `.docx` 내보내기 | MIT | Copyright (c) 2016 Dolan Miu |
 
 > Apache-2.0(`hwp.js`, `pdfjs-dist`)은 라이선스 사본과 NOTICE 고지 보존을 요구합니다. 위 표와 `node_modules`의 동봉 라이선스로 이를 충족합니다.

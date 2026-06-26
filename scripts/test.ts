@@ -210,6 +210,24 @@ ok('문서 내보내기 HTML 은 text/html', String(docHtmlExp.headers['content-
 const profHtmlExp = await reqRaw('GET', '/api/export/profile?format=html');
 ok('프로필 내보내기 HTML 은 text/html', String(profHtmlExp.headers['content-type'] || '').includes('text/html'));
 
+/* Word(.docx) 내보내기 — 실제 OOXML 바이너리(zip)인지, 본문 텍스트가 들어갔는지 */
+const { unzipSync, strFromU8 } = await import('fflate');
+const docxRes = await tool('export_resume').handler({ document_id: exResumeId, format: 'docx' });
+const docxPath = (docxRes.data as any).path as string;
+ok('MCP 이력서 docx: .docx 경로 반환(본문엔 바이너리 대신 안내문)',
+  docxRes.isError !== true &&
+    typeof docxPath === 'string' && docxPath.endsWith('.docx') &&
+    !String((docxRes.data as any).content).includes('PK'));
+const docxBytes = fs.readFileSync(docxPath);
+ok('docx 파일은 PK(zip) 헤더로 시작', docxBytes[0] === 0x50 && docxBytes[1] === 0x4b);
+const docxXml = strFromU8(unzipSync(new Uint8Array(docxBytes))['word/document.xml']);
+ok('docx 본문(word/document.xml)에 이력서 텍스트 포함', docxXml.includes('5년차 백엔드'));
+// 웹 API: format=docx 는 wordprocessingml MIME + .docx 첨부여야 한다.
+const docDocxExp = await reqRaw('GET', `/api/export/document/${exResumeId}?format=docx`);
+ok('문서 내보내기 docx 는 wordprocessingml + .docx 첨부',
+  String(docDocxExp.headers['content-type'] || '').includes('wordprocessingml') &&
+    /\.docx/.test(String(docDocxExp.headers['content-disposition'] || '')));
+
 /* 홈 시간축 넛지 — 마감 임박(deadlines) + 지원 후 무응답(followups) */
 const { getHomeSummary } = await import('../packages/core/src/summary.ts');
 const dlDate = new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10);

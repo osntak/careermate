@@ -14,8 +14,10 @@ export default {
   // export profile as a resume
   'profile.export.md': 'MD',
   'profile.export.html': 'HTML',
+  'profile.export.docx': 'Word',
   'profile.export.mdTitle': 'Export resume as Markdown',
   'profile.export.htmlTitle': 'Export resume as HTML',
+  'profile.export.docxTitle': 'Export resume as Word (.docx)',
 
   // basic info card
   'profile.basic.title': 'Basic info',
