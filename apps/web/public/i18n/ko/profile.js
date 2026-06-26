@@ -11,13 +11,6 @@ export default {
   'profile.completeness.title': '프로필 완성도',
   'profile.completeness.percent': '{{pct}}%',
 
-  // export profile as a resume
-  'profile.export.md': 'MD',
-  'profile.export.html': 'HTML',
-  'profile.export.docx': 'Word',
-  'profile.export.mdTitle': '이력서 Markdown 내보내기',
-  'profile.export.htmlTitle': '이력서 HTML 내보내기',
-  'profile.export.docxTitle': '이력서 Word(.docx) 내보내기',
 
   // basic info card
   'profile.basic.title': '기본 정보',

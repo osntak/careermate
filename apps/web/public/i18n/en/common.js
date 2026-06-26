@@ -9,6 +9,10 @@ export default {
   'common.delete': 'Delete',
   'common.open': 'Open',
   'common.justNow': 'just now',
+  'common.export': 'Export',
+  'common.fmtWord': 'Word',
+  'common.fmtHtml': 'HTML',
+  'common.fmtMarkdown': 'Markdown',
 
   'toast.copied': 'Copied to clipboard.',
   'toast.copyFailed': "Couldn't copy. Please select and copy it manually.",

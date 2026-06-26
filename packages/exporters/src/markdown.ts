@@ -11,19 +11,24 @@ import { escapeHtml } from './html.ts';
 /* ----------------------------------------------------------- slug / filenames */
 
 /**
- * Make a filesystem-safe, ASCII-leaning slug from arbitrary (often Korean) text.
- * Non-ASCII runs collapse to `-`; the result is lowercased and trimmed of
- * leading/trailing separators. Falls back to `document` when nothing survives.
+ * Make a filesystem-safe slug from arbitrary text, PRESERVING the original
+ * script (Hangul, CJK, Latin, digits) so a Korean title like "백엔드 자기소개서"
+ * yields "백엔드_자기소개서" instead of a generic fallback. Spaces and any
+ * characters that aren't Unicode letters/numbers (punctuation, path separators)
+ * collapse to `_`; the result is trimmed and capped to a sane filename length.
+ * Falls back to `fallback` when nothing survives (e.g. emoji-only titles); pass
+ * `''` to opt out of the fallback when composing a multi-part name.
+ * Unicode filenames are safe on modern OSes, and the download header
+ * (`http.ts` `sendDownload`) already allows Hangul and encodes UTF-8.
  */
 export function slugify(input: string | null | undefined, fallback = 'document'): string {
-  const raw = (input ?? '').normalize('NFKD');
-  // Keep ASCII alphanumerics; everything else becomes a separator.
-  const slug = raw
-    .replace(/[^\x00-\x7F]+/g, '-') // drop non-ASCII (e.g. Hangul) -> separator
-    .replace(/[^a-zA-Z0-9]+/g, '-') // remaining punctuation/space -> separator
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .toLowerCase();
+  const slug = (input ?? '')
+    .normalize('NFC')
+    .replace(/[^\p{L}\p{N}]+/gu, '_') // non letter/number (space, punctuation, /\:*?…) -> separator
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80)
+    .replace(/_+$/g, ''); // re-trim a separator left dangling by the length cap
   return slug || fallback;
 }
 

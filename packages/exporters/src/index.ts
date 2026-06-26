@@ -61,6 +61,18 @@ function docxNote(filename: string): string {
   return `(Word 문서로 저장됨: ${filename})`;
 }
 
+/**
+ * Compose an export filename from slugged parts joined by `_`, then the
+ * extension — e.g. `["토스 백엔드 자기소개서", "홍길동"]` → `토스_백엔드_자기소개서_홍길동.docx`.
+ * Empty parts (no title, no owner name) drop out; if nothing survives, `fallback`
+ * is used. The owner's name as the trailing part makes files self-identifying in
+ * a downloads folder.
+ */
+function exportName(parts: (string | null | undefined)[], ext: string, fallback: string): string {
+  const slug = parts.map((p) => slugify(p, '')).filter(Boolean).join('_') || fallback;
+  return `${slug}.${ext}`;
+}
+
 /* ------------------------------------------------------------- cover letters */
 
 /** Build the shared markdown body for a cover letter (used by MD + HTML). */
@@ -88,7 +100,7 @@ export function coverLetterToMarkdown(
   opts?: ExportOptions,
 ): ExportResult {
   return {
-    filename: `${slugify(cl.title, 'cover-letter')}.md`,
+    filename: exportName([cl.title, opts?.profile?.name], 'md', 'cover_letter'),
     mimeType: MD_MIME,
     content: coverLetterBody(cl, opts),
   };
@@ -100,7 +112,7 @@ export function coverLetterToHtml(
   opts?: ExportOptions,
 ): ExportResult {
   return {
-    filename: `${slugify(cl.title, 'cover-letter')}.html`,
+    filename: exportName([cl.title, opts?.profile?.name], 'html', 'cover_letter'),
     mimeType: HTML_MIME,
     content: toPrintableHtml(cl.title, coverLetterBody(cl, opts)),
   };
@@ -111,7 +123,7 @@ export async function coverLetterToDocx(
   cl: CoverLetterRecord,
   opts?: ExportOptions,
 ): Promise<ExportResult> {
-  const filename = `${slugify(cl.title, 'cover-letter')}.docx`;
+  const filename = exportName([cl.title, opts?.profile?.name], 'docx', 'cover_letter');
   const bytes = await markdownToDocx(cl.title, coverLetterBody(cl, opts));
   return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
 }
@@ -139,7 +151,7 @@ export function resumeToMarkdown(
   ]);
 
   return {
-    filename: `${slugify(doc.title, doc.kind)}.md`,
+    filename: exportName([doc.title, profile?.name], 'md', doc.kind),
     mimeType: MD_MIME,
     content: body,
   };
@@ -152,7 +164,7 @@ export function resumeToHtml(
 ): ExportResult {
   const md = resumeToMarkdown(doc, profile);
   return {
-    filename: `${slugify(doc.title, doc.kind)}.html`,
+    filename: exportName([doc.title, profile?.name], 'html', doc.kind),
     mimeType: HTML_MIME,
     content: toPrintableHtml(doc.title, md.content),
   };
@@ -164,7 +176,7 @@ export async function resumeToDocx(
   profile?: ProfileRecord | null,
 ): Promise<ExportResult> {
   const md = resumeToMarkdown(doc, profile);
-  const filename = `${slugify(doc.title, doc.kind)}.docx`;
+  const filename = exportName([doc.title, profile?.name], 'docx', doc.kind);
   const bytes = await markdownToDocx(doc.title, md.content);
   return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
 }
@@ -278,7 +290,7 @@ export function profileToMarkdown(
   ]);
 
   return {
-    filename: `${slugify(name, 'resume')}-resume.md`,
+    filename: exportName(['프로필', profile.name], 'md', 'resume'),
     mimeType: MD_MIME,
     content,
   };
@@ -294,7 +306,7 @@ export function profileToHtml(
   const md = profileToMarkdown(profile, experiences, projects, skills);
   const title = profile.name?.trim() || '이력서';
   return {
-    filename: `${slugify(title, 'resume')}-resume.html`,
+    filename: exportName(['프로필', profile.name], 'html', 'resume'),
     mimeType: HTML_MIME,
     content: toPrintableHtml(title, md.content),
   };
@@ -309,7 +321,7 @@ export async function profileToDocx(
 ): Promise<ExportResult> {
   const md = profileToMarkdown(profile, experiences, projects, skills);
   const title = profile.name?.trim() || '이력서';
-  const filename = `${slugify(title, 'resume')}-resume.docx`;
+  const filename = exportName(['프로필', profile.name], 'docx', 'resume');
   const bytes = await markdownToDocx(title, md.content);
   return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
 }
@@ -392,7 +404,7 @@ export function interviewPrepToMarkdown(
   ]);
 
   return {
-    filename: `${slugify(titleBase, 'interview-prep')}.md`,
+    filename: exportName([titleBase], 'md', 'interview_prep'),
     mimeType: MD_MIME,
     content,
   };
@@ -406,7 +418,7 @@ export function interviewPrepToHtml(
   const md = interviewPrepToMarkdown(prep, job);
   const title = job ? `${job.company} ${job.position} 면접 준비` : '면접 준비';
   return {
-    filename: `${slugify(title, 'interview-prep')}.html`,
+    filename: exportName([title], 'html', 'interview_prep'),
     mimeType: HTML_MIME,
     content: toPrintableHtml(title, md.content),
   };

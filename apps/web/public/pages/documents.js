@@ -3,7 +3,7 @@
 import {
   el, get, post, put, del, Card, Badge, Btn, IconBtn, SubmitBtn, EmptyState,
   Field, Input, Textarea, Select, openModal, confirmDialog,
-  toastOk, toastError, copyText, downloadUrl, fmtRelative, mount, meta,
+  toastOk, toastError, copyText, fmtRelative, mount, meta, ExportMenu,
 } from '/lib.js';
 import { t } from '/i18n.js';
 
@@ -138,9 +138,7 @@ function CoverRow(cl, reload) {
   const actions = el('div', { class: 'flex gap-2 wrap' },
     Btn(t('documents.cover.open'), { sm: true, icon: 'external', onClick: () => openCoverDetail(cl.id, reload) }),
     Btn(t('documents.cover.copy'), { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(cl.current_content || ''), disabled: !cl.current_content }),
-    Btn(t('documents.cover.exportDocx'), { sm: true, variant: 'ghost', icon: 'download', title: t('documents.cover.exportDocxTitle'), onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=docx`) }),
-    Btn(t('documents.cover.exportMd'), { sm: true, variant: 'ghost', icon: 'download', title: t('documents.cover.exportMdTitle'), onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=md`) }),
-    Btn(t('documents.cover.exportHtml'), { sm: true, variant: 'ghost', icon: 'download', title: t('documents.cover.exportHtmlTitle'), onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=html`) }),
+    ExportMenu(`/api/export/cover-letter/${cl.id}`),
     cl.is_primary ? null : Btn(t('documents.cover.setPrimary'), { sm: true, variant: 'ghost', icon: 'check', onClick: () => setPrimaryCover(cl.id, reload) }),
     IconBtn('trash', { variant: 'danger', title: t('documents.cover.delete'), onClick: () => removeCover(cl, reload) }),
   );
@@ -256,9 +254,7 @@ function CoverDetailBody(cl, { refresh }) {
       cl.is_primary ? Badge('accent', t('documents.cover.primary')) : null,
     ),
     el('div', { class: 'flex gap-2 wrap' },
-      Btn(t('documents.coverDetail.exportDocx'), { sm: true, variant: 'ghost', icon: 'download', onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=docx`) }),
-      Btn(t('documents.coverDetail.exportMd'), { sm: true, variant: 'ghost', icon: 'download', onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=md`) }),
-      Btn(t('documents.coverDetail.exportHtml'), { sm: true, variant: 'ghost', icon: 'download', onClick: () => downloadUrl(`/api/export/cover-letter/${cl.id}?format=html`) }),
+      ExportMenu(`/api/export/cover-letter/${cl.id}`),
     ),
   ));
 
@@ -448,9 +444,7 @@ async function openDocDetail(id, kindLabels, m, reload) {
     ),
     footer: (close) => [
       Btn(t('documents.docDetail.copy'), { variant: 'ghost', icon: 'copy', onClick: () => copyText(doc.content || '') }),
-      Btn(t('documents.docDetail.exportDocx'), { variant: 'ghost', icon: 'download', title: t('documents.docDetail.exportDocxTitle'), onClick: () => downloadUrl(`/api/export/document/${doc.id}?format=docx`) }),
-      Btn(t('documents.docDetail.export'), { variant: 'ghost', icon: 'download', title: t('documents.docDetail.exportTitle'), onClick: () => downloadUrl(`/api/export/document/${doc.id}?format=md`) }),
-      Btn(t('documents.docDetail.exportHtml'), { variant: 'ghost', icon: 'download', title: t('documents.docDetail.exportHtmlTitle'), onClick: () => downloadUrl(`/api/export/document/${doc.id}?format=html`) }),
+      ExportMenu(`/api/export/document/${doc.id}`, { sm: false }),
       Btn(t('documents.docDetail.delete'), { variant: 'danger', icon: 'trash', onClick: async () => {
         const ok = await confirmDialog({ title: t('documents.docDetail.deleteTitle'), message: t('documents.docDetail.deleteConfirm', { title: doc.title }), confirmLabel: t('documents.docDetail.deleteConfirmLabel'), danger: true });
         if (!ok) return;

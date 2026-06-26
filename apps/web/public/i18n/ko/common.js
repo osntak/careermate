@@ -9,6 +9,10 @@ export default {
   'common.delete': '삭제',
   'common.open': '열기',
   'common.justNow': '방금 전',
+  'common.export': '내보내기',
+  'common.fmtWord': 'Word',
+  'common.fmtHtml': 'HTML',
+  'common.fmtMarkdown': 'Markdown',
 
   'toast.copied': '클립보드에 복사했습니다.',
   'toast.copyFailed': '복사에 실패했습니다. 직접 선택해 복사해 주세요.',

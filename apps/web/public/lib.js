@@ -216,6 +216,78 @@ export function IconBtn(name, { onClick, title, variant = 'ghost' } = {}) {
   return el('button', { class: `btn btn--${variant} icon-btn`, onClick, title, attrs: { 'aria-label': title || name } }, icon(name));
 }
 /**
+ * A dropdown: one trigger button that opens a small popover of actions, so
+ * several secondary actions (e.g. export as docx/html/md) collapse into a single
+ * control instead of a row of competing buttons. The popover is position:fixed
+ * and anchored to the trigger's rect, so it never clips inside a scrolling modal
+ * body and flips above the trigger when there's no room below. Closes on outside
+ * click, Escape, scroll, resize, or item activation.
+ *
+ * `items`: array of `{ label, hint?, icon?, onClick, danger? }` (falsy entries skipped).
+ */
+export function Menu(label, items, { icon: ic = 'download', variant = 'ghost', sm, align = 'end' } = {}) {
+  const list = el('div', { class: 'menu__list', attrs: { role: 'menu' }, hidden: true });
+  for (const it of items) {
+    if (!it) continue;
+    list.append(el('button', {
+      class: `menu__item${it.danger ? ' menu__item--danger' : ''}`,
+      type: 'button', attrs: { role: 'menuitem' },
+      onClick: () => { close(); it.onClick?.(); },
+    }, it.icon && icon(it.icon), el('span', { class: 'menu__item-label' }, it.label), it.hint && el('span', { class: 'menu__item-hint' }, it.hint)));
+  }
+  const trigger = el('button', {
+    class: ['btn', variant && `btn--${variant}`, sm && 'btn--sm', 'menu__trigger'].filter(Boolean).join(' '),
+    type: 'button', attrs: { 'aria-haspopup': 'menu', 'aria-expanded': 'false' },
+    onClick: () => (list.hidden ? open() : close()),
+  }, ic && icon(ic), label && el('span', {}, label), icon('chevronRight', 'menu__caret'));
+  const wrap = el('div', { class: 'menu' }, trigger, list);
+
+  function place() {
+    const r = trigger.getBoundingClientRect();
+    const lw = list.offsetWidth, lh = list.offsetHeight;
+    let top = r.bottom + 6;
+    if (top + lh > window.innerHeight - 8 && r.top - 6 - lh > 8) top = r.top - 6 - lh; // flip up
+    let left = align === 'end' ? r.right - lw : r.left;
+    left = Math.max(8, Math.min(left, window.innerWidth - lw - 8));
+    list.style.top = `${Math.round(top)}px`;
+    list.style.left = `${Math.round(left)}px`;
+  }
+  function open() {
+    if (!list.hidden) return;
+    list.hidden = false; place(); // place() reads layout while visible, same tick → no flash
+    trigger.setAttribute('aria-expanded', 'true');
+    document.addEventListener('click', onDoc, true);
+    document.addEventListener('keydown', onKey, true);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+  }
+  function close() {
+    if (list.hidden) return;
+    list.hidden = true;
+    trigger.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', onDoc, true);
+    document.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('scroll', close, true);
+    window.removeEventListener('resize', close);
+  }
+  function onDoc(e) { if (!wrap.contains(e.target)) close(); }
+  function onKey(e) { if (e.key === 'Escape') { close(); trigger.focus(); } }
+  return wrap;
+}
+/**
+ * The standard "내보내기" dropdown for a document export endpoint. `baseUrl` is a
+ * GET export route (e.g. `/api/export/profile`); each item appends `?format=…`
+ * and triggers a download. One control replaces the old docx/html/md button row.
+ */
+export function ExportMenu(baseUrl, { sm = true } = {}) {
+  const sep = baseUrl.includes('?') ? '&' : '?';
+  return Menu(t('common.export'), [
+    { label: t('common.fmtWord'), hint: '.docx', onClick: () => downloadUrl(`${baseUrl}${sep}format=docx`) },
+    { label: t('common.fmtHtml'), hint: '.html', onClick: () => downloadUrl(`${baseUrl}${sep}format=html`) },
+    { label: t('common.fmtMarkdown'), hint: '.md', onClick: () => downloadUrl(`${baseUrl}${sep}format=md`) },
+  ], { sm });
+}
+/**
  * A footer button for async saves. While `action()` runs the button is disabled
  * (so a slow local round-trip can't be double-clicked into duplicate records),
  * and if it throws the message is shown in the modal's persistent `.modal__error`
