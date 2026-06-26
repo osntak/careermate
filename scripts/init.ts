@@ -392,7 +392,7 @@ const SAFE_TOOLS: readonly string[] = [
   'add_experience', 'get_experiences', 'add_project', 'get_projects', 'add_skill', 'get_skills',
   'get_cover_letters', 'save_cover_letter_version', 'save_job_posting', 'get_job_posting', 'list_jobs',
   'get_application_context', 'save_fit_analysis', 'update_application_status', 'save_interview_prep',
-  'export_cover_letter', 'export_resume', 'export_profile', 'list_recent_activity', 'get_workflow_guide', 'get_playbook', 'get_verifier',
+  'export_cover_letter', 'export_resume', 'export_profile', 'list_recent_activity', 'get_workflow_guide', 'get_playbook', 'get_verifier', 'get_anchor',
   'validate_cover_letter', 'set_verify_mode', 'get_writing_style_guide', 'check_for_update',
   // careermate 자신의 인박스 폴더·대시보드(127.0.0.1)만 여는 로컬 동작 + 인박스 내부 문서 읽기 → 사전허용 안전.
   'read_inbox', 'open_inbox', 'open_dashboard', 'open_application',
