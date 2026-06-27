@@ -26,31 +26,61 @@ const HEADING_BY_LEVEL = [
   HeadingLevel.HEADING_4,
 ] as const;
 
+/**
+ * XML 1.0 forbids these control chars even as numeric references; the `docx`
+ * lib writes run text verbatim into document.xml, so a single one makes the
+ * whole .docx not well-formed and Word refuses to open it. Tab (0x09) and
+ * newline (0x0A) are valid and preserved. Strip everything else in the C0 set.
+ */
+const XML_INVALID_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F]/g;
+const xmlSafe = (s: string): string => s.replace(XML_INVALID_RE, '');
+
+const ALNUM_RE = /[\p{L}\p{N}]/u;
+/** Link-scheme allowlist — mirrors html.ts renderInline so the docx path can't
+ *  emit javascript:/file:// hyperlinks that the HTML path neutralizes. */
+const SAFE_LINK_RE = /^(https?:|mailto:|#|\/)/i;
+
 /** Inline tokens: **bold**, _italic_, [text](url). Order-preserving, non-nesting. */
 const INLINE_RE = /(\*\*([^*]+)\*\*|_([^_]+)_|\[([^\]]+)\]\(([^)]+)\))/g;
 
 function inlineRuns(text: string): (TextRun | ExternalHyperlink)[] {
+  const src = xmlSafe(text);
   const out: (TextRun | ExternalHyperlink)[] = [];
   let last = 0;
-  for (const m of text.matchAll(INLINE_RE)) {
+  for (const m of src.matchAll(INLINE_RE)) {
     const idx = m.index ?? 0;
-    if (idx > last) out.push(new TextRun(text.slice(last, idx)));
+    if (idx > last) out.push(new TextRun(src.slice(last, idx)));
     if (m[2] !== undefined) {
       out.push(new TextRun({ text: m[2], bold: true }));
     } else if (m[3] !== undefined) {
-      out.push(new TextRun({ text: m[3], italics: true }));
+      // CommonMark intraword-underscore rule: `_` is emphasis only when flanked
+      // by non-alphanumerics, so snake_case / env-vars / file_paths
+      // (read_write_latency, API_KEY) are kept literal instead of being mangled.
+      const before = idx > 0 ? src[idx - 1] : '';
+      const after = src[idx + m[0].length] ?? '';
+      if (ALNUM_RE.test(before) || ALNUM_RE.test(after)) {
+        out.push(new TextRun(m[0])); // not emphasis — emit underscores literally
+      } else {
+        out.push(new TextRun({ text: m[3], italics: true }));
+      }
     } else if (m[4] !== undefined) {
       // [text](url) — a real Word hyperlink so it survives ATS text extraction.
-      out.push(
-        new ExternalHyperlink({
-          children: [new TextRun({ text: m[4], style: 'Hyperlink' })],
-          link: m[5],
-        }),
-      );
+      const link = (m[5] ?? '').trim();
+      if (SAFE_LINK_RE.test(link)) {
+        out.push(
+          new ExternalHyperlink({
+            children: [new TextRun({ text: m[4], style: 'Hyperlink' })],
+            link,
+          }),
+        );
+      } else {
+        // Disallowed scheme (javascript:/file:/data:) → plain text, mirroring html.ts.
+        out.push(new TextRun(m[4]));
+      }
     }
     last = idx + m[0].length;
   }
-  if (last < text.length) out.push(new TextRun(text.slice(last)));
+  if (last < src.length) out.push(new TextRun(src.slice(last)));
   return out.length ? out : [new TextRun('')];
 }
 
@@ -89,8 +119,8 @@ function markdownToParagraphs(markdown: string): Paragraph[] {
       continue;
     }
 
-    // Bullet.
-    const b = /^[-*]\s+(.*)$/.exec(line);
+    // Bullet (-, *, + — match the markdown dialect html.ts accepts).
+    const b = /^[-*+]\s+(.*)$/.exec(line);
     if (b) {
       paras.push(
         new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children: inlineRuns(b[1]) }),

@@ -27,7 +27,7 @@ import {
   APPLICATION_STATUSES,
   APPLICATION_STATUS_LABELS,
   DOCUMENT_KINDS,
-  CONTENT_SOURCES,
+  INTERVIEW_UNLOCK_STATUSES,
 } from '@careermate/shared';
 import {
   profileRepo,
@@ -150,9 +150,6 @@ async function mapWithLimit<T, R>(items: T[], limit: number, fn: (item: T, index
   return out;
 }
 
-/** Statuses at/after which interview prep is recommended as a next step. */
-const INTERVIEW_UNLOCKED = ['document_passed', 'interview', 'final_passed'];
-
 /**
  * Pick the recommended Career-OS route from the loaded context, so the AI is
  * nudged onto the expert procedure for what it's most likely about to do.
@@ -166,7 +163,7 @@ function pickRoute(ctx: ReturnType<typeof getApplicationContext>): string | null
   const app = ctx.recent_applications.find(
     (a) => (a as { job_id?: string }).job_id === jobId,
   ) as { status?: string } | undefined;
-  if (app?.status && INTERVIEW_UNLOCKED.includes(app.status)) return 'prepare_interview';
+  if (app?.status && (INTERVIEW_UNLOCK_STATUSES as readonly string[]).includes(app.status)) return 'prepare_interview';
   if (!ctx.fit_analysis) return 'analyze_job';
   return 'write_cover_letter';
 }

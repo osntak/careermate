@@ -228,6 +228,22 @@ ok('문서 내보내기 docx 는 wordprocessingml + .docx 첨부',
   String(docDocxExp.headers['content-type'] || '').includes('wordprocessingml') &&
     /\.docx/.test(String(docDocxExp.headers['content-disposition'] || '')));
 
+/* docx 렌더러 회귀(감사 보완): snake_case 밑줄 보존 · XML 위법 제어문자 제거 · 링크 스킴 검증 */
+const { markdownToDocx } = await import('../packages/exporters/src/docx.ts');
+const rdBytes = await markdownToDocx(
+  't',
+  '# 제목\n- read_write_latency 를 50% 개선, API_KEY 설정\n- [정상](https://ex.com) / [위험](javascript:alert(1))\n_강조_ 와 본문\x0c제어\x07문자',
+);
+const rdZip = unzipSync(new Uint8Array(rdBytes));
+const rdXml = strFromU8(rdZip['word/document.xml']);
+const rdAll = Object.values(rdZip).map((b) => strFromU8(b)).join('');
+const rdText = rdXml.replace(/<[^>]+>/g, ''); // 런 경계 무시·본문만 — 분리된 run도 인접 렌더되므로 내용 보존만 확인
+ok('docx: snake_case 밑줄 보존(이탤릭 변환 안 함)', rdText.includes('read_write_latency') && rdText.includes('API_KEY'));
+ok('docx: XML 위법 제어문자(0x0C·0x07 등) 제거 → well-formed', !/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(rdXml));
+ok('docx: 위험 스킴(javascript:) 하이퍼링크 미생성', !rdAll.includes('javascript:'));
+ok('docx: 정상 링크(https)는 유지', rdAll.includes('https://ex.com'));
+ok('docx: 공백 양옆 _강조_는 이탤릭 유지', rdXml.includes('<w:i') && rdXml.includes('강조'));
+
 /* 홈 시간축 넛지 — 마감 임박(deadlines) + 지원 후 무응답(followups) */
 const { getHomeSummary } = await import('../packages/core/src/summary.ts');
 const dlDate = new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10);

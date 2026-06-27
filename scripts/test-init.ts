@@ -114,7 +114,12 @@ try {
     // 드리프트 가드: manifest(레지스트리에서 생성)의 모든 도구가 SAFE(허용) 또는 MUST_PROMPT로 분류돼야 한다.
     const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'manifest.json'), 'utf8')) as {
       tools?: { name: string }[];
+      version?: string;
     };
+    // 버전 드리프트 가드: 루트 manifest는 수기 관리(build-mcpb는 stage 사본만 동기화)라
+    // 릴리스 때 manifest 버전 bump를 빠뜨리기 쉽다. package.json을 단일 출처로 강제한다.
+    const pkgVersion = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).version;
+    ok(`manifest.version === package.json (${pkgVersion})`, manifest.version === pkgVersion);
     const manifestTools = (manifest.tools ?? []).map((t) => t.name);
     const unclassified = manifestTools.filter(
       (t) => !allow.has(`mcp__careermate__${t}`) && !MUST_PROMPT.includes(t),
