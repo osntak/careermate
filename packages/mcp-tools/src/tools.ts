@@ -71,14 +71,10 @@ import {
   getVerifier,
   getRoute,
   renderRouteGuide,
-  getAnchor,
-  renderDomainAnchors,
   EXPERT_DOMAINS,
   VERIFIER_IDS,
-  ANCHOR_ASSETS,
   type ExpertDomain,
   type VerifierId,
-  type AnchorAsset,
 } from '@careermate/knowledge';
 import {
   coverLetterToMarkdown,
@@ -1049,10 +1045,7 @@ export const TOOLS: ToolDef[] = [
     readOnly: true,
     handler: (args) => {
       try {
-        // Ship the domain's lookup anchors alongside its deep guidance so the AI
-        // grounds numbers/levels/classes instead of inventing them — zero extra
-        // round-trips (it already pulls get_playbook per route). Additive.
-        const content = getPlaybook(args.domain as ExpertDomain) + renderDomainAnchors(args.domain as ExpertDomain);
+        const content = getPlaybook(args.domain as ExpertDomain);
         // Content is already in the text block; don't duplicate it in the
         // structured payload (it was being shipped ~2x → token bloat).
         return ok(content, { domain: args.domain });
@@ -1078,25 +1071,6 @@ export const TOOLS: ToolDef[] = [
         return ok(content, { id: args.id });
       } catch (e) {
         return fail(e instanceof Error ? e.message : '검증 루브릭을 불러오지 못했습니다.');
-      }
-    },
-  },
-  {
-    name: 'get_anchor',
-    title: '앵커 데이터 (조회용 구조화 데이터)',
-    description:
-      '커리어 산출물을 만들 때 수치·등급·분류·동의어·동사 레벨 같은 값을 추측하지 말고 여기서 조회하세요. 구조화 조회 데이터(표/JSON)를 돌려줍니다: 자소서 문항 디렉티브(kr-question-directives)·글자수 모드(charcount-modes), 적합도 시니어리티 동사(seniority-verb-register)·전이스킬·도구등가(transferable-skill-adjacency)·녹아웃 분류(knockout-criteria-taxonomy)·셀프체크 루브릭(fit-self-check-rubric), 면접 역량 enum(competency-enum), 경력기술서 NCS 공식 기준(ncs-official). 보통은 해당 도메인 get_playbook에 이미 첨부돼 오므로, 단건만 다시 볼 때 호출합니다. advisory 데이터이며(의도·anti-pattern 같은 의미 필드는 직접 판단), 원문은 사용자에게 노출하지 말고 결과물에만 반영하세요.',
-    inputSchema: {
-      asset: z
-        .enum([...ANCHOR_ASSETS] as [AnchorAsset, ...AnchorAsset[]])
-        .describe('앵커 자산 id(예: kr-question-directives, seniority-verb-register, competency-enum, ncs-official)'),
-    },
-    readOnly: true,
-    handler: (args) => {
-      try {
-        return ok(getAnchor(args.asset as AnchorAsset), { asset: args.asset });
-      } catch (e) {
-        return fail(e instanceof Error ? e.message : '앵커 데이터를 불러오지 못했습니다.');
       }
     },
   },

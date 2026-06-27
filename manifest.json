@@ -187,10 +187,6 @@
       "description": "검증 루브릭 (저장 전 자가검증)"
     },
     {
-      "name": "get_anchor",
-      "description": "앵커 데이터 (조회용 구조화 데이터)"
-    },
-    {
       "name": "validate_cover_letter",
       "description": "자기소개서 자동 점검 (저장 전 미리보기)"
     },

@@ -69,41 +69,6 @@ export const EOP_FEATURES = [
 ] as const;
 export type EopFeature = (typeof EOP_FEATURES)[number];
 
-/**
- * Structured anchor-data assets the connected AI *looks up* instead of inventing
- * (numbers, verb registers, taxonomies, dictionaries). 1:1 with
- * docs/career-os/knowledge/anchors/<asset>.md. Additive, advisory, read-only —
- * see docs/career-os/validation/research/2026-06_knowledge-enrichment.md.
- */
-export const ANCHOR_ASSETS = [
-  'kr-question-directives',
-  'charcount-modes',
-  'seniority-verb-register',
-  'transferable-skill-adjacency',
-  'knockout-criteria-taxonomy',
-  'fit-self-check-rubric',
-  'competency-enum',
-  'ncs-official',
-] as const;
-export type AnchorAsset = (typeof ANCHOR_ASSETS)[number];
-
-/**
- * Which anchors ride along with which expert playbook, so get_playbook ships a
- * domain's lookup data next to its deep guidance (zero extra round-trips). The
- * AI grounds numbers/levels/classes on these instead of guessing per run.
- */
-export const DOMAIN_ANCHORS: Partial<Record<ExpertDomain, readonly AnchorAsset[]>> = {
-  'cover-letter': ['kr-question-directives', 'charcount-modes'],
-  'fit-matching': [
-    'seniority-verb-register',
-    'transferable-skill-adjacency',
-    'knockout-criteria-taxonomy',
-    'fit-self-check-rubric',
-  ],
-  'interview-behavioral': ['competency-enum'],
-  resume: ['ncs-official'],
-};
-
 const cache = new Map<string, string>();
 function readDoc(rel: string): string {
   let cached = cache.get(rel);
@@ -127,31 +92,6 @@ export function getVerifier(id: VerifierId): string {
 /** Thin execution procedure (EOP) for a feature. */
 export function getEop(feature: EopFeature): string {
   return readDoc(`eop/${feature}.md`);
-}
-
-/** Read-only structured anchor-data asset (a lookup the AI grounds on, not guidance). */
-export function getAnchor(asset: AnchorAsset): string {
-  return readDoc(path.join('knowledge', 'anchors', `${asset}.md`));
-}
-
-/**
- * A domain's attached anchor data, ready to append to get_playbook output (or ''
- * when the domain has none). getPlaybook itself stays pure so existing
- * callers/tests are unaffected; the MCP handler concatenates this.
- */
-export function renderDomainAnchors(domain: ExpertDomain): string {
-  const assets = DOMAIN_ANCHORS[domain];
-  if (!assets || assets.length === 0) return '';
-  const lines: string[] = [
-    '',
-    '---',
-    '',
-    '## 첨부 앵커 데이터 (조회용 — 추측 대신 이 값을 쓰세요)',
-    '',
-    '이 도메인의 구조화 조회 데이터입니다. 수치·등급·분류·동의어·동사 레벨을 발명하지 말고 아래 표/JSON에서 찾아 적용하세요(advisory — 의도·anti-pattern 같은 의미 필드는 직접 판단). 단건만 다시 볼 때는 `get_anchor({ asset })`.',
-  ];
-  for (const a of assets) lines.push('', getAnchor(a));
-  return lines.join('\n');
 }
 
 /** A goal → which EOP, expert playbooks, and verifiers to apply, in order. */
@@ -258,9 +198,6 @@ export function renderRouteGuide(id: string): string | undefined {
   lines.push('## 이 작업에 적용할 전문가 플레이북');
   lines.push('작성 직전, 아래 도메인의 깊은 지식을 받아 적용하세요:');
   for (const d of route.expertSequence) lines.push(`- \`get_playbook({ domain: "${d}" })\``);
-  lines.push(
-    '> 일부 플레이북에는 **첨부 앵커 데이터**(문항 디렉티브·글자수 모드·시니어리티 동사·전이스킬·녹아웃 분류·역량 enum·NCS 공식 등 조회 데이터)가 함께 옵니다 — 수치·등급·분류·동의어를 추측하지 말고 그 값을 쓰세요.',
-  );
   lines.push('');
   lines.push('## 저장 전 자가검증 (verifier)');
   lines.push(
