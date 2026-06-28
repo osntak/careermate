@@ -61,6 +61,7 @@ import {
   saveInterviewPrep,
   listRecentActivity,
   getActionDigest,
+  prescreenJob,
   jobWithMeta,
   previewCoverLetter,
   summarizeReport,
@@ -1005,6 +1006,22 @@ export const TOOLS: ToolDef[] = [
         ? '지금 당장 챙길 후속 항목이 없습니다(무응답 지원·임박 마감·면접 준비 대기 없음).'
         : `챙길 항목 ${n}건: 후속 ${d.followups.length} · 마감 ${d.deadlines.length} · 면접준비 ${d.interview_todo.length}`;
       return ok(msg, d);
+    },
+  },
+  {
+    name: 'prescreen_job',
+    title: '공고 사전 프리스크린(키워드 겹침)',
+    description:
+      '저장된 공고의 핵심 키워드를 사용자의 보유 기술·프로젝트/경력 기술스택과 대조해 "이 공고를 깊게 볼 가치가 있는지"를 빠르게 가늠합니다. LLM 없이 셀 수 있는 키워드 겹침(matched/missing/coverage)만 돌려주는 값싼 사전 필터이며, **진짜 적합도 판단은 당신(AI)이 get_application_context로 맥락을 받아 직접 수행**합니다(이 도구는 그 대체가 아닙니다). 사용자가 공고를 여러 개 훑으며 우선순위를 정하거나 "이거 지원할 만해?"라고 물을 때, 본격 분석 전에 가볍게 호출하세요. coverage가 낮아도 키워드 미기재일 수 있으니 단정하지 말고, 표기되지 않은 역량은 사용자에게 확인하세요. 읽기 전용입니다.',
+    inputSchema: { job_id: z.string() },
+    readOnly: true,
+    handler: (args) => {
+      const r = prescreenJob(args.job_id);
+      if (!r) return fail('공고를 찾을 수 없습니다. 먼저 save_job_posting으로 저장하세요.');
+      if (r.coverage == null)
+        return ok('이 공고에 저장된 핵심 키워드가 없어 겹침을 셀 수 없습니다. save_job_posting의 keywords에 핵심 키워드를 정리해 넣으면 프리스크린이 가능합니다.', r);
+      const pct = Math.round(r.coverage * 100);
+      return ok(`키워드 겹침 ${pct}% — 보유 ${r.matched.length}/${r.job_keywords.length}개. 부족: ${r.missing.join(', ') || '없음'}. (셀 수 있는 겹침일 뿐, 실제 적합도는 직접 판단하세요.)`, r);
     },
   },
 

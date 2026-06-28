@@ -18,6 +18,9 @@ import {
   interviewRepo,
   fitRepo,
   activityRepo,
+  skillRepo,
+  experienceRepo,
+  projectRepo,
 } from '@careermate/db';
 import { getOnboardingStatus } from './onboarding.ts';
 
@@ -239,4 +242,49 @@ export function getActionDigest(now: Date = new Date()): ActionDigest {
 
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   return { today, followups, deadlines, interview_todo };
+}
+
+/* ---------------------------------------------------------- job pre-screen */
+
+// "Should I even bother reading this JD?" — community research U3: ~70% of postings
+// prove unsuitable after reading. This is a CHEAP, DETERMINISTIC keyword-overlap
+// signal (same philosophy as charcount: count, don't judge). The real fit analysis
+// is still the AI's job via save_fit_analysis — this only pre-filters by which job
+// keywords the user's stored skills/tech already cover.
+
+const normToken = (s: string): string =>
+  s.toLowerCase().trim().replace(/^[.,/()\s]+|[.,/()\s]+$/g, '');
+
+export interface JobPrescreen {
+  job_id: string;
+  job_keywords: string[];
+  matched: string[];
+  missing: string[];
+  /** matched / total keywords (0..1); null when the job has no keywords to screen. */
+  coverage: number | null;
+  user_skill_count: number;
+}
+
+export function prescreenJob(jobId: string): JobPrescreen | null {
+  const job = jobRepo.get(jobId);
+  if (!job) return null;
+  const userTokens = new Set<string>();
+  for (const s of skillRepo.list()) if (s.name) userTokens.add(normToken(s.name));
+  for (const e of experienceRepo.list()) for (const t of e.tech ?? []) userTokens.add(normToken(t));
+  for (const p of projectRepo.list()) for (const t of p.tech ?? []) userTokens.add(normToken(t));
+  userTokens.delete('');
+
+  const keywords = (job.keywords ?? []).filter((k) => k && k.trim());
+  const matched: string[] = [];
+  const missing: string[] = [];
+  for (const kw of keywords) {
+    const n = normToken(kw);
+    const hit =
+      userTokens.has(n) ||
+      // substring match only for tokens ≥3 chars (avoid "c"/"r" matching everything).
+      (n.length >= 3 && [...userTokens].some((u) => u.length >= 3 && (u.includes(n) || n.includes(u))));
+    (hit ? matched : missing).push(kw);
+  }
+  const coverage = keywords.length ? matched.length / keywords.length : null;
+  return { job_id: jobId, job_keywords: keywords, matched, missing, coverage, user_skill_count: userTokens.size };
 }

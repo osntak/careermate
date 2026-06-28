@@ -150,7 +150,7 @@ npx -y careermate init
 | 이력서 | `read_document` · `add_resume` · `get_resumes` · `export_resume` · `delete_resume` · `open_inbox` · `read_inbox` |
 | 경력·프로젝트·스킬 | `add_experience` · `get_experiences` · `delete_experience` · `add_project` · `get_projects` · `delete_project` · `add_skill` · `get_skills` · `delete_skill` |
 | 자기소개서 | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
-| 채용공고 | `save_job_posting` · `get_job_posting` · `list_jobs` · `delete_job_posting` |
+| 채용공고 | `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
 | 핵심 컨텍스트 | **`get_application_context`** (지원에 필요한 맥락을 한 번에 모아줌) |
 | 핏 분석 | `save_fit_analysis` |
 | 지원 상태 | `update_application_status` |
@@ -423,7 +423,7 @@ Dark mode is supported.
 | Resume | `read_document` · `add_resume` · `get_resumes` · `export_resume` · `delete_resume` · `open_inbox` · `read_inbox` |
 | Experience / projects / skills | `add_experience` · `get_experiences` · `delete_experience` · `add_project` · `get_projects` · `delete_project` · `add_skill` · `get_skills` · `delete_skill` |
 | Cover letter | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
-| Job posting | `save_job_posting` · `get_job_posting` · `list_jobs` · `delete_job_posting` |
+| Job posting | `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
 | Core context | **`get_application_context`** (gathers all context needed for an application in one call) |
 | Fit analysis | `save_fit_analysis` |
 | Application status | `update_application_status` |
