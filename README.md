@@ -33,9 +33,19 @@
 - **AI와 대화로 모든 작업** — MCP 도구로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
 - **지원 상태 8단계 관리** — `draft`(작성 중) · `planned`(지원 예정) · `applied`(지원 완료) · `document_passed`(서류 합격) · `interview`(면접 진행) · `final_passed`(최종 합격) · `rejected`(불합격) · `on_hold`(보류). `document_passed` 이상에서는 면접 준비를 다음 행동으로 제안합니다.
 - **자기소개서 버전 관리** — 공고별로 자소서 버전을 쌓고 타임라인으로 비교, 파일로 내보내기.
-- **채용공고 파싱** — 붙여넣은 공고 텍스트를 구조화해 저장.
+- **공고 검색·가져오기** — 키워드(직무·기술)로 원티드·점핏 같은 공개 채용 사이트에서 공고를 바로 가져와, 마음에 드는 것만 저장. 키 발급·설치 없이 동작하며, 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음, 보내는 건 검색어뿐).
+- **채용공고 파싱** — 붙여넣거나 가져온 공고 텍스트를 구조화해 저장.
 - **로컬 대시보드** — 프레임워크·CDN 없는 바닐라 JS로 만든 7페이지 웹 화면(다크모드 지원).
 - **데이터 내보내기/삭제** — Settings 페이지에서 직접.
+
+> **예: 공고 검색** — "백엔드 공고 찾아줘"라고 하면 AI가 공개 사이트에서 공고를 모아 이렇게 보여주고, 고른 것만 저장합니다:
+>
+> > "백엔드" 공고 6건을 찾았어요 (원티드·점핏):
+> > 1. **미소(miso)** — 백엔드 개발자 (Node.js) · 서울 · 경력 5~11년
+> > 2. **콕스웨이브** — [AX Workflow Builder] 백엔드 엔지니어 · 서울 · 경력 3~7년
+> > 3. **다우기술** — HTS 채널 개발 · 서울 마포구 · `JavaScript` `Mfc` · ~7/7 마감
+> >
+> > 어떤 공고를 저장해서 적합도 분석·자소서로 이어갈까요? (예: "1번, 3번 저장")
 
 ---
 
@@ -305,9 +315,19 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 - **Everything through conversation with AI** — MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
 - **8-stage application status** — `draft` · `planned` · `applied` · `document_passed` · `interview` · `final_passed` · `rejected` · `on_hold`. Interview prep is suggested at `document_passed` or later.
 - **Cover-letter versioning** — Stack versions per posting, compare on a timeline, export to a file.
-- **Job-posting parsing** — Turn pasted posting text into structured records.
+- **Job search & import** — Pull postings by keyword (role/skill) straight from public job boards (e.g. Wanted, Jumpit) and save only the ones you like. No API key or setup; it only *fetches* public postings (no bot-protection bypass, no bulk harvesting — only the search keyword is sent).
+- **Job-posting parsing** — Turn pasted or imported posting text into structured records.
 - **Local dashboard** — A 7-page web UI built with framework-free, CDN-free vanilla JS (dark mode supported).
 - **Export / delete your data** — Directly from the Settings page.
+
+> **Example: job search** — Ask "find backend jobs" and the AI gathers postings from public boards, presents them like this, and saves only the ones you pick:
+>
+> > Found 6 "backend" postings (Wanted · Jumpit):
+> > 1. **miso** — Backend Developer (Node.js) · Seoul · 5–11 yrs
+> > 2. **Coxwave** — [AX Workflow Builder] Backend Engineer · Seoul · 3–7 yrs
+> > 3. **Daou Tech** — HTS Channel Dev · Seoul Mapo-gu · `JavaScript` `Mfc` · due 7/7
+> >
+> > Which should I save to analyze fit / draft a cover letter? (e.g. "save #1 and #3")
 
 ---
 
