@@ -326,6 +326,77 @@ export async function profileToDocx(
   return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
 }
 
+/**
+ * Full profile → JSON Resume (jsonresume.org, schema v1.0.0). Makes CareerMate
+ * data portable: the open standard is consumed by 100+ themes (HTML/PDF render)
+ * and other AI/ATS tools. Dates pass through as stored (YYYY-MM[-DD]); only
+ * populated fields are emitted to keep the document clean.
+ */
+export function profileToJsonResume(
+  profile: ProfileRecord,
+  experiences: ExperienceRecord[] = [],
+  projects: ProjectRecord[] = [],
+  skills: SkillRecord[] = [],
+): ExportResult {
+  const clean = <T extends Record<string, unknown>>(o: T): T =>
+    Object.fromEntries(
+      Object.entries(o).filter(([, v]) => v != null && !(Array.isArray(v) && v.length === 0) && v !== ''),
+    ) as T;
+
+  const basics = clean({
+    name: profile.name ?? '',
+    label: profile.headline ?? '',
+    email: profile.email ?? '',
+    phone: profile.phone ?? '',
+    summary: profile.summary ?? '',
+    location: profile.location ? { address: profile.location } : undefined,
+    profiles: (profile.links ?? [])
+      .filter((l) => l.url)
+      .map((l) => clean({ network: l.label ?? '', url: l.url })),
+  });
+
+  const work = experiences.map((e) =>
+    clean({
+      name: e.company ?? '',
+      position: e.role ?? '',
+      startDate: e.start_date ?? '',
+      endDate: e.is_current ? '' : (e.end_date ?? ''),
+      summary: e.description ?? '',
+      highlights: e.achievements ?? [],
+    }),
+  );
+
+  const projectsOut = projects.map((p) =>
+    clean({
+      name: p.name ?? '',
+      description: p.description ?? '',
+      highlights: p.highlights ?? [],
+      keywords: p.tech ?? [],
+      url: p.url ?? '',
+      startDate: p.start_date ?? '',
+      endDate: p.end_date ?? '',
+      roles: p.role ? [p.role] : [],
+    }),
+  );
+
+  const skillsOut = skills.map((s) => clean({ name: s.name, level: s.level ?? '' }));
+
+  const resume = {
+    $schema: 'https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json',
+    basics,
+    work,
+    projects: projectsOut,
+    skills: skillsOut,
+    meta: { canonical: 'https://jsonresume.org', version: 'v1.0.0', generatedBy: 'CareerMate' },
+  };
+
+  return {
+    filename: exportName(['프로필', profile.name], 'json', 'resume'),
+    mimeType: 'application/json',
+    content: JSON.stringify(resume, null, 2),
+  };
+}
+
 /* ------------------------------------------------------------ interview prep */
 
 /** Interview prep record → Markdown study sheet. */

@@ -89,6 +89,7 @@ import {
   profileToMarkdown,
   profileToHtml,
   profileToDocx,
+  profileToJsonResume,
   type ExportResult,
 } from '@careermate/exporters';
 import { extractDocument } from '@careermate/parsers';
@@ -924,9 +925,9 @@ export const TOOLS: ToolDef[] = [
     name: 'export_profile',
     title: '프로필을 이력서로 내보내기',
     description:
-      '저장된 프로필·경력·프로젝트·보유 기술을 한 장의 이력서 형식으로 모아 Word(.docx)·Markdown·인쇄용 HTML(브라우저에서 PDF로 저장) 파일로 내보내 데이터 폴더의 exports에 저장하고, 파일 경로를 돌려줍니다. ATS 제출처럼 Word 파일이 필요하면 format=docx를 쓰세요. 사용자가 "내 프로필을 이력서로 뽑아줘"처럼 구조화된 데이터 전체를 이력서로 받고 싶을 때 사용하세요. 특정 공고 맞춤 이력서는 add_resume로 정리·저장한 뒤 export_resume를 쓰세요. 대시보드에서 직접 다운로드할 수도 있습니다.',
+      '저장된 프로필·경력·프로젝트·보유 기술을 한 장의 이력서 형식으로 모아 Word(.docx)·Markdown·인쇄용 HTML(브라우저에서 PDF로 저장)·JSON Resume(format=json, jsonresume.org 표준) 파일로 내보내 데이터 폴더의 exports에 저장하고, 파일 경로를 돌려줍니다. ATS 제출처럼 Word 파일이 필요하면 format=docx, 다른 이력서 도구·테마와 연동할 표준 데이터가 필요하면 format=json을 쓰세요. 사용자가 "내 프로필을 이력서로 뽑아줘"처럼 구조화된 데이터 전체를 이력서로 받고 싶을 때 사용하세요. 특정 공고 맞춤 이력서는 add_resume로 정리·저장한 뒤 export_resume를 쓰세요. 대시보드에서 직접 다운로드할 수도 있습니다.',
     inputSchema: {
-      format: z.enum(['md', 'html', 'docx']).optional().describe('기본 md'),
+      format: z.enum(['md', 'html', 'docx', 'json']).optional().describe('기본 md. json = JSON Resume 표준'),
     },
     handler: async (args) => {
       const profile = profileRepo.get();
@@ -940,7 +941,9 @@ export const TOOLS: ToolDef[] = [
           ? await profileToDocx(profile, experiences, projects, skills)
           : format === 'html'
             ? profileToHtml(profile, experiences, projects, skills)
-            : profileToMarkdown(profile, experiences, projects, skills);
+            : format === 'json'
+              ? profileToJsonResume(profile, experiences, projects, skills)
+              : profileToMarkdown(profile, experiences, projects, skills);
       const written = writeExport(result);
       if ('error' in written) return fail(written.error);
       return ok(`프로필을 이력서(${format.toUpperCase()})로 내보냈습니다.\n저장 위치: ${written.path}`, {
