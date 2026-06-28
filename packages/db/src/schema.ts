@@ -300,6 +300,18 @@ export const MIGRATIONS: string[] = [
 
   CREATE INDEX IF NOT EXISTS idx_timeline_job ON application_timeline_events(job_id, occurred_at ASC);
   `,
+
+  // v4 — structured quantitative credentials on the profile (학력·자격증·어학점수·수상).
+  // Stored as JSON arrays in TEXT columns (same pattern as profile.links), so the AI
+  // can cite exact values (GPA, TOEIC 920) without re-asking or hallucinating, and
+  // they feed the verify corpus. ALTER ADD COLUMN is non-destructive and idempotent
+  // across the ordered migration runner.
+  `
+  ALTER TABLE profile ADD COLUMN education TEXT NOT NULL DEFAULT '[]';
+  ALTER TABLE profile ADD COLUMN certifications TEXT NOT NULL DEFAULT '[]';
+  ALTER TABLE profile ADD COLUMN language_scores TEXT NOT NULL DEFAULT '[]';
+  ALTER TABLE profile ADD COLUMN awards TEXT NOT NULL DEFAULT '[]';
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

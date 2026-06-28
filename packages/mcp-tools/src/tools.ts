@@ -353,7 +353,7 @@ export const TOOLS: ToolDef[] = [
     name: 'save_profile',
     title: '프로필 저장',
     description:
-      '사용자 프로필을 저장합니다. 전달한 필드만 갱신되고 나머지는 유지됩니다(부분 저장 안전). 이력서를 구조화한 뒤 이름/한 줄 소개/희망 직무/선호 문체/강조 포인트 등을 채워 저장하세요. 선호 문체(preferred_tone)와 강조 포인트(emphasis_points)는 이후 자기소개서 작성 품질에 직접 영향을 줍니다.',
+      '사용자 프로필을 저장합니다. 전달한 필드만 갱신되고 나머지는 유지됩니다(부분 저장 안전). 이력서를 구조화한 뒤 이름/한 줄 소개/희망 직무/선호 문체/강조 포인트 등을 채워 저장하세요. 선호 문체(preferred_tone)와 강조 포인트(emphasis_points)는 이후 자기소개서 작성 품질에 직접 영향을 줍니다. 학력(education)·자격증(certifications)·어학점수(language_scores: 토익·오픽 등)·수상(awards)이 이력서에 있으면 구조화해 저장하세요 — 한국 이력서 핵심 스펙이고, 저장하면 이후 자소서·이력서에서 정확한 수치(학점 3.8, 토익 920)를 지어내지 않고 그대로 인용합니다.',
     inputSchema: ProfileInputSchema.shape,
     handler: (args) => {
       const p = saveProfile(args);

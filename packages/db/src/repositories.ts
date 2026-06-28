@@ -64,6 +64,10 @@ function mapProfile(r: any): ProfileRecord {
     preferred_tone: r.preferred_tone,
     emphasis_points: fromJson(r.emphasis_points, []),
     links: fromJson(r.links, []),
+    education: fromJson(r.education, []),
+    certifications: fromJson(r.certifications, []),
+    language_scores: fromJson(r.language_scores, []),
+    awards: fromJson(r.awards, []),
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
@@ -92,21 +96,31 @@ export const profileRepo = {
       preferred_tone: input.preferred_tone ?? existing?.preferred_tone ?? null,
       emphasis_points: input.emphasis_points ?? existing?.emphasis_points ?? [],
       links: input.links ?? existing?.links ?? [],
+      education: input.education ?? existing?.education ?? [],
+      certifications: input.certifications ?? existing?.certifications ?? [],
+      language_scores: input.language_scores ?? existing?.language_scores ?? [],
+      awards: input.awards ?? existing?.awards ?? [],
       created_at: existing?.created_at ?? ts,
       updated_at: ts,
     };
     db.prepare(
-      `INSERT INTO profile (id,name,email,phone,location,headline,summary,desired_roles,desired_conditions,preferred_tone,emphasis_points,links,created_at,updated_at)
-       VALUES (@id,@name,@email,@phone,@location,@headline,@summary,@desired_roles,@desired_conditions,@preferred_tone,@emphasis_points,@links,@created_at,@updated_at)
+      `INSERT INTO profile (id,name,email,phone,location,headline,summary,desired_roles,desired_conditions,preferred_tone,emphasis_points,links,education,certifications,language_scores,awards,created_at,updated_at)
+       VALUES (@id,@name,@email,@phone,@location,@headline,@summary,@desired_roles,@desired_conditions,@preferred_tone,@emphasis_points,@links,@education,@certifications,@language_scores,@awards,@created_at,@updated_at)
        ON CONFLICT(id) DO UPDATE SET
          name=@name,email=@email,phone=@phone,location=@location,headline=@headline,summary=@summary,
          desired_roles=@desired_roles,desired_conditions=@desired_conditions,preferred_tone=@preferred_tone,
-         emphasis_points=@emphasis_points,links=@links,updated_at=@updated_at`,
+         emphasis_points=@emphasis_points,links=@links,
+         education=@education,certifications=@certifications,language_scores=@language_scores,awards=@awards,
+         updated_at=@updated_at`,
     ).run({
       ...merged,
       desired_roles: toJson(merged.desired_roles),
       emphasis_points: toJson(merged.emphasis_points),
       links: toJson(merged.links),
+      education: toJson(merged.education),
+      certifications: toJson(merged.certifications),
+      language_scores: toJson(merged.language_scores),
+      awards: toJson(merged.awards),
     });
     return merged;
   },

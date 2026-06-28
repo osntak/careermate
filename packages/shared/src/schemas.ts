@@ -114,6 +114,43 @@ export const LinkSchema = z.object({
 });
 export type Link = z.infer<typeof LinkSchema>;
 
+/* Structured quantitative credentials (한국 이력서 스펙). Values are kept verbatim as
+   strings so the AI cites them exactly (학점 3.8, TOEIC 920) without re-deriving. */
+export const EducationSchema = z.object({
+  school: reqLine.describe('학교명'),
+  degree: z.string().max(MAX_LINE).optional().describe('학위/과정 (고졸·학사·석사·박사 등)'),
+  major: z.string().max(MAX_LINE).optional().describe('전공'),
+  gpa: z.string().max(MAX_LINE).optional().describe('학점 (예: 3.8)'),
+  gpa_scale: z.string().max(MAX_LINE).optional().describe('학점 만점 (예: 4.5)'),
+  start_date: z.string().max(MAX_LINE).optional().describe('YYYY-MM'),
+  end_date: z.string().max(MAX_LINE).optional().describe('YYYY-MM (졸업/예정)'),
+  status: z.string().max(MAX_LINE).optional().describe('졸업/재학/휴학/중퇴/수료'),
+});
+export type Education = z.infer<typeof EducationSchema>;
+
+export const CertificationSchema = z.object({
+  name: reqLine.describe('자격증/면허명'),
+  issuer: z.string().max(MAX_LINE).optional().describe('발급기관'),
+  date: z.string().max(MAX_LINE).optional().describe('취득일 YYYY-MM'),
+  score: z.string().max(MAX_LINE).optional().describe('점수/등급(있으면)'),
+});
+export type Certification = z.infer<typeof CertificationSchema>;
+
+export const LanguageScoreSchema = z.object({
+  test: reqLine.describe('시험명 (TOEIC·OPIc·TOEIC Speaking·JLPT·HSK 등)'),
+  score: reqLine.describe('점수/등급 (예: 920, IH, N1)'),
+  date: z.string().max(MAX_LINE).optional().describe('응시/취득일 YYYY-MM'),
+});
+export type LanguageScore = z.infer<typeof LanguageScoreSchema>;
+
+export const AwardSchema = z.object({
+  title: reqLine.describe('수상/대외활동명'),
+  issuer: z.string().max(MAX_LINE).optional().describe('주최/수여기관'),
+  date: z.string().max(MAX_LINE).optional().describe('YYYY-MM'),
+  description: z.string().max(MAX_NOTE).optional().describe('간단 설명'),
+});
+export type Award = z.infer<typeof AwardSchema>;
+
 export const ProfileInputSchema = z.object({
   name: reqLine.optional(),
   email: optLine,
@@ -126,6 +163,10 @@ export const ProfileInputSchema = z.object({
   preferred_tone: z.string().max(MAX_LINE).optional().describe('자기소개서 선호 문체 (예: 담백하고 구체적)'),
   emphasis_points: strList.optional().describe('강조하고 싶은 핵심 포인트'),
   links: z.array(LinkSchema).max(MAX_ITEMS).optional().describe('포트폴리오/깃허브/링크드인 등'),
+  education: z.array(EducationSchema).max(MAX_ITEMS).optional().describe('학력 (학교·학위·전공·학점)'),
+  certifications: z.array(CertificationSchema).max(MAX_ITEMS).optional().describe('자격증/면허'),
+  language_scores: z.array(LanguageScoreSchema).max(MAX_ITEMS).optional().describe('어학 점수 (토익·오픽 등)'),
+  awards: z.array(AwardSchema).max(MAX_ITEMS).optional().describe('수상/대외활동'),
 });
 export type ProfileInput = z.infer<typeof ProfileInputSchema>;
 
@@ -142,6 +183,10 @@ export const ProfileRecordSchema = z.object({
   preferred_tone: z.string().nullable(),
   emphasis_points: z.array(z.string()),
   links: z.array(LinkSchema),
+  education: z.array(EducationSchema),
+  certifications: z.array(CertificationSchema),
+  language_scores: z.array(LanguageScoreSchema),
+  awards: z.array(AwardSchema),
 });
 export type ProfileRecord = z.infer<typeof ProfileRecordSchema>;
 

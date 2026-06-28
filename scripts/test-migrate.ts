@@ -32,7 +32,7 @@ const ok = (name: string, cond: boolean, extra = '') => {
   }
 };
 
-const LATEST = MIGRATIONS.length; // v1,v2,v3 → 3
+const LATEST = MIGRATIONS.length; // v1..v4
 const T = '2026-01-01T00:00:00.000Z';
 
 function newDb(): DatabaseSync {
@@ -43,19 +43,23 @@ function newDb(): DatabaseSync {
   return db;
 }
 
-console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1,v2,v3)`);
-ok('MIGRATIONS 길이 3', LATEST === 3, String(LATEST));
+console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v4)`);
+ok('MIGRATIONS 길이 4', LATEST === 4, String(LATEST));
 
 console.log('\n1) 신규 설치 — from=0 전체 빌드');
 {
   const db = newDb();
   const r = migrate(db);
-  ok('fresh → {from:0, to:3}', r.from === 0 && r.to === LATEST, JSON.stringify(r));
+  ok(`fresh → {from:0, to:${LATEST}}`, r.from === 0 && r.to === LATEST, JSON.stringify(r));
   const ver = (db.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
-  ok('schema_version 기록 = 3', ver === String(LATEST), ver);
+  ok(`schema_version 기록 = ${LATEST}`, ver === String(LATEST), ver);
+  // v4 profile credential columns present, default '[]'.
+  const pcols = (db.prepare(`PRAGMA table_info(profile)`).all() as { name: string }[]).map((c) => c.name);
+  ok('v4 프로필 스펙 컬럼 4종 생성(education·certifications·language_scores·awards)',
+    ['education', 'certifications', 'language_scores', 'awards'].every((c) => pcols.includes(c)), pcols.join(','));
   // idempotent re-run
   const r2 = migrate(db);
-  ok('재실행 멱등 → {from:3, to:3} (무변경)', r2.from === LATEST && r2.to === LATEST, JSON.stringify(r2));
+  ok(`재실행 멱등 → {from:${LATEST}, to:${LATEST}} (무변경)`, r2.from === LATEST && r2.to === LATEST, JSON.stringify(r2));
   db.close();
 }
 
@@ -69,6 +73,8 @@ console.log('\n2) 업그레이드 from=1 — v1 구버전 DB에 실데이터 적
 
   // Old-shape rows: a kept job + valid children, plus orphans the v2 rebuild must repair.
   db.prepare(`INSERT INTO jobs (id,company,position,created_at,updated_at) VALUES (?,?,?,?,?)`).run('job-keep', '회사A', '데이터 분석가', T, T);
+  // A v1 profile row (no spec columns yet) → v4 ALTER must add columns without losing it.
+  db.prepare(`INSERT INTO profile (id,name,created_at,updated_at) VALUES ('singleton','홍길동',?,?)`).run(T, T);
 
   db.prepare(`INSERT INTO cover_letters (id,title,job_id,created_at,updated_at) VALUES (?,?,?,?,?)`).run('cl-keep', '자소서1', 'job-keep', T, T);
   // cover_letter whose job is gone → v2 SET-NULLs job_id but KEEPS the row.
@@ -88,11 +94,16 @@ console.log('\n2) 업그레이드 from=1 — v1 구버전 DB에 실데이터 적
 
   // --- the path under test: incremental from>0 migration ---
   const r = migrate(db);
-  ok('업그레이드 → {from:1, to:3}', r.from === 1 && r.to === LATEST, JSON.stringify(r));
+  ok(`업그레이드 → {from:1, to:${LATEST}}`, r.from === 1 && r.to === LATEST, JSON.stringify(r));
 
   const cnt = (sql: string) => Number((db.prepare(sql).get() as { c: number }).c);
 
   ok('job-keep 보존', cnt(`SELECT COUNT(*) c FROM jobs WHERE id='job-keep'`) === 1);
+  // v4 ALTER over a populated v1 profile: row survives + new spec columns added with default '[]'.
+  const prof = db.prepare(`SELECT name, education, language_scores FROM profile WHERE id='singleton'`).get() as
+    | { name: string; education: string; language_scores: string }
+    | undefined;
+  ok('v1 프로필 행 보존 + v4 스펙 컬럼 default [] 추가', !!prof && prof.name === '홍길동' && prof.education === '[]' && prof.language_scores === '[]', JSON.stringify(prof));
   ok('cl-keep 보존(job_id=job-keep 유지)', cnt(`SELECT COUNT(*) c FROM cover_letters WHERE id='cl-keep' AND job_id='job-keep'`) === 1);
 
   const orphanJob = db.prepare(`SELECT job_id FROM cover_letters WHERE id='cl-orphanjob'`).get() as { job_id: string | null } | undefined;
@@ -118,7 +129,7 @@ console.log('\n2) 업그레이드 from=1 — v1 구버전 DB에 실데이터 적
   ok('마이그레이션 후 foreign_key_check 위반 0건', fkViolations.length === 0, JSON.stringify(fkViolations));
 
   const ver = (db.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
-  ok('schema_version = 3 기록', ver === String(LATEST), ver);
+  ok(`schema_version = ${LATEST} 기록`, ver === String(LATEST), ver);
 
   db.close();
 }

@@ -78,6 +78,22 @@ export function collectVerifyCorpus(jobId?: string | null): VerifyCorpus {
   for (const s of skillRepo.list()) {
     structured.push([s.name, s.level, s.years != null ? `${s.years}년` : ''].filter(Boolean).join(' '));
   }
+  // Profile credentials (학점·어학·자격·수상) — so a cited GPA/score (3.8, TOEIC 920)
+  // traces to stored data and isn't hard-blocked as fabricated. Structured-only ⇒ advisory.
+  // Provenance matching is unit-keyed, and a purely numeric score is cited both bare
+  // ("920") and with the 점 counter ("920점"); emit both forms so neither false-fires.
+  const scoreForms = (s?: string): string =>
+    s && /^\d+(\.\d+)?$/.test(s.trim()) ? `${s.trim()} ${s.trim()}점` : (s ?? '');
+  const prof = profileRepo.get();
+  if (prof) {
+    for (const ed of prof.education) {
+      const gpa = ed.gpa ? `학점 ${ed.gpa}${ed.gpa_scale ? `/${ed.gpa_scale}` : ''}` : '';
+      structured.push([ed.school, ed.degree, ed.major, gpa, ed.status].filter(Boolean).join(' '));
+    }
+    for (const c of prof.certifications) structured.push([c.name, c.issuer, scoreForms(c.score)].filter(Boolean).join(' '));
+    for (const l of prof.language_scores) structured.push(`${l.test} ${scoreForms(l.score)}`);
+    for (const a of prof.awards) structured.push([a.title, a.issuer, a.description].filter(Boolean).join(' '));
+  }
   const job = jobId ? jobRepo.get(jobId) : null;
   const jobText = job ? [job.description, ...(job.requirements ?? []), ...(job.keywords ?? [])].filter(Boolean).join('\n') : '';
   return { documents: documents.join('\n'), structured: structured.join('\n'), job: jobText };

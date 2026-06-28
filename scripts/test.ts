@@ -392,6 +392,13 @@ section('6) 검증 엔진(verify) — 숫자 출처 게이트');
   ok('validate_cover_letter: 상한 초과를 advisory로 반환(차단 아님)', vCount.data?.charLimit?.status === 'over' && vCount.data?.charLimit?.delta === 2 && vCount.isError !== true, JSON.stringify(vCount.data?.charLimit));
   const vNoLimit: any = await tool('validate_cover_letter').handler({ text: '가나다' });
   ok('validate_cover_letter: 한도 없으면 charLimit 없음', vNoLimit.data?.charLimit === undefined && vNoLimit.data?.charCounts?.noSpace === 3);
+
+  // ③ 정량 스펙 필드: 프로필에 어학점수·학력 구조화 저장 → 조회 + 인용한 수치(920)가 환각으로 막히지 않음(corpus 통합)
+  await tool('save_profile').handler({ language_scores: [{ test: 'TOEIC', score: '920' }], education: [{ school: '한국대학교', gpa: '3.8', gpa_scale: '4.5', status: '졸업' }] });
+  const profApi = (await json('GET', '/api/profile')).profile;
+  ok('프로필 정량 스펙(어학·학력) 구조화 저장·조회', profApi.language_scores?.[0]?.score === '920' && profApi.education?.[0]?.gpa === '3.8', JSON.stringify({ ls: profApi.language_scores, ed: profApi.education }));
+  const vSpec: any = await tool('validate_cover_letter').handler({ text: '토익 920점을 취득해 영어 기술 문서를 직접 다뤄 왔습니다.' });
+  ok('저장된 어학점수(920)는 환각으로 차단되지 않음(프로필 스펙 → corpus)', (vSpec.data?.provenance?.fabricated ?? []).every((f: any) => !String(f.raw).includes('920')) && vSpec.data?.blocking?.length === 0, JSON.stringify(vSpec.data?.provenance?.fabricated));
 }
 
 /* ------------------ 7. 배치 입력 + 멱등 upsert (스킬/경력/프로젝트) */
