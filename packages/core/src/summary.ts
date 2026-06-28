@@ -21,6 +21,7 @@ import {
   skillRepo,
   experienceRepo,
   projectRepo,
+  timelineRepo,
 } from '@careermate/db';
 import { getOnboardingStatus } from './onboarding.ts';
 
@@ -287,4 +288,71 @@ export function prescreenJob(jobId: string): JobPrescreen | null {
   }
   const coverage = keywords.length ? matched.length / keywords.length : null;
   return { job_id: jobId, job_keywords: keywords, matched, missing, coverage, user_skill_count: userTokens.size };
+}
+
+/* ----------------------------------------------------------- pipeline stats */
+
+// Application analytics (community U1: "what's my response rate?"). A TRUE
+// ever-reached funnel, not a current-status snapshot: status transitions are
+// logged to the timeline (application_status_changed events), so a job currently
+// 'rejected' still counts toward the furthest stage it reached. Descriptive only
+// — with small N these rates are not predictive; the tool surfaces that caveat.
+const PROGRESSION: ApplicationStatus[] = ['applied', 'document_passed', 'interview', 'final_passed'];
+
+export interface PipelineStats {
+  total: number;
+  /** Current-status snapshot (where each application sits right now). */
+  by_status: { status: ApplicationStatus; label: string; count: number }[];
+  /** Ever-reached counts (reconstructed from the status-change timeline). */
+  funnel: { applied: number; document_passed: number; interview: number; final_passed: number };
+  /** Pass-through rates relative to "ever applied" (percent, 1 d.p.); null when denominator is 0. */
+  rates: { document_pass: number | null; interview: number | null; offer: number | null };
+  outcomes: { final_passed: number; rejected: number; in_progress: number; on_hold: number };
+  note: string;
+}
+
+export function getPipelineStats(): PipelineStats {
+  const applications = applicationRepo.list();
+  const by_status = (Object.keys(APPLICATION_STATUS_LABELS) as ApplicationStatus[]).map((status) => ({
+    status,
+    label: APPLICATION_STATUS_LABELS[status],
+    count: applications.filter((a) => a.status === status).length,
+  }));
+
+  let appliedN = 0, docN = 0, intN = 0, offerN = 0;
+  for (const a of applications) {
+    const reached = new Set<string>([a.status]);
+    if (a.applied_at) reached.add('applied');
+    for (const e of timelineRepo.listByJob(a.job_id)) {
+      if (e.type !== 'application_status_changed') continue;
+      const p = (e.payload ?? {}) as { status?: string; from_status?: string };
+      if (p.status) reached.add(p.status);
+      if (p.from_status) reached.add(p.from_status);
+    }
+    let maxStage = -1;
+    for (const s of reached) maxStage = Math.max(maxStage, PROGRESSION.indexOf(s as ApplicationStatus));
+    if (maxStage >= 0) appliedN++;
+    if (maxStage >= 1) docN++;
+    if (maxStage >= 2) intN++;
+    if (maxStage >= 3) offerN++;
+  }
+
+  const pct = (n: number, d: number): number | null => (d > 0 ? Math.round((n / d) * 1000) / 10 : null);
+  const cur = (s: ApplicationStatus) => applications.filter((a) => a.status === s).length;
+
+  return {
+    total: applications.length,
+    by_status,
+    funnel: { applied: appliedN, document_passed: docN, interview: intN, final_passed: offerN },
+    rates: { document_pass: pct(docN, appliedN), interview: pct(intN, appliedN), offer: pct(offerN, appliedN) },
+    outcomes: {
+      final_passed: cur('final_passed'),
+      rejected: cur('rejected'),
+      in_progress: cur('applied') + cur('document_passed') + cur('interview'),
+      on_hold: cur('on_hold'),
+    },
+    note:
+      '단계별 도달 깔때기는 상태 변경 이력(타임라인)으로 복원한 실측치입니다(현재 rejected여도 거쳐간 최고 단계까지 집계). ' +
+      '비율은 설명용이며 표본이 작으면 예측력이 낮습니다 — 추세 참고로만 쓰세요.',
+  };
 }

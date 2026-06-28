@@ -61,6 +61,7 @@ import {
   saveInterviewPrep,
   listRecentActivity,
   getActionDigest,
+  getPipelineStats,
   prescreenJob,
   jobWithMeta,
   previewCoverLetter,
@@ -1010,6 +1011,24 @@ export const TOOLS: ToolDef[] = [
         ? '지금 당장 챙길 후속 항목이 없습니다(무응답 지원·임박 마감·면접 준비 대기 없음).'
         : `챙길 항목 ${n}건: 후속 ${d.followups.length} · 마감 ${d.deadlines.length} · 면접준비 ${d.interview_todo.length}`;
       return ok(msg, d);
+    },
+  },
+  {
+    name: 'get_pipeline_stats',
+    title: '지원 파이프라인 분석(깔때기·합격률)',
+    description:
+      '전체 지원 현황을 분석해 돌려줍니다: 현재 상태 분포(by_status), 단계별 도달 깔때기(funnel: 지원→서류합격→면접→최종, 상태 변경 이력으로 복원한 실측치라 현재 불합격이어도 거쳐간 최고 단계까지 집계), 통과율(rates: 서류·면접·최종, 지원 대비 %), 결과 요약(outcomes). 사용자가 "내 합격률 어때?", "지원 통계 보여줘", "어느 단계에서 많이 떨어져?"라고 물을 때 사용하세요. 비율은 설명용이며 표본이 작으면 예측력이 낮다는 점을 함께 전하세요(note 참고). 읽기 전용입니다.',
+    inputSchema: {},
+    readOnly: true,
+    handler: () => {
+      const s = getPipelineStats();
+      if (s.total === 0) return ok('아직 지원 내역이 없어 분석할 통계가 없습니다.', s);
+      const r = s.rates;
+      const fmt = (v: number | null) => (v == null ? '—' : `${v}%`);
+      return ok(
+        `지원 ${s.total}건 · 깔때기 지원 ${s.funnel.applied}→서류 ${s.funnel.document_passed}→면접 ${s.funnel.interview}→최종 ${s.funnel.final_passed} · 통과율 서류 ${fmt(r.document_pass)}·면접 ${fmt(r.interview)}·최종 ${fmt(r.offer)} (표본 작으면 추세 참고로만)`,
+        s,
+      );
     },
   },
   {
