@@ -1,6 +1,6 @@
 {
   "name": "careermate",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "type": "module",
   "description": "CareerMate — an MCP-first, local-first career workspace. Connect it to a local AI agent (Claude Desktop, Claude Code, Codex); CareerMate stores your career data locally on your machine and exposes it over MCP.",
   "license": "MIT",
