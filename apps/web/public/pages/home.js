@@ -45,7 +45,7 @@ export async function render(ctx) {
   }
 
   if (!s.onboarding.completed) wrap.append(GettingStarted(s.onboarding));
-  wrap.append(StatRow(s.counts));
+  wrap.append(StatRow(s));
   wrap.append(Pipeline(s.status_breakdown));
   wrap.append(el('div', { class: 'grid grid--2' },
     el('div', { class: 'stack-4' }, ActionLane(s), RecentJobs(s.recent_jobs)),
@@ -96,15 +96,35 @@ function GettingStarted(o) {
 }
 
 /* ----------------------------------------------- KPI summary tiles (at-a-glance) */
-function StatTile(label, value, iconName, to) {
-  const tile = Stat({ label, value, iconName, onClick: () => navigate(to) });
+function StatTile(label, value, iconName, to, hint) {
+  const tile = Stat({ label, value, hint, iconName, onClick: () => navigate(to) });
   tile.classList.add('is-clickable');
   return tile;
 }
-function StatRow(counts) {
+function StatRow(s) {
+  const counts = s.counts;
+  const by = Object.fromEntries((s.status_breakdown || []).map((b) => [b.status, b.count]));
+  const c = (st) => by[st] || 0;
+
+  // Contextual sub-lines use only real counts (never invented). Tiles with no
+  // meaningful secondary signal (cover letters, interview prep) stay clean — the
+  // .stat min-height keeps the row even either way.
+
+  // 저장 공고 → how many postings still await action (not yet applied).
+  const notApplied = c('draft') + c('planned');
+  const jobsHint = notApplied > 0 ? t('home.stat.jobsSub', { count: notApplied }) : null;
+
+  // 진행 중 지원 → surface the most advanced active stages (interview → screening
+  // → applied), up to two, so the number carries a "where are they" breakdown.
+  const activeHint = [
+    c('interview') ? t('home.stat.subInterview', { count: c('interview') }) : null,
+    c('document_passed') ? t('home.stat.subDocPassed', { count: c('document_passed') }) : null,
+    c('applied') ? t('home.stat.subApplied', { count: c('applied') }) : null,
+  ].filter(Boolean).slice(0, 2).join(' · ') || null;
+
   return el('div', { class: 'grid grid--4' },
-    StatTile(t('home.stat.jobs'), counts.jobs, 'briefcase', '/jobs'),
-    StatTile(t('home.stat.activeApplications'), counts.active_applications, 'layers', '/applications'),
+    StatTile(t('home.stat.jobs'), counts.jobs, 'briefcase', '/jobs', jobsHint),
+    StatTile(t('home.stat.activeApplications'), counts.active_applications, 'layers', '/applications', activeHint),
     StatTile(t('home.stat.coverLetters'), counts.cover_letters, 'file', '/documents'),
     StatTile(t('home.stat.interviewPending'), counts.interview_pending, 'mic', '/interview'),
   );

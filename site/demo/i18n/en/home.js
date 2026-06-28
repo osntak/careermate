@@ -37,6 +37,11 @@ export default {
   'home.stat.activeApplications': 'Active applications',
   'home.stat.coverLetters': 'Cover letters',
   'home.stat.interviewPending': 'Interview prep',
+  // KPI tile context sub-lines (derived from real counts; omitted when zero)
+  'home.stat.jobsSub': '{{count}} to apply',
+  'home.stat.subInterview': 'Interview {{count}}',
+  'home.stat.subDocPassed': 'Screening {{count}}',
+  'home.stat.subApplied': 'Applied {{count}}',
 
   // pipeline
   'home.pipeline.title': 'Application pipeline',

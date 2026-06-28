@@ -201,14 +201,16 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .card.is-clickable { cursor: pointer; transition: border-color .12s, box-shadow .12s, transform .12s; }
 .card.is-clickable:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
 
-/* stat tiles */
-.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; }
+/* stat tiles — slim, dense KPI row (home only). A contextual hint line, when
+   present, sits at the bottom so tiles align evenly whether or not they carry one. */
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 12px 15px; min-height: 84px; display: flex; flex-direction: column; }
 .stat.is-clickable { cursor: pointer; transition: border-color .12s, box-shadow .12s; }
 .stat.is-clickable:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
 .stat__label { font-size: 13px; color: var(--text-secondary); display:flex; align-items:center; gap:7px; }
 .stat__label svg { width: 15px; height: 15px; color: var(--text-tertiary); }
-.stat__value { font-size: 26px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; }
-.stat__hint { font-size: 12.5px; color: var(--text-tertiary); margin-top: 2px; }
+.stat__value { font-size: 23px; font-weight: 700; letter-spacing: -.02em; margin-top: 3px; line-height: 1.15; }
+.stat__hint { font-size: 12.5px; color: var(--text-tertiary); margin-top: auto; padding-top: 6px; }
 /* borderless count strip (settings 내 데이터) — flat counts, never a card-in-card */
 .countstrip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 24px; }
 .countstrip__item { display: flex; flex-direction: column; gap: 2px; }
@@ -378,6 +380,24 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .app-group__dot { width: 9px; height: 9px; border-radius: 999px; flex: none; }
 .app-group__title { font-weight: 650; font-size: 15px; letter-spacing: -.01em; }
 .app-group__count { margin-left: auto; color: var(--text-tertiary); font-size: 13px; }
+
+/* applications row trailing — keep the right edge informative (never empty):
+   right-aligned score column, an optional D-day chip, then the status. The status
+   shows a calm badge at rest and swaps to the inline change-select on hover/focus
+   (display swap, not opacity, so the hidden control reserves no width). */
+.app-score { min-width: 42px; text-align: right; font-size: 13.5px; }
+.app-dday { color: var(--text-tertiary); }
+.app-dday--urgent { color: var(--amber); }
+.app-status { display: inline-flex; align-items: center; }
+.app-status .select { display: none; }
+.list-row:hover .app-status .badge,
+.list-row:focus-within .app-status .badge { display: none; }
+.list-row:hover .app-status .select,
+.list-row:focus-within .app-status .select { display: inline-flex; }
+@media (hover: none) {
+  .app-status .badge { display: none; }
+  .app-status .select { display: inline-flex; }
+}
 
 /* row-level action (e.g. status select) — hidden until the row is hovered or
    focused, so grouped lists stay calm. Always shown where hover isn't available. */

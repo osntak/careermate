@@ -1,7 +1,7 @@
 // Applications — every application grouped by status in a calm VERTICAL list
 // (no horizontal scroll). Change a status inline to move an item between groups.
 import {
-  el, get, put, navigate, EmptyState, Btn, ListRow,
+  el, get, put, navigate, EmptyState, Btn, ListRow, Badge,
   Select, scoreClass, statusColor, mount, toast, toastOk, toastError,
 } from '/demo/lib.js';
 import { t } from '/demo/i18n.js';
@@ -66,20 +66,24 @@ export async function render(ctx) {
     const sel = Select(
       statusOptions.map((o) => ({ ...o, selected: o.value === app.status })),
       {
-        class: 'select select--sm row-action',
+        class: 'select select--sm',
         title: t('applications.statusSelect.title'),
         onClick: (e) => e.stopPropagation(),
         onChange: (e) => { e.stopPropagation(); changeStatus(app, e.target.value, e.target); },
       },
     );
+    // Keep the right edge informative on every row: a right-aligned score column
+    // (a muted dash when not yet scored, so scores line up and "no score" reads
+    // clearly), then the status — a calm badge that swaps to the change-select on hover.
+    const score = app.fit_score != null
+      ? el('span', { class: `app-score strong tnum ${scoreClass(app.fit_score)}` }, t('applications.row.score', { score: app.fit_score }))
+      : el('span', { class: 'app-score muted tnum' }, '—');
     return ListRow({
       title: job.company || '—',
       sub: subBits.join(' · '),
       trailing: [
-        app.fit_score != null
-          ? el('span', { class: `strong tnum ${scoreClass(app.fit_score)}` }, t('applications.row.score', { score: app.fit_score }))
-          : null,
-        sel,
+        score,
+        el('span', { class: 'app-status' }, Badge(app.status, t('status.' + app.status)), sel),
       ],
       onClick: () => navigate(`/jobs/${app.job_id}`),
     });

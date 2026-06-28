@@ -28,6 +28,11 @@ export default {
   'home.stat.activeApplications': '진행 중 지원',
   'home.stat.coverLetters': '자기소개서',
   'home.stat.interviewPending': '면접 준비',
+  // KPI tile context sub-lines (derived from real counts; omitted when zero)
+  'home.stat.jobsSub': '지원 전 {{count}}건',
+  'home.stat.subInterview': '면접 {{count}}',
+  'home.stat.subDocPassed': '서류 {{count}}',
+  'home.stat.subApplied': '지원 {{count}}',
 
   // pipeline
   'home.pipeline.title': '지원 파이프라인',
