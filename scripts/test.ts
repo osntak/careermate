@@ -399,6 +399,11 @@ section('6) 검증 엔진(verify) — 숫자 출처 게이트');
   ok('프로필 정량 스펙(어학·학력) 구조화 저장·조회', profApi.language_scores?.[0]?.score === '920' && profApi.education?.[0]?.gpa === '3.8', JSON.stringify({ ls: profApi.language_scores, ed: profApi.education }));
   const vSpec: any = await tool('validate_cover_letter').handler({ text: '토익 920점을 취득해 영어 기술 문서를 직접 다뤄 왔습니다.' });
   ok('저장된 어학점수(920)는 환각으로 차단되지 않음(프로필 스펙 → corpus)', (vSpec.data?.provenance?.fabricated ?? []).every((f: any) => !String(f.raw).includes('920')) && vSpec.data?.blocking?.length === 0, JSON.stringify(vSpec.data?.provenance?.fabricated));
+
+  // ② 기업 리서치 필드: 공고에 인재상·핵심가치·사업개요 저장 → 조회(자소서·면접 정렬용)
+  const jobCo: any = await tool('save_job_posting').handler({ company: '컬처핏테크', position: '백엔드 엔지니어', talent_profile: '주도적으로 문제를 정의하고 해결하는 사람', core_values: ['고객집착', '실험정신'], company_overview: '핀테크 결제 플랫폼, 최근 송금 서비스 출시' });
+  const coJob = (await json('GET', `/api/jobs/${jobCo.data?.id}`)).job;
+  ok('공고 기업리서치(인재상·핵심가치·사업개요) 저장·조회', coJob.talent_profile?.includes('주도적') && coJob.core_values?.length === 2 && coJob.company_overview?.includes('핀테크'), JSON.stringify({ t: coJob.talent_profile, cv: coJob.core_values, o: coJob.company_overview }));
 }
 
 /* ------------------ 7. 배치 입력 + 멱등 upsert (스킬/경력/프로젝트) */

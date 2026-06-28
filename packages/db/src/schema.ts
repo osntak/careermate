@@ -312,6 +312,15 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE profile ADD COLUMN language_scores TEXT NOT NULL DEFAULT '[]';
   ALTER TABLE profile ADD COLUMN awards TEXT NOT NULL DEFAULT '[]';
   `,
+
+  // v5 — company research on the job posting (사업개요·인재상·핵심가치). Korea-centric: cover
+  // letters and interview prep align to a company's 인재상/핵심가치, so store it where the AI
+  // already reads it (the job context) rather than a separate entity. Additive ALTER, idempotent.
+  `
+  ALTER TABLE jobs ADD COLUMN company_overview TEXT;
+  ALTER TABLE jobs ADD COLUMN talent_profile TEXT;
+  ALTER TABLE jobs ADD COLUMN core_values TEXT NOT NULL DEFAULT '[]';
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

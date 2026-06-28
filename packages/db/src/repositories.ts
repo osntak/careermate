@@ -656,6 +656,9 @@ function mapJob(r: any): JobRecord {
     keywords: fromJson(r.keywords, []),
     deadline: r.deadline,
     source: r.source,
+    company_overview: r.company_overview ?? null,
+    talent_profile: r.talent_profile ?? null,
+    core_values: fromJson(r.core_values, []),
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
@@ -688,7 +691,7 @@ export const jobRepo = {
     if (existing) {
       const m = { ...existing, ...input } as JobRecord;
       db.prepare(
-        `UPDATE jobs SET company=?,position=?,url=?,location=?,employment_type=?,description=?,requirements=?,keywords=?,deadline=?,source=?,updated_at=? WHERE id=?`,
+        `UPDATE jobs SET company=?,position=?,url=?,location=?,employment_type=?,description=?,requirements=?,keywords=?,deadline=?,source=?,company_overview=?,talent_profile=?,core_values=?,updated_at=? WHERE id=?`,
       ).run(
         m.company,
         m.position,
@@ -700,6 +703,9 @@ export const jobRepo = {
         toJson(m.keywords ?? []),
         m.deadline ?? null,
         m.source ?? null,
+        m.company_overview ?? null,
+        m.talent_profile ?? null,
+        toJson(m.core_values ?? []),
         ts,
         existing.id,
       );
@@ -707,8 +713,8 @@ export const jobRepo = {
     }
     const newJobId = id ?? newId('job_');
     db.prepare(
-      `INSERT INTO jobs (id,company,position,url,location,employment_type,description,requirements,keywords,deadline,source,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO jobs (id,company,position,url,location,employment_type,description,requirements,keywords,deadline,source,company_overview,talent_profile,core_values,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     ).run(
       newJobId,
       input.company,
@@ -721,6 +727,9 @@ export const jobRepo = {
       toJson(input.keywords ?? []),
       input.deadline ?? null,
       input.source ?? null,
+      input.company_overview ?? null,
+      input.talent_profile ?? null,
+      toJson(input.core_values ?? []),
       ts,
       ts,
     );

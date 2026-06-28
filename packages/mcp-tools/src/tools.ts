@@ -608,7 +608,7 @@ export const TOOLS: ToolDef[] = [
     name: 'save_job_posting',
     title: '채용공고 저장',
     description:
-      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
+      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요 — 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
     inputSchema: JobInputSchema.shape,
     handler: (args) => {
       const { job } = saveJobPosting(args);

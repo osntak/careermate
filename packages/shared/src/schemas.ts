@@ -391,6 +391,9 @@ export const JobInputSchema = z.object({
   keywords: strList.optional().describe('핵심 키워드'),
   deadline: z.string().max(MAX_LINE).optional().describe('마감일 YYYY-MM-DD'),
   source: z.string().max(MAX_LINE).optional().describe('출처 (사람인/원티드/직접 입력 등)'),
+  company_overview: optBody.describe('회사 사업개요·미션·주요 제품·최근 활동 (AI가 리서치해 채움)'),
+  talent_profile: optBody.describe('회사가 강조하는 인재상 (한국 자소서·면접에서 정렬 기준)'),
+  core_values: strList.optional().describe('회사 핵심가치 (키워드 배열)'),
 });
 export type JobInput = z.infer<typeof JobInputSchema>;
 
@@ -406,6 +409,9 @@ export const JobRecordSchema = z.object({
   keywords: z.array(z.string()),
   deadline: z.string().nullable(),
   source: z.string().nullable(),
+  company_overview: z.string().nullable(),
+  talent_profile: z.string().nullable(),
+  core_values: z.array(z.string()),
 });
 export type JobRecord = z.infer<typeof JobRecordSchema>;
 

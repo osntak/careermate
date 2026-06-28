@@ -32,7 +32,7 @@ const ok = (name: string, cond: boolean, extra = '') => {
   }
 };
 
-const LATEST = MIGRATIONS.length; // v1..v4
+const LATEST = MIGRATIONS.length; // v1..v5
 const T = '2026-01-01T00:00:00.000Z';
 
 function newDb(): DatabaseSync {
@@ -43,8 +43,8 @@ function newDb(): DatabaseSync {
   return db;
 }
 
-console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v4)`);
-ok('MIGRATIONS 길이 4', LATEST === 4, String(LATEST));
+console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v5)`);
+ok('MIGRATIONS 길이 5', LATEST === 5, String(LATEST));
 
 console.log('\n1) 신규 설치 — from=0 전체 빌드');
 {
@@ -57,6 +57,9 @@ console.log('\n1) 신규 설치 — from=0 전체 빌드');
   const pcols = (db.prepare(`PRAGMA table_info(profile)`).all() as { name: string }[]).map((c) => c.name);
   ok('v4 프로필 스펙 컬럼 4종 생성(education·certifications·language_scores·awards)',
     ['education', 'certifications', 'language_scores', 'awards'].every((c) => pcols.includes(c)), pcols.join(','));
+  const jcols = (db.prepare(`PRAGMA table_info(jobs)`).all() as { name: string }[]).map((c) => c.name);
+  ok('v5 공고 기업리서치 컬럼 3종 생성(company_overview·talent_profile·core_values)',
+    ['company_overview', 'talent_profile', 'core_values'].every((c) => jcols.includes(c)), jcols.join(','));
   // idempotent re-run
   const r2 = migrate(db);
   ok(`재실행 멱등 → {from:${LATEST}, to:${LATEST}} (무변경)`, r2.from === LATEST && r2.to === LATEST, JSON.stringify(r2));
@@ -99,6 +102,11 @@ console.log('\n2) 업그레이드 from=1 — v1 구버전 DB에 실데이터 적
   const cnt = (sql: string) => Number((db.prepare(sql).get() as { c: number }).c);
 
   ok('job-keep 보존', cnt(`SELECT COUNT(*) c FROM jobs WHERE id='job-keep'`) === 1);
+  // v5 ALTER over a populated v1 jobs row: company + new research columns (core_values default []).
+  const jobKeep = db.prepare(`SELECT company, core_values FROM jobs WHERE id='job-keep'`).get() as
+    | { company: string; core_values: string }
+    | undefined;
+  ok('v1 공고 행 보존 + v5 기업리서치 컬럼 default [] 추가', !!jobKeep && jobKeep.company === '회사A' && jobKeep.core_values === '[]', JSON.stringify(jobKeep));
   // v4 ALTER over a populated v1 profile: row survives + new spec columns added with default '[]'.
   const prof = db.prepare(`SELECT name, education, language_scores FROM profile WHERE id='singleton'`).get() as
     | { name: string; education: string; language_scores: string }
