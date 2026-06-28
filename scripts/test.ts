@@ -91,6 +91,10 @@ ok('get_application_context 집계', ctx.job?.id === apiJob.id && ctx.fit_analys
 const cl = (await json('POST', '/api/cover-letters', { title: '라인 자소서', job_id: apiJob.id, content: 'v1' }, { 'x-careermate-token': SESSION_TOKEN })).cover_letter;
 await authed('POST', `/api/cover-letters/${cl.id}/versions`, { content: 'v2', note: '보강' });
 ok('자소서 버전 관리', (await json('GET', `/api/cover-letters/${cl.id}`)).cover_letter.version_count === 2);
+// 회귀: 새 버전을 (job_id 없이) 추가해도 공고 연결이 유지돼야 한다. (버그: addVersion이
+// undefined→null 강제로 job_id를 지워 공고 상세에서 자소서가 사라졌음.)
+ok('자소서 새 버전 저장이 공고 연결을 유지(회귀)',
+  (await json('GET', `/api/jobs/${apiJob.id}`)).job.cover_letters.some((c: any) => c.id === cl.id));
 const timelineBeforeApply = (await json('GET', `/api/jobs/${apiJob.id}`)).job.timeline;
 ok(
   '공고 상세 타임라인: 공고 등록/분석/자소서 이벤트',

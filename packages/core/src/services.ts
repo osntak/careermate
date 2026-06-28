@@ -280,7 +280,11 @@ export function saveCoverLetterVersion(input: CoverLetterVersionInput & { force?
   const { coverLetter, version } = coverLetterRepo.addVersion({
     cover_letter_id: input.cover_letter_id,
     title: input.title,
-    job_id: input.job_id ?? null,
+    // Pass job_id through verbatim — do NOT coerce undefined→null here. addVersion
+    // treats `undefined` as "leave the link alone" and `null` as "clear it"; the old
+    // `?? null` wiped a cover letter's job link whenever a new version was saved
+    // without re-specifying job_id (e.g. editing an existing letter).
+    job_id: input.job_id,
     content: input.content,
     note: input.note,
     source: input.source ?? 'ai',
@@ -295,7 +299,9 @@ export function saveCoverLetterVersion(input: CoverLetterVersionInput & { force?
   }
   activityRepo.log(
     'cover_letter_version_saved',
-    `${coverLetter.title} 자기소개서 v${version.version_no}를 저장했습니다.`,
+    // Title already names the document (often ends in "자기소개서") — don't append the
+    // word again or it doubles ("…자기소개서 자기소개서 v2"). Title + version is enough.
+    `${coverLetter.title} v${version.version_no}를 저장했습니다.`,
     'cover_letter',
     coverLetter.id,
   );
