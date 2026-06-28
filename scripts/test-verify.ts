@@ -9,6 +9,8 @@ import {
   analyzeProvenance,
   lintArtifact,
   styleSignals,
+  countChars,
+  checkCharLimit,
   type VerifyCorpus,
 } from '../packages/core/src/verify/index.ts';
 
@@ -83,6 +85,27 @@ console.log('\n4) 문체 신호 (advisory)');
   ok('번역투(통해) 감지', ids.includes('translationese'), ids.join(','));
   ok('클리셰(귀사) 감지', ids.includes('cliche'), ids.join(','));
   ok('문체 신호는 차단 아님', lintArtifact('cover_letter', '저는 항상 데이터의 힘을 믿어왔습니다. 귀사에 기여하고 싶습니다.', corpus).blocking.length === 0);
+}
+
+console.log('\n6) 글자수 카운터 (공백포함/제외/byte) + 한도');
+{
+  const c = countChars('가 나\n다');
+  ok('공백포함=코드포인트(가 나\\n다 → 5)', c.withSpace === 5, JSON.stringify(c));
+  ok('공백제외=모든 공백 제거(→ 3)', c.noSpace === 3, JSON.stringify(c));
+  ok('byte=UTF-8(한글3·공백1·\\n1 → 11)', c.byte === 11, JSON.stringify(c));
+  ok('영문 a b → 공백포함3·공백제외2·byte3', (() => { const x = countChars('a b'); return x.withSpace === 3 && x.noSpace === 2 && x.byte === 3; })());
+  ok('emoji 😀 → 코드포인트1·byte4(서로게이트 안전)', (() => { const x = countChars('😀'); return x.withSpace === 1 && x.byte === 4; })());
+
+  ok('한도 없음 → no_limit', checkCharLimit('가나다', {}).status === 'no_limit');
+  ok('기본 모드 = 공백포함', checkCharLimit('가 나', {}).mode === 'with_space');
+  const over = checkCharLimit('가나다라마바', { max: 5 });
+  ok('초과 → over + delta(6−5=1)', over.status === 'over' && over.count === 6 && over.delta === 1, JSON.stringify(over));
+  const under = checkCharLimit('가나', { min: 5 });
+  ok('미달 → under + delta(5−2=3)', under.status === 'under' && under.delta === 3, JSON.stringify(under));
+  ok('범위 내 → ok', checkCharLimit('가나다', { min: 2, max: 5 }).status === 'ok');
+  ok('mode=no_space 적용(가 나 다, max3 → ok)', checkCharLimit('가 나 다', { max: 3, mode: 'no_space' }).status === 'ok');
+  const byteOver = checkCharLimit('가나', { max: 5, mode: 'byte' });
+  ok('mode=byte 적용(가나=6byte, max5 → over)', byteOver.status === 'over' && byteOver.count === 6, JSON.stringify(byteOver));
 }
 
 console.log(`\nVERIFY_VERDICT ${fail === 0 ? 'PASS' : 'FAIL'}  (pass=${pass} fail=${fail})`);

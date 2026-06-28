@@ -386,6 +386,12 @@ section('6) 검증 엔진(verify) — 숫자 출처 게이트');
   ok('공고의 5년이 본인 5년을 지지하지 않음', analyzeProvenance('5년 경험이 있습니다', corpus).jobSourced.length === 1);
   ok('코퍼스 없으면 차단 안 함', lintArtifact('cover_letter', '250% 향상', { documents: '', structured: '', job: '' }).blocking.length === 0);
   ok('엄격 모드: 구조화 전용 수치(12→3)도 차단', lintArtifact('cover_letter', '12건에서 3건으로 줄였습니다', corpus, { strict: true }).blocking.length === 1);
+  // 글자수 카운터: validate_cover_letter가 결정론 카운트 + 상·하한 advisory를 반환 (LLM은 글자수를 못 셈)
+  const vCount: any = await tool('validate_cover_letter').handler({ text: '가나다라마', max_chars: 3 });
+  ok('validate_cover_letter: 글자수 3모드 카운트 반환', vCount.data?.charCounts?.withSpace === 5 && vCount.data?.charCounts?.byte === 15, JSON.stringify(vCount.data?.charCounts));
+  ok('validate_cover_letter: 상한 초과를 advisory로 반환(차단 아님)', vCount.data?.charLimit?.status === 'over' && vCount.data?.charLimit?.delta === 2 && vCount.isError !== true, JSON.stringify(vCount.data?.charLimit));
+  const vNoLimit: any = await tool('validate_cover_letter').handler({ text: '가나다' });
+  ok('validate_cover_letter: 한도 없으면 charLimit 없음', vNoLimit.data?.charLimit === undefined && vNoLimit.data?.charCounts?.noSpace === 3);
 }
 
 /* ------------------ 7. 배치 입력 + 멱등 upsert (스킬/경력/프로젝트) */

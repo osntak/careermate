@@ -8,4 +8,5 @@
  */
 export * from './normalize.ts';
 export * from './lexicons.ts';
+export * from './charcount.ts';
 export * from './lint.ts';

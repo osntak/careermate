@@ -63,6 +63,7 @@ import {
   jobWithMeta,
   previewCoverLetter,
   summarizeReport,
+  checkCharLimit,
 } from '@careermate/core';
 import { getWritingStyleGuide } from '@careermate/prompts';
 import { getWorkflow, renderWorkflowMarkdown, WORKFLOWS } from '@careermate/workflows';
@@ -1077,14 +1078,20 @@ export const TOOLS: ToolDef[] = [
     name: 'validate_cover_letter',
     title: '자기소개서 자동 점검 (저장 전 미리보기)',
     description:
-      '자기소개서를 save_cover_letter_version으로 저장하기 직전에 호출하면, 저장하지 않고 미리 점검만 합니다. CareerMate가 LLM 없이 결정론으로 (1) 본문의 정량 수치가 저장된 경력·이력서·프로젝트에 근거가 있는지(없으면 환각 의심 → 저장 시 차단됨), (2) 공고에서 가져온 수치를 본인 성과처럼 쓰지 않았는지, (3) 번역투·제너릭 도입·빈 형용사·블라인드 위반 같은 문체 신호를 세어 돌려줍니다. 점검은 셀 수 있는 것만 봅니다 — 사실성·동문서답 같은 의미 판단은 당신(AI)이 직접 하세요. job_id를 주면 공고 수치까지 비교합니다.',
+      '자기소개서를 save_cover_letter_version으로 저장하기 직전에 호출하면, 저장하지 않고 미리 점검만 합니다. CareerMate가 LLM 없이 결정론으로 (1) 본문의 정량 수치가 저장된 경력·이력서·프로젝트에 근거가 있는지(없으면 환각 의심 → 저장 시 차단됨), (2) 공고에서 가져온 수치를 본인 성과처럼 쓰지 않았는지, (3) 번역투·제너릭 도입·빈 형용사·블라인드 위반 같은 문체 신호를 세어 돌려줍니다. 또 (4) 글자수를 공백포함·공백제외·UTF-8 byte 세 기준으로 정확히 세고, min_chars/max_chars를 주면 상·하한 충족 여부까지 돌려줍니다(LLM은 글자수를 정확히 못 세므로 이 기능을 쓰세요). 점검은 셀 수 있는 것만 봅니다 — 사실성·동문서답 같은 의미 판단은 당신(AI)이 직접 하세요. 한국 문항형 자소서는 문항마다 글자수 한도가 다르니 각 문항 본문을 그 문항의 한도로 따로 점검하세요. job_id를 주면 공고 수치까지 비교합니다.',
     inputSchema: {
-      text: z.string().max(200_000).describe('점검할 자기소개서 본문'),
+      text: z.string().max(200_000).describe('점검할 자기소개서 본문(문항형이면 한 문항 본문)'),
       job_id: z.string().optional().describe('연결할 공고(있으면 공고 수치까지 비교)'),
       strict: z
         .boolean()
         .optional()
         .describe('이번 점검만 엄격하게(이력서 본문에 근거 없는 수치도 차단). 사용자가 "엄격하게 봐줘"라고 할 때 true. 생략하면 저장된 모드를 따름'),
+      min_chars: z.number().int().positive().optional().describe('글자수 하한(이 문항 기준). 미달이면 알려줍니다'),
+      max_chars: z.number().int().positive().optional().describe('글자수 상한(이 문항 기준). 초과면 알려줍니다'),
+      count_mode: z
+        .enum(['with_space', 'no_space', 'byte'])
+        .optional()
+        .describe('글자수 기준: with_space=공백포함(기본), no_space=공백제외, byte=UTF-8 바이트. 공고가 지정한 기준을 쓰고, 모르면 공백포함'),
     },
     readOnly: true,
     handler: (args) => {
@@ -1095,7 +1102,25 @@ export const TOOLS: ToolDef[] = [
         ? `⛔ 이대로 저장하면 막힙니다 — ${report.blocking.map((b) => `${b.label}: ${b.detail}`).join('; ')}`
         : '✅ 자동 차단 항목 없음(셀 수 있는 항목 기준).';
       const modeLine = report.strict ? '\n(엄격 모드 적용 중)' : '';
-      return ok(`${verdict}${modeLine}\n${summarizeReport(report)}\n\n${report.disclaimer}`, report);
+
+      // Deterministic char count (chatbots can't count reliably) + optional limit check.
+      const cc = report.charCounts;
+      let charLine = `\n글자수 — 공백포함 ${cc.withSpace}자 · 공백제외 ${cc.noSpace}자 · ${cc.byte}byte`;
+      const min = typeof args?.min_chars === 'number' ? args.min_chars : undefined;
+      const max = typeof args?.max_chars === 'number' ? args.max_chars : undefined;
+      let charLimit;
+      if (min !== undefined || max !== undefined) {
+        charLimit = checkCharLimit(text, { min, max, mode: args?.count_mode });
+        const mLabel = charLimit.mode === 'no_space' ? '공백제외' : charLimit.mode === 'byte' ? 'byte' : '공백포함';
+        const unit = charLimit.mode === 'byte' ? 'byte' : '자';
+        if (charLimit.status === 'over') charLine += `\n⚠️ 한도 초과(${mLabel} ${charLimit.count}${unit} / 상한 ${max}${unit}) — ${charLimit.delta}${unit} 줄이세요`;
+        else if (charLimit.status === 'under') charLine += `\n⚠️ 하한 미달(${mLabel} ${charLimit.count}${unit} / 하한 ${min}${unit}) — ${charLimit.delta}${unit} 더 쓰세요`;
+        else charLine += `\n✅ 글자수 한도 충족(${mLabel} ${charLimit.count}${unit})`;
+      }
+      return ok(`${verdict}${modeLine}\n${summarizeReport(report)}${charLine}\n\n${report.disclaimer}`, {
+        ...report,
+        charLimit,
+      });
     },
   },
   {

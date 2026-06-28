@@ -24,6 +24,7 @@ import {
   type NumberToken,
 } from './normalize.ts';
 import { STYLE_LEXICONS, countHits } from './lexicons.ts';
+import { countChars, type CharCounts } from './charcount.ts';
 
 export type Severity = 'critical' | 'warn' | 'info';
 
@@ -66,7 +67,10 @@ export interface ProvenanceResult {
 
 export interface LintReport {
   kind: 'cover_letter' | 'fit' | 'interview' | 'resume';
+  /** Normalized code-point length (kept for backward compat). For form length use charCounts. */
   charCount: number;
+  /** Deterministic counts on the RAW text (what a submission form counts), three Korean conventions. */
+  charCounts: CharCounts;
   /** Advisory style signals (never block). */
   signals: Signal[];
   provenance: ProvenanceResult;
@@ -225,6 +229,7 @@ export function lintArtifact(
   return {
     kind,
     charCount: [...norm].length,
+    charCounts: countChars(text),
     signals,
     provenance,
     blocking,
