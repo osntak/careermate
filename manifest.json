@@ -131,6 +131,10 @@
       "description": "저장된 공고 목록"
     },
     {
+      "name": "prescreen_job",
+      "description": "공고 사전 프리스크린(키워드 겹침)"
+    },
+    {
       "name": "delete_job_posting",
       "description": "채용공고 삭제"
     },
@@ -173,6 +177,14 @@
     {
       "name": "list_recent_activity",
       "description": "최근 활동 조회"
+    },
+    {
+      "name": "get_followups",
+      "description": "후속 조치 알림(무응답 지원·마감·면접준비)"
+    },
+    {
+      "name": "get_pipeline_stats",
+      "description": "지원 파이프라인 분석(깔때기·합격률)"
     },
     {
       "name": "get_workflow_guide",
