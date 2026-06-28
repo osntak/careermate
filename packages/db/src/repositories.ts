@@ -895,6 +895,9 @@ export const applicationRepo = {
 /* --------------------------------------------------------- Interview preps */
 
 function mapInterviewPrep(r: any): InterviewPrepRecord {
+  // debrief defaults to '{}' at the DB level; surface an empty debrief as null so
+  // consumers can treat "no debrief yet" uniformly.
+  const debrief = fromJson(r.debrief, null);
   return {
     id: r.id,
     job_id: r.job_id,
@@ -902,6 +905,7 @@ function mapInterviewPrep(r: any): InterviewPrepRecord {
     star_guides: fromJson(r.star_guides, []),
     self_introduction: r.self_introduction,
     notes: r.notes,
+    debrief: debrief && Object.keys(debrief).length ? debrief : null,
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
@@ -923,13 +927,19 @@ export const interviewRepo = {
     const ts = now();
     if (existing) {
       const m = { ...existing, ...input } as InterviewPrepRecord;
+      // Debrief is shallow-merged (not replaced) so a later partial debrief save
+      // doesn't wipe earlier fields; prep (pre) and debrief (post) coexist per job.
+      const mergedDebrief = input.debrief
+        ? { ...(existing.debrief ?? {}), ...input.debrief }
+        : existing.debrief;
       db.prepare(
-        `UPDATE interview_preps SET questions=?,star_guides=?,self_introduction=?,notes=?,updated_at=? WHERE id=?`,
+        `UPDATE interview_preps SET questions=?,star_guides=?,self_introduction=?,notes=?,debrief=?,updated_at=? WHERE id=?`,
       ).run(
         toJson(m.questions ?? []),
         toJson(m.star_guides ?? []),
         m.self_introduction ?? null,
         m.notes ?? null,
+        toJson(mergedDebrief ?? {}),
         ts,
         existing.id,
       );
@@ -937,7 +947,7 @@ export const interviewRepo = {
     }
     const id = newId('itv_');
     db.prepare(
-      `INSERT INTO interview_preps (id,job_id,questions,star_guides,self_introduction,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)`,
+      `INSERT INTO interview_preps (id,job_id,questions,star_guides,self_introduction,notes,debrief,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)`,
     ).run(
       id,
       input.job_id,
@@ -945,6 +955,7 @@ export const interviewRepo = {
       toJson(input.star_guides ?? []),
       input.self_introduction ?? null,
       input.notes ?? null,
+      toJson(input.debrief ?? {}),
       ts,
       ts,
     );

@@ -510,12 +510,24 @@ export const InterviewQuestionSchema = z.object({
 });
 export type InterviewQuestion = z.infer<typeof InterviewQuestionSchema>;
 
+/** Post-interview debrief — captured AFTER the interview to close the loop and feed the next round. */
+export const InterviewDebriefSchema = z.object({
+  asked_questions: strList.optional().describe('실제로 받은 질문들'),
+  went_well: optBody.describe('잘된 점/강했던 답변'),
+  to_improve: optBody.describe('아쉬운 점/다음에 개선할 점'),
+  next_round_focus: optBody.describe('다음 라운드/면접에 대비해 준비할 포인트'),
+  sentiment: z.enum(['positive', 'neutral', 'negative']).optional().describe('체감 분위기'),
+  interviewed_at: optLine.describe('면접 본 날짜(YYYY-MM-DD)'),
+});
+export type InterviewDebrief = z.infer<typeof InterviewDebriefSchema>;
+
 export const InterviewPrepInputSchema = z.object({
   job_id: reqLine,
   questions: z.array(InterviewQuestionSchema).max(MAX_ITEMS).optional(),
   star_guides: z.array(StarGuideSchema).max(MAX_ITEMS).optional(),
   self_introduction: optBody.describe('1분 자기소개 초안'),
   notes: optNote.describe('면접 후기/메모'),
+  debrief: InterviewDebriefSchema.optional().describe('면접 후 디브리프(받은 질문·잘된 점·개선점·다음 라운드 포커스)'),
 });
 export type InterviewPrepInput = z.infer<typeof InterviewPrepInputSchema>;
 
@@ -526,6 +538,7 @@ export const InterviewPrepRecordSchema = z.object({
   star_guides: z.array(StarGuideSchema),
   self_introduction: z.string().nullable(),
   notes: z.string().nullable(),
+  debrief: InterviewDebriefSchema.nullable(),
 });
 export type InterviewPrepRecord = z.infer<typeof InterviewPrepRecordSchema>;
 

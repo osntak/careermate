@@ -841,7 +841,8 @@ export const TOOLS: ToolDef[] = [
     description:
       '예상 면접 질문, 꼬리 질문, STAR 답변 가이드, 1분 자기소개 초안 등 해당 공고 기준 면접 준비 자료를 저장합니다. 공고/직무/자기소개서를 근거로 당신(AI)이 생성한 자료를 저장하는 데 사용합니다. ' +
       "질문은 두 갈래로 준비하세요 — 각 질문의 category를 'technical'(기술·직무 1차 면접) 또는 'behavioral'(인성·컬처핏·임원 2차 면접, 자기소개서·프로필 기반)로 지정합니다. 가능하면 두 갈래 모두 채워 한 번에 저장하세요(대시보드가 기술/인성·컬처핏 탭으로 나눠 보여줍니다). " +
-      'job_id는 필수입니다. 같은 공고에 다시 저장하면 갱신됩니다.',
+      '면접을 본 뒤에는 같은 도구에 debrief(받은 질문 asked_questions·잘된 점 went_well·개선점 to_improve·다음 라운드 포커스 next_round_focus·체감 분위기 sentiment)를 채워 저장하면 다음 라운드 준비와 일관성 점검에 그대로 이어집니다(면접 전 준비와 면접 후 디브리프가 한 공고에 함께 쌓입니다). ' +
+      'job_id는 필수입니다. 같은 공고에 다시 저장하면 갱신됩니다(debrief는 기존 값과 병합되어 기존 필드를 지우지 않습니다).',
     inputSchema: InterviewPrepInputSchema.shape,
     handler: (args) => {
       try {

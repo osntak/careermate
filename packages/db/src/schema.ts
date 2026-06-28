@@ -321,6 +321,14 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE jobs ADD COLUMN talent_profile TEXT;
   ALTER TABLE jobs ADD COLUMN core_values TEXT NOT NULL DEFAULT '[]';
   `,
+
+  // v6 — post-interview debrief on interview_preps (받은 질문·잘된 점·개선점·다음 라운드 포커스·
+  // 체감 분위기). Closes the loop: prep is pre-interview, debrief is post-interview, but both belong
+  // to the same per-job entity, so store as one JSON column rather than a new table. Additive ALTER,
+  // idempotent. Feeds next-round prep and consistency (lessons carry into later interviews).
+  `
+  ALTER TABLE interview_preps ADD COLUMN debrief TEXT NOT NULL DEFAULT '{}';
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {
