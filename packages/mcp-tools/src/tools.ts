@@ -60,6 +60,7 @@ import {
   updateApplicationStatus,
   saveInterviewPrep,
   listRecentActivity,
+  getActionDigest,
   jobWithMeta,
   previewCoverLetter,
   summarizeReport,
@@ -988,6 +989,22 @@ export const TOOLS: ToolDef[] = [
     handler: (args) => {
       const acts = listRecentActivity(args?.limit ?? 20);
       return ok(`최근 활동 ${acts.length}건`, acts);
+    },
+  },
+  {
+    name: 'get_followups',
+    title: '후속 조치 알림(놓친 지원·마감·면접준비)',
+    description:
+      '지금 챙겨야 할 것들을 한 번에 돌려줍니다: ① 응답 없이 오래된 지원(지원 후 무응답·서류합격 후 일정대기·면접 후 결과대기) ② 임박했거나 지난 지원 마감(지원 전 단계) ③ 합격했는데 아직 면접 준비가 없는 공고. 사용자가 "내 지원 현황 어때?", "뭐 챙겨야 해?", "후속 연락할 거 있어?"라고 묻거나, 세션을 이어가며 놓친 게 없는지 먼저 점검할 때 사용하세요. 읽기 전용입니다. 응답의 reason은 사용자 언어로 풀어 전하고, 후속 문의는 강요하지 말고 선택지로 제안하세요(채용 관행상 과한 독촉은 역효과).',
+    inputSchema: {},
+    readOnly: true,
+    handler: () => {
+      const d = getActionDigest();
+      const n = d.followups.length + d.deadlines.length + d.interview_todo.length;
+      const msg = n === 0
+        ? '지금 당장 챙길 후속 항목이 없습니다(무응답 지원·임박 마감·면접 준비 대기 없음).'
+        : `챙길 항목 ${n}건: 후속 ${d.followups.length} · 마감 ${d.deadlines.length} · 면접준비 ${d.interview_todo.length}`;
+      return ok(msg, d);
     },
   },
 

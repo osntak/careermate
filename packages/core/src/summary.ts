@@ -160,3 +160,83 @@ export function getHomeSummary(now: Date = new Date()): HomeSummary {
 export function listRecentActivity(limit = 20): ActivityRecord[] {
   return activityRepo.recent(limit);
 }
+
+/* ----------------------------------------------------------- action digest */
+
+// Follow-up is the #1 thing trackers drop (community research): applications go
+// stale and the user forgets to nudge. The dashboard Home already surfaces this,
+// but the AI agent — the primary interface — couldn't see it. getActionDigest
+// exposes the same "what needs my attention now" intelligence to MCP, broadened
+// past 'applied' to the other waiting states (post-pass scheduling, post-interview
+// result). Read-only; thresholds are advisory nudges, not hard rules.
+const POST_PASS_STALE_DAYS = 7; // document_passed → interview scheduling wait
+const POST_INTERVIEW_STALE_DAYS = 7; // interview → result wait
+
+export interface FollowupItem {
+  job: JobRecord;
+  status: ApplicationStatus;
+  status_label: string;
+  days_since: number;
+  reason: string;
+}
+
+export interface ActionDigest {
+  /** Server's today (YYYY-MM-DD) — the AI can't reliably know the current date. */
+  today: string;
+  followups: FollowupItem[];
+  deadlines: { job: JobRecord; status: ApplicationStatus; status_label: string; days_left: number }[];
+  interview_todo: { job: JobRecord; status_label: string }[];
+}
+
+/**
+ * "What needs attention now" for the AI agent: stale applications awaiting a
+ * response (so the user can decide whether to follow up), upcoming/overdue
+ * deadlines, and passed stages still missing interview prep. All read-only.
+ */
+export function getActionDigest(now: Date = new Date()): ActionDigest {
+  const applications = applicationRepo.list();
+  const jobs = jobRepo.list();
+  const statusByJob = new Map(applications.map((a) => [a.job_id, a]));
+
+  const followups: FollowupItem[] = [];
+  for (const a of applications) {
+    const job = jobRepo.get(a.job_id);
+    if (!job) continue;
+    if (a.status === 'applied') {
+      const days = daysSinceTimestamp(a.applied_at, now);
+      if (days != null && days >= FOLLOWUP_STALE_DAYS)
+        followups.push({ job, status: a.status, status_label: APPLICATION_STATUS_LABELS[a.status], days_since: days, reason: `지원 후 ${days}일째 응답 없음 — 정중한 후속 문의를 고려할 시점` });
+    } else if (a.status === 'document_passed') {
+      const days = daysSinceTimestamp(a.updated_at, now);
+      if (days != null && days >= POST_PASS_STALE_DAYS)
+        followups.push({ job, status: a.status, status_label: APPLICATION_STATUS_LABELS[a.status], days_since: days, reason: `서류 합격 후 ${days}일째 면접 일정 대기` });
+    } else if (a.status === 'interview') {
+      const days = daysSinceTimestamp(a.updated_at, now);
+      if (days != null && days >= POST_INTERVIEW_STALE_DAYS)
+        followups.push({ job, status: a.status, status_label: APPLICATION_STATUS_LABELS[a.status], days_since: days, reason: `면접 후 ${days}일째 결과 대기` });
+    }
+  }
+  followups.sort((a, b) => b.days_since - a.days_since);
+
+  const deadlines = jobs
+    .map((job) => {
+      const status = statusByJob.get(job.id)?.status ?? 'draft';
+      if (!DEADLINE_ACTIONABLE.includes(status)) return null;
+      const days_left = daysUntilDate(job.deadline, now);
+      if (days_left == null || days_left > DEADLINE_SOON_DAYS) return null;
+      return { job, status, status_label: APPLICATION_STATUS_LABELS[status], days_left };
+    })
+    .filter((x): x is { job: JobRecord; status: ApplicationStatus; status_label: string; days_left: number } => x !== null)
+    .sort((a, b) => a.days_left - b.days_left);
+
+  const interview_todo = applications
+    .filter((a) => INTERVIEW_UNLOCK_STATUSES.includes(a.status) && !interviewRepo.getByJob(a.job_id))
+    .map((a) => {
+      const job = jobRepo.get(a.job_id);
+      return job ? { job, status_label: APPLICATION_STATUS_LABELS[a.status] } : null;
+    })
+    .filter((x): x is { job: JobRecord; status_label: string } => x !== null);
+
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return { today, followups, deadlines, interview_todo };
+}
