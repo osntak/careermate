@@ -63,6 +63,8 @@ import {
   getActionDigest,
   getPipelineStats,
   prescreenJob,
+  searchJobs,
+  JOB_SEARCH_SOURCES,
   jobWithMeta,
   previewCoverLetter,
   summarizeReport,
@@ -1029,6 +1031,28 @@ export const TOOLS: ToolDef[] = [
         `지원 ${s.total}건 · 깔때기 지원 ${s.funnel.applied}→서류 ${s.funnel.document_passed}→면접 ${s.funnel.interview}→최종 ${s.funnel.final_passed} · 통과율 서류 ${fmt(r.document_pass)}·면접 ${fmt(r.interview)}·최종 ${fmt(r.offer)} (표본 작으면 추세 참고로만)`,
         s,
       );
+    },
+  },
+  {
+    name: 'search_jobs',
+    title: '공고 검색·가져오기(키워드)',
+    description:
+      `키워드로 무인증 공개 채용 사이트(${JOB_SEARCH_SOURCES.join('·')})에서 채용 공고를 가져옵니다. 사용자가 "백엔드 신입 공고 찾아줘", "React 공고 가져와"처럼 공고를 찾아 달라고 할 때 사용하세요. 결과(회사·직무·링크·지역·경력·기술스택·마감)를 사용자에게 보기 좋게 보여 주고, **사용자가 관심 있다고 고른 것만** save_job_posting으로 저장하세요(전부 자동 저장하지 마세요). 저장한 공고는 이어서 get_application_context로 분석·자소서로 연결됩니다. ` +
+      `참고: 이 도구는 외부 공개 페이지에서 공고를 가져오기만 하며(보내는 것은 검색 키워드뿐, 사용자 데이터는 절대 전송하지 않음), 봇 차단 우회는 하지 않습니다. 사람인·잡코리아는 키 발급 또는 약관 제약으로 여기 포함되지 않습니다. 결과가 비어 있으면 키워드를 바꾸거나 사용자에게 공고 URL/본문을 받아 save_job_posting으로 저장하세요.`,
+    inputSchema: {
+      keyword: z.string().describe('검색어(직무·기술·키워드). 예: "백엔드", "React 신입"'),
+      sources: z.array(z.enum([...JOB_SEARCH_SOURCES] as [string, ...string[]])).optional().describe(`대상 사이트(생략 시 전체: ${JOB_SEARCH_SOURCES.join('·')})`),
+      limit: z.number().optional().describe('사이트별 최대 건수(기본 10, 최대 50)'),
+    },
+    readOnly: true,
+    handler: async (args) => {
+      const res = await searchJobs(args.keyword, { sources: args.sources, limit: args.limit });
+      const failed = res.providers.filter((p) => !p.ok);
+      const okCount = res.results.length;
+      const parts = [`'${res.query}' 검색 결과 ${okCount}건`];
+      if (failed.length) parts.push(`(일부 사이트 응답 실패: ${failed.map((f) => f.source).join(', ')})`);
+      if (okCount === 0) parts.push('— 키워드를 바꾸거나, 공고 URL/본문을 주시면 직접 저장해 드릴게요.');
+      return ok(parts.join(' '), res);
     },
   },
   {

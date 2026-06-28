@@ -396,6 +396,9 @@ const SAFE_TOOLS: readonly string[] = [
   'validate_cover_letter', 'set_verify_mode', 'get_writing_style_guide', 'check_for_update',
   // 읽기전용 조회 도구(DB 변경·외부 전송 없음) → 사전허용 안전.
   'get_followups', 'get_pipeline_stats', 'prescreen_job',
+  // search_jobs: 공개 잡보드에서 공고를 가져오기만(보내는 건 검색어뿐, 사용자 데이터 미전송).
+  // check_for_update와 같은 "네트워크 read" 부류라 사전허용 안전(우회·쓰기 없음).
+  'search_jobs',
   // careermate 자신의 인박스 폴더·대시보드(127.0.0.1)만 여는 로컬 동작 + 인박스 내부 문서 읽기 → 사전허용 안전.
   'read_inbox', 'open_inbox', 'open_dashboard', 'open_application',
 ];

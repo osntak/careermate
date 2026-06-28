@@ -150,7 +150,7 @@ npx -y careermate init
 | 이력서 | `read_document` · `add_resume` · `get_resumes` · `export_resume` · `delete_resume` · `open_inbox` · `read_inbox` |
 | 경력·프로젝트·스킬 | `add_experience` · `get_experiences` · `delete_experience` · `add_project` · `get_projects` · `delete_project` · `add_skill` · `get_skills` · `delete_skill` |
 | 자기소개서 | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
-| 채용공고 | `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
+| 채용공고 | `search_jobs` · `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
 | 핵심 컨텍스트 | **`get_application_context`** (지원에 필요한 맥락을 한 번에 모아줌) |
 | 핏 분석 | `save_fit_analysis` |
 | 지원 상태 | `update_application_status` |
@@ -235,7 +235,7 @@ CareerMate/
 - **정적 파일 보호** — 경로 traversal(상위 폴더 탈출) 차단.
 - **본문 크기 제한** — 요청 본문 8MB 제한.
 - **민감 정보 비노출** — 이력서·자기소개서 본문은 로그나 에러 응답에 노출되지 않습니다.
-- **외부 전송 없음** — MCP 서버는 네트워크 호출을 하지 않으며, 모든 데이터는 당신의 컴퓨터에만 남습니다. 내보내기·삭제는 대시보드 **Settings**에서 직접 할 수 있습니다.
+- **사용자 데이터 외부 전송 없음** — CareerMate는 당신의 프로필·이력서·자소서 등 **개인 데이터를 외부로 보내지 않습니다.** 모든 데이터는 당신의 컴퓨터에만 남습니다. 외부로 나가는 네트워크 호출은 (1) 선택적 버전 확인, (2) 공고 검색(공개 잡보드)뿐이며, 이때도 **보내는 것은 검색 키워드뿐**(개인 데이터 아님)이고 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음). 내보내기·삭제는 대시보드 **Settings**에서 직접 할 수 있습니다.
 
 ---
 
@@ -423,7 +423,7 @@ Dark mode is supported.
 | Resume | `read_document` · `add_resume` · `get_resumes` · `export_resume` · `delete_resume` · `open_inbox` · `read_inbox` |
 | Experience / projects / skills | `add_experience` · `get_experiences` · `delete_experience` · `add_project` · `get_projects` · `delete_project` · `add_skill` · `get_skills` · `delete_skill` |
 | Cover letter | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
-| Job posting | `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
+| Job posting | `search_jobs` · `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
 | Core context | **`get_application_context`** (gathers all context needed for an application in one call) |
 | Fit analysis | `save_fit_analysis` |
 | Application status | `update_application_status` |
@@ -509,7 +509,7 @@ CareerMate/
 - **Static-file protection** — Path traversal (escaping the parent folder) is blocked.
 - **Body size limit** — Request bodies are capped at 8MB.
 - **No sensitive-data leakage** — Resume and cover-letter content is never exposed in logs or error responses.
-- **No external transmission** — The MCP server makes no network calls, and all data stays only on your computer. Export and delete are available directly in the dashboard **Settings**.
+- **No personal-data transmission** — CareerMate never sends your personal data (profile, resumes, cover letters) anywhere; all data stays only on your computer. The only outbound network calls are (1) the optional version check and (2) job search (public job boards) — and even then only the **search keyword** is sent (no personal data), to *fetch* public postings (no bot-protection bypass, no automated bulk harvesting). Export and delete are available directly in the dashboard **Settings**.
 
 ---
 
