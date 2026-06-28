@@ -2,7 +2,7 @@
 export default {
   // ---- list mode ----
   'jobs.list.empty.title': 'No saved postings yet',
-  'jobs.list.empty.body': 'Add a posting you are interested in to track its fit and your progress.',
+  'jobs.list.empty.body': 'Add a posting you are interested in to track its fit and your progress. Or just tell your connected AI “find backend jobs” and it will fetch postings and save them here.',
   'jobs.list.addJob': 'Add posting',
   'jobs.list.searchPlaceholder': 'Search company or role',
   'jobs.list.searchAria': 'Search postings',

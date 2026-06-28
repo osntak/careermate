@@ -2,7 +2,7 @@
 import {
   el, get, post, put, del, icon, Card, Badge, Btn, IconBtn, SubmitBtn, EmptyState, Chips,
   Field, Input, Textarea, openModal, closeModal, confirmDialog,
-  toastOk, toastError, fmtDate, mount, linesToArray, csvToArray, downloadUrl,
+  toastOk, toastError, fmtDate, mount, linesToArray, csvToArray, ExportMenu,
 } from '/demo/lib.js';
 import { t } from '/demo/i18n.js';
 
@@ -67,8 +67,7 @@ function CompletenessCard(o) {
     title: t('profile.completeness.title'),
     sub: t('profile.completeness.percent', { pct }),
     actions: [
-      Btn(t('profile.export.md'), { sm: true, variant: 'ghost', icon: 'download', title: t('profile.export.mdTitle'), onClick: () => downloadUrl('/api/export/profile?format=md') }),
-      Btn(t('profile.export.html'), { sm: true, variant: 'ghost', icon: 'download', title: t('profile.export.htmlTitle'), onClick: () => downloadUrl('/api/export/profile?format=html') }),
+      ExportMenu('/api/export/profile'),
     ],
     body: [
       el('div', { class: 'progress', style: { marginBottom: steps.length ? '12px' : '0' } },

@@ -2,7 +2,7 @@
 export default {
   // ---- list mode ----
   'jobs.list.empty.title': '저장된 공고가 없어요',
-  'jobs.list.empty.body': '관심 있는 채용공고를 추가해 적합도와 진행 상태를 관리해 보세요.',
+  'jobs.list.empty.body': '관심 있는 채용공고를 추가해 적합도와 진행 상태를 관리해 보세요. 연결된 AI에게 “백엔드 공고 찾아줘”처럼 말하면 공고를 찾아 여기에 저장해 줍니다.',
   'jobs.list.addJob': '공고 추가',
   'jobs.list.searchPlaceholder': '회사·직무 검색',
   'jobs.list.searchAria': '공고 검색',
