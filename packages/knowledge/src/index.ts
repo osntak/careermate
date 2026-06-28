@@ -47,7 +47,9 @@ export const EXPERT_DOMAINS = [
 ] as const;
 export type ExpertDomain = (typeof EXPERT_DOMAINS)[number];
 
-/** 6 verifier rubrics — 1:1 with docs/career-os/knowledge/verifiers/<id>.md (CONTRACT C3). */
+/** 7 verifier rubrics — 1:1 with docs/career-os/knowledge/verifiers/<id>.md (CONTRACT C3).
+ *  ai-detection-risk: additive (한국 AI-자소서 탐지 시장 전용 — 진정성·면접 방어가능성 점검,
+ *  탐지기 우회가 아님). human-voice(문체 "AI 티")와 역할이 다르다. */
 export const VERIFIER_IDS = [
   'truthfulness',
   'consistency',
@@ -55,6 +57,7 @@ export const VERIFIER_IDS = [
   'responsiveness-on-target',
   'ats-compat',
   'human-voice',
+  'ai-detection-risk',
 ] as const;
 export type VerifierId = (typeof VERIFIER_IDS)[number];
 
@@ -121,13 +124,15 @@ export const CAREER_ROUTES: Record<string, CareerRoute> = {
   write_cover_letter: {
     eop: 'cover-letter',
     expertSequence: ['cover-letter', 'human-writing', 'company-research'],
-    verifierSequence: ['human-voice', 'truthfulness', 'responsiveness-on-target', 'ats-compat', 'consistency'],
+    // ai-detection-risk: 한국 자소서는 AI 탐지(무하유 GPT킬러 등)가 제도화돼 있어, 저장 전
+    // "진정성·면접 방어가능성·자기복제 여부"를 점검한다(탐지 우회가 아님 — 짝은 human-voice).
+    verifierSequence: ['human-voice', 'truthfulness', 'responsiveness-on-target', 'ats-compat', 'consistency', 'ai-detection-risk'],
     loop: 'draft_verify_revise',
   },
   write_career_description: {
     eop: 'career-description',
     expertSequence: ['resume', 'ats'],
-    verifierSequence: ['truthfulness', 'consistency', 'ats-compat'],
+    verifierSequence: ['truthfulness', 'consistency', 'ats-compat', 'ai-detection-risk'],
     loop: 'draft_verify_revise',
   },
   prepare_interview: {

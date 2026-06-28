@@ -1056,7 +1056,7 @@ export const TOOLS: ToolDef[] = [
     name: 'get_verifier',
     title: '검증 루브릭 (저장 전 자가검증)',
     description:
-      '커리어 산출물(자소서·이력서·면접 답변·적합도 등)을 save_*로 저장하기 직전에 호출하세요. 해당 검증기의 점검 항목·합격 기준·세는 방법을 루브릭으로 돌려줍니다 — 실제 점검과 합격/불합격 판단은 당신(AI)이 직접 합니다(CareerMate는 내부 LLM이 없어 의미 판단을 대신하지 않습니다). 6개 검증기: truthfulness(사실/허위수치), consistency(산출물 간 모순), recency-staleness(신선도), responsiveness-on-target(질문에 답했는가), ats-compat(ATS 호환), human-voice(AI 티/사람 목소리).',
+      '커리어 산출물(자소서·이력서·면접 답변·적합도 등)을 save_*로 저장하기 직전에 호출하세요. 해당 검증기의 점검 항목·합격 기준·세는 방법을 루브릭으로 돌려줍니다 — 실제 점검과 합격/불합격 판단은 당신(AI)이 직접 합니다(CareerMate는 내부 LLM이 없어 의미 판단을 대신하지 않습니다). 7개 검증기: truthfulness(사실/허위수치), consistency(산출물 간 모순), recency-staleness(신선도), responsiveness-on-target(질문에 답했는가), ats-compat(ATS 호환), human-voice(AI 티/사람 목소리), ai-detection-risk(한국 AI-자소서 탐지 시장 — 진정성·면접 방어가능성·자기복제 점검, 탐지 우회 아님).',
     inputSchema: {
       id: z
         .enum([...VERIFIER_IDS] as [VerifierId, ...VerifierId[]])

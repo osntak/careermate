@@ -156,7 +156,7 @@ npx -y careermate init
 | 지원 상태 | `update_application_status` |
 | 면접 준비 | `save_interview_prep` |
 | 글쓰기 | `get_writing_style_guide` (AI 티 안 나는 한국어 글쓰기 규칙) |
-| 전문가 지식 (Career-OS) | `get_playbook` (도메인 플레이북 16종) · `get_verifier` (저장 전 검증 루브릭 6종) |
+| 전문가 지식 (Career-OS) | `get_playbook` (도메인 플레이북 16종) · `get_verifier` (저장 전 검증 루브릭 7종) |
 | 저장 전 점검 | `validate_cover_letter` (자소서 저장 전 미리보기) · `set_verify_mode` (점검 엄격도 기본/엄격) |
 | 대시보드/활동 | `open_dashboard` · `open_application` · `list_recent_activity` · `get_workflow_guide` |
 | 업데이트 | `check_for_update` · `update_careermate` |
@@ -429,7 +429,7 @@ Dark mode is supported.
 | Application status | `update_application_status` |
 | Interview prep | `save_interview_prep` |
 | Writing | `get_writing_style_guide` (rules for human-sounding Korean writing) |
-| Expert knowledge (Career-OS) | `get_playbook` (16 domain playbooks) · `get_verifier` (6 pre-save rubrics) |
+| Expert knowledge (Career-OS) | `get_playbook` (16 domain playbooks) · `get_verifier` (7 pre-save rubrics) |
 | Pre-save check | `validate_cover_letter` (dry-run preview before saving) · `set_verify_mode` (check strictness: default/strict) |
 | Dashboard / activity | `open_dashboard` · `open_application` · `list_recent_activity` · `get_workflow_guide` |
 | Update | `check_for_update` · `update_careermate` |
