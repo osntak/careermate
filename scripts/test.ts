@@ -158,6 +158,33 @@ const tool = (name: string) => {
   if (!t) throw new Error(`tool not found: ${name}`);
   return t;
 };
+
+/* MCP 어노테이션 정직성(출시 전 감사 회귀 잠금) — 프라이버시 주장("외부로 안 나감")은
+   이 힌트가 사실일 때만 성립한다. 외부 통신 도구·비가역 도구 집합을 정확히 고정. */
+{
+  const names = (pred: (t: (typeof TOOLS)[number]) => boolean) =>
+    TOOLS.filter(pred).map((t) => t.name).sort();
+  const openWorld = names((t) => t.openWorld === true);
+  ok(
+    'openWorldHint = 실제 외부 통신 3종만(check_for_update·search_jobs·update_careermate)',
+    JSON.stringify(openWorld) === JSON.stringify(['check_for_update', 'search_jobs', 'update_careermate']),
+  );
+  const destructive = names((t) => t.destructive === true);
+  ok(
+    'destructiveHint = 비가역 7종(delete_* 6 + update_careermate)만',
+    JSON.stringify(destructive) ===
+      JSON.stringify([
+        'delete_cover_letter',
+        'delete_experience',
+        'delete_job_posting',
+        'delete_project',
+        'delete_resume',
+        'delete_skill',
+        'update_careermate',
+      ]),
+  );
+  ok('readOnly 도구에 destructive/idempotent 오지정 없음', TOOLS.every((t) => !t.readOnly || (!t.destructive && !t.idempotent)));
+}
 /* get_application_context: 오늘 날짜(today) 주입 — 연차·재직기간 환산 기준일(LLM이 현재일 모름 보정) */
 const ctxToday = await tool('get_application_context').handler({});
 ok(

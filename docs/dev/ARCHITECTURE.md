@@ -113,7 +113,7 @@ CareerMate는 독립적으로 동작하는 **두 개의 로컬 프로세스**로
 AI 클라이언트가 `apps/mcp` 서버에 MCP 프로토콜로 도구 호출을 보낸다(`apps/mcp/src/index.ts`).
 
 1. **기동 시 DB 보장** — `main()`이 `getDb()`를 먼저 호출해 DB 생성·마이그레이션을 마친 뒤 도구를 서빙한다.
-2. **도구 등록** — `@careermate/mcp-tools`의 `TOOLS` 배열을 순회하며 각 도구를 `server.registerTool`로 등록한다. 입력 스키마(zod), 제목/설명, `readOnlyHint`/`openWorldHint` 어노테이션이 함께 전달된다. `openWorldHint`는 항상 `false` — 외부 세계로 나가지 않는다.
+2. **도구 등록** — `@careermate/mcp-tools`의 `TOOLS` 배열을 순회하며 각 도구를 `server.registerTool`로 등록한다. 입력 스키마(zod), 제목/설명과 함께 `readOnlyHint`/`openWorldHint`/`destructiveHint`/`idempotentHint` 어노테이션이 도구 정의의 플래그 그대로 전달된다. `openWorldHint=true`는 실제로 외부에 나가는 3종뿐이다 — `search_jobs`(공개 잡보드로 검색어 전송)·`check_for_update`/`update_careermate`(npm 레지스트리). 그 외 도구는 전부 로컬 전용이다. `destructiveHint=true`는 비가역 도구(`delete_*` 6종 + `update_careermate`)에만 붙으며, 이 집합은 `scripts/test.ts`가 회귀 잠금한다.
 3. **핸들러 실행** — 도구 호출이 오면 해당 핸들러가 인자를 받아 core 로직을 수행하고, 결과를 `toCallToolResult`로 MCP 응답 형태로 변환한다. 예외는 안전한 메시지로만 변환되어 문서 본문이 새지 않는다.
 4. **전송 계층** — `StdioServerTransport`로 통신한다. **stdout은 MCP 전송 채널이므로 절대 로그를 쓰지 않는다.** 모든 로그는 stderr로만 나간다.
 
@@ -155,7 +155,7 @@ CareerMate는 로컬에만 머무는 도구이지만, **로컬 서버는 사용�
 - **CSRF 세션 토큰** — 서버 기동 시 1회 발급한 랜덤 토큰을 서빙되는 HTML의 `<meta name="careermate-token">`에 주입한다. 변경 요청(POST/PUT/PATCH/DELETE)은 이 토큰을 `x-careermate-token` 헤더로 제시해야 한다. 동일 출처 스크립트만 토큰을 읽을 수 있고, 비교는 타이밍 안전 비교를 쓴다.
 - **허용적 CORS 미발급** — 어떤 응답에도 허용적 CORS 헤더를 붙이지 않으므로, 설령 요청이 통과해도 교차 출처 페이지는 응답을 읽지 못한다.
 - **정적 경로 traversal 차단**, **본문 크기 제한(8MB)**, **민감 본문 미노출** — 이력서/자소서 본문은 로그·에러 응답에 절대 노출하지 않는다.
-- **MCP 측 경계** — MCP 서버는 stdout에 절대 쓰지 않고(전송 채널 보호), 도구 어노테이션의 `openWorldHint=false`로 외부 세계 접근이 없음을 명시한다. 예외도 안전한 메시지로만 변환한다.
+- **MCP 측 경계** — MCP 서버는 stdout에 절대 쓰지 않고(전송 채널 보호), 도구 어노테이션을 실제 동작과 일치하게 방출한다: 외부 통신이 있는 3종(`search_jobs`·`check_for_update`·`update_careermate`)만 `openWorldHint=true`, 나머지는 전부 로컬 전용(`false`). 예외도 안전한 메시지로만 변환한다.
 
 ---
 

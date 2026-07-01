@@ -22,6 +22,15 @@ export interface ToolDef {
   inputSchema: ZodRawShape;
   /** Hint flags for clients (readOnly tools don't mutate). */
   readOnly?: boolean;
+  /**
+   * Tool reaches outside the user's machine (job-board fetch, npm registry).
+   * Must be honest — the privacy story depends on these hints being true.
+   */
+  openWorld?: boolean;
+  /** Irreversible effect (hard delete, package update). Default: non-destructive upsert. */
+  destructive?: boolean;
+  /** Repeating the same call with the same args has no additional effect (documented upserts). */
+  idempotent?: boolean;
   handler: (args: any) => ToolResult | Promise<ToolResult>;
 }
 

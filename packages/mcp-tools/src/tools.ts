@@ -361,6 +361,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'save_profile',
+    idempotent: true, // 부분 업서트 — 같은 인자 재호출은 같은 결과
     title: '프로필 저장',
     description:
       '사용자 프로필을 저장합니다. 전달한 필드만 갱신되고 나머지는 유지됩니다(부분 저장 안전). 이력서를 구조화한 뒤 이름/한 줄 소개/희망 직무/선호 문체/강조 포인트 등을 채워 저장하세요. 선호 문체(preferred_tone)와 강조 포인트(emphasis_points)는 이후 자기소개서 작성 품질에 직접 영향을 줍니다. 학력(education)·자격증(certifications)·어학점수(language_scores: 토익·오픽 등)·수상(awards)이 이력서에 있으면 구조화해 저장하세요 — 한국 이력서 핵심 스펙이고, 저장하면 이후 자소서·이력서에서 정확한 수치(학점 3.8, 토익 920)를 지어내지 않고 그대로 인용합니다.',
@@ -402,6 +403,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'delete_resume',
+    destructive: true,
     title: '이력서/문서 삭제',
     description:
       '저장된 이력서·경력기술서·포트폴리오 등 문서를 삭제합니다. 사용자가 명확히 삭제를 요청했을 때만 사용하세요. 먼저 get_resumes로 목록을 확인하고 어떤 문서인지 사용자와 확인한 뒤 호출합니다. confirm에는 DELETE를 넣으세요.',
@@ -422,6 +424,7 @@ export const TOOLS: ToolDef[] = [
   /* ----------------------------------------------------------- experiences */
   {
     name: 'add_experience',
+    idempotent: true, // 회사·직무·입사일 키 업서트(adr_0003) — 재호출 안전
     title: '경력 추가',
     description:
       '구조화된 경력(직장 단위)을 저장합니다. 이력서에서 파악한 경력을 experiences 배열에 한 번에 담아 호출하세요(한 건이어도 배열로 — 항목마다 도구를 반복 호출하지 마세요). 이력서 본문(add_resume)과 달리 회사·직무·기간·성과를 필드로 나눠 저장해 적합도 분석/자소서 작성 시 정밀하게 활용됩니다. 각 항목은 company가 필수이며, achievements에는 정량 지표가 담긴 성과를, tech에는 사용 기술을 배열로 넣으세요. 같은 회사·직무·입사일(start_date)이 일치하면 갱신되고 중복 생성되지 않으니 여러 번 저장해도 안전합니다. 온보딩 완성도(get_onboarding_status)의 has_experience를 채우려면 1건 이상 추가하세요.',
@@ -447,6 +450,7 @@ export const TOOLS: ToolDef[] = [
   /* -------------------------------------------------------------- projects */
   {
     name: 'add_project',
+    idempotent: true, // 이름 키 업서트 — 재호출 안전
     title: '프로젝트 추가',
     description:
       '대표 프로젝트를 저장합니다. projects 배열에 여러 개를 한 번에 담아 호출하세요(한 개여도 배열로 — 항목마다 반복 호출하지 마세요). 각 항목은 name이 필수이며, highlights(핵심 성과)와 tech(사용 기술)를 배열로 넣으면 자소서·면접 준비에서 근거로 활용됩니다. url에 결과물 링크를 넣을 수 있습니다. 같은 이름의 프로젝트는 갱신되고 중복 생성되지 않으니 여러 번 저장해도 안전합니다.',
@@ -472,6 +476,7 @@ export const TOOLS: ToolDef[] = [
   /* ---------------------------------------------------------------- skills */
   {
     name: 'add_skill',
+    idempotent: true, // 이름 키 업서트 — 재호출 안전
     title: '기술스택 추가',
     description:
       '보유 기술스택을 저장합니다. 여러 개를 skills 배열에 한 번에 담아 호출하세요(한 개여도 배열로 — 기술마다 도구를 반복 호출하지 마세요). 각 항목은 name이 필수이며, category(언어/프레임워크/툴/소프트스킬 등)·level·years로 숙련도를 함께 기록하면 공고 키워드 매칭이 정확해집니다. 같은 이름의 기술은 갱신되고 중복 생성되지 않으니 여러 번 저장해도 안전합니다. 온보딩 완성도의 has_skills를 채우려면 1개 이상 추가하세요.',
@@ -495,6 +500,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'delete_experience',
+    destructive: true,
     title: '경력 항목 삭제',
     description:
       '구조화된 경력(직장) 항목 하나를 삭제합니다. 잘못 추출/입력된 경력을 지울 때 사용하세요. 먼저 get_experiences로 목록과 id를 확인하고 사용자와 확인한 뒤 호출합니다. (내용 수정은 add_experience로 같은 항목을 다시 저장하면 갱신됩니다.) confirm에는 DELETE를 넣으세요.',
@@ -513,6 +519,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'delete_project',
+    destructive: true,
     title: '프로젝트 항목 삭제',
     description:
       '구조화된 프로젝트 항목 하나를 삭제합니다. 잘못 추출/입력된 프로젝트를 지울 때 사용하세요. 먼저 get_projects로 목록과 id를 확인하고 사용자와 확인한 뒤 호출합니다. (내용 수정은 add_project로 같은 항목을 다시 저장하면 갱신됩니다.) confirm에는 DELETE를 넣으세요.',
@@ -531,6 +538,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'delete_skill',
+    destructive: true,
     title: '기술스택 항목 삭제',
     description:
       '구조화된 기술스택 항목 하나를 삭제합니다. 잘못 추출/입력된 기술을 지울 때 사용하세요. 먼저 get_skills로 목록과 id를 확인하고 사용자와 확인한 뒤 호출합니다. (내용 수정은 add_skill로 같은 항목을 다시 저장하면 갱신됩니다.) confirm에는 DELETE를 넣으세요.',
@@ -588,6 +596,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'delete_cover_letter',
+    destructive: true,
     title: '자기소개서 삭제',
     description:
       '사용자가 저장된 자기소개서 삭제를 명확히 요청했을 때만 사용합니다. 먼저 get_cover_letters로 전체 목록 또는 공고별 목록을 확인하고, 삭제할 항목을 사용자가 확인한 뒤 호출하세요. 삭제하면 해당 자기소개서의 모든 버전이 함께 삭제되며 되돌릴 수 없습니다. confirm에는 DELETE를 넣으세요.',
@@ -616,6 +625,7 @@ export const TOOLS: ToolDef[] = [
   /* ------------------------------------------------------------------ jobs */
   {
     name: 'save_job_posting',
+    idempotent: true, // 같은 url 업서트 — 재호출 안전
     title: '채용공고 저장',
     description:
       '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요 — 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 회사 평판(평점·워라밸·문화 리스크 등)을 리서치했다면 reputation에 요약(출처·최근성 표기)을 넣으면 오퍼 판단·면접에 활용됩니다. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
@@ -664,6 +674,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'delete_job_posting',
+    destructive: true,
     title: '채용공고 삭제',
     description:
       '사용자가 저장된 채용공고 삭제를 명확히 요청했을 때만 사용합니다. 먼저 list_jobs로 전체 공고 목록을 확인하고, 삭제할 공고를 사용자가 확인한 뒤 호출하세요. 삭제하면 연결된 지원 상태·적합도 분석·면접 준비가 함께 삭제됩니다. 연결된 자기소개서는 삭제하지 않고 공고 연결만 해제합니다. confirm에는 DELETE를 넣으세요.',
@@ -764,6 +775,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'save_fit_analysis',
+    idempotent: true, // 공고당 1건 업서트
     title: '적합도 분석 결과 저장',
     description:
       '공고와 사용자 정보를 비교해 당신(AI)이 도출한 적합도 분석을 저장합니다. job_id는 필수이며 먼저 save_job_posting으로 공고가 저장되어 있어야 합니다. score(0~100), summary, strengths(강점), gaps(보완 필요), matched/missing_keywords, recommendations(자소서·지원 전략 제안)를 채워 저장하세요. 같은 공고에 다시 저장하면 갱신됩니다.',
@@ -845,6 +857,7 @@ export const TOOLS: ToolDef[] = [
   /* ---------------------------------------------------------- interview prep */
   {
     name: 'save_interview_prep',
+    idempotent: true, // 공고당 1건 업서트(debrief는 병합)
     title: '면접 준비 자료 저장',
     description:
       '예상 면접 질문, 꼬리 질문, STAR 답변 가이드, 1분 자기소개 초안 등 해당 공고 기준 면접 준비 자료를 저장합니다. 공고/직무/자기소개서를 근거로 당신(AI)이 생성한 자료를 저장하는 데 사용합니다. ' +
@@ -1039,6 +1052,8 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'search_jobs',
+    // 외부 공개 잡보드(원티드·점핏)로 검색어가 나간다 — openWorld를 정직하게 표시.
+    openWorld: true,
     title: '공고 검색·가져오기(키워드)',
     description:
       `키워드로 무인증 공개 채용 사이트(${JOB_SEARCH_SOURCES.join('·')})에서 채용 공고를 가져옵니다. 사용자가 "백엔드 신입 공고 찾아줘", "React 공고 가져와"처럼 공고를 찾아 달라고 할 때 사용하세요. 결과(회사·직무·링크·지역·경력·기술스택·마감)를 사용자에게 보기 좋게 보여 주고, **사용자가 관심 있다고 고른 것만** save_job_posting으로 저장하세요(전부 자동 저장하지 마세요). 저장한 공고는 이어서 get_application_context로 분석·자소서로 연결됩니다. ` +
@@ -1077,6 +1092,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'save_offer',
+    idempotent: true, // 공고당 1건 업서트
     title: '오퍼(제안) 저장',
     description:
       '받은 채용 제안(오퍼)을 공고에 연결해 저장합니다(공고당 1건, 다시 저장하면 갱신). 현금성 항목은 **만원 단위 숫자**로 — base_salary(기본급/연봉)·bonus_amount(연 성과급·상여 기대액)·welfare_amount(복지포인트 등 연환산)·signing_amount(사이닝 일시금). 주식/스톡옵션은 가치평가가 모호하니 equity_note에 텍스트로, 그 외 보상은 comp_note에. 근무형태·계약형태·수락 마감일(accept_deadline)도 저장하세요. **당신(AI)이 이 오퍼를 종합 평가해 ai_score(0~100)와 verdict(최종평 — "어떤 상황이면 이 회사가 좋다" 식 한두 문장)를 함께 채워 저장하세요** — CareerMate엔 LLM이 없어 이 점수·평이 대시보드에 그대로 표시됩니다. 회사 평판이 판단에 필요하면 공고의 reputation을 먼저 채워두세요. 여러 오퍼의 정밀 비교는 compare_offers로 데이터를 받아 당신이 직접 하세요(총보상·성장·안정성·워라밸).',
@@ -1256,6 +1272,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'set_verify_mode',
+    idempotent: true, // 같은 값 재설정은 무해
     title: '점검 모드 설정 (기본/엄격)',
     description:
       '저장 전 자동 점검의 엄격도를 바꿉니다. 엄격 모드(strict=true)를 켜면, 이후 모든 자소서 저장에서 "이력서 본문에 근거 없는 수치"(구조화 경력 항목에만 있는 값)까지 차단합니다. 기본 모드는 출처가 아예 없는 수치만 차단합니다. 사용자가 "엄격하게 봐줘"라고 하면 바로 켜지 말고 "앞으로 항상 엄격하게 볼까요?"라고 먼저 확인한 뒤 동의하면 strict=true로 호출하세요. 끄기(strict=false)는 안전장치를 약하게 만드는 것이므로, 사용자가 명확히 끄겠다고 할 때만 호출하세요. 이번 한 건만 엄격하게 보려면 모드를 바꾸지 말고 validate_cover_letter / save_cover_letter_version에 strict:true를 한 번만 넘기세요.',
@@ -1304,6 +1321,8 @@ export const TOOLS: ToolDef[] = [
   /* ----------------------------------------------------------------- update */
   {
     name: 'check_for_update',
+    // npm 레지스트리로 버전 조회가 나간다(사용자 데이터 미전송).
+    openWorld: true,
     title: '업데이트 확인',
     description:
       'CareerMate에 새 버전이 있는지 npm 레지스트리에서 지금 확인합니다(공개 버전 정보만 GET하며 사용자 데이터는 전송하지 않습니다). 현재 버전·최신 버전·업데이트 가능 여부를 돌려줍니다. 사용자가 "최신이야?/업데이트 있어?"라고 묻거나, get_onboarding_status가 새 버전을 알릴 때 호출하세요. 확인만 하고 설치는 하지 않습니다. 사용자가 "업데이트해줘/최신으로 올려줘"처럼 명시적으로 요청하면 update_careermate를 호출하세요.',
@@ -1332,6 +1351,9 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: 'update_careermate',
+    // npm에서 패키지를 내려받아 설치 폴더의 코드를 교체한다.
+    openWorld: true,
+    destructive: true,
     title: 'CareerMate 업데이트',
     description:
       'CareerMate를 최신 버전으로 업데이트합니다(설치 폴더에 npm으로 careermate@latest 설치). 사용자가 명시적으로 "업데이트해줘", "CareerMate 업데이트해줘", "최신으로 올려줘"라고 할 때 호출하세요. 이 도구가 최신 버전 확인도 함께 하므로 별도 확인 질문 없이 실행해도 됩니다. 성공하면 적용을 위해 AI 앱(또는 MCP 연결) 재시작이 필요하며, 재시작 시 데이터베이스는 자동 마이그레이션되어 기존 데이터는 보존됩니다. 자동 설치가 막히면(개발 모드·비표준 설치) 직접 칠 명령을 안내합니다.',

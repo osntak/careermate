@@ -35,10 +35,16 @@ async function main(): Promise<void> {
         title: tool.title,
         description: tool.description,
         inputSchema: tool.inputSchema,
+        // 어노테이션은 도구 정의(ToolDef)의 플래그를 그대로 반영한다 — 정직해야 한다.
+        // openWorldHint: search_jobs(잡보드)·check_for_update/update_careermate(npm)처럼
+        // 실제로 외부에 나가는 도구만 true. destructiveHint: 스펙 기본값이 true라
+        // 업서트가 파괴적으로 오분류되지 않도록 비파괴 쓰기에는 명시적 false를 방출한다.
         annotations: {
           title: tool.title,
           readOnlyHint: tool.readOnly ?? false,
-          openWorldHint: false,
+          openWorldHint: tool.openWorld ?? false,
+          destructiveHint: tool.destructive ?? false,
+          idempotentHint: tool.idempotent ?? false,
         },
       },
       async (args: unknown) => {
