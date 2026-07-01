@@ -105,6 +105,9 @@ export default {
   'settings.import.confirm': '가져오기',
   'settings.import.doneToast': '데이터를 가져왔어요.',
 
+  // 언어
+  'settings.lang.sub': '대시보드 표시 언어',
+
   // 위험 구역
   'settings.reset.gateWord': '초기화',
   'settings.reset.title': '모든 데이터 초기화',

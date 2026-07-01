@@ -146,12 +146,19 @@ export async function render(ctx) {
       mount(panel, list.length
         ? el('div', { class: 'stack-3' }, ...list.map(QuestionBlock))
         : el('p', { class: 'muted', style: { margin: 0 } }, t('interview.modal.questionsEmptyTab')));
-      for (const c of CATEGORIES) tabEls[c].classList.toggle('is-active', c === active);
+      for (const c of CATEGORIES) {
+        tabEls[c].classList.toggle('is-active', c === active);
+        tabEls[c].setAttribute('aria-selected', String(c === active));
+      }
     }
-    const tabs = el('div', { class: 'tabs' }, ...CATEGORIES.map((c) => {
+    // 키보드 조작 가능 탭(activate = role/tabindex/Enter·Space) + 탭 시맨틱.
+    const tabs = el('div', { class: 'tabs', attrs: { role: 'tablist' } }, ...CATEGORIES.map((c) => {
       const n = groups[c].length;
-      const tabEl = el('div', { class: 'tab', onClick: () => { active = c; draw(); } },
-        n ? `${t('interview.tab.' + c)} (${n})` : t('interview.tab.' + c));
+      const tabEl = el('div', {
+        class: 'tab',
+        attrs: { role: 'tab', 'aria-selected': 'false' },
+        activate: () => { active = c; draw(); },
+      }, n ? `${t('interview.tab.' + c)} (${n})` : t('interview.tab.' + c));
       tabEls[c] = tabEl;
       return tabEl;
     }));

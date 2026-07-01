@@ -105,6 +105,9 @@ export default {
   'settings.import.confirm': 'Import',
   'settings.import.doneToast': 'Data imported.',
 
+  // language
+  'settings.lang.sub': 'Dashboard display language',
+
   // danger zone
   'settings.reset.gateWord': 'RESET',
   'settings.reset.title': 'Reset all data',

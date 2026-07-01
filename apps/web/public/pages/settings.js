@@ -168,7 +168,6 @@ function Theme() {
 /* ------------------------------------------------------------- 언어 / Language */
 function LanguageSwitcher() {
   // 테마 컴포넌트와 동일 패턴: localStorage 영속 + paint() + 변경 시 재페인트.
-  // 카탈로그가 채워지는 Phase 2부터 페이지 텍스트가 실제로 전환된다.
   const options = [
     { value: 'ko', label: '한국어' },
     { value: 'en', label: 'English' },
@@ -188,8 +187,9 @@ function LanguageSwitcher() {
   onLangChange(paint);
 
   return Card({
+    // 제목은 의도적으로 양언어 병기 — 현재 언어를 못 읽는 사용자도 이 카드를 찾아야 한다.
     title: '언어 / Language',
-    sub: '대시보드 표시 언어',
+    sub: t('settings.lang.sub'),
     body: row,
   });
 }

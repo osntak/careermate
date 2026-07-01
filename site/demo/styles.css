@@ -577,3 +577,16 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
   .card__head .right{ margin-left: 0; width: 100%; justify-content: flex-start; }
   .page-head{ flex-wrap: wrap; }
 }
+
+/* ---------- reduced motion ----------
+   전정기관 민감 사용자를 위해 OS 설정을 존중한다: 모달·토스트·오프캔버스의
+   등장 애니메이션과 hover 트랜지션을 사실상 즉시(0.01ms)로 줄인다.
+   (스켈레톤 shimmer 포함 — 반복 애니메이션이 가장 부담이 크다.) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

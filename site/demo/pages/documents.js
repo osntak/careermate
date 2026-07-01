@@ -21,19 +21,28 @@ export async function render(ctx) {
   const root = el('div', { class: 'stack-4' });
 
   const panel = el('div', {});
-  const tabCover = el('div', { class: `tab${tab === 'cover' ? ' is-active' : ''}`, onClick: () => selectTab('cover') }, t('documents.tab.cover'));
-  const tabCareer = el('div', { class: `tab${tab === 'career' ? ' is-active' : ''}`, onClick: () => selectTab('career') }, t('documents.tab.career'));
-  const tabDocs = el('div', { class: `tab${tab === 'docs' ? ' is-active' : ''}`, onClick: () => selectTab('docs') }, t('documents.tab.docs'));
-  root.append(el('div', { class: 'tabs' }, tabCover, tabCareer, tabDocs), panel);
+  // Tabs are keyboard-operable (activate = role/tabindex/Enter·Space), with tab
+  // semantics for AT — role은 attrs가 먼저 tab으로 지정하므로 activate의 button 기본값을 덮지 않는다.
+  const makeTab = (key, label) =>
+    el('div', {
+      class: `tab${tab === key ? ' is-active' : ''}`,
+      attrs: { role: 'tab', 'aria-selected': String(tab === key) },
+      activate: () => selectTab(key),
+    }, label);
+  const tabCover = makeTab('cover', t('documents.tab.cover'));
+  const tabCareer = makeTab('career', t('documents.tab.career'));
+  const tabDocs = makeTab('docs', t('documents.tab.docs'));
+  root.append(el('div', { class: 'tabs', attrs: { role: 'tablist' } }, tabCover, tabCareer, tabDocs), panel);
 
   let query = '';
   let searchInput = null;
   function selectTab(next) {
     tab = next;
     query = '';
-    tabCover.classList.toggle('is-active', tab === 'cover');
-    tabCareer.classList.toggle('is-active', tab === 'career');
-    tabDocs.classList.toggle('is-active', tab === 'docs');
+    for (const [node, key] of [[tabCover, 'cover'], [tabCareer, 'career'], [tabDocs, 'docs']]) {
+      node.classList.toggle('is-active', tab === key);
+      node.setAttribute('aria-selected', String(tab === key));
+    }
     setActions();
     renderPanel();
   }
