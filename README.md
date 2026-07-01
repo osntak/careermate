@@ -257,7 +257,7 @@ CareerMate/
 - [`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md) — **설치 레퍼런스 허브**: 지원 앱 매트릭스 + 설치 3방식(에이전트/npx/zip) + 클라이언트별 수동 MCP 설정 + 알려진 제약. (사람용 안내는 https://careermate.life)
 - [`docs/START_WORKFLOW.md`](docs/START_WORKFLOW.md) — 등록부터 면접 준비까지 단계별 작업 런북.
 - [`docs/FAQ.md`](docs/FAQ.md) — **자주 묻는 질문 / 문제 해결**: "PDF가 안 읽혀요", "분석이 안 돼요", "공고 URL은 어떻게 넣어요" 등.
-- [`docs/dev/TODO.md`](docs/dev/TODO.md) — 남은 작업과 v1 범위 밖 항목.
+- [`docs/dev/ROADMAP.md`](docs/dev/ROADMAP.md) — 로드맵(앞으로 갈 방향).
 - [`CHANGELOG.md`](CHANGELOG.md) — 버전별 변경 이력. / [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — 기여·보안·행동 강령.
 
 ---
@@ -542,7 +542,7 @@ CareerMate/
 - [`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md) — **Install reference hub**: supported-apps matrix + the 3 install methods (agent / npx / zip) + per-client manual MCP setup + known constraints. (Human-facing guide at https://careermate.life)
 - [`docs/START_WORKFLOW.md`](docs/START_WORKFLOW.md) — Step-by-step runbook from registration to interview prep.
 - [`docs/FAQ.md`](docs/FAQ.md) — **FAQ / troubleshooting**: "PDF won't read," "analysis isn't working," "how do I add a posting URL," etc.
-- [`docs/dev/TODO.md`](docs/dev/TODO.md) — Remaining work and out-of-scope-for-v1 items.
+- [`docs/dev/ROADMAP.md`](docs/dev/ROADMAP.md) — Roadmap (where the project is headed).
 - [`CHANGELOG.md`](CHANGELOG.md) — Per-version change history. / [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — Contributing, security, and code of conduct.
 
 ---

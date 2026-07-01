@@ -6,7 +6,33 @@
 ## [Unreleased]
 
 ### 추가 (Added)
-- 자기소개서·이력서·경력기술서를 **Word(`.docx`)** 파일로 내보내기 추가(`export_cover_letter`·`export_resume`·`export_profile`의 `format=docx`, 대시보드 Documents·Profile의 "Word" 버튼). ATS 제출에 알맞은 단일 컬럼 표준 레이아웃으로 내용을 충실히 담습니다(회사 지정 양식 채우기는 미지원).
+- **오퍼 비교**: 받은 채용 제안을 공고에 연결해 저장(`save_offer` — 만원 단위 현금성 항목의 결정론 연봉 합산 포함)하고, 점수순으로 비교(`compare_offers`·`get_offer`). 대시보드 지원현황 상단에 오퍼 비교 섹션(점수순 카드 + 최종평) 추가.
+- **회사 리서치·평판**: 공고에 회사 평판(`reputation`) 필드 추가, 공고 상세에 '회사 리서치' 카드(개요·인재상·핵심가치·평판) 노출.
+
+### 변경 (Changed)
+- **스키마 마이그레이션 하드닝**: 마이그레이션별 개별 트랜잭션 + 성공 즉시 버전 기록(중간 실패 시 부팅 크래시 루프 제거), `ADD COLUMN` 자가치유(부분 적용 상태 복구), 업그레이드 직전 자동 백업 스냅샷(`backups/pre-migrate-*.sqlite`, 최근 5개 보관).
+- **MCP 도구 어노테이션 정직화**: 외부 통신이 실제로 있는 3종(`search_jobs`·`check_for_update`·`update_careermate`)만 `openWorldHint=true`로 표시하고, 비가역 도구(`delete_*`·`update_careermate`)에 `destructiveHint`, 문서화된 업서트에 `idempotentHint`를 방출.
+- **공고 검색 User-Agent 정직화**: 브라우저 위장 UA를 제거하고 `careermate/<버전>`으로 자신을 밝힘(두 잡보드 모두 정상 응답 실측 확인).
+- CI를 3-OS 매트릭스(ubuntu·windows·macos)로 확장하고, npm 게시 전 전체 테스트 + 배포 번들(`dist/mcp.mjs`) 실기동 스모크를 게이트로 추가.
+
+### 수정 (Fixed)
+- 공고 삭제 시 연결된 오퍼를 명시적으로 함께 삭제(FK CASCADE 의존 제거).
+
+## [0.0.8] - 2026-06-29
+
+### 추가 (Added)
+- **공고 검색·가져오기**(`search_jobs`): 키워드로 무인증 공개 잡보드(원티드·점핏)에서 공고를 가져와, 사용자가 고른 것만 저장. 봇 차단 우회 없음 · 보내는 것은 검색어뿐.
+- **후속 조치 알림**(`get_followups`): 무응답 지원·임박/지난 마감·면접 준비 누락을 한 번에 점검.
+- **지원 파이프라인 분석**(`get_pipeline_stats`): 상태 분포·단계별 도달 깔때기·통과율.
+- **공고 프리스크린**(`prescreen_job`): 공고 키워드 ↔ 보유 기술 겹침을 결정론으로 계산하는 값싼 사전 필터.
+- **면접 후 디브리프**: 면접 준비와 같은 엔티티에 받은 질문·잘된 점·개선점·다음 라운드 포커스 누적(`save_interview_prep`의 `debrief`).
+- 자기소개서·이력서·경력기술서를 **Word(`.docx`)** 파일로 내보내기(`export_cover_letter`·`export_resume`·`export_profile`의 `format=docx`, 대시보드 Documents·Profile의 "Word" 버튼). ATS 제출에 알맞은 단일 컬럼 표준 레이아웃(회사 지정 양식 채우기는 미지원).
+- **JSON Resume 내보내기**(`export_profile format=json`): jsonresume.org 표준으로 다른 이력서 도구·테마와 연동.
+- 랜딩 히어로 데모에 '공고 검색' 씬 추가, 홈 KPI 맥락 줄·슬림 타일 등 대시보드 밀도 개선.
+
+### 변경 (Changed)
+- Career-OS 지식 보강: 적합도 레벨별 전략·의사결정 스코어카드·자소서 앵글, truthfulness 검증기에 "속성 추론 비약" 실패모드 추가.
+- 신규 읽기전용 도구 3종을 클라이언트 사전허용(SAFE) 목록에 반영하고 manifest를 도구 레지스트리와 동기화(도구 47개).
 
 ## [0.0.7] - 2026-06-25
 

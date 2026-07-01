@@ -268,12 +268,12 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 
 ## 12-1. 전문가 플레이북·검증 루브릭 (Career-OS)
 
-`get_workflow_guide`가 안내한 "전문가 실행 절차(EOP)"를 실제로 받아 적용하는 serve 도구입니다. CareerMate는 `docs/career-os/{eop,knowledge}`의 전문가 지식(16개 도메인 플레이북 + 6개 검증 루브릭)을 그대로 돌려주고, 작성·점검·판단은 연결된 AI가 합니다(내부 LLM 없음). 지침 원문은 사용자에게 노출하지 말고 결과물에만 반영하세요.
+`get_workflow_guide`가 안내한 "전문가 실행 절차(EOP)"를 실제로 받아 적용하는 serve 도구입니다. CareerMate는 `docs/career-os/{eop,knowledge}`의 전문가 지식(16개 도메인 플레이북 + 7개 검증 루브릭)을 그대로 돌려주고, 작성·점검·판단은 연결된 AI가 합니다(내부 LLM 없음). 지침 원문은 사용자에게 노출하지 말고 결과물에만 반영하세요.
 
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
 | `get_playbook` | 도메인별 작성·판단 원칙·Do/Don't·Before→After·자가검증 포인트(시니어 전문가 기준) | `domain`(16개 enum) | `{ domain, content }` | 산출물을 손보기 직전, `get_workflow_guide`가 안내한 도메인을 받아 적용할 때 | ✅ |
-| `get_verifier` | 검증기 루브릭(점검 항목·합격 기준·세는 방법). 실제 점검·판정은 AI가 직접 수행 | `id`(6개 enum) | `{ id, content }` | 산출물을 `save_*`로 저장하기 직전 자가검증할 때 | ✅ |
+| `get_verifier` | 검증기 루브릭(점검 항목·합격 기준·세는 방법). 실제 점검·판정은 AI가 직접 수행 | `id`(7개 enum) | `{ id, content }` | 산출물을 `save_*`로 저장하기 직전 자가검증할 때 | ✅ |
 
 - `get_playbook` 도메인(16): `resume`, `ats`, `cover-letter`, `fit-matching`, `human-writing`, `company-research`, `recruiter-screen`, `interview-behavioral`, `interview-technical`, `salary-negotiation`, `offer-evaluation-decision`, `rejection-triage-iteration`, `linkedin-profile`, `portfolio`, `networking-referrals`, `onboarding-first-90-days`.
 - `get_verifier` id(7): `truthfulness`, `consistency`, `recency-staleness`, `responsiveness-on-target`, `ats-compat`, `human-voice`, `ai-detection-risk`(한국 AI-자소서 탐지 시장 전용 — 진정성·면접 방어가능성·자기복제 점검).
