@@ -59,11 +59,20 @@ if (isHelp || !ENTRIES[cmd]) {
   process.exit(isHelp ? 0 : 1);
 }
 
+// node:sqlite는 22.5–22.12 / 23.0–23.3에서만 --experimental-sqlite가 필요하다.
+// 22.13/23.4부터는 무플래그로 동작하고, 일부 런타임(Claude Desktop 내장 Node 24가
+// 실제 사례 — CHANGELOG 0.0.3)은 모르는 플래그를 하드 거부하므로 필요한 버전에만 전달한다.
+// (22.5 미만은 node:sqlite 자체가 없다 — doctor가 버전 안내를 담당.)
+const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
+const needsSqliteFlag =
+  (nodeMajor === 22 && nodeMinor >= 5 && nodeMinor < 13) || (nodeMajor === 23 && nodeMinor < 4);
+const nodeFlags = ['--no-warnings', ...(needsSqliteFlag ? ['--experimental-sqlite'] : [])];
+
 const bundle = BUNDLES[cmd] ? path.join(ROOT, BUNDLES[cmd]) : null;
 const runArgs =
   bundle && fs.existsSync(bundle)
-    ? ['--no-warnings', '--experimental-sqlite', bundle, ...rest]
-    : ['--no-warnings', '--experimental-sqlite', '--import', 'tsx', path.join(ROOT, ENTRIES[cmd]), ...rest];
+    ? [...nodeFlags, bundle, ...rest]
+    : [...nodeFlags, '--import', 'tsx', path.join(ROOT, ENTRIES[cmd]), ...rest];
 
 // 자식 cwd는 tsx/tsconfig(paths 별칭) 해석을 위해 ROOT로 고정한다. 하지만 init은 사용자가
 // 명령을 친 '작업 폴더'에 .mcp.json·권한 설정을 써야 하므로, 원래 cwd를 env로 함께 넘긴다
