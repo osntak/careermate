@@ -75,9 +75,15 @@ const MAX_BYTES = 25 * 1024 * 1024;
  * "to finish the analysis". None of these are ever a résumé/career document, so
  * declining them costs nothing and closes a real exfiltration amplifier.
  * (`.key` is intentionally absent — it's Apple Keynote, handled as legacy-binary.)
+ *
+ * Beyond keys/dotenv, also decline (pre-launch audit follow-up):
+ *  - cloud/cluster credential dirs: .kube, .docker, .azure, .boto, .config/gcloud
+ *  - browser credential/cookie stores: Chrome·Edge "Login Data"/"Web Data"/Cookies,
+ *    Firefox key4.db/logins.json
+ *  - crypto wallets: wallet.dat
  */
 const SENSITIVE_PATH_RE =
-  /(^|[/\\])\.(ssh|aws|gnupg)([/\\]|$)|(^|[/\\])id_(rsa|dsa|ecdsa|ed25519)(\.[\w]+)?$|\.(pem|ppk)$|(^|[/\\])\.env(\.[\w-]+)?$|(^|[/\\])\.(npmrc|netrc|git-credentials)$/i;
+  /(^|[/\\])\.(ssh|aws|gnupg|kube|docker|azure|boto)([/\\]|$)|[/\\]\.config[/\\]gcloud([/\\]|$)|(^|[/\\])id_(rsa|dsa|ecdsa|ed25519)(\.[\w]+)?$|\.(pem|ppk)$|(^|[/\\])\.env(\.[\w-]+)?$|(^|[/\\])\.(npmrc|netrc|git-credentials)$|(^|[/\\])(login data|web data|cookies|key4\.db|logins\.json|wallet\.dat)$/i;
 
 // Bound the work a single (possibly hostile) file can trigger. The MAX_BYTES cap
 // only limits the *compressed* input; a crafted archive can still expand far

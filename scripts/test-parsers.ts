@@ -80,6 +80,23 @@ async function main() {
     // ~/.ssh/... matches even when the file does not exist (check precedes statSync).
     const rssh = await extractDocument('~/.ssh/id_ed25519');
     ok('~/.ssh/id_ed25519 → 존재하지 않아도 deny-list 우선 차단', rssh.unsupported && rssh.errored, JSON.stringify(rssh.warnings));
+
+    // 확장 deny-list(출시 전 감사 후속): 클라우드 자격증명·브라우저 로그인 저장소·지갑.
+    const denyMore = [
+      '~/.kube/config',
+      '~/.docker/config.json',
+      '~/.config/gcloud/credentials.db',
+      'C:\\Users\\me\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Login Data',
+      '~/.mozilla/firefox/abc.default/key4.db',
+      '~/wallet.dat',
+    ];
+    for (const p of denyMore) {
+      const rr = await extractDocument(p);
+      ok(`확장 차단: ${p}`, rr.unsupported && rr.errored, JSON.stringify(rr.warnings));
+    }
+    // 오탐 방지: 흔한 문서 경로는 deny에 걸리면 안 된다(파일 없음 소프트 실패는 무방).
+    const legit = await extractDocument('~/Documents/이력서_지원서_cookies관련경험.txt');
+    ok('일반 문서 경로 오탐 없음(보안 차단 문구 아님)', !(legit.warnings[0] ?? '').includes('보안상'), JSON.stringify(legit.warnings));
   }
 
   console.log('\n4) 보안 — 심링크 탈출 가드(양성 이름 .txt → 민감 대상)');
