@@ -73,6 +73,11 @@ export default {
   'jobs.detail.openPosting': '공고 원문',
 
   // ---- posting card ----
+  'jobs.company.title': '회사 리서치',
+  'jobs.company.overview': '사업 개요',
+  'jobs.company.talent': '인재상',
+  'jobs.company.values': '핵심가치',
+  'jobs.company.reputation': '평판',
   'jobs.posting.title': '공고 정보',
   'jobs.posting.location': '위치',
   'jobs.posting.employment': '고용형태',
