@@ -1,7 +1,7 @@
 // Applications — every application grouped by status in a calm VERTICAL list
 // (no horizontal scroll). Change a status inline to move an item between groups.
 import {
-  el, get, put, navigate, EmptyState, Btn, ListRow, Badge,
+  el, get, put, navigate, EmptyState, Btn, ListRow, Badge, Card,
   Select, scoreClass, statusColor, mount, toast, toastOk, toastError,
 } from '/lib.js';
 import { t } from '/i18n.js';
@@ -21,9 +21,10 @@ function ddayLabel(deadline) {
 
 export async function render(ctx) {
   ctx.setActions([]);
-  const data = await get('/api/applications');
+  const [data, offersRes] = await Promise.all([get('/api/applications'), get('/api/offers')]);
   const applications = data.applications || [];
   const boardOrder = data.board_order || [];
+  const offers = (offersRes && offersRes.offers) || [];
 
   if (!applications.length) {
     mount(ctx.view, el('div', { class: 'stack-4' }, EmptyState({
@@ -43,6 +44,7 @@ export async function render(ctx) {
   for (const app of applications) (byStatus[app.status] || (byStatus[app.status] = [])).push(app);
 
   const wrap = el('div', { class: 'stack-4' });
+  if (offers.length) wrap.append(OffersSection(offers));
   for (const code of boardOrder) {
     const apps = byStatus[code];
     if (apps && apps.length) wrap.append(StatusGroup(code, apps));
@@ -111,4 +113,34 @@ export async function render(ctx) {
       selectEl.disabled = false;
     }
   }
+}
+
+// Offers — sorted by the AI's score (server pre-sorts). The score + verdict were
+// written by the connected AI at save time, so this renders without any LLM. The
+// precise head-to-head comparison happens in the AI chat via compare_offers.
+function OffersSection(offers) {
+  return el('div', { class: 'stack-3' },
+    el('div', { class: 'app-group__head' },
+      el('span', { class: 'app-group__title' }, t('applications.offers.title')),
+      el('span', { class: 'app-group__count tnum' }, t('applications.group.count', { count: offers.length }))),
+    ...offers.map(OfferCard));
+}
+
+function OfferCard(o) {
+  const meta = [];
+  if (o.total_comp_annual_est != null)
+    meta.push(`${t('applications.offers.est')} ${o.total_comp_annual_est.toLocaleString()}${t('applications.offers.unit')}`);
+  if (o.work_arrangement) meta.push(o.work_arrangement);
+  if (o.accept_deadline) meta.push(t('applications.offers.acceptBy', { date: o.accept_deadline }));
+  const score = o.ai_score != null
+    ? el('span', { class: `strong tnum ${scoreClass(o.ai_score)}` }, String(o.ai_score))
+    : el('span', { class: 'muted' }, t('applications.offers.noScore'));
+  return Card({
+    title: o.company,
+    sub: meta.join(' · '),
+    actions: score,
+    body: o.verdict ? el('p', { class: 'muted', style: { marginTop: '6px' } }, o.verdict) : null,
+    clickable: true,
+    onClick: () => navigate(`/jobs/${o.job_id}`),
+  });
 }

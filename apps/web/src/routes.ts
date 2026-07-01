@@ -56,6 +56,7 @@ import {
   saveCoverLetterVersion,
   updateApplicationStatus,
   saveInterviewPrep,
+  compareOffers,
   jobWithMeta,
 } from '@careermate/core';
 import { PROMPTS } from '@careermate/prompts';
@@ -270,6 +271,7 @@ export function registerApiRoutes(router: Router): void {
   router.get('/api/context', (ctx) =>
     getApplicationContext({ job_id: ctx.query.get('job_id') ?? undefined }),
   );
+  router.get('/api/offers', () => ({ offers: compareOffers() }));
   router.get('/api/prompts', () => ({ prompts: PROMPTS }));
   router.get('/api/workflows', () => ({ workflows: WORKFLOWS }));
   router.get('/api/meta', () => ({

@@ -1,5 +1,12 @@
 // 지원 현황 페이지.
 export default {
+  // offers comparison
+  'applications.offers.title': '오퍼 비교',
+  'applications.offers.est': '추정 연 현금성',
+  'applications.offers.unit': '만원',
+  'applications.offers.noScore': '점수 미정',
+  'applications.offers.acceptBy': '수락 마감 {{date}}',
+
   // deadline D-day chip
   'applications.dday.future': '마감 D-{{n}}',
   'applications.dday.today': '마감 D-day',
