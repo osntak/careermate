@@ -4,7 +4,9 @@
 
 **한국어** · [English](#careermate-english)
 
-**MCP 우선(MCP-first) 로컬 커리어 관리 도구.** 내 컴퓨터에서 동작하는 AI 에이전트(Claude Desktop·Claude Code·Codex 등)를 인터페이스로 쓰고, CareerMate는 당신의 커리어 데이터를 **이 컴퓨터에만** 저장한 뒤 MCP로 노출합니다.
+**평소 쓰는 AI에게 말로 커리어를 정리시키세요.** 이력서 등록·공고 분석·자기소개서·지원 현황·면접 준비를 내 컴퓨터에서 동작하는 AI 에이전트(Claude Desktop·Claude Code·Codex 등)에게 대화로 시키면, CareerMate가 그 결과를 **이 컴퓨터에만** 구조화해 보관하고 MCP로 노출합니다. CareerMate 안에 AI는 없습니다 — 생각은 당신의 AI가, 저장은 CareerMate가 합니다.
+
+![CareerMate 대시보드 — 오퍼 비교와 지원 현황](https://raw.githubusercontent.com/osntak/careermate/main/offers-applications.jpeg)
 
 ---
 
@@ -47,6 +49,8 @@
 > >
 > > 어떤 공고를 저장해서 적합도 분석·자소서로 이어갈까요? (예: "1번, 3번 저장")
 
+![공고 상세 — 회사 리서치·적합도 분석·타임라인](https://raw.githubusercontent.com/osntak/careermate/main/job-company-research.jpeg)
+
 ---
 
 ## 구성
@@ -62,44 +66,11 @@
 
 ## 빠른 시작
 
-### 요구사항
-
-- **Node.js >= 22.5.0** — 내장 `node:sqlite`를 사용하므로 컴파일러나 네이티브 빌드가 **필요 없습니다**.
-- 버전 확인:
-  ```bash
-  node --version
-  ```
-  `v22.5.0` 미만이거나 명령을 찾지 못하면 설치하세요 — Windows: `winget install OpenJS.NodeJS.LTS`, macOS: `brew install node`, 그 외: https://nodejs.org 에서 최신 LTS.
-
-### 1) 설치
-
-빌드 단계가 없습니다. TypeScript는 `tsx`로 바로 실행됩니다. (소스를 직접 받으려면 `git clone https://github.com/osntak/careermate.git`, 클론 없이 바로 쓰려면 `npx -y careermate init`을 쓰세요.)
-
-```bash
-npm install
-```
-
-### 2) 대시보드 실행
-
-```bash
-npm start
-```
-
-- 기본 주소는 `http://127.0.0.1:4319` 이며 브라우저가 자동으로 열립니다.
-- 포트가 사용 중이면 자동으로 다음 빈 포트로 폴백하니, 터미널에 출력된 실제 주소를 확인하세요.
-- 종료는 터미널에서 `Ctrl+C`.
-
-### 3) 데모 데이터로 둘러보기(선택)
-
-빈 화면이 낯설다면 예시 데이터를 넣어 기능을 미리 체험할 수 있습니다.
-
-```bash
-npm run seed
-```
-
-### 4) AI(MCP)에 연결
+**요구사항은 Node.js >= 22.5.0 하나입니다** — 내장 `node:sqlite`를 쓰므로 컴파일러·네이티브 빌드가 필요 없습니다. `node --version`으로 확인하고, 미만이거나 명령이 없으면 설치하세요(Windows: `winget install OpenJS.NodeJS.LTS` · macOS: `brew install node` · 그 외: https://nodejs.org 최신 LTS).
 
 CareerMate는 **내 컴퓨터에서 로컬 stdio MCP 서버를 띄울 수 있는 AI**에서 동작합니다. (ChatGPT·Gemini의 웹/앱은 클라우드에서 동작해 로컬 stdio MCP 서버에 직접 연결할 수 없습니다.)
+
+### A. 그냥 쓰려면 (권장 — 클론·빌드 없음)
 
 설치는 크게 **3가지 — "누가 설치하느냐"** 의 차이입니다. 아래 순서대로 골라 쓰세요.
 
@@ -127,11 +98,38 @@ npx -y careermate init
 
 #### ③ `careermate.zip` (Claude Desktop "채팅" 앱 전용 · Node 불필요 폴백)
 
-터미널·Node 없이 붙이는 **유일한 길**입니다. `dist/careermate.zip`(`npm run build:mcpb`로 생성)을 압축 해제한 뒤, Claude Desktop의 **Settings → Extensions → Advanced settings → Install extension…** 에서 압축을 푼 폴더를 추가하고 재시작합니다. 단 Claude Desktop **내장 Node 버전에 의존해 불안정할 수 있습니다**(Node<22.5면 동작 불가).
+터미널·Node 없이 붙이는 **유일한 길**입니다. [최신 GitHub Release](https://github.com/osntak/careermate/releases/latest)에서 `careermate.zip`을 내려받아 압축 해제한 뒤, Claude Desktop의 **Settings → Extensions → Advanced settings → Install extension…** 에서 압축을 푼 폴더를 추가하고 재시작합니다. (소스에서 직접 만들려면 `npm run build:mcpb` → `dist/careermate.zip`.) 단 Claude Desktop **내장 Node 버전에 의존해 불안정할 수 있습니다**(Node<22.5면 동작 불가).
 
 `.mcpb` 직접 추가는 일부 Claude Desktop 버전에서 실패하는 알려진 이슈가 있어, 현재는 ZIP 압축 해제 후 폴더 추가를 권장합니다. `.mcpb`와 `.zip`은 같은 번들입니다.
 
 연결 후 AI 클라이언트를 **완전히 재시작**하고, `get_onboarding_status`를 호출해 달라고 시켜 연결을 검증하세요. 자세한 절차는 AI용 런북 **[`INSTALL.md`](INSTALL.md)**, 사람용 설치 안내 **https://careermate.life**, 설치 후 사용법 **[`docs/START_WORKFLOW.md`](docs/START_WORKFLOW.md)**, 지원 앱 매트릭스 **[`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md)**를 참고하세요.
+
+### B. 소스로 개발/기여하려면
+
+```bash
+git clone https://github.com/osntak/careermate.git && cd careermate
+npm install     # 빌드 단계 없음 — TypeScript를 tsx로 바로 실행
+npm start       # 대시보드 http://127.0.0.1:4319 (포트 사용 중이면 다음 빈 포트로 폴백, Ctrl+C 종료)
+npm run seed    # (선택) 데모 데이터로 둘러보기
+npm run init    # 이 폴더 기준으로 AI 클라이언트에 MCP 등록
+```
+
+AI 클라이언트에 연결된 상태라면 "대시보드 열어줘"만으로도 서버가 백그라운드에서 시작되므로, 대시보드가 터미널 세션에 묶이지 않습니다.
+
+### 안 되면 여기부터 (Troubleshooting)
+
+<details>
+<summary><b>AI가 도구를 못 봐요 · 원인을 모르겠어요 · Node 오류 · zip 실패 · 포트 충돌</b> — 5문항</summary>
+
+1. **AI가 CareerMate를 못 봐요** — AI 앱을 **완전히 종료 후 재시작**하세요(백그라운드/트레이 포함). Claude Code는 폴더 "신뢰" 1회 승인이 필요하고, `/mcp` 명령으로 careermate가 보이는지 확인할 수 있습니다.
+2. **뭐가 문제인지 모르겠어요** — 터미널에서 `npx -y careermate doctor`(Node·데이터 폴더·DB·도구 등록·업데이트 점검). AI에게 "doctor 돌려서 뭐가 문제인지 봐줘"라고 해도 됩니다.
+3. **Node 버전 오류** — `node --version`이 22.5 미만이면 최신 LTS로 재설치하고 **터미널을 새로 연 뒤** 다시 시도하세요.
+4. **Claude 채팅앱에 zip이 안 붙어요** — 알려진 이슈입니다. 압축을 **푼 폴더**를 추가하세요. 그래도 안 되면 ②의 `npx -y careermate init` 경로를 권장합니다.
+5. **포트 충돌** — 자동으로 다음 빈 포트로 폴백합니다. 터미널에 출력된 실제 주소를 확인하세요.
+
+더 많은 항목은 [`docs/FAQ.md`](docs/FAQ.md)에 있습니다. **보안 문제**는 공개 이슈 대신 [`SECURITY.md`](SECURITY.md)의 비공개 절차로 알려주세요.
+
+</details>
 
 ---
 
@@ -287,7 +285,9 @@ MIT 라이선스 — 전문은 [`LICENSE`](LICENSE) 파일을 참고하세요.
 
 [한국어](#careermate) · **English**
 
-**An MCP-first, local-only career workspace.** You drive it through an AI agent that runs on your own computer (Claude Desktop, Claude Code, Codex, …); CareerMate stores your career data **only on this machine** and exposes it over MCP.
+**Let the AI you already use manage your career — by talking to it.** Ask an AI agent running on your own computer (Claude Desktop, Claude Code, Codex, …) to register your resume, analyze postings, draft cover letters, track applications, and prep interviews; CareerMate stores the results as structured data **only on this machine** and exposes them over MCP. There is no AI inside CareerMate — your AI does the thinking, CareerMate does the storing.
+
+![CareerMate dashboard — offer comparison and application pipeline](https://raw.githubusercontent.com/osntak/careermate/main/offers-applications.jpeg)
 
 ---
 
@@ -330,6 +330,8 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 > >
 > > Which should I save to analyze fit / draft a cover letter? (e.g. "save #1 and #3")
 
+![Job detail — company research, fit analysis, timeline](https://raw.githubusercontent.com/osntak/careermate/main/job-company-research.jpeg)
+
 ---
 
 ## Architecture
@@ -345,45 +347,11 @@ Two local processes share the same database.
 
 ## Quick start
 
-### Requirements
-
-- **Node.js >= 22.5.0** — uses the built-in `node:sqlite`, so **no compiler or native build** is required.
-- Check your version:
-  ```bash
-  node --version
-  ```
-  If it's below `v22.5.0` or the command isn't found, install it — Windows: `winget install OpenJS.NodeJS.LTS`, macOS: `brew install node`, otherwise the latest LTS from https://nodejs.org.
-
-### 1) Install
-
-There is no build step. TypeScript runs directly via `tsx`. (To get the source directly, `git clone https://github.com/osntak/careermate.git`, or skip the clone and use `npx -y careermate init`.)
-
-```bash
-npm install
-```
-
-### 2) Run the dashboard
-
-```bash
-npm start
-```
-
-- The default address is `http://127.0.0.1:4319` and the browser opens automatically.
-- If the port is busy, it falls back to the next free port — check the actual address printed in the terminal.
-- Stop it with `Ctrl+C` in the terminal.
-- When connected to an AI client, saying "open the dashboard" starts the server in the background if needed, so it is not tied to the AI terminal session.
-
-### 3) Explore with demo data (optional)
-
-If a blank screen feels unfamiliar, seed example data to try the features first.
-
-```bash
-npm run seed
-```
-
-### 4) Connect to your AI (MCP)
+**The only requirement is Node.js >= 22.5.0** — CareerMate uses the built-in `node:sqlite`, so no compiler or native build is needed. Check with `node --version`; if it's below 22.5 or missing, install it (Windows: `winget install OpenJS.NodeJS.LTS` · macOS: `brew install node` · otherwise the latest LTS from https://nodejs.org).
 
 CareerMate works with **any AI that can launch a local stdio MCP server on your machine**. (The web/mobile apps of ChatGPT and Gemini run in the cloud and cannot connect directly to a local stdio MCP server.)
+
+### A. Just want to use it (recommended — no clone, no build)
 
 Installation comes down to **three options — "who does the installing."** Pick one, in this order.
 
@@ -411,11 +379,38 @@ For other clients (Cursor, Cline, Windsurf, …), `npx -y careermate init -- --p
 
 #### ③ `careermate.zip` (Claude Desktop "chat" app only · no-Node fallback)
 
-This is the **only path with no terminal and no Node**. Unzip `dist/careermate.zip` (created via `npm run build:mcpb`), add the extracted folder through Claude Desktop's **Settings → Extensions → Advanced settings → Install extension…**, then restart. Note that it **depends on Claude Desktop's bundled Node version** (won't work if that Node is < 22.5).
+This is the **only path with no terminal and no Node**. Download `careermate.zip` from the [latest GitHub Release](https://github.com/osntak/careermate/releases/latest), unzip it, add the extracted folder through Claude Desktop's **Settings → Extensions → Advanced settings → Install extension…**, then restart. (To build it from source: `npm run build:mcpb` → `dist/careermate.zip`.) Note that it **depends on Claude Desktop's bundled Node version** (won't work if that Node is < 22.5).
 
 Direct `.mcpb` install is a known issue in some Claude Desktop builds, so the ZIP folder path is the recommended no-terminal route. The `.mcpb` and `.zip` assets contain the same bundle.
 
 After connecting, **fully restart** the AI client and verify the connection by asking it to call `get_onboarding_status`. For details, see the AI runbook **[`INSTALL.md`](INSTALL.md)**, the human-facing install guide **https://careermate.life**, the post-install usage flow **[`docs/START_WORKFLOW.md`](docs/START_WORKFLOW.md)**, and the supported-apps matrix **[`docs/SUPPORTED_AI_APPS.md`](docs/SUPPORTED_AI_APPS.md)**.
+
+### B. Develop / contribute from source
+
+```bash
+git clone https://github.com/osntak/careermate.git && cd careermate
+npm install     # no build step — TypeScript runs directly via tsx
+npm start       # dashboard at http://127.0.0.1:4319 (falls back to the next free port; Ctrl+C to stop)
+npm run seed    # (optional) explore with demo data
+npm run init    # register the MCP server with your AI clients, rooted at this folder
+```
+
+When an AI client is connected, saying "open the dashboard" starts the server in the background if needed, so the dashboard is not tied to a terminal session.
+
+### If it doesn't work, start here (troubleshooting)
+
+<details>
+<summary><b>AI can't see the tools · not sure what's wrong · Node error · zip won't attach · port conflict</b> — 5 checks</summary>
+
+1. **The AI can't see CareerMate** — **Fully quit and restart** the AI app (including tray/background). Claude Code needs a one-time folder "trust" approval; use the `/mcp` command to check that careermate is listed.
+2. **Not sure what's wrong** — Run `npx -y careermate doctor` in a terminal (checks Node, data folder, DB, tool registration, updates). Or just ask your AI: "run doctor and tell me what's wrong."
+3. **Node version error** — If `node --version` is below 22.5, install the latest LTS and **open a new terminal** before retrying.
+4. **The zip won't attach in the Claude chat app** — Known issue. Add the **extracted folder** instead. If that still fails, use the `npx -y careermate init` path from ②.
+5. **Port conflict** — It falls back to the next free port automatically; check the actual address printed in the terminal.
+
+More in [`docs/FAQ.md`](docs/FAQ.md). For **security issues**, use the private process in [`SECURITY.md`](SECURITY.md) instead of a public issue.
+
+</details>
 
 ---
 
