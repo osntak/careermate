@@ -12,6 +12,12 @@
  * rebuild + v3 upgrade preserve data, repair orphans (CASCADE/SET NULL), and
  * leave a clean foreign_key_check.
  *
+ * Pre-launch hardening additions (§3~5): the runner now applies each migration
+ * in its own transaction with an immediate version stamp, skips ADD COLUMN when
+ * the column already exists (self-heal of pre-hardening partial states), and
+ * never stamps a newer-versioned DB downward. Those guarantees are locked here
+ * with failure injection.
+ *
  * Note: no fs.rmSync cleanup — Node 25/Windows hard-crashes on rmSync.
  */
 import os from 'node:os';
@@ -139,6 +145,69 @@ console.log('\n2) 업그레이드 from=1 — v1 구버전 DB에 실데이터 적
   const ver = (db.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
   ok(`schema_version = ${LATEST} 기록`, ver === String(LATEST), ver);
 
+  db.close();
+}
+
+console.log('\n3) 부분 실패 상태 자가치유 — 컬럼 일부만 적용된 채 버전 미기록(과거 러너 사고)');
+{
+  const db = newDb();
+  // v1~v3까지 적용된 DB에서, v4가 절반(2/4 컬럼)만 적용되고 버전은 3에 머문 상태를 재현.
+  db.exec(MIGRATIONS[0]!);
+  db.exec(MIGRATIONS[1]!);
+  db.exec(MIGRATIONS[2]!);
+  db.exec(`CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
+  db.prepare(`INSERT INTO _meta (key,value) VALUES ('schema_version','3')`).run();
+  db.exec(`ALTER TABLE profile ADD COLUMN education TEXT NOT NULL DEFAULT '[]';`);
+  db.exec(`ALTER TABLE profile ADD COLUMN certifications TEXT NOT NULL DEFAULT '[]';`);
+
+  let threw = false;
+  let r = { from: -1, to: -1 };
+  try {
+    r = migrate(db);
+  } catch {
+    threw = true;
+  }
+  ok('부분 적용 상태에서 migrate()가 throw하지 않음(duplicate column 자가치유)', !threw);
+  ok(`복구 → {from:3, to:${LATEST}}`, r.from === 3 && r.to === LATEST, JSON.stringify(r));
+  const pcols = (db.prepare(`PRAGMA table_info(profile)`).all() as { name: string }[]).map((c) => c.name);
+  ok('기존 2컬럼 유지 + 누락 2컬럼(language_scores·awards) 추가 완료',
+    ['education', 'certifications', 'language_scores', 'awards'].every((c) => pcols.includes(c)), pcols.join(','));
+  const ver = (db.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
+  ok(`schema_version = ${LATEST} 복구`, ver === String(LATEST), ver);
+  db.close();
+}
+
+console.log('\n4) 마이그레이션 실패 시 성공분까지는 버전 기록(개별 트랜잭션) + 재개 멱등');
+{
+  // 끝에 고장난 마이그레이션을 임시로 붙여 중간 실패를 주입한다.
+  MIGRATIONS.push(`CREATE TABLE broken (;`);
+  const db = newDb();
+  let threw = false;
+  try {
+    migrate(db);
+  } catch {
+    threw = true;
+  }
+  ok('고장난 마이그레이션에서 throw', threw);
+  const ver = (db.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
+  ok(`실패 이전 성공분(v${LATEST})까지 버전 기록 — 재부팅 크래시 루프 없음`, ver === String(LATEST), ver);
+
+  // 고장 제거(=패치 배포 시나리오) 후 재실행: 성공분은 재실행하지 않고 이어간다.
+  MIGRATIONS.pop();
+  const r = migrate(db);
+  ok(`재개 → {from:${LATEST}, to:${LATEST}} (성공분 재실행 없음)`, r.from === LATEST && r.to === LATEST, JSON.stringify(r));
+  db.close();
+}
+
+console.log('\n5) 미래 버전 DB 가드 — 더 새 버전이 만든 DB를 다운스탬프하지 않음');
+{
+  const db = newDb();
+  migrate(db);
+  db.prepare(`UPDATE _meta SET value='99' WHERE key='schema_version'`).run();
+  const r = migrate(db);
+  ok('migrate() no-op → {from:99, to:99}', r.from === 99 && r.to === 99, JSON.stringify(r));
+  const ver = (db.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
+  ok('schema_version 99 유지(다운스탬프 없음)', ver === '99', ver);
   db.close();
 }
 

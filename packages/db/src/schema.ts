@@ -5,6 +5,16 @@
  * in `_meta`. Applying is idempotent and safe to run on every process start, so
  * both the web server and the MCP server can call `migrate()` on boot and share
  * the same database file without coordination.
+ *
+ * Crash safety (this DB is the user's only copy):
+ *  - Each migration runs in its own transaction and `schema_version` is stamped
+ *    inside that same transaction, so a step either fully applies (including its
+ *    version bump) or fully rolls back — a process death mid-upgrade can never
+ *    leave "applied but unrecorded" work that re-throws on the next boot.
+ *  - `ALTER TABLE … ADD COLUMN` statements are skipped when the column already
+ *    exists (SQLite has no IF NOT EXISTS for columns), so a DB damaged by the
+ *    pre-hardening runner self-heals instead of crash-looping on boot.
+ *  - A DB stamped by a NEWER CareerMate is left untouched (never stamped down).
  */
 import type { DatabaseSync } from 'node:sqlite';
 
@@ -367,16 +377,65 @@ export function migrate(db: DatabaseSync): { from: number; to: number } {
     | undefined;
   const from = row ? Number(row.value) : 0;
 
+  // DB stamped by a newer CareerMate than this code: leave it alone. Stamping it
+  // back down would make the newer app re-run migrations it already applied.
+  if (from >= MIGRATIONS.length) return { from, to: from };
+
   for (let v = from; v < MIGRATIONS.length; v++) {
-    db.exec(MIGRATIONS[v]!);
+    applyMigration(db, v);
+  }
+  return { from, to: MIGRATIONS.length };
+}
+
+function stampVersion(db: DatabaseSync, version: number): void {
+  db.prepare(
+    `INSERT INTO _meta (key, value) VALUES ('schema_version', ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+  ).run(String(version));
+}
+
+function columnExists(db: DatabaseSync, table: string, column: string): boolean {
+  const rows = db
+    .prepare(`PRAGMA table_info("${table.replaceAll('"', '""')}")`)
+    .all() as Array<{ name: string }>;
+  return rows.some((r) => r.name === column);
+}
+
+// One `ALTER TABLE <t> ADD COLUMN <c> …;` statement on its own line (how all
+// column-adding migrations here are written).
+const ALTER_ADD_COLUMN_RE = /^[ \t]*ALTER TABLE\s+(\w+)\s+ADD COLUMN\s+(\w+)[^;]*;[ \t]*$/gm;
+
+/** Drop ADD COLUMN statements whose column already exists (idempotent re-run). */
+function skipExistingColumns(db: DatabaseSync, sql: string): string {
+  return sql.replace(ALTER_ADD_COLUMN_RE, (stmt, table: string, column: string) =>
+    columnExists(db, table, column) ? '' : stmt,
+  );
+}
+
+function applyMigration(db: DatabaseSync, v: number): void {
+  const sql = MIGRATIONS[v]!;
+
+  if (sql.includes('BEGIN;')) {
+    // Self-transactional migration (v2 toggles PRAGMA foreign_keys, which is a
+    // no-op inside an open transaction, so it must manage BEGIN/COMMIT itself).
+    // Stamp right after; if the process dies in the tiny window between the two
+    // statements, re-running the rebuild is safe (it copies the data again).
+    db.exec(sql);
+    stampVersion(db, v + 1);
+    return;
   }
 
-  const to = MIGRATIONS.length;
-  if (to !== from) {
-    db.prepare(
-      `INSERT INTO _meta (key, value) VALUES ('schema_version', ?)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    ).run(String(to));
+  db.exec('BEGIN');
+  try {
+    db.exec(skipExistingColumns(db, sql));
+    stampVersion(db, v + 1);
+    db.exec('COMMIT');
+  } catch (err) {
+    try {
+      db.exec('ROLLBACK');
+    } catch {
+      /* surface the original error */
+    }
+    throw err;
   }
-  return { from, to };
 }
