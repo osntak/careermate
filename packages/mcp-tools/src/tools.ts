@@ -23,6 +23,7 @@ import {
   CoverLetterVersionInputSchema,
   ApplicationSubmissionSchema,
   InterviewPrepInputSchema,
+  OfferInputSchema,
   DocumentInputSchema,
   APPLICATION_STATUSES,
   APPLICATION_STATUS_LABELS,
@@ -65,6 +66,9 @@ import {
   prescreenJob,
   searchJobs,
   JOB_SEARCH_SOURCES,
+  saveOffer,
+  compareOffers,
+  getOffer,
   jobWithMeta,
   previewCoverLetter,
   summarizeReport,
@@ -614,7 +618,7 @@ export const TOOLS: ToolDef[] = [
     name: 'save_job_posting',
     title: '채용공고 저장',
     description:
-      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요 — 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
+      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요 — 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 회사 평판(평점·워라밸·문화 리스크 등)을 리서치했다면 reputation에 요약(출처·최근성 표기)을 넣으면 오퍼 판단·면접에 활용됩니다. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
     inputSchema: JobInputSchema.shape,
     handler: (args) => {
       const { job } = saveJobPosting(args);
@@ -1069,6 +1073,52 @@ export const TOOLS: ToolDef[] = [
         return ok('이 공고에 저장된 핵심 키워드가 없어 겹침을 셀 수 없습니다. save_job_posting의 keywords에 핵심 키워드를 정리해 넣으면 프리스크린이 가능합니다.', r);
       const pct = Math.round(r.coverage * 100);
       return ok(`키워드 겹침 ${pct}% — 보유 ${r.matched.length}/${r.job_keywords.length}개. 부족: ${r.missing.join(', ') || '없음'}. (셀 수 있는 겹침일 뿐, 실제 적합도는 직접 판단하세요.)`, r);
+    },
+  },
+  {
+    name: 'save_offer',
+    title: '오퍼(제안) 저장',
+    description:
+      '받은 채용 제안(오퍼)을 공고에 연결해 저장합니다(공고당 1건, 다시 저장하면 갱신). 현금성 항목은 **만원 단위 숫자**로 — base_salary(기본급/연봉)·bonus_amount(연 성과급·상여 기대액)·welfare_amount(복지포인트 등 연환산)·signing_amount(사이닝 일시금). 주식/스톡옵션은 가치평가가 모호하니 equity_note에 텍스트로, 그 외 보상은 comp_note에. 근무형태·계약형태·수락 마감일(accept_deadline)도 저장하세요. **당신(AI)이 이 오퍼를 종합 평가해 ai_score(0~100)와 verdict(최종평 — "어떤 상황이면 이 회사가 좋다" 식 한두 문장)를 함께 채워 저장하세요** — CareerMate엔 LLM이 없어 이 점수·평이 대시보드에 그대로 표시됩니다. 회사 평판이 판단에 필요하면 공고의 reputation을 먼저 채워두세요. 여러 오퍼의 정밀 비교는 compare_offers로 데이터를 받아 당신이 직접 하세요(총보상·성장·안정성·워라밸).',
+    inputSchema: OfferInputSchema.shape,
+    handler: (args) => {
+      try {
+        const offer = saveOffer(args);
+        const total = offer.total_comp_annual_est;
+        const msg =
+          `'${offer.company}' 오퍼를 저장했어요` +
+          (offer.ai_score != null ? ` (점수 ${offer.ai_score})` : '') +
+          (total != null ? ` · 추정 연 현금성 ${total.toLocaleString()}만원` : '') +
+          '.';
+        return ok(msg, offer);
+      } catch (e) {
+        return fail(e instanceof Error ? e.message : '저장 실패');
+      }
+    },
+  },
+  {
+    name: 'compare_offers',
+    title: '오퍼 비교',
+    description:
+      '저장된 모든 오퍼를 **점수순(당신이 매긴 ai_score)** 으로 회사·직무·추정 연 현금성 총액·근무형태·수락마감·최종평과 함께 돌려줍니다. total_comp_annual_est는 CareerMate가 결정론으로 합산한 추정치(기본급+성과급+복지, 일시금 제외)입니다. "어느 오퍼가 나은지"의 정밀 판단은 이 데이터를 받아 당신이 offer-evaluation·salary-negotiation 관점(총보상·성장·안정성·워라밸·회사 평판)으로 직접 하세요. 사용자가 "오퍼 비교해줘"라고 할 때 사용합니다. 읽기 전용입니다.',
+    inputSchema: {},
+    readOnly: true,
+    handler: () => {
+      const offers = compareOffers();
+      if (offers.length === 0) return ok('저장된 오퍼가 없습니다. save_offer로 먼저 저장하세요.', offers);
+      return ok(`오퍼 ${offers.length}건(점수순).`, offers);
+    },
+  },
+  {
+    name: 'get_offer',
+    title: '오퍼 조회(공고별)',
+    description: '특정 공고에 저장된 오퍼 1건을 돌려줍니다(없으면 null). 읽기 전용입니다.',
+    inputSchema: { job_id: z.string() },
+    readOnly: true,
+    handler: (args) => {
+      const offer = getOffer(args.job_id);
+      if (!offer) return ok('이 공고에 저장된 오퍼가 없습니다.', null);
+      return ok(`'${offer.company}' 오퍼.`, offer);
     },
   },
 

@@ -19,6 +19,7 @@ export {
   fitRepo,
   applicationRepo,
   interviewRepo,
+  offerRepo,
   activityRepo,
   timelineRepo,
   getEntityCounts,

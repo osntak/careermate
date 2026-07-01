@@ -21,6 +21,8 @@ import {
   type CoverLetterVersionRecord,
   type JobInput,
   type JobRecord,
+  type OfferInput,
+  type OfferRecord,
   type FitAnalysisInput,
   type FitAnalysisRecord,
   type ApplicationInput,
@@ -659,6 +661,7 @@ function mapJob(r: any): JobRecord {
     company_overview: r.company_overview ?? null,
     talent_profile: r.talent_profile ?? null,
     core_values: fromJson(r.core_values, []),
+    reputation: r.reputation ?? null,
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
@@ -691,7 +694,7 @@ export const jobRepo = {
     if (existing) {
       const m = { ...existing, ...input } as JobRecord;
       db.prepare(
-        `UPDATE jobs SET company=?,position=?,url=?,location=?,employment_type=?,description=?,requirements=?,keywords=?,deadline=?,source=?,company_overview=?,talent_profile=?,core_values=?,updated_at=? WHERE id=?`,
+        `UPDATE jobs SET company=?,position=?,url=?,location=?,employment_type=?,description=?,requirements=?,keywords=?,deadline=?,source=?,company_overview=?,talent_profile=?,core_values=?,reputation=?,updated_at=? WHERE id=?`,
       ).run(
         m.company,
         m.position,
@@ -706,6 +709,7 @@ export const jobRepo = {
         m.company_overview ?? null,
         m.talent_profile ?? null,
         toJson(m.core_values ?? []),
+        m.reputation ?? null,
         ts,
         existing.id,
       );
@@ -713,8 +717,8 @@ export const jobRepo = {
     }
     const newJobId = id ?? newId('job_');
     db.prepare(
-      `INSERT INTO jobs (id,company,position,url,location,employment_type,description,requirements,keywords,deadline,source,company_overview,talent_profile,core_values,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO jobs (id,company,position,url,location,employment_type,description,requirements,keywords,deadline,source,company_overview,talent_profile,core_values,reputation,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     ).run(
       newJobId,
       input.company,
@@ -730,6 +734,7 @@ export const jobRepo = {
       input.company_overview ?? null,
       input.talent_profile ?? null,
       toJson(input.core_values ?? []),
+      input.reputation ?? null,
       ts,
       ts,
     );
@@ -1035,6 +1040,99 @@ export const timelineRepo = {
   },
 };
 
+/* -------------------------------------------------------------------- Offers */
+
+function mapOffer(r: any): OfferRecord {
+  const base = r.base_salary ?? null;
+  const bonus = r.bonus_amount ?? null;
+  const welfare = r.welfare_amount ?? null;
+  // Annual cash estimate = base + bonus + welfare (signing is one-time → excluded).
+  // null when no numeric cash piece was provided (can't estimate).
+  const hasAny = base != null || bonus != null || welfare != null;
+  const total = hasAny ? (base ?? 0) + (bonus ?? 0) + (welfare ?? 0) : null;
+  return {
+    id: r.id,
+    job_id: r.job_id,
+    base_salary: base,
+    bonus_amount: bonus,
+    welfare_amount: welfare,
+    signing_amount: r.signing_amount ?? null,
+    equity_note: r.equity_note ?? null,
+    comp_note: r.comp_note ?? null,
+    work_arrangement: r.work_arrangement ?? null,
+    contract_type: r.contract_type ?? null,
+    accept_deadline: r.accept_deadline ?? null,
+    ai_score: r.ai_score ?? null,
+    verdict: r.verdict ?? null,
+    notes: r.notes ?? null,
+    total_comp_annual_est: total,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  };
+}
+
+export const offerRepo = {
+  getByJob(jobId: string): OfferRecord | null {
+    const r = getDb().prepare(`SELECT * FROM offers WHERE job_id=?`).get(jobId);
+    return r ? mapOffer(r) : null;
+  },
+  list(): OfferRecord[] {
+    return (getDb().prepare(`SELECT * FROM offers ORDER BY ai_score IS NULL, ai_score DESC, updated_at DESC`).all() as any[]).map(mapOffer);
+  },
+  /** Upsert by job_id (one offer per job). Missing fields are preserved on update (partial-safe). */
+  save(input: OfferInput): OfferRecord {
+    const db = getDb();
+    const existing = this.getByJob(input.job_id);
+    const ts = now();
+    const n = (v: number | undefined, prev: number | null | undefined) => (v ?? prev ?? null);
+    const s = (v: string | undefined, prev: string | null | undefined) => (v ?? prev ?? null);
+    if (existing) {
+      db.prepare(
+        `UPDATE offers SET base_salary=?,bonus_amount=?,welfare_amount=?,signing_amount=?,equity_note=?,comp_note=?,work_arrangement=?,contract_type=?,accept_deadline=?,ai_score=?,verdict=?,notes=?,updated_at=? WHERE id=?`,
+      ).run(
+        n(input.base_salary, existing.base_salary),
+        n(input.bonus_amount, existing.bonus_amount),
+        n(input.welfare_amount, existing.welfare_amount),
+        n(input.signing_amount, existing.signing_amount),
+        s(input.equity_note, existing.equity_note),
+        s(input.comp_note, existing.comp_note),
+        s(input.work_arrangement, existing.work_arrangement),
+        s(input.contract_type, existing.contract_type),
+        s(input.accept_deadline, existing.accept_deadline),
+        n(input.ai_score, existing.ai_score),
+        s(input.verdict, existing.verdict),
+        s(input.notes, existing.notes),
+        ts,
+        existing.id,
+      );
+      return this.getByJob(input.job_id)!;
+    }
+    const id = newId('ofr_');
+    db.prepare(
+      `INSERT INTO offers (id,job_id,base_salary,bonus_amount,welfare_amount,signing_amount,equity_note,comp_note,work_arrangement,contract_type,accept_deadline,ai_score,verdict,notes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    ).run(
+      id,
+      input.job_id,
+      input.base_salary ?? null,
+      input.bonus_amount ?? null,
+      input.welfare_amount ?? null,
+      input.signing_amount ?? null,
+      input.equity_note ?? null,
+      input.comp_note ?? null,
+      input.work_arrangement ?? null,
+      input.contract_type ?? null,
+      input.accept_deadline ?? null,
+      input.ai_score ?? null,
+      input.verdict ?? null,
+      input.notes ?? null,
+      ts,
+      ts,
+    );
+    return this.getByJob(input.job_id)!;
+  },
+};
+
 /* ------------------------------------------------------------------ Counts */
 
 /**
@@ -1058,6 +1156,7 @@ export function getEntityCounts(): Record<string, number> {
     'applications',
     'interview_preps',
     'application_timeline_events',
+    'offers',
   ]);
   const c = (t: string): number => {
     if (!ALLOWED_TABLES.has(t)) throw new Error(`getEntityCounts: 허용되지 않은 테이블 이름: ${t}`);
@@ -1074,5 +1173,6 @@ export function getEntityCounts(): Record<string, number> {
     applications: c('applications'),
     interview_preps: c('interview_preps'),
     application_timeline_events: c('application_timeline_events'),
+    offers: c('offers'),
   };
 }

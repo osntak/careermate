@@ -329,6 +329,35 @@ export const MIGRATIONS: string[] = [
   `
   ALTER TABLE interview_preps ADD COLUMN debrief TEXT NOT NULL DEFAULT '{}';
   `,
+
+  // v7 — offer comparison (한국 총보상 필드) + company reputation research field on jobs.
+  // offers: one per job (UNIQUE job_id, mirrors interview_preps). Cash pieces are numeric (만원) so
+  // the server can deterministically sum an annual estimate; equity/other stay free-text (comp is
+  // messy). ai_score/verdict are written by the connected AI at save time (no LLM here) and rendered
+  // by the dashboard, so it never needs to call an LLM. jobs.reputation: AI-researched company
+  // reputation summary (same pattern as company_overview) — feeds offer verdicts + offer-evaluation.
+  `
+  CREATE TABLE IF NOT EXISTS offers (
+    id TEXT PRIMARY KEY,
+    job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id) ON DELETE CASCADE,
+    base_salary INTEGER,
+    bonus_amount INTEGER,
+    welfare_amount INTEGER,
+    signing_amount INTEGER,
+    equity_note TEXT,
+    comp_note TEXT,
+    work_arrangement TEXT,
+    contract_type TEXT,
+    accept_deadline TEXT,
+    ai_score INTEGER,
+    verdict TEXT,
+    notes TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_offers_job ON offers(job_id);
+  ALTER TABLE jobs ADD COLUMN reputation TEXT;
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

@@ -32,7 +32,7 @@ const ok = (name: string, cond: boolean, extra = '') => {
   }
 };
 
-const LATEST = MIGRATIONS.length; // v1..v6
+const LATEST = MIGRATIONS.length; // v1..v7
 const T = '2026-01-01T00:00:00.000Z';
 
 function newDb(): DatabaseSync {
@@ -43,8 +43,8 @@ function newDb(): DatabaseSync {
   return db;
 }
 
-console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v6)`);
-ok('MIGRATIONS 길이 6', LATEST === 6, String(LATEST));
+console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v7)`);
+ok('MIGRATIONS 길이 7', LATEST === 7, String(LATEST));
 
 console.log('\n1) 신규 설치 — from=0 전체 빌드');
 {

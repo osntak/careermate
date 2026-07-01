@@ -139,6 +139,18 @@
       "description": "공고 검색·가져오기(키워드, 무인증 공개 잡보드)"
     },
     {
+      "name": "save_offer",
+      "description": "오퍼(제안) 저장 — 총보상·AI 점수·최종평"
+    },
+    {
+      "name": "compare_offers",
+      "description": "오퍼 비교(점수순·현금성 총액 추정)"
+    },
+    {
+      "name": "get_offer",
+      "description": "오퍼 조회(공고별)"
+    },
+    {
       "name": "delete_job_posting",
       "description": "채용공고 삭제"
     },

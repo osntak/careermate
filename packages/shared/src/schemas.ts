@@ -394,6 +394,7 @@ export const JobInputSchema = z.object({
   company_overview: optBody.describe('회사 사업개요·미션·주요 제품·최근 활동 (AI가 리서치해 채움)'),
   talent_profile: optBody.describe('회사가 강조하는 인재상 (한국 자소서·면접에서 정렬 기준)'),
   core_values: strList.optional().describe('회사 핵심가치 (키워드 배열)'),
+  reputation: optBody.describe('회사 평판 요약 — 평점·워라밸·문화 리스크 등 (AI가 company-research 플레이북으로 리서치해 채움; 출처·최근성 표기)'),
 });
 export type JobInput = z.infer<typeof JobInputSchema>;
 
@@ -412,8 +413,51 @@ export const JobRecordSchema = z.object({
   company_overview: z.string().nullable(),
   talent_profile: z.string().nullable(),
   core_values: z.array(z.string()),
+  reputation: z.string().nullable(),
 });
 export type JobRecord = z.infer<typeof JobRecordSchema>;
+
+/* ------------------------------------------------------------------- Offer */
+
+/** Job offer for comparison. Cash pieces are 만원(numeric) so the server can sum an
+ *  annual estimate deterministically; equity/other stay free-text. ai_score/verdict
+ *  are produced by the connected AI at save time (CareerMate has no LLM). */
+export const OfferInputSchema = z.object({
+  job_id: reqLine,
+  base_salary: z.number().nonnegative().optional().describe('기본급/연봉 (만원)'),
+  bonus_amount: z.number().nonnegative().optional().describe('연 성과급·상여 기대액 (만원)'),
+  welfare_amount: z.number().nonnegative().optional().describe('복지포인트 등 연환산 (만원)'),
+  signing_amount: z.number().nonnegative().optional().describe('사이닝보너스 일시금 (만원)'),
+  equity_note: optNote.describe('주식/스톡옵션 (정성 서술 — 가치평가가 모호하므로 텍스트)'),
+  comp_note: optBody.describe('기타 보상 자유 서술'),
+  work_arrangement: optLine.describe('근무형태 (재택/하이브리드/출근)'),
+  contract_type: optLine.describe('계약형태 (정규/계약 등)'),
+  accept_deadline: optLine.describe('수락 마감일 YYYY-MM-DD'),
+  ai_score: z.number().min(0).max(100).optional().describe('AI가 매긴 종합 점수 0~100 (저장 시 AI가 채움)'),
+  verdict: optBody.describe('최종평 — 어떤 상황이면 어디가 좋은지 등 (AI가 저장 시 작성)'),
+  notes: optNote,
+});
+export type OfferInput = z.infer<typeof OfferInputSchema>;
+
+export const OfferRecordSchema = z.object({
+  ...baseRecord,
+  job_id: z.string(),
+  base_salary: z.number().nullable(),
+  bonus_amount: z.number().nullable(),
+  welfare_amount: z.number().nullable(),
+  signing_amount: z.number().nullable(),
+  equity_note: z.string().nullable(),
+  comp_note: z.string().nullable(),
+  work_arrangement: z.string().nullable(),
+  contract_type: z.string().nullable(),
+  accept_deadline: z.string().nullable(),
+  ai_score: z.number().nullable(),
+  verdict: z.string().nullable(),
+  notes: z.string().nullable(),
+  /** Server-computed annual cash estimate = base + bonus + welfare (signing is one-time, excluded). Null if no numeric pieces. */
+  total_comp_annual_est: z.number().nullable(),
+});
+export type OfferRecord = z.infer<typeof OfferRecordSchema>;
 
 /* ------------------------------------------------------------- FitAnalysis */
 
