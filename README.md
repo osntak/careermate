@@ -11,7 +11,7 @@
 ## 핵심 철학
 
 - **MCP 우선** — 새 앱 사용법을 익힐 필요가 없습니다. 내 컴퓨터에서 동작하는 AI 에이전트(Claude Desktop·Claude Code·Codex 등 로컬 MCP 클라이언트)와 대화하면, 그 AI가 CareerMate의 로컬 MCP 도구를 호출해 당신의 커리어 DB를 읽고 씁니다.
-- **로컬 우선** — 모든 데이터는 당신의 컴퓨터에만 저장됩니다(`~/.careermate`). 외부 서버로 전송하지 않습니다. 대시보드 웹 서버는 `127.0.0.1`(이 컴퓨터)에만 연결됩니다.
+- **로컬 우선** — 모든 데이터는 당신의 컴퓨터에만 저장됩니다(`~/.careermate`). 저장된 개인 데이터는 외부 서버로 전송하지 않습니다 — 외부로 나가는 것은 선택적 버전 확인과 공고 검색 시 **검색 키워드**뿐입니다(아래 [보안 / 프라이버시](#보안--프라이버시) 참고). 대시보드 웹 서버는 `127.0.0.1`(이 컴퓨터)에만 연결됩니다.
 - **LLM 비내장** — CareerMate 안에는 AI가 들어 있지 않습니다. 분석·글쓰기 같은 “생각하는 일”은 **당신의 AI**가 하고, CareerMate는 데이터를 **안전하게 보관·조회**하는 역할만 합니다.
 
 > 쉽게 말해: 당신의 AI가 “두뇌”, CareerMate는 그 두뇌가 꺼내 쓰는 “커리어 서랍장”입니다.
@@ -294,7 +294,7 @@ MIT 라이선스 — 전문은 [`LICENSE`](LICENSE) 파일을 참고하세요.
 ## Core philosophy
 
 - **MCP-first** — No new app to learn. You talk to an AI agent running on your machine (Claude Desktop, Claude Code, Codex, and other local MCP clients), and that AI calls CareerMate's local MCP tools to read and write your career database.
-- **Local-first** — All data lives only on your computer (`~/.careermate`). Nothing is sent to external servers. The dashboard web server binds only to `127.0.0.1` (this machine).
+- **Local-first** — All data lives only on your computer (`~/.careermate`). Your stored personal data is never sent to external servers — the only outbound calls are the optional version check and the **search keyword** during job search (see [Security / privacy](#security--privacy) below). The dashboard web server binds only to `127.0.0.1` (this machine).
 - **No built-in LLM** — There is no AI inside CareerMate. The "thinking" — analysis, writing — is done by **your AI**; CareerMate only stores and serves the data safely.
 
 > In short: your AI is the "brain," and CareerMate is the "career drawer" it reaches into.

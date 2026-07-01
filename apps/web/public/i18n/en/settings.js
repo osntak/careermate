@@ -109,14 +109,14 @@ export default {
   'settings.reset.gateWord': 'RESET',
   'settings.reset.title': 'Reset all data',
   'settings.reset.calloutTitle': "This can't be undone",
-  'settings.reset.calloutBody': 'All data, including your profile, postings, applications, documents, and interview prep, will be permanently deleted. For safety, a backup is created automatically right before the reset.',
+  'settings.reset.calloutBody': 'All data, including your profile, postings, applications, documents, and interview prep, will be permanently deleted. For safety, a backup is created automatically right before the reset — that backup file remains in the backups folder inside your data directory, so delete it too if you want no trace left.',
   'settings.reset.instruction': 'To continue, type {{word}} in the field below.',
   'settings.reset.confirm': 'Reset all data',
   'settings.reset.doneToast': 'All data has been reset.',
   'settings.danger.title': 'Danger zone',
   'settings.danger.sub': "This action can't be undone",
   'settings.danger.resetTitle': 'Reset all data',
-  'settings.danger.resetBody': 'Deletes all CareerMate data stored on this computer. A backup is created automatically before the reset.',
+  'settings.danger.resetBody': 'Deletes all CareerMate data stored on this computer. An automatic backup is created before the reset and remains in the backups folder.',
 
   // help / report a problem
   'settings.support.title': 'Help & report a problem',

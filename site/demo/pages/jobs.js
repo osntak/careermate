@@ -340,6 +340,7 @@ async function renderDetail(ctx, jobId) {
       CoverLettersCard(job.cover_letters),
       InterviewCard(job)),
     PostingCard(job),
+    CompanyResearchCard(job),
     FitCard(job.fit),
     TimelineCard(job.timeline),
     RelatedCard(job.related),
@@ -382,6 +383,24 @@ function PostingCard(job) {
   }
 
   return Card({ title: t('jobs.posting.title'), body });
+}
+
+// Company research the AI saved (overview·인재상·핵심가치·평판) — rendered so the
+// user can actually SEE it in the dashboard, not just have the AI use it.
+function CompanyResearchCard(job) {
+  const hasValues = job.core_values && job.core_values.length;
+  if (!job.company_overview && !job.talent_profile && !hasValues && !job.reputation) return null;
+  const field = (labelKey, value) => el('div', { class: 'mt-3' },
+    el('div', { class: 'muted text-sm mb-2' }, t(labelKey)),
+    el('p', { style: { margin: 0, whiteSpace: 'pre-wrap' } }, value));
+  const body = [];
+  if (job.company_overview) body.push(field('jobs.company.overview', job.company_overview));
+  if (job.talent_profile) body.push(field('jobs.company.talent', job.talent_profile));
+  if (hasValues) body.push(el('div', { class: 'mt-3' },
+    el('div', { class: 'muted text-sm mb-2' }, t('jobs.company.values')),
+    Chips(job.core_values, { accent: true })));
+  if (job.reputation) body.push(field('jobs.company.reputation', job.reputation));
+  return Card({ title: t('jobs.company.title'), body });
 }
 
 function FitCard(fit) {

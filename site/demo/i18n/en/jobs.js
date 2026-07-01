@@ -73,6 +73,11 @@ export default {
   'jobs.detail.openPosting': 'Original posting',
 
   // ---- posting card ----
+  'jobs.company.title': 'Company research',
+  'jobs.company.overview': 'Overview',
+  'jobs.company.talent': 'Ideal candidate',
+  'jobs.company.values': 'Core values',
+  'jobs.company.reputation': 'Reputation',
   'jobs.posting.title': 'Posting details',
   'jobs.posting.location': 'Location',
   'jobs.posting.employment': 'Employment type',

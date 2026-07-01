@@ -1,5 +1,12 @@
 // Applications page.
 export default {
+  // offers comparison
+  'applications.offers.title': 'Offer comparison',
+  'applications.offers.est': 'Est. annual cash',
+  'applications.offers.unit': '만원',
+  'applications.offers.noScore': 'No score',
+  'applications.offers.acceptBy': 'Accept by {{date}}',
+
   // deadline D-day chip
   'applications.dday.future': 'Due in {{n}}d',
   'applications.dday.today': 'Due today',
