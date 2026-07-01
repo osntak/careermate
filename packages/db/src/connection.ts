@@ -4,11 +4,68 @@
  * Both the web server and the MCP server import this. SQLite with WAL handles
  * the two-process concurrency (dashboard editing + AI writing) cleanly.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { getDbPath } from './paths.ts';
-import { migrate } from './schema.ts';
+import { getBackupsDir, getDbPath } from './paths.ts';
+import { migrate, MIGRATIONS } from './schema.ts';
 
 let _db: DatabaseSync | null = null;
+
+/** How many automatic pre-migration snapshots to keep (newest first). */
+const PRE_MIGRATE_KEEP = 5;
+
+/**
+ * Snapshot the DB into backups/ right before a schema upgrade runs. The DB is
+ * the user's only copy, so even though each migration is transactional, a bad
+ * migration shipped in an update must never be able to destroy data without a
+ * restore point. Best-effort: a failed backup logs to stderr but does not block
+ * boot (blocking would take both the dashboard and the MCP server down).
+ */
+function preMigrationBackup(db: DatabaseSync): void {
+  try {
+    const hasMeta = db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='_meta'`)
+      .get();
+    if (!hasMeta) return; // fresh file — nothing to protect yet
+    const row = db.prepare(`SELECT value FROM _meta WHERE key = 'schema_version'`).get() as
+      | { value: string }
+      | undefined;
+    const from = row ? Number(row.value) : 0;
+    if (from === 0 || from >= MIGRATIONS.length) return; // fresh, current, or newer — no upgrade will run
+
+    const dir = getBackupsDir();
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const dest = path.join(dir, `pre-migrate-v${from}-${stamp}.sqlite`);
+    try {
+      if (/[\0\n\r]/.test(dest)) throw new Error('backup path not safe for SQL literal');
+      db.exec(`VACUUM INTO '${dest.replace(/'/g, "''")}'`);
+    } catch {
+      fs.copyFileSync(getDbPath(), dest); // WAL is checkpointed on close; copy is a coarse fallback
+    }
+
+    // Prune old snapshots (ISO stamp in the name → lexicographic sort == time sort).
+    // fs.unlinkSync only — rmSync hard-crashes on Node 25/Windows.
+    const stale = fs
+      .readdirSync(dir)
+      .filter((f) => f.startsWith('pre-migrate-') && f.endsWith('.sqlite'))
+      .sort()
+      .reverse()
+      .slice(PRE_MIGRATE_KEEP);
+    for (const f of stale) {
+      try {
+        fs.unlinkSync(path.join(dir, f));
+      } catch {
+        /* best-effort */
+      }
+    }
+  } catch (err) {
+    // stderr only — stdout is the MCP transport channel.
+    console.error(
+      `[careermate] 업그레이드 전 자동 백업 실패(마이그레이션은 계속 진행): ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
 
 export function getDb(): DatabaseSync {
   if (_db) return _db;
@@ -16,6 +73,7 @@ export function getDb(): DatabaseSync {
   db.exec('PRAGMA journal_mode = WAL;');
   db.exec('PRAGMA foreign_keys = ON;');
   db.exec('PRAGMA busy_timeout = 5000;');
+  preMigrationBackup(db);
   migrate(db);
   _db = db;
   return db;

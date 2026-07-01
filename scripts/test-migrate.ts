@@ -25,6 +25,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { MIGRATIONS, migrate } from '../packages/db/src/schema.ts';
+import { getDb, closeDb } from '../packages/db/src/connection.ts';
 
 let pass = 0,
   fail = 0;
@@ -209,6 +210,61 @@ console.log('\n5) 미래 버전 DB 가드 — 더 새 버전이 만든 DB를 다
   const ver = (db.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
   ok('schema_version 99 유지(다운스탬프 없음)', ver === '99', ver);
   db.close();
+}
+
+console.log('\n6) 업그레이드 직전 자동 백업 — getDb()가 마이그레이션 전 스냅샷을 남김');
+{
+  // v1 DB를 실제 데이터 폴더 위치(CAREERMATE_DATA_DIR)에 만들어 getDb() 부팅 경로를 태운다.
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-backup-'));
+  process.env.CAREERMATE_DATA_DIR = dataDir;
+  closeDb();
+
+  const seed = new DatabaseSync(path.join(dataDir, 'careermate.sqlite'));
+  seed.exec('PRAGMA journal_mode = WAL;');
+  seed.exec(MIGRATIONS[0]!);
+  seed.exec(`CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
+  seed.prepare(`INSERT INTO _meta (key,value) VALUES ('schema_version','1')`).run();
+  seed.prepare(`INSERT INTO profile (id,name,created_at,updated_at) VALUES ('singleton','백업 확인',?,?)`).run(T, T);
+  seed.close();
+
+  // 보관 상한(5) 프루닝 확인용 더미 스냅샷 6개(이름의 ISO 스탬프가 정렬 키).
+  const backupsDir = path.join(dataDir, 'backups');
+  fs.mkdirSync(backupsDir, { recursive: true });
+  for (let i = 0; i < 6; i++) {
+    fs.writeFileSync(path.join(backupsDir, `pre-migrate-v1-2020-01-0${i + 1}T00-00-00-000Z.sqlite`), 'dummy');
+  }
+
+  const db = getDb(); // → 백업 후 v1→v7 마이그레이션
+  const snaps = fs.readdirSync(backupsDir).filter((f) => f.startsWith('pre-migrate-') && f.endsWith('.sqlite'));
+  const fresh = snaps.filter((f) => !f.includes('2020-01-'));
+  ok('업그레이드 직전 스냅샷 생성(pre-migrate-v1-*.sqlite)', fresh.length === 1, snaps.join(','));
+  ok(`보관 상한 프루닝 — 스냅샷 총 5개 유지`, snaps.length === 5, String(snaps.length));
+
+  // 스냅샷은 업그레이드 "이전" 상태여야 한다: v1 스키마(education 없음) + 데이터 보존.
+  const snap = new DatabaseSync(path.join(backupsDir, fresh[0]!), { readOnly: true });
+  const snapVer = (snap.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
+  const snapCols = (snap.prepare(`PRAGMA table_info(profile)`).all() as { name: string }[]).map((c) => c.name);
+  const snapName = (snap.prepare(`SELECT name FROM profile WHERE id='singleton'`).get() as { name: string }).name;
+  ok('스냅샷 schema_version=1(마이그레이션 이전 상태)', snapVer === '1', snapVer);
+  ok('스냅샷은 v1 스키마 그대로(education 컬럼 없음)', !snapCols.includes('education'), snapCols.join(','));
+  ok('스냅샷에 데이터 보존', snapName === '백업 확인', snapName);
+  snap.close();
+
+  // 본 DB는 최신으로 올라갔는지.
+  const liveVer = (db.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
+  ok(`본 DB는 v${LATEST}로 업그레이드 완료`, liveVer === String(LATEST), liveVer);
+  closeDb();
+
+  // 신규 설치(빈 파일)에는 백업을 만들지 않는다.
+  const freshDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-backup-fresh-'));
+  process.env.CAREERMATE_DATA_DIR = freshDir;
+  getDb();
+  const freshBackups = fs.existsSync(path.join(freshDir, 'backups'))
+    ? fs.readdirSync(path.join(freshDir, 'backups')).filter((f) => f.startsWith('pre-migrate-'))
+    : [];
+  ok('신규 설치에는 스냅샷 없음', freshBackups.length === 0, freshBackups.join(','));
+  closeDb();
+  delete process.env.CAREERMATE_DATA_DIR;
 }
 
 console.log(`\nMIGRATE_VERDICT ${fail === 0 ? 'PASS' : 'FAIL'}  (pass=${pass} fail=${fail})`);
