@@ -749,6 +749,9 @@ export const jobRepo = {
       db.prepare(`DELETE FROM applications WHERE job_id=?`).run(id);
       db.prepare(`DELETE FROM interview_preps WHERE job_id=?`).run(id);
       db.prepare(`DELETE FROM application_timeline_events WHERE job_id=?`).run(id);
+      // offers has ON DELETE CASCADE, but delete explicitly like the siblings above
+      // (consistent pattern + safe even if PRAGMA foreign_keys is ever off).
+      db.prepare(`DELETE FROM offers WHERE job_id=?`).run(id);
       return db.prepare(`DELETE FROM jobs WHERE id=?`).run(id).changes > 0;
     });
   },
