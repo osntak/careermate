@@ -11,12 +11,17 @@
  *    scraper/anti-bot evasion (that's the legally dangerous part — see
  *    .claude/work/research/research_0004). Sites requiring keys (Saramin oapi,
  *    고용24) or that forbid it in robots.txt (JobKorea search) are excluded here.
+ *  - Honest User-Agent. We identify ourselves as careermate (verified live:
+ *    both providers answer 200 to it), never as a spoofed browser — "no bot
+ *    evasion" must include not lying about who is asking.
  *  - Read-only w.r.t. the DB. This returns candidates; the AI shows them and the
  *    user picks which to save via save_job_posting (no auto-dumping into the DB).
  *
  * Providers are unofficial public endpoints — if a response shape changes, only
  * the affected provider's parser needs updating (others keep working).
  */
+
+import { APP_VERSION } from '@careermate/shared';
 
 export interface JobSearchResult {
   /** Provider id, e.g. 'wanted' | 'jumpit'. */
@@ -58,8 +63,7 @@ export interface JobSearchOptions {
   timeoutMs?: number;
 }
 
-const UA =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+const UA = `careermate/${APP_VERSION} (+https://careermate.life)`;
 
 /** Slice an ISO timestamp / date string to YYYY-MM-DD; undefined if not a date. */
 function toYmd(v: unknown): string | undefined {
