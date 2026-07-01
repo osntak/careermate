@@ -17,11 +17,17 @@ concurrency:
 jobs:
   verify:
     # 타깃 사용자 다수가 Windows인데(과거 회귀도 대부분 Windows+Node 특이 동작)
-    # 한 OS만 돌면 "가장 잘 깨지는 플랫폼"이 사각이 됩니다. 3-OS 매트릭스로 실행.
+    # 한 OS만 돌면 "가장 잘 깨지는 플랫폼"이 사각이 됩니다. 3-OS 매트릭스 + Node
+    # 버전 축(node:sqlite 플래그 유무·rmSync 등 버전별 거동 이력)으로 실행.
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [22]
+        include:
+          # Node 버전 축은 ubuntu에서만 추가로 돌려 매트릭스 비용을 아낍니다.
+          - { os: ubuntu-latest, node: 24 }
+          - { os: ubuntu-latest, node: 25 }
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -30,7 +36,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node }}
           cache: npm
 
       - name: Install deps
@@ -51,9 +57,9 @@ jobs:
       # CI에서는 명시적으로 설치해 실제로 렌더·반응형 오버플로를 검사합니다).
       # 렌더 검사는 OS 무관이라 ubuntu에서만 돌려 매트릭스 비용을 아낍니다.
       - name: Install Playwright Chromium
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 22
         run: npx playwright install --with-deps chromium
 
       - name: UI smoke (렌더 + 반응형 오버플로)
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 22
         run: npm run test:ui
