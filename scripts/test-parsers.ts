@@ -7,8 +7,10 @@
  * (audit R22, gap-2): the SENSITIVE_PATH deny-list, the symlink-escape guard
  * (benign-named link → sensitive target), CP949/EUC-KR sniffing for Korean text
  * files, and the zero-byte / missing / directory / image soft-fail messaging.
- * Binary decoders (pdf/docx/hwp) need real fixtures and are a follow-up; this
- * suite locks the deterministic, fixture-free paths.
+ * §4-1 adds real binary fixtures (pre-launch audit follow-up): a hand-assembled
+ * minimal PDF, a docx-library-generated DOCX (Korean round-trip), and a minimal
+ * OWPML HWPX zip. Binary .hwp (OLE) still needs a real authored fixture — the
+ * format can't be synthesized simply — and remains the one uncovered decoder.
  *
  * Note: no fs.rmSync cleanup — on Node 25/Windows every rmSync hard-crashes the
  * process (uncatchable), so we leave the os.tmpdir() scratch dir for the OS.
@@ -117,6 +119,67 @@ async function main() {
       ok('양성 이름 .txt 심링크 → 민감 대상 해석 후 차단', r.unsupported && r.errored, JSON.stringify({ u: r.unsupported, e: r.errored }));
       ok('심링크 경유 본문 누출 없음', !r.text.includes('PRIVATE') && !r.text.includes('leak'), JSON.stringify(r.text.length));
     }
+  }
+
+  console.log('\n4-1) 바이너리 픽스처 — PDF·DOCX·HWPX 실추출');
+  {
+    // PDF: xref 오프셋까지 계산한 최소 유효 PDF(본문은 ASCII — 한글은 폰트 임베드 필요라 제외).
+    const buildMinimalPdf = (text: string): Buffer => {
+      const objs: string[] = [];
+      objs[1] = `1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`;
+      objs[2] = `2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n`;
+      objs[3] = `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n`;
+      const stream = `BT /F1 24 Tf 72 720 Td (${text}) Tj ET`;
+      objs[4] = `4 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`;
+      objs[5] = `5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n`;
+      let pdf = `%PDF-1.4\n`;
+      const offsets: number[] = [0];
+      for (let i = 1; i <= 5; i++) {
+        offsets[i] = Buffer.byteLength(pdf, 'ascii');
+        pdf += objs[i];
+      }
+      const xrefPos = Buffer.byteLength(pdf, 'ascii');
+      pdf +=
+        `xref\n0 6\n0000000000 65535 f \n` +
+        offsets.slice(1).map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('');
+      pdf += `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
+      return Buffer.from(pdf, 'ascii');
+    };
+    const pdfPath = path.join(tmp, 'fixture.pdf');
+    fs.writeFileSync(pdfPath, buildMinimalPdf('CareerMate PDF Fixture 2026'));
+    const rp = await extractDocument(pdfPath);
+    ok('PDF → 텍스트 추출(형식·본문)', rp.format === 'pdf' && rp.text.includes('CareerMate PDF Fixture 2026'),
+      JSON.stringify({ f: rp.format, u: rp.unsupported, w: rp.warnings, t: rp.text.slice(0, 80) }));
+
+    // DOCX: 실제 docx 라이브러리로 생성 → 추출 왕복(한글 본문 보존 확인).
+    const { Document, Packer, Paragraph, TextRun } = await import('docx');
+    const docxDoc = new Document({
+      sections: [{
+        children: [
+          new Paragraph({ children: [new TextRun('경력기술서 픽스처 — 한글 본문 보존 확인')] }),
+          new Paragraph({ children: [new TextRun('second paragraph roundtrip')] }),
+        ],
+      }],
+    });
+    const docxPath = path.join(tmp, 'fixture.docx');
+    fs.writeFileSync(docxPath, await Packer.toBuffer(docxDoc));
+    const rd = await extractDocument(docxPath);
+    ok('DOCX → 한글 본문 왕복 보존', rd.format === 'docx' && rd.text.includes('한글 본문 보존 확인') && rd.text.includes('second paragraph roundtrip'),
+      JSON.stringify({ f: rd.format, u: rd.unsupported, w: rd.warnings, t: rd.text.slice(0, 80) }));
+
+    // HWPX: 최소 OWPML(Contents/section0.xml) zip — 문단 분리·엔티티 디코드 확인.
+    const { zipSync, strToU8 } = await import('fflate');
+    const sectionXml =
+      `<?xml version="1.0" encoding="UTF-8"?>` +
+      `<hs:sec xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section" xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph">` +
+      `<hp:p id="1"><hp:run><hp:t>한컴 픽스처 본문입니다</hp:t></hp:run></hp:p>` +
+      `<hp:p id="2"><hp:run><hp:t>둘째 줄 &amp; 엔티티</hp:t></hp:run></hp:p>` +
+      `</hs:sec>`;
+    const hwpxPath = path.join(tmp, 'fixture.hwpx');
+    fs.writeFileSync(hwpxPath, zipSync({ 'Contents/section0.xml': strToU8(sectionXml), 'mimetype': strToU8('application/hwp+zip') }));
+    const rh = await extractDocument(hwpxPath);
+    ok('HWPX → 문단 텍스트 추출 + 엔티티 디코드', rh.format === 'hwpx' && rh.text.includes('한컴 픽스처 본문입니다') && rh.text.includes('둘째 줄 & 엔티티'),
+      JSON.stringify({ f: rh.format, u: rh.unsupported, w: rh.warnings, t: rh.text.slice(0, 80) }));
   }
 
   console.log('\n5) 소프트 실패 메시지 — 빈/없음/폴더/이미지');
