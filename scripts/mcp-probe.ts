@@ -6,6 +6,11 @@
  * a long-lived tsx child otherwise corrupts it.
  *
  * Inherits CAREERMATE_DATA_DIR from the parent so it hits the same database.
+ *
+ * CAREERMATE_PROBE_TARGET=dist probes the esbuild bundle (dist/mcp.mjs) — what
+ * npm users actually run — instead of the tsx source entry. Wired via
+ * scripts/test-dist.mjs so CI can catch bundling regressions (externals, shims,
+ * sidecar assets) that a source-only probe lets through.
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,9 +19,14 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+const serverArgs =
+  process.env.CAREERMATE_PROBE_TARGET === 'dist'
+    ? [path.join(repoRoot, 'dist', 'mcp.mjs')]
+    : ['--import', 'tsx', 'apps/mcp/src/index.ts'];
+
 const transport = new StdioClientTransport({
   command: process.execPath,
-  args: ['--no-warnings', '--experimental-sqlite', '--import', 'tsx', 'apps/mcp/src/index.ts'],
+  args: ['--no-warnings', '--experimental-sqlite', ...serverArgs],
   env: { ...process.env } as Record<string, string>,
   cwd: repoRoot,
   stderr: 'ignore',

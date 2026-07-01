@@ -68,6 +68,8 @@
     "doctor": "node --no-warnings --experimental-sqlite --import tsx scripts/doctor.ts",
     "test": "node --no-warnings scripts/test-all.mjs",
     "test:ui": "node --no-warnings scripts/run.mjs scripts/ui-smoke.ts \"UI_VERDICT PASS\"",
+    "test:dist": "node --no-warnings scripts/test-dist.mjs",
+    "prepublishOnly": "node --no-warnings scripts/test-all.mjs && node --no-warnings scripts/test-dist.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

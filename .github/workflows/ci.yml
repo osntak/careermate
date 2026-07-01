@@ -16,7 +16,13 @@ concurrency:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    # 타깃 사용자 다수가 Windows인데(과거 회귀도 대부분 Windows+Node 특이 동작)
+    # 한 OS만 돌면 "가장 잘 깨지는 플랫폼"이 사각이 됩니다. 3-OS 매트릭스로 실행.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,10 +42,18 @@ jobs:
       - name: Test (코어 + API + 보안 + MCP + DB 불변식)
         run: npm test
 
+      # 사용자가 실제로 받는 산출물(dist 번들) 실기동 스모크 — esbuild 누락/shim
+      # 회귀는 소스(tsx) 테스트로는 잡히지 않습니다.
+      - name: Dist bundle smoke (dist/mcp.mjs 실기동)
+        run: npm run test:dist
+
       # UI 스모크는 Chromium이 필요합니다(없으면 ui-smoke가 스스로 건너뛰므로,
       # CI에서는 명시적으로 설치해 실제로 렌더·반응형 오버플로를 검사합니다).
+      # 렌더 검사는 OS 무관이라 ubuntu에서만 돌려 매트릭스 비용을 아낍니다.
       - name: Install Playwright Chromium
+        if: matrix.os == 'ubuntu-latest'
         run: npx playwright install --with-deps chromium
 
       - name: UI smoke (렌더 + 반응형 오버플로)
+        if: matrix.os == 'ubuntu-latest'
         run: npm run test:ui
