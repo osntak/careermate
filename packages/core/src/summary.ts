@@ -6,6 +6,8 @@ import {
   type ApplicationStatus,
   APPLICATION_STATUS_LABELS,
   INTERVIEW_UNLOCK_STATUSES,
+  REJECTED_STAGES,
+  type RejectedStage,
   type JobRecord,
   type ApplicationRecord,
   type CoverLetterRecord,
@@ -396,6 +398,10 @@ export interface PipelineStats {
   /** Pass-through rates relative to "ever applied" (percent, 1 d.p.); null when denominator is 0. */
   rates: { document_pass: number | null; interview: number | null; offer: number | null };
   outcomes: { final_passed: number; rejected: number; in_progress: number; on_hold: number };
+  /** 탈락 회고: 현재 rejected인 지원 중 단계가 기록된 것의 단계별 건수(0인 단계는 생략). */
+  rejected_by_stage: { stage: RejectedStage; count: number }[];
+  /** rejected인데 단계 미기록 수 — 기록하면 어디서 떨어지는지 패턴이 드러난다. */
+  rejected_unrecorded: number;
   note: string;
 }
 
@@ -428,6 +434,15 @@ export function getPipelineStats(): PipelineStats {
   const pct = (n: number, d: number): number | null => (d > 0 ? Math.round((n / d) * 1000) / 10 : null);
   const cur = (s: ApplicationStatus) => applications.filter((a) => a.status === s).length;
 
+  // 탈락 회고: 현재 rejected인 지원만 대상으로 단계 분포를 센다. 단계 미기록(rejected_stage=null)은
+  // 별도 카운트해, "미기록이 많으면 기록을 유도" 하는 신호로 쓴다.
+  const rejectedApps = applications.filter((a) => a.status === 'rejected');
+  const rejected_by_stage = REJECTED_STAGES.map((stage) => ({
+    stage,
+    count: rejectedApps.filter((a) => a.rejected_stage === stage).length,
+  })).filter((s) => s.count > 0);
+  const rejected_unrecorded = rejectedApps.filter((a) => !a.rejected_stage).length;
+
   return {
     total: applications.length,
     by_status,
@@ -439,6 +454,8 @@ export function getPipelineStats(): PipelineStats {
       in_progress: cur('applied') + cur('document_passed') + cur('interview'),
       on_hold: cur('on_hold'),
     },
+    rejected_by_stage,
+    rejected_unrecorded,
     note:
       '단계별 도달 깔때기는 상태 변경 이력(타임라인)으로 복원한 실측치입니다(현재 rejected여도 거쳐간 최고 단계까지 집계). ' +
       '비율은 설명용이며 표본이 작으면 예측력이 낮습니다 — 추세 참고로만 쓰세요.',

@@ -65,6 +65,10 @@ export async function render(ctx) {
     const subBits = [job.position, job.location].filter(Boolean);
     const dday = ddayLabel(job.deadline);
     if (dday) subBits.push(dday);
+    // 탈락 회고: 불합격이고 단계가 기록돼 있으면 어느 단계에서 떨어졌는지 sub에 가볍게 병기.
+    if (app.status === 'rejected' && app.rejected_stage) {
+      subBits.push(`${t('applications.rejectedStage.label')} ${t('applications.rejectedStage.' + app.rejected_stage)}`);
+    }
     const sel = Select(
       statusOptions.map((o) => ({ ...o, selected: o.value === app.status })),
       {

@@ -184,7 +184,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
-| `update_application_status` | 지원 상태 변경. `document_passed` 이상이면 면접 준비를 제안하는 힌트 동봉 | `job_id`, `status`, `note?` | 변경 결과(`hint` 포함 가능) | 지원 진행 단계가 바뀔 때 | ✏️ |
+| `update_application_status` | 지원 상태 변경. `document_passed` 이상이면 면접 준비를 제안하는 힌트 동봉. `rejected`로 바꿀 때는 탈락 회고로 `rejected_stage`(서류/인적성/면접/최종/기타)를 함께 기록 — 없으면 기록을 유도하는 `suggested_next_action` 동봉 | `job_id`, `status`, `note?`, `rejected_stage?` | 변경 결과(`hint`·회고 유도 포함 가능) | 지원 진행 단계가 바뀔 때 | ✏️ |
 
 지원 상태 8단계(`APPLICATION_STATUSES`):
 
@@ -252,7 +252,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 | --- | --- | --- | --- | --- | --- |
 | `list_recent_activity` | 최근 활동 내역(공고 저장, 적합도 분석, 자소서 버전, 상태 변경, 면접 준비 등) 조회 | `limit?`(기본 20) | `ActivityRecord[]` | "최근에 뭐 했지?" 또는 이어서 작업할 맥락이 필요할 때 | ✅ |
 | `get_followups` | 지금 챙길 항목 한 번에 — 무응답 지원(지원 후 무응답·서류합격 후 일정대기·면접 후 결과대기)·임박/지난 마감(지원 전 단계)·면접 준비 누락 공고. 지원 항목엔 결정론 팔로업 타이밍(`followup_timing` due=5~7영업일·overdue=8영업일+, `business_days_since`)과 45일+ 무응답 시 `suggest_on_hold` | 없음 | `{ today, followups[]{…, followup_timing?, business_days_since?, suggest_on_hold?}, deadlines[], interview_todo[] }` | "내 지원 현황 어때?/뭐 챙겨야 해?/언제 팔로업?" 또는 세션 이어가며 놓친 것 점검할 때 | ✅ |
-| `get_pipeline_stats` | 지원 파이프라인 분석 — 현재 상태 분포·단계별 도달 깔때기(지원→서류→면접→최종, 상태 변경 이력 복원)·통과율·결과 요약 | 없음 | `{ total, by_status[], funnel, rates, outcomes, note }` | "내 합격률/지원 통계 어때?", "어느 단계에서 떨어져?"라고 물을 때(비율은 설명용, 표본 작으면 추세만) | ✅ |
+| `get_pipeline_stats` | 지원 파이프라인 분석 — 현재 상태 분포·단계별 도달 깔때기(지원→서류→면접→최종, 상태 변경 이력 복원)·통과율·결과 요약·탈락 단계 분포(`rejected_by_stage`·`rejected_unrecorded`) | 없음 | `{ total, by_status[], funnel, rates, outcomes, rejected_by_stage[], rejected_unrecorded, note }` | "내 합격률/지원 통계 어때?", "어느 단계에서 떨어져?"라고 물을 때(비율은 설명용, 표본 작으면 추세만) | ✅ |
 
 ---
 

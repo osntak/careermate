@@ -39,7 +39,7 @@ const ok = (name: string, cond: boolean, extra = '') => {
   }
 };
 
-const LATEST = MIGRATIONS.length; // v1..v9
+const LATEST = MIGRATIONS.length; // v1..v10
 const T = '2026-01-01T00:00:00.000Z';
 
 function newDb(): DatabaseSync {
@@ -50,8 +50,8 @@ function newDb(): DatabaseSync {
   return db;
 }
 
-console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v9)`);
-ok('MIGRATIONS 길이 9', LATEST === 9, String(LATEST));
+console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v10)`);
+ok('MIGRATIONS 길이 10', LATEST === 10, String(LATEST));
 
 console.log('\n1) 신규 설치 — from=0 전체 빌드');
 {
@@ -183,6 +183,26 @@ console.log('\n2-2) v8→v9 — 공고에 questions 컬럼 추가(기본 []) + �
     | { company: string; questions: string }
     | undefined;
   ok('기존 공고 보존 + questions 기본 []', !!q && q.company === '회사Q' && q.questions === '[]', JSON.stringify(q));
+  db.close();
+}
+
+console.log('\n2-3) v9→v10 — applications에 rejected_stage 컬럼 추가(기본 NULL) + 데이터 보존');
+{
+  const db = newDb();
+  for (let i = 0; i < 9; i++) db.exec(MIGRATIONS[i]!);
+  db.exec(`CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
+  db.prepare(`INSERT INTO _meta (key,value) VALUES ('schema_version','9')`).run();
+  db.prepare(`INSERT INTO jobs (id,company,position,created_at,updated_at) VALUES ('job-r','회사R','데이터',?,?)`).run(T, T);
+  db.prepare(`INSERT INTO applications (id,job_id,status,created_at,updated_at) VALUES ('app-r','job-r','rejected',?,?)`).run(T, T);
+
+  const r = migrate(db);
+  ok(`v9→v${LATEST} 업그레이드`, r.from === 9 && r.to === LATEST, JSON.stringify(r));
+  const acols = (db.prepare(`PRAGMA table_info(applications)`).all() as { name: string }[]).map((c) => c.name);
+  ok('v10 applications.rejected_stage 컬럼 생성', acols.includes('rejected_stage'), acols.join(','));
+  const a = db.prepare(`SELECT status, rejected_stage FROM applications WHERE id='app-r'`).get() as
+    | { status: string; rejected_stage: string | null }
+    | undefined;
+  ok('기존 지원 보존 + rejected_stage 기본 NULL', !!a && a.status === 'rejected' && a.rejected_stage === null, JSON.stringify(a));
   db.close();
 }
 

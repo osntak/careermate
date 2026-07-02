@@ -27,6 +27,14 @@ export default {
   // app row
   'applications.row.score': '{{score}} pts',
 
+  // Rejection retrospective — which stage the rejection happened at (rejected rows only)
+  'applications.rejectedStage.label': 'Rejected at:',
+  'applications.rejectedStage.document': 'Screening',
+  'applications.rejectedStage.assessment': 'Assessment/AI',
+  'applications.rejectedStage.interview': 'Interview',
+  'applications.rejectedStage.final': 'Final/offer',
+  'applications.rejectedStage.other': 'Other',
+
   // status select + toasts
   'applications.statusSelect.title': 'Change status',
   'applications.toast.statusChanged': 'Application status updated.',

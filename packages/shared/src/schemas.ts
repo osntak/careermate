@@ -523,6 +523,23 @@ export type FitAnalysisRecord = z.infer<typeof FitAnalysisRecordSchema>;
 
 /* ------------------------------------------------------------- Application */
 
+/**
+ * 탈락 회고 — 어느 전형 단계에서 떨어졌는지. 탈락 사유를 알려주는 기업은 6%뿐이고 지원자
+ * 83%가 알고 싶어하므로, 이 자가 기록이 "서류는 붙는데 면접에서 떨어진다" 같은 패턴을 로컬
+ * 데이터로 드러내는 유일한 신호다. status='rejected'일 때만 의미가 있다.
+ */
+export const REJECTED_STAGES = ['document', 'assessment', 'interview', 'final', 'other'] as const;
+export type RejectedStage = (typeof REJECTED_STAGES)[number];
+
+/** Korean labels for the rejection stage (dashboard localizes separately via i18n). */
+export const REJECTED_STAGE_LABELS: Record<RejectedStage, string> = {
+  document: '서류',
+  assessment: '인적성·AI역검',
+  interview: '면접',
+  final: '최종·처우',
+  other: '기타',
+};
+
 export const ApplicationInputSchema = z.object({
   job_id: reqLine,
   status: z.enum(APPLICATION_STATUSES).optional(),
@@ -548,6 +565,12 @@ export const ApplicationStatusUpdateSchema = z.object({
   status: z.enum(APPLICATION_STATUSES),
   note: optNote.describe('상태 변경 사유/메모'),
   submission: ApplicationSubmissionSchema.optional().describe('지원 완료 기록에 남길 제출 자료 스냅샷'),
+  rejected_stage: z
+    .enum(REJECTED_STAGES)
+    .optional()
+    .describe(
+      "탈락 회고 — 'rejected'로 바꿀 때 어느 단계에서 떨어졌는지: 서류=document, 인적성·AI역검=assessment, 면접=interview, 최종·처우=final, 기타=other. rejected가 아닌 상태에는 저장되지 않습니다.",
+    ),
 });
 export type ApplicationStatusUpdate = z.infer<typeof ApplicationStatusUpdateSchema>;
 
@@ -559,6 +582,7 @@ export const ApplicationRecordSchema = z.object({
   cover_letter_id: z.string().nullable(),
   applied_at: z.string().nullable(),
   notes: z.string().nullable(),
+  rejected_stage: z.enum(REJECTED_STAGES).nullable(),
 });
 export type ApplicationRecord = z.infer<typeof ApplicationRecordSchema>;
 

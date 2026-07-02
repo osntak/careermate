@@ -27,6 +27,8 @@ import {
   DocumentInputSchema,
   APPLICATION_STATUSES,
   APPLICATION_STATUS_LABELS,
+  REJECTED_STAGES,
+  REJECTED_STAGE_LABELS,
   DOCUMENT_KINDS,
   INTERVIEW_UNLOCK_STATUSES,
 } from '@careermate/shared';
@@ -822,21 +824,36 @@ export const TOOLS: ToolDef[] = [
   {
     name: 'update_application_status',
     title: '지원 상태 변경',
-    description: `지원 상태를 변경합니다. 가능한 상태: ${STATUS_LIST}. '서류 합격(document_passed)' 이상으로 바뀌면 면접 준비를 제안하는 힌트를 함께 돌려줍니다. note에 변경 사유를 남길 수 있습니다.`,
+    description:
+      `지원 상태를 변경합니다. 가능한 상태: ${STATUS_LIST}. '서류 합격(document_passed)' 이상으로 바뀌면 면접 준비를 제안하는 힌트를 함께 돌려줍니다. note에 변경 사유를 남길 수 있습니다. ` +
+      "'불합격(rejected)'으로 바꿀 때는 rejected_stage에 어느 단계에서 아쉽게 됐는지 함께 남기세요 — 서류=document, 인적성·AI역검=assessment, 면접=interview, 최종·처우=final, 기타=other. 탈락 사유를 알려주는 기업은 드물어, 이 자가 기록이 쌓이면 '서류는 붙는데 면접에서 떨어진다' 같은 패턴이 로컬 데이터로 드러납니다(get_pipeline_stats).",
     inputSchema: {
       job_id: z.string(),
       status: z.enum(APPLICATION_STATUSES),
       note: z.string().optional(),
       submission: ApplicationSubmissionSchema.optional(),
+      rejected_stage: z
+        .enum(REJECTED_STAGES)
+        .optional()
+        .describe(
+          "탈락 회고 — 'rejected'로 바꿀 때 어느 단계에서 탈락했는지: 서류=document, 인적성·AI역검=assessment, 면접=interview, 최종·처우=final, 기타=other",
+        ),
     },
     handler: (args) => {
       try {
-        const res = updateApplicationStatus(args.job_id, args.status, args.note, args.submission);
-        const user_message =
-          `지원 상태를 '${APPLICATION_STATUS_LABELS[args.status as keyof typeof APPLICATION_STATUS_LABELS]}'(으)로 바꿨어요.` +
-          (res.hint ? `\n\n${res.hint}` : '');
+        const res = updateApplicationStatus(args.job_id, args.status, args.note, args.submission, args.rejected_stage);
+        // 탈락으로 바꿨는데 단계가 안 남았으면: 실패시키지 않고 저장은 하되, 회고를 유도한다.
+        const needsRetro = args.status === 'rejected' && !res.application.rejected_stage;
+        const retro_prompt =
+          '어느 단계에서 아쉽게 됐는지(서류/인적성/면접/최종)와 배운 점을 남겨두면 다음 지원 전략에 쓸 수 있어요. 기록할까요?';
+        const base =
+          `지원 상태를 '${APPLICATION_STATUS_LABELS[args.status as keyof typeof APPLICATION_STATUS_LABELS]}'(으)로 바꿨어요.`;
+        const user_message = base + (res.hint ? `\n\n${res.hint}` : needsRetro ? `\n\n${retro_prompt}` : '');
+        const text = needsRetro
+          ? `${user_message}\n\n(AI 안내: 사용자에게 어느 단계에서 떨어졌는지와 배운 점을 물어, rejected_stage와 note로 함께 기록하도록 제안하세요.)`
+          : user_message;
         return ok(
-          user_message,
+          text,
           {
             ...res,
             user_message,
@@ -845,7 +862,12 @@ export const TOOLS: ToolDef[] = [
                   prompt: res.hint,
                   next_workflow: 'prepare_interview',
                 }
-              : null,
+              : needsRetro
+                ? {
+                    prompt: retro_prompt,
+                    next_tool: 'update_application_status',
+                  }
+                : null,
           },
         );
       } catch (e) {
@@ -1036,7 +1058,7 @@ export const TOOLS: ToolDef[] = [
     name: 'get_pipeline_stats',
     title: '지원 파이프라인 분석(깔때기·합격률)',
     description:
-      '전체 지원 현황을 분석해 돌려줍니다: 현재 상태 분포(by_status), 단계별 도달 깔때기(funnel: 지원→서류합격→면접→최종, 상태 변경 이력으로 복원한 실측치라 현재 불합격이어도 거쳐간 최고 단계까지 집계), 통과율(rates: 서류·면접·최종, 지원 대비 %), 결과 요약(outcomes). 사용자가 "내 합격률 어때?", "지원 통계 보여줘", "어느 단계에서 많이 떨어져?"라고 물을 때 사용하세요. 비율은 설명용이며 표본이 작으면 예측력이 낮다는 점을 함께 전하세요(note 참고). 읽기 전용입니다.',
+      '전체 지원 현황을 분석해 돌려줍니다: 현재 상태 분포(by_status), 단계별 도달 깔때기(funnel: 지원→서류합격→면접→최종, 상태 변경 이력으로 복원한 실측치라 현재 불합격이어도 거쳐간 최고 단계까지 집계), 통과율(rates: 서류·면접·최종, 지원 대비 %), 결과 요약(outcomes), 탈락 단계 분포(rejected_by_stage: 서류·인적성·면접·최종·기타별 탈락 건수 + rejected_unrecorded: 단계 미기록 수). 사용자가 "내 합격률 어때?", "지원 통계 보여줘", "어느 단계에서 많이 떨어져?"라고 물을 때 사용하세요. 비율은 설명용이며 표본이 작으면 예측력이 낮다는 점을 함께 전하세요(note 참고). 읽기 전용입니다.',
     inputSchema: {},
     readOnly: true,
     handler: () => {
@@ -1044,8 +1066,12 @@ export const TOOLS: ToolDef[] = [
       if (s.total === 0) return ok('아직 지원 내역이 없어 분석할 통계가 없습니다.', s);
       const r = s.rates;
       const fmt = (v: number | null) => (v == null ? '—' : `${v}%`);
+      // 탈락 분포 한 줄: 기록된 단계별 건수 + 미기록이 있으면 기록 유도.
+      const rejParts = s.rejected_by_stage.map((x) => `${REJECTED_STAGE_LABELS[x.stage]} ${x.count}`);
+      if (s.rejected_unrecorded > 0) rejParts.push(`미기록 ${s.rejected_unrecorded}건 — 기록하면 패턴이 보입니다`);
+      const rejLine = rejParts.length ? ` · 탈락 분포: ${rejParts.join('·')}` : '';
       return ok(
-        `지원 ${s.total}건 · 깔때기 지원 ${s.funnel.applied}→서류 ${s.funnel.document_passed}→면접 ${s.funnel.interview}→최종 ${s.funnel.final_passed} · 통과율 서류 ${fmt(r.document_pass)}·면접 ${fmt(r.interview)}·최종 ${fmt(r.offer)} (표본 작으면 추세 참고로만)`,
+        `지원 ${s.total}건 · 깔때기 지원 ${s.funnel.applied}→서류 ${s.funnel.document_passed}→면접 ${s.funnel.interview}→최종 ${s.funnel.final_passed} · 통과율 서류 ${fmt(r.document_pass)}·면접 ${fmt(r.interview)}·최종 ${fmt(r.offer)}${rejLine} (표본 작으면 추세 참고로만)`,
         s,
       );
     },

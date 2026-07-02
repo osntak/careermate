@@ -211,6 +211,37 @@ const tool = (name: string) => {
   const cmp = (await tool('compare_offers').handler({})).data as any[];
   ok('compare_offers 응답에 offer_status 포함', cmp.some((x) => x.job_id === j.id && x.offer_status === 'accepted'));
 }
+
+/* 탈락 회고(rejected_stage) — 단계 기록·미기록 유도·파이프라인 분포 집계.
+   기존 apiJob 등 상태를 건드리지 않도록 전용 공고를 새로 만들어 테스트한다. */
+{
+  // ① rejected + rejected_stage='interview' → 응답·조회에 반영.
+  const rj1 = (await tool('save_job_posting').handler({ company: '탈락회고면접사', position: '백엔드' })).data as any;
+  const rejRes = await tool('update_application_status').handler({ job_id: rj1.id, status: 'rejected', rejected_stage: 'interview', note: '최종 면접 탈락' });
+  ok('탈락 단계 저장: 응답 application.rejected_stage=interview', (rejRes.data as any).application?.rejected_stage === 'interview', JSON.stringify((rejRes.data as any).application?.rejected_stage));
+  const rj1App = (await json('GET', '/api/applications')).applications.find((a: any) => a.job_id === rj1.id);
+  ok('탈락 단계 조회: /api/applications에 rejected_stage 반영', rj1App?.rejected_stage === 'interview', JSON.stringify(rj1App?.rejected_stage));
+
+  // ② rejected without stage → suggested_next_action(회고 유도) 존재.
+  const rj2 = (await tool('save_job_posting').handler({ company: '탈락회고미기록사', position: '프론트' })).data as any;
+  const noStageRes = await tool('update_application_status').handler({ job_id: rj2.id, status: 'rejected' });
+  ok(
+    '탈락 단계 미기록 → 저장은 되고 회고 유도(suggested_next_action) 동봉',
+    noStageRes.isError !== true &&
+      (noStageRes.data as any).application?.rejected_stage == null &&
+      (noStageRes.data as any).suggested_next_action?.next_tool === 'update_application_status',
+    JSON.stringify((noStageRes.data as any).suggested_next_action),
+  );
+
+  // ③ get_pipeline_stats: rejected_by_stage 집계 + rejected_unrecorded 카운트.
+  const stats = (await tool('get_pipeline_stats').handler({})).data as any;
+  const interviewBucket = stats.rejected_by_stage.find((x: any) => x.stage === 'interview');
+  ok(
+    'get_pipeline_stats: rejected_by_stage에 interview 집계 + rejected_unrecorded≥1',
+    !!interviewBucket && interviewBucket.count >= 1 && stats.rejected_unrecorded >= 1,
+    JSON.stringify({ byStage: stats.rejected_by_stage, unrecorded: stats.rejected_unrecorded }),
+  );
+}
 /* get_application_context: 오늘 날짜(today) 주입 — 연차·재직기간 환산 기준일(LLM이 현재일 모름 보정) */
 const ctxToday = await tool('get_application_context').handler({});
 ok(

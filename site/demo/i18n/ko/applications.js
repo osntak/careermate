@@ -27,6 +27,14 @@ export default {
   // app row
   'applications.row.score': '{{score}}점',
 
+  // 탈락 회고 — 어느 단계에서 떨어졌는지 병기(불합격 행에만 표시)
+  'applications.rejectedStage.label': '탈락 단계:',
+  'applications.rejectedStage.document': '서류',
+  'applications.rejectedStage.assessment': '인적성·AI역검',
+  'applications.rejectedStage.interview': '면접',
+  'applications.rejectedStage.final': '최종·처우',
+  'applications.rejectedStage.other': '기타',
+
   // status select + toasts
   'applications.statusSelect.title': '상태 변경',
   'applications.toast.statusChanged': '지원 상태를 변경했어요.',

@@ -384,6 +384,13 @@ export const MIGRATIONS: string[] = [
   `
   ALTER TABLE jobs ADD COLUMN questions TEXT NOT NULL DEFAULT '[]';
   `,
+
+  // v10 — 탈락 회고: 어느 전형 단계에서 떨어졌는지 자가 기록. 탈락 사유를 고지하는 기업은 6%뿐이고
+  // 지원자 83%가 알고 싶어하므로, 이 자가 기록이 "서류는 붙는데 면접에서 떨어진다" 같은 패턴을 로컬
+  // 데이터로 드러내는 유일한 신호다. 탈락이 아니거나 미기록이면 NULL. Additive ALTER (runner가 멱등 처리).
+  `
+  ALTER TABLE applications ADD COLUMN rejected_stage TEXT;
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

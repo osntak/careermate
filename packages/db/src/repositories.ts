@@ -28,6 +28,7 @@ import {
   type ApplicationInput,
   type ApplicationRecord,
   type ApplicationStatus,
+  type RejectedStage,
   type InterviewPrepInput,
   type InterviewPrepRecord,
   type ActivityRecord,
@@ -840,6 +841,8 @@ function mapApplication(r: any): ApplicationRecord {
     cover_letter_id: r.cover_letter_id,
     applied_at: r.applied_at,
     notes: r.notes,
+    // 탈락 회고: 탈락이 아니거나 미기록이면 NULL(v10 이전 DB는 컬럼이 없어 undefined → null 정규화).
+    rejected_stage: r.rejected_stage ?? null,
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
@@ -892,15 +895,25 @@ export const applicationRepo = {
       .run(m.status, m.resume_id ?? null, m.cover_letter_id ?? null, m.applied_at ?? null, m.notes ?? null, now(), app.id);
     return this.get(app.id)!;
   },
-  setStatus(jobId: string, status: ApplicationStatus, note?: string): ApplicationRecord {
+  setStatus(
+    jobId: string,
+    status: ApplicationStatus,
+    note?: string,
+    rejectedStage?: RejectedStage,
+  ): ApplicationRecord {
     const app = this.ensure(jobId);
     assertStatusTransition(app.status, status);
     const appliedAt =
       status === 'applied' && !app.applied_at ? now() : app.applied_at;
     const notes = note ? [app.notes, note].filter(Boolean).join('\n') : app.notes;
+    // 탈락 회고: 'rejected'일 때만 단계를 저장한다. 명시 값이 오면 갱신하고, 없으면 기존 값을
+    // 보존해(같은 rejected에 메모만 추가하는 등) 이미 남긴 회고를 지우지 않는다. rejected에서 다른
+    // 상태로 되살아나면 NULL로 초기화한다(정합성 — 탈락이 아닌데 단계가 남아 있으면 안 됨).
+    const rejectedStageValue =
+      status === 'rejected' ? rejectedStage ?? app.rejected_stage ?? null : null;
     getDb()
-      .prepare(`UPDATE applications SET status=?, applied_at=?, notes=?, updated_at=? WHERE id=?`)
-      .run(status, appliedAt, notes, now(), app.id);
+      .prepare(`UPDATE applications SET status=?, applied_at=?, notes=?, rejected_stage=?, updated_at=? WHERE id=?`)
+      .run(status, appliedAt, notes, rejectedStageValue, now(), app.id);
     return this.get(app.id)!;
   },
 };

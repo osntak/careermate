@@ -14,6 +14,7 @@ import {
   type CoverLetterVersionInput,
   type ApplicationStatus,
   type ApplicationSubmission,
+  type RejectedStage,
   type ApplicationRecord,
   type InterviewPrepInput,
   type InterviewPrepRecord,
@@ -350,6 +351,7 @@ export function updateApplicationStatus(
   status: ApplicationStatus,
   note?: string,
   submission?: ApplicationSubmission,
+  rejectedStage?: RejectedStage,
 ): StatusChangeResult {
   const job = jobRepo.get(jobId);
   if (!job) throw notFound('공고를 찾을 수 없습니다.');
@@ -358,7 +360,7 @@ export function updateApplicationStatus(
   // together: if any write throws (e.g. a bad bind), roll back so we never leave
   // the status changed but the submission/timeline missing.
   const application = tx(() => {
-    let application = applicationRepo.setStatus(jobId, status, note);
+    let application = applicationRepo.setStatus(jobId, status, note, rejectedStage);
     const submittedDocs = (submission?.document_ids ?? [])
       .map((docId) => documentRepo.get(docId))
       .filter((doc): doc is DocumentRecord => !!doc);
@@ -407,6 +409,8 @@ export function updateApplicationStatus(
         status_label: APPLICATION_STATUS_LABELS[status],
         note: note ?? null,
         submission: submissionPayload,
+        // 탈락 회고: rejected로 넘어갈 때 실제 저장된 단계(setStatus가 정합성 처리한 값)를 타임라인에도 남긴다.
+        rejected_stage: application.rejected_stage,
       },
       occurred_at: submittedAtToOccurrence(submittedAt),
     });
