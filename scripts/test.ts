@@ -398,6 +398,33 @@ ok(
   );
 }
 
+/* A-3. 전형 일정 다이제스트: 미래 일정이 upcoming_schedule에 D-day와 함께 잡히고,
+   같은 날짜 두 공고 일정이 schedule_conflicts로 감지되는지(날짜는 new Date 기준 상대 계산으로
+   생성해 결정론 유지 — 서버의 today 계산과 동일한 로컬 날짜). */
+{
+  const { getActionDigest } = await import('../packages/core/src/summary.ts');
+  // 서버(daysUntilDate)와 같은 로컬 자정 기준으로 날짜 문자열을 만든다.
+  const localDate = (offsetDays: number) => {
+    const d = new Date(Date.now() + offsetDays * 86400000);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const d3 = localDate(3);
+  // 같은 날짜(d3)에 서로 다른 두 공고의 일정 → 충돌. 하나는 다가오는 일정에도 잡힌다.
+  await tool('save_job_posting').handler({ company: '일정A사', position: '백엔드', schedule: [{ label: '1차 면접', date: d3, time: '10:00' }] });
+  await tool('save_job_posting').handler({ company: '일정B사', position: '프론트', schedule: [{ label: 'AI역검', date: d3, time: '15:00' }] });
+
+  const dg = getActionDigest() as any;
+  const up = (dg.upcoming_schedule || []).find((x: any) => x.company === '일정A사');
+  ok('getActionDigest: 3일 뒤 일정이 upcoming_schedule에 d_day(≈3)와 함께 잡힘',
+    !!up && up.label === '1차 면접' && up.date === d3 && up.d_day >= 2 && up.d_day <= 4,
+    JSON.stringify(up && { l: up.label, d: up.date, dd: up.d_day }));
+  const conflict = (dg.schedule_conflicts || []).find((c: any) => c.date === d3);
+  ok('getActionDigest: 같은 날짜 두 공고 일정이 schedule_conflicts로 감지',
+    !!conflict && conflict.items.length >= 2 &&
+      conflict.items.some((i: any) => i.company === '일정A사') && conflict.items.some((i: any) => i.company === '일정B사'),
+    JSON.stringify(conflict && { date: conflict.date, n: conflict.items.length }));
+}
+
 /* 구조화 항목·문서 삭제 (MCP) — confirm 게이트 */
 const exExpRec = (await tool('add_experience').handler({ experiences: [{ company: '삭제할경력', role: '직무' }] })).data as any;
 const exExpId = exExpRec[0].id;
@@ -556,6 +583,28 @@ section('6) 검증 엔진(verify) — 숫자 출처 게이트');
   ok('questions 미전달 재저장 시 기존 문항 보존(부분 갱신)',
     qJob2?.job?.questions?.length === 2 && qJob2.job.position === '서비스 기획(수정)',
     JSON.stringify({ q: qJob2?.job?.questions?.length, pos: qJob2?.job?.position }));
+
+  // ⑥ 전형 일정: 면접·발표 날짜를 schedule로 저장 → get_job_posting 반환 확인. 이어서 schedule
+  // 없이 같은 url 재저장 시 기존 일정이 보존되는지(부분 갱신, questions와 동일 머지) 확인.
+  const sUrl = 'https://example.com/jobs/전형일정';
+  const jobS: any = await tool('save_job_posting').handler({
+    company: '전형일정사', position: '데이터 엔지니어', url: sUrl,
+    schedule: [
+      { label: '1차 면접', date: '2026-08-10', time: '14:00', note: '판교 오피스' },
+      { label: '서류 발표', date: '2026-08-03' },
+    ],
+  });
+  const sJob = (await tool('get_job_posting').handler({ job_id: jobS.data?.id })).data as any;
+  ok('공고 전형 일정 2건 저장·조회(label·date·time·note)',
+    sJob?.job?.schedule?.length === 2 &&
+    sJob.job.schedule.some((x: any) => x.label === '1차 면접' && x.date === '2026-08-10' && x.time === '14:00' && x.note === '판교 오피스') &&
+    sJob.job.schedule.some((x: any) => x.label === '서류 발표' && x.date === '2026-08-03'),
+    JSON.stringify(sJob?.job?.schedule));
+  await tool('save_job_posting').handler({ company: '전형일정사', position: '데이터 엔지니어(수정)', url: sUrl });
+  const sJob2 = (await tool('get_job_posting').handler({ job_id: jobS.data?.id })).data as any;
+  ok('schedule 미전달 재저장 시 기존 일정 보존(부분 갱신)',
+    sJob2?.job?.schedule?.length === 2 && sJob2.job.position === '데이터 엔지니어(수정)',
+    JSON.stringify({ s: sJob2?.job?.schedule?.length, pos: sJob2?.job?.position }));
 }
 
 /* ------------------ 7. 배치 입력 + 멱등 upsert (스킬/경력/프로젝트) */

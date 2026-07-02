@@ -391,6 +391,15 @@ export const MIGRATIONS: string[] = [
   `
   ALTER TABLE applications ADD COLUMN rejected_stage TEXT;
   `,
+
+  // v11 — 전형 일정: 서류마감→인적성·AI역검→1·2차 면접→발표로 이어지는 단계별 날짜를 공고에
+  // 구조화 보관. 일정을 jobs에 두는 이유: 서류마감(deadline)이 이미 jobs에 있고, save_job_posting
+  // 업서트를 그대로 재사용해 도구 신설 없이 갱신할 수 있다. 면접초대 메일·발표 공지를 사용자가
+  // 붙여넣으면 AI가 날짜를 추출해 저장하고, 서버가 D-day·같은 날짜 충돌을 결정론으로 계산한다.
+  // JSON 배열을 TEXT에 저장(다른 JSON 필드와 동일). Additive ALTER (runner가 멱등 처리).
+  `
+  ALTER TABLE jobs ADD COLUMN schedule TEXT NOT NULL DEFAULT '[]';
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

@@ -398,6 +398,31 @@ export const JobQuestionSchema = z.object({
 });
 export type JobQuestion = z.infer<typeof JobQuestionSchema>;
 
+/**
+ * One recruitment-schedule entry (전형 일정 — 면접·인적성·발표 등). Kept on the job so
+ * save_job_posting carries it without a new tool, and the server computes D-day/conflicts
+ * deterministically (getActionDigest). This is NOT the document deadline — that stays in
+ * `deadline`; these are the downstream stage dates the AI extracts from an interview invite
+ * or announcement the user pastes in. Dates are strict YYYY-MM-DD so the server can compute
+ * D-day and same-day collisions without guessing formats.
+ */
+const SCHEDULE_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const SCHEDULE_TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const JobScheduleItemSchema = z.object({
+  label: reqLine.describe('일정 이름 (예: 1차 면접·AI역검·서류 발표)'),
+  date: z
+    .string()
+    .regex(SCHEDULE_DATE_RE, 'YYYY-MM-DD 형식이어야 합니다')
+    .describe('일정 날짜 YYYY-MM-DD'),
+  time: z
+    .string()
+    .regex(SCHEDULE_TIME_RE, 'HH:MM(24시간) 형식이어야 합니다')
+    .optional()
+    .describe('시각 HH:MM(24시간, 선택)'),
+  note: optLine.describe('부가 메모(예: 장소·준비물, 선택)'),
+});
+export type JobScheduleItem = z.infer<typeof JobScheduleItemSchema>;
+
 export const JobInputSchema = z.object({
   company: reqLine,
   position: reqLine.describe('직무/포지션명'),
@@ -418,6 +443,11 @@ export const JobInputSchema = z.object({
     .max(MAX_ITEMS)
     .optional()
     .describe('회사 지정 자소서 문항·글자수 — 사용자가 문항을 주면 구조화 저장'),
+  schedule: z
+    .array(JobScheduleItemSchema)
+    .max(MAX_ITEMS)
+    .optional()
+    .describe('전형 일정 — 면접초대 메일·발표 공지를 받으면 구조화 저장(label·date 필수, time 선택). 서류 마감은 deadline 필드를 쓰세요.'),
 });
 export type JobInput = z.infer<typeof JobInputSchema>;
 
@@ -438,6 +468,7 @@ export const JobRecordSchema = z.object({
   core_values: z.array(z.string()),
   reputation: z.string().nullable(),
   questions: z.array(JobQuestionSchema),
+  schedule: z.array(JobScheduleItemSchema),
 });
 export type JobRecord = z.infer<typeof JobRecordSchema>;
 

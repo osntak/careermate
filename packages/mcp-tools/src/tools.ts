@@ -630,7 +630,7 @@ export const TOOLS: ToolDef[] = [
     idempotent: true, // 같은 url 업서트 — 재호출 안전
     title: '채용공고 저장',
     description:
-      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요 — 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 회사 평판(평점·워라밸·문화 리스크 등)을 리서치했다면 reputation에 요약(출처·최근성 표기)을 넣으면 오퍼 판단·면접에 활용됩니다. 회사 지정 자소서 문항·글자수가 있으면 questions 배열에 구조화 저장하세요(question 필수, max_chars/min_chars/count_mode). 이후 자소서 작성 시 문항별로 validate_cover_letter(min_chars/max_chars/count_mode)로 한도를 점검합니다. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
+      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요 — 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 회사 평판(평점·워라밸·문화 리스크 등)을 리서치했다면 reputation에 요약(출처·최근성 표기)을 넣으면 오퍼 판단·면접에 활용됩니다. 회사 지정 자소서 문항·글자수가 있으면 questions 배열에 구조화 저장하세요(question 필수, max_chars/min_chars/count_mode). 이후 자소서 작성 시 문항별로 validate_cover_letter(min_chars/max_chars/count_mode)로 한도를 점검합니다. 면접·인적성·발표 등 전형 일정을 받으면 schedule 배열에 구조화 저장하세요(label·date 필수, time 선택; 서류 마감은 deadline 필드). 면접초대 메일을 사용자가 붙여넣으면 날짜·시간을 추출해 저장하고, 같은 날 다른 일정과 겹치면 알려주세요. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
     inputSchema: JobInputSchema.shape,
     handler: (args) => {
       const { job } = saveJobPosting(args);
@@ -1042,15 +1042,17 @@ export const TOOLS: ToolDef[] = [
     name: 'get_followups',
     title: '후속 조치 알림(놓친 지원·마감·면접준비)',
     description:
-      '지금 챙겨야 할 것들을 한 번에 돌려줍니다: ① 응답 없이 오래된 지원(지원 후 무응답·서류합격 후 일정대기·면접 후 결과대기) ② 임박했거나 지난 지원 마감(지원 전 단계) ③ 합격했는데 아직 면접 준비가 없는 공고. 사용자가 "내 지원 현황 어때?", "뭐 챙겨야 해?", "후속 연락할 거 있어?"라고 묻거나, 세션을 이어가며 놓친 게 없는지 먼저 점검할 때 사용하세요. 읽기 전용입니다. 지원(applied) 항목에는 결정론 팔로업 타이밍이 붙습니다: `followup_timing="due"`는 지원 후 5~7영업일(주말 제외)로 정중한 후속 문의 적기, `"overdue"`는 8영업일 이상으로 적기가 지났다는 뜻이며, `business_days_since`는 경과 영업일 수입니다. 달력일 45일 이상 무응답이면 `suggest_on_hold=true`가 붙으니 "보류(on_hold)로 옮길까요?"라고 제안하세요. 응답의 reason은 사용자 언어로 풀어 전하고, 후속 문의는 강요하지 말고 선택지로 제안하세요(채용 관행상 과한 독촉은 역효과 — 문의는 정중히 1회).',
+      '지금 챙겨야 할 것들을 한 번에 돌려줍니다: ① 응답 없이 오래된 지원(지원 후 무응답·서류합격 후 일정대기·면접 후 결과대기) ② 임박했거나 지난 지원 마감(지원 전 단계) ③ 합격했는데 아직 면접 준비가 없는 공고 ④ 오늘~7일 내 다가오는 전형 일정(면접·인적성·발표; `upcoming_schedule`에 각 일정의 D-day) ⑤ 같은 날짜에 겹치는 일정(`schedule_conflicts` — 서로 다른 공고 포함, 있으면 사용자에게 알려 조정 제안). 사용자가 "내 지원 현황 어때?", "뭐 챙겨야 해?", "이번 주 일정 뭐 있어?", "후속 연락할 거 있어?"라고 묻거나, 세션을 이어가며 놓친 게 없는지 먼저 점검할 때 사용하세요. 읽기 전용입니다. 지원(applied) 항목에는 결정론 팔로업 타이밍이 붙습니다: `followup_timing="due"`는 지원 후 5~7영업일(주말 제외)로 정중한 후속 문의 적기, `"overdue"`는 8영업일 이상으로 적기가 지났다는 뜻이며, `business_days_since`는 경과 영업일 수입니다. 달력일 45일 이상 무응답이면 `suggest_on_hold=true`가 붙으니 "보류(on_hold)로 옮길까요?"라고 제안하세요. 응답의 reason은 사용자 언어로 풀어 전하고, 후속 문의는 강요하지 말고 선택지로 제안하세요(채용 관행상 과한 독촉은 역효과 — 문의는 정중히 1회).',
     inputSchema: {},
     readOnly: true,
     handler: () => {
       const d = getActionDigest();
-      const n = d.followups.length + d.deadlines.length + d.interview_todo.length;
-      const msg = n === 0
-        ? '지금 당장 챙길 후속 항목이 없습니다(무응답 지원·임박 마감·면접 준비 대기 없음).'
-        : `챙길 항목 ${n}건: 후속 ${d.followups.length} · 마감 ${d.deadlines.length} · 면접준비 ${d.interview_todo.length}`;
+      const n = d.followups.length + d.deadlines.length + d.interview_todo.length + d.upcoming_schedule.length;
+      const parts = [`후속 ${d.followups.length}`, `마감 ${d.deadlines.length}`, `면접준비 ${d.interview_todo.length}`, `일정 ${d.upcoming_schedule.length}`];
+      if (d.schedule_conflicts.length) parts.push(`일정충돌 ${d.schedule_conflicts.length}`);
+      const msg = n === 0 && d.schedule_conflicts.length === 0
+        ? '지금 당장 챙길 후속 항목이 없습니다(무응답 지원·임박 마감·면접 준비 대기·다가오는 일정 없음).'
+        : `챙길 항목: ${parts.join(' · ')}`;
       return ok(msg, d);
     },
   },

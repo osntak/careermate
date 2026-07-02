@@ -6,6 +6,7 @@
 ## [Unreleased]
 
 ### 추가 (Added)
+- **전형 일정**: 공고에 면접·인적성·AI역검·발표 등 단계별 날짜를 구조화 저장(`save_job_posting`의 `schedule` — `label`·`date` 필수, `time` 선택). 면접초대 메일·발표 공지를 붙여넣으면 AI가 날짜를 추출해 저장하고, 서버가 D-day와 같은 날짜 충돌을 결정론으로 계산합니다(`get_followups`에 `upcoming_schedule`·`schedule_conflicts`). 대시보드 홈 "이번에 할 일"에 다가오는 일정(7일 내) D-day 항목, 공고 상세에 "전형 일정" 블록(날짜순·D-day·지난 일정 흐리게)을 노출합니다.
 - **탈락 회고**: 지원을 불합격으로 바꿀 때 어느 전형 단계에서 떨어졌는지 기록(`update_application_status`의 `rejected_stage` — 서류/인적성·AI역검/면접/최종·처우/기타). 미기록 시 회고를 유도하고, `get_pipeline_stats`에 단계별 탈락 분포(`rejected_by_stage`·`rejected_unrecorded`)를 더해 "서류는 붙는데 면접에서 떨어진다" 같은 패턴을 로컬 데이터로 드러냅니다. 대시보드 지원 현황의 불합격 행에 탈락 단계를 병기합니다.
 - **자소서 문항 뱅크**: 공고에 회사 지정 자소서 문항·글자수를 구조화 저장(`save_job_posting`의 `questions` — 문항·`min_chars`/`max_chars`/`count_mode`). 공고 상세에 "자소서 문항" 블록으로 노출하고, 문항별 답변은 `validate_cover_letter`의 한도 점검으로 확인합니다.
 - **팔로업 타이밍**: `get_followups`의 지원(applied) 항목에 결정론 영업일 계산 추가 — 지원 후 5~7영업일이면 `followup_timing="due"`(후속 문의 적기), 8영업일 이상이면 `"overdue"`, 달력일 45일 이상 무응답이면 `suggest_on_hold`(보류 이동 제안). 주말 제외·과한 독촉 경고 유지.

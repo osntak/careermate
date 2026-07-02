@@ -194,6 +194,13 @@ function ddayBadge(daysLeft) {
   return Badge('interview', t('applications.dday.future', { n: daysLeft }));
 }
 
+// hiring-schedule stage D-day (0 = today). Uses a neutral "D-{{n}}" label (these are
+// stage dates, not application deadlines), turning red only when it's today.
+function scheduleDdayBadge(dDay) {
+  if (dDay === 0) return Badge('rejected', t('home.actionLane.scheduleToday'));
+  return Badge('interview', t('home.actionLane.scheduleDday', { n: dDay }));
+}
+
 function ActionLane(s) {
   const rows = [];
   const seen = new Set();
@@ -212,6 +219,17 @@ function ActionLane(s) {
       title: it.job.company,
       sub: it.job.position,
       trailing: el('span', { class: 'badge badge--accent' }, el('span', { class: 'dot' }), t('home.actionLane.interviewPrep')),
+      onClick: () => navigate(`/jobs/${it.job.id}`),
+    }));
+  }
+  // Hiring-schedule stages (면접·인적성·발표) sit right after interview prep and before
+  // deadlines: they're the most time-bound "be there on this date" items.
+  for (const it of s.upcoming_schedule || []) {
+    push(it.job.id, ListRow({
+      leading: statusDot('interview'),
+      title: it.job.company,
+      sub: it.time ? `${it.label} · ${it.time}` : it.label,
+      trailing: scheduleDdayBadge(it.d_day),
       onClick: () => navigate(`/jobs/${it.job.id}`),
     }));
   }

@@ -142,7 +142,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
 | `search_jobs` | 키워드로 무인증 공개 잡보드(원티드·점핏)에서 공고를 *가져옴*(저장은 안 함) | `keyword`(필수), `sources?`, `limit?`(기본 10) | `{ query, results[](회사·직무·url·지역·경력·기술·마감), providers[] }` | 사용자가 "○○ 공고 찾아줘"라고 할 때. 결과를 보여주고 **고른 것만** save_job_posting | ✅ |
-| `save_job_posting` | 채용공고 저장(있으면 갱신). 저장 시 지원(application) 항목 자동 생성 | `company`, `position`(필수), `url?`, `location?`, `employment_type?`, `description?`, `requirements?`, `keywords?`, `deadline?`, `source?`, `questions?`(회사 지정 자소서 문항·글자수: `question`·`min_chars`·`max_chars`·`count_mode`) | 저장된 `JobRecord`(`job_id` 포함) | 공고를 DB에 등록/갱신할 때 | ✏️ |
+| `save_job_posting` | 채용공고 저장(있으면 갱신). 저장 시 지원(application) 항목 자동 생성 | `company`, `position`(필수), `url?`, `location?`, `employment_type?`, `description?`, `requirements?`, `keywords?`, `deadline?`, `source?`, `questions?`(회사 지정 자소서 문항·글자수: `question`·`min_chars`·`max_chars`·`count_mode`), `schedule?`(전형 일정: `label`·`date`(YYYY-MM-DD) 필수·`time`(HH:MM)·`note`) | 저장된 `JobRecord`(`job_id` 포함) | 공고를 DB에 등록/갱신할 때 | ✏️ |
 | `get_job_posting` | 공고 1건 상세 조회 | `job_id` | `{ job, fit, application, cover_letters, interview }` | 한 공고의 분석·상태·자소서·면접 자료를 한 번에 볼 때 | ✅ |
 | `list_jobs` | 저장된 모든 공고를 지원 상태·적합도 점수와 함께 목록화 | 없음 | 공고 메타 포함 배열 | 전체 공고를 훑어볼 때 | ✅ |
 | `prescreen_job` | 공고 키워드 ↔ 보유 기술 목록 **+ 대표 이력서 본문** 겹침을 결정론으로 계산(값싼 사전 필터, LLM 없음) | `job_id` | `{ job_keywords, matched[], missing[], coverage, user_skill_count, resume_matched[], combined_matched[], combined_coverage, resume_checked }` | 본격 적합도 분석 전 "깊게 볼 가치 있나" 빠르게 가늠할 때(여러 공고 우선순위). combined_coverage가 낮은데 보유 역량이면 이력서 보강 신호 | ✅ |
@@ -251,7 +251,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
 | `list_recent_activity` | 최근 활동 내역(공고 저장, 적합도 분석, 자소서 버전, 상태 변경, 면접 준비 등) 조회 | `limit?`(기본 20) | `ActivityRecord[]` | "최근에 뭐 했지?" 또는 이어서 작업할 맥락이 필요할 때 | ✅ |
-| `get_followups` | 지금 챙길 항목 한 번에 — 무응답 지원(지원 후 무응답·서류합격 후 일정대기·면접 후 결과대기)·임박/지난 마감(지원 전 단계)·면접 준비 누락 공고. 지원 항목엔 결정론 팔로업 타이밍(`followup_timing` due=5~7영업일·overdue=8영업일+, `business_days_since`)과 45일+ 무응답 시 `suggest_on_hold` | 없음 | `{ today, followups[]{…, followup_timing?, business_days_since?, suggest_on_hold?}, deadlines[], interview_todo[] }` | "내 지원 현황 어때?/뭐 챙겨야 해?/언제 팔로업?" 또는 세션 이어가며 놓친 것 점검할 때 | ✅ |
+| `get_followups` | 지금 챙길 항목 한 번에 — 무응답 지원(지원 후 무응답·서류합격 후 일정대기·면접 후 결과대기)·임박/지난 마감(지원 전 단계)·면접 준비 누락 공고·오늘~7일 내 전형 일정(D-day)·같은 날짜 일정 충돌. 지원 항목엔 결정론 팔로업 타이밍(`followup_timing` due=5~7영업일·overdue=8영업일+, `business_days_since`)과 45일+ 무응답 시 `suggest_on_hold` | 없음 | `{ today, followups[]{…, followup_timing?, business_days_since?, suggest_on_hold?}, deadlines[], interview_todo[], upcoming_schedule[]{ job_id, company, position, label, date, time?, d_day }, schedule_conflicts[]{ date, items[] } }` | "내 지원 현황 어때?/뭐 챙겨야 해?/이번 주 일정 뭐 있어?/언제 팔로업?" 또는 세션 이어가며 놓친 것 점검할 때 | ✅ |
 | `get_pipeline_stats` | 지원 파이프라인 분석 — 현재 상태 분포·단계별 도달 깔때기(지원→서류→면접→최종, 상태 변경 이력 복원)·통과율·결과 요약·탈락 단계 분포(`rejected_by_stage`·`rejected_unrecorded`) | 없음 | `{ total, by_status[], funnel, rates, outcomes, rejected_by_stage[], rejected_unrecorded, note }` | "내 합격률/지원 통계 어때?", "어느 단계에서 떨어져?"라고 물을 때(비율은 설명용, 표본 작으면 추세만) | ✅ |
 
 ---

@@ -664,6 +664,7 @@ function mapJob(r: any): JobRecord {
     core_values: fromJson(r.core_values, []),
     reputation: r.reputation ?? null,
     questions: fromJson(r.questions, []),
+    schedule: fromJson(r.schedule, []),
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
@@ -696,7 +697,7 @@ export const jobRepo = {
     if (existing) {
       const m = { ...existing, ...input } as JobRecord;
       db.prepare(
-        `UPDATE jobs SET company=?,position=?,url=?,location=?,employment_type=?,description=?,requirements=?,keywords=?,deadline=?,source=?,company_overview=?,talent_profile=?,core_values=?,reputation=?,questions=?,updated_at=? WHERE id=?`,
+        `UPDATE jobs SET company=?,position=?,url=?,location=?,employment_type=?,description=?,requirements=?,keywords=?,deadline=?,source=?,company_overview=?,talent_profile=?,core_values=?,reputation=?,questions=?,schedule=?,updated_at=? WHERE id=?`,
       ).run(
         m.company,
         m.position,
@@ -715,6 +716,8 @@ export const jobRepo = {
         // questions omitted from input → m keeps existing.questions (preserved);
         // provided → replaced. Same merge semantics as the other JSON fields.
         toJson(m.questions ?? []),
+        // schedule follows the same preserve-on-omit merge (v11 전형 일정).
+        toJson(m.schedule ?? []),
         ts,
         existing.id,
       );
@@ -722,8 +725,8 @@ export const jobRepo = {
     }
     const newJobId = id ?? newId('job_');
     db.prepare(
-      `INSERT INTO jobs (id,company,position,url,location,employment_type,description,requirements,keywords,deadline,source,company_overview,talent_profile,core_values,reputation,questions,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO jobs (id,company,position,url,location,employment_type,description,requirements,keywords,deadline,source,company_overview,talent_profile,core_values,reputation,questions,schedule,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     ).run(
       newJobId,
       input.company,
@@ -741,6 +744,7 @@ export const jobRepo = {
       toJson(input.core_values ?? []),
       input.reputation ?? null,
       toJson(input.questions ?? []),
+      toJson(input.schedule ?? []),
       ts,
       ts,
     );

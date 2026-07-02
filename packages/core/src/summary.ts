@@ -49,6 +49,8 @@ export interface HomeSummary {
   interview_todo: { job: JobRecord; status_label: string }[];
   deadlines: { job: JobRecord; status: ApplicationStatus; status_label: string; days_left: number }[];
   followups: { job: JobRecord; days_since: number }[];
+  /** Upcoming hiring-schedule stages (면접·인적성·발표) within SCHEDULE_SOON_DAYS, date/time asc. */
+  upcoming_schedule: { job: JobRecord; label: string; date: string; time?: string; d_day: number }[];
   recent_activity: ActivityRecord[];
 }
 
@@ -60,7 +62,35 @@ const DEADLINE_ACTIONABLE: ApplicationStatus[] = ['draft', 'planned'];
 const DEADLINE_SOON_DAYS = 14;
 // Suggest a follow-up when an application has sat in 'applied' this many days with no response.
 const FOLLOWUP_STALE_DAYS = 10;
+// Surface a hiring-schedule stage (면접·인적성·발표) once it's within this many days (today = 0).
+const SCHEDULE_SOON_DAYS = 7;
 const DAY_MS = 86400000;
+
+/**
+ * Collect every future (today or later) schedule stage across all jobs, newest date last,
+ * so both the home lane and the AG digest derive their views from one deterministic list.
+ * Each item carries its D-day (0 = today). Sort: date asc, then time asc (timeless entries last).
+ */
+interface FutureScheduleItem {
+  job: JobRecord;
+  label: string;
+  date: string;
+  time?: string;
+  d_day: number;
+}
+function collectFutureSchedule(jobs: JobRecord[], now: Date): FutureScheduleItem[] {
+  const items: FutureScheduleItem[] = [];
+  for (const job of jobs) {
+    for (const s of job.schedule ?? []) {
+      const d_day = daysUntilDate(s.date, now);
+      if (d_day == null || d_day < 0) continue; // past stages drop off
+      items.push({ job, label: s.label, date: s.date, time: s.time, d_day });
+    }
+  }
+  return items.sort((a, b) =>
+    a.date < b.date ? -1 : a.date > b.date ? 1 : (a.time || '99:99').localeCompare(b.time || '99:99'),
+  );
+}
 
 /** Whole days from `now`'s local midnight to a `YYYY-MM-DD` date (future > 0, today = 0, past < 0); null if unparseable. */
 function daysUntilDate(dateStr: string | null | undefined, now: Date): number | null {
@@ -163,6 +193,13 @@ export function getHomeSummary(now: Date = new Date()): HomeSummary {
     .sort((a, b) => b.days_since - a.days_since)
     .slice(0, 5);
 
+  // Upcoming hiring-schedule stages within a week — same "what's next" lane as
+  // interview prep / deadlines. Past stages already dropped in collectFutureSchedule.
+  const upcoming_schedule = collectFutureSchedule(jobs, now)
+    .filter((x) => x.d_day <= SCHEDULE_SOON_DAYS)
+    .map((x) => ({ job: x.job, label: x.label, date: x.date, ...(x.time ? { time: x.time } : {}), d_day: x.d_day }))
+    .slice(0, 6);
+
   return {
     onboarding,
     counts: {
@@ -185,6 +222,7 @@ export function getHomeSummary(now: Date = new Date()): HomeSummary {
     interview_todo,
     deadlines,
     followups,
+    upcoming_schedule,
     recent_activity: activityRepo.recent(10),
   };
 }
@@ -226,12 +264,34 @@ export interface FollowupItem {
   suggest_on_hold?: boolean;
 }
 
+/** One upcoming hiring-schedule stage the AI should flag (오늘~7일 내). */
+export interface UpcomingScheduleItem {
+  job_id: string;
+  company: string;
+  position: string;
+  label: string;
+  date: string;
+  time?: string;
+  /** Whole days until the stage (0 = today). */
+  d_day: number;
+}
+
+/** Two or more stages landing on the same date (across postings) — a scheduling collision. */
+export interface ScheduleConflict {
+  date: string;
+  items: { job_id: string; company: string; position: string; label: string; time?: string }[];
+}
+
 export interface ActionDigest {
   /** Server's today (YYYY-MM-DD) — the AI can't reliably know the current date. */
   today: string;
   followups: FollowupItem[];
   deadlines: { job: JobRecord; status: ApplicationStatus; status_label: string; days_left: number }[];
   interview_todo: { job: JobRecord; status_label: string }[];
+  /** Upcoming hiring-schedule stages within a week (면접·인적성·발표), date/time asc. */
+  upcoming_schedule: UpcomingScheduleItem[];
+  /** Same-date collisions among all future stages — surface so the user can resolve them. */
+  schedule_conflicts: ScheduleConflict[];
 }
 
 /**
@@ -300,8 +360,45 @@ export function getActionDigest(now: Date = new Date()): ActionDigest {
     })
     .filter((x): x is { job: JobRecord; status_label: string } => x !== null);
 
+  // 전형 일정: 오늘~7일 내 다가오는 일정(D-day) + 같은 날짜 충돌(공고 무관). 충돌은 7일에 얽매이지
+  // 않고 미래 전체에서 감지한다(다음 달 두 면접이 같은 날이면 미리 알려야 하므로).
+  const futureSchedule = collectFutureSchedule(jobs, now);
+  const upcoming_schedule: UpcomingScheduleItem[] = futureSchedule
+    .filter((x) => x.d_day <= SCHEDULE_SOON_DAYS)
+    .map((x) => ({
+      job_id: x.job.id,
+      company: x.job.company,
+      position: x.job.position,
+      label: x.label,
+      ...(x.time ? { time: x.time } : {}),
+      date: x.date,
+      d_day: x.d_day,
+    }));
+
+  const byDate = new Map<string, FutureScheduleItem[]>();
+  for (const x of futureSchedule) {
+    const arr = byDate.get(x.date) ?? [];
+    arr.push(x);
+    byDate.set(x.date, arr);
+  }
+  const schedule_conflicts: ScheduleConflict[] = [];
+  for (const [date, items] of byDate) {
+    if (items.length < 2) continue;
+    schedule_conflicts.push({
+      date,
+      items: items.map((x) => ({
+        job_id: x.job.id,
+        company: x.job.company,
+        position: x.job.position,
+        label: x.label,
+        ...(x.time ? { time: x.time } : {}),
+      })),
+    });
+  }
+  schedule_conflicts.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  return { today, followups, deadlines, interview_todo };
+  return { today, followups, deadlines, interview_todo, upcoming_schedule, schedule_conflicts };
 }
 
 /* ---------------------------------------------------------- job pre-screen */

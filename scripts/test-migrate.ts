@@ -39,7 +39,7 @@ const ok = (name: string, cond: boolean, extra = '') => {
   }
 };
 
-const LATEST = MIGRATIONS.length; // v1..v10
+const LATEST = MIGRATIONS.length; // v1..v11
 const T = '2026-01-01T00:00:00.000Z';
 
 function newDb(): DatabaseSync {
@@ -50,8 +50,8 @@ function newDb(): DatabaseSync {
   return db;
 }
 
-console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v10)`);
-ok('MIGRATIONS 길이 10', LATEST === 10, String(LATEST));
+console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v11)`);
+ok('MIGRATIONS 길이 11', LATEST === 11, String(LATEST));
 
 console.log('\n1) 신규 설치 — from=0 전체 빌드');
 {
@@ -203,6 +203,25 @@ console.log('\n2-3) v9→v10 — applications에 rejected_stage 컬럼 추가(�
     | { status: string; rejected_stage: string | null }
     | undefined;
   ok('기존 지원 보존 + rejected_stage 기본 NULL', !!a && a.status === 'rejected' && a.rejected_stage === null, JSON.stringify(a));
+  db.close();
+}
+
+console.log('\n2-4) v10→v11 — 공고에 schedule 컬럼 추가(기본 []) + 데이터 보존');
+{
+  const db = newDb();
+  for (let i = 0; i < 10; i++) db.exec(MIGRATIONS[i]!);
+  db.exec(`CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
+  db.prepare(`INSERT INTO _meta (key,value) VALUES ('schema_version','10')`).run();
+  db.prepare(`INSERT INTO jobs (id,company,position,created_at,updated_at) VALUES ('job-s','회사S','백엔드',?,?)`).run(T, T);
+
+  const r = migrate(db);
+  ok(`v10→v${LATEST} 업그레이드`, r.from === 10 && r.to === LATEST, JSON.stringify(r));
+  const jcols = (db.prepare(`PRAGMA table_info(jobs)`).all() as { name: string }[]).map((c) => c.name);
+  ok('v11 jobs.schedule 컬럼 생성', jcols.includes('schedule'), jcols.join(','));
+  const s = db.prepare(`SELECT company, schedule FROM jobs WHERE id='job-s'`).get() as
+    | { company: string; schedule: string }
+    | undefined;
+  ok('기존 공고 보존 + schedule 기본 []', !!s && s.company === '회사S' && s.schedule === '[]', JSON.stringify(s));
   db.close();
 }
 

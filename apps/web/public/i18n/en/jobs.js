@@ -99,6 +99,12 @@ export default {
   'jobs.questions.modeWithSpace': ' (incl. spaces)',
   'jobs.questions.modeNoSpace': ' (excl. spaces)',
 
+  // ---- hiring schedule (전형 일정) ----
+  'jobs.schedule.title': 'Hiring schedule',
+  'jobs.schedule.today': 'D-day',
+  'jobs.schedule.dday': 'D-{{n}}',
+  'jobs.schedule.past': 'Past',
+
   // ---- fit card ----
   'jobs.fit.title': 'Fit analysis',
   'jobs.fit.emptyBody': 'Not analyzed yet. The comparison between this posting and your profile will appear here.',
