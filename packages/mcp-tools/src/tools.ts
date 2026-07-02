@@ -628,7 +628,7 @@ export const TOOLS: ToolDef[] = [
     idempotent: true, // 같은 url 업서트 — 재호출 안전
     title: '채용공고 저장',
     description:
-      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요 — 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 회사 평판(평점·워라밸·문화 리스크 등)을 리서치했다면 reputation에 요약(출처·최근성 표기)을 넣으면 오퍼 판단·면접에 활용됩니다. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
+      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요 — 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 회사 평판(평점·워라밸·문화 리스크 등)을 리서치했다면 reputation에 요약(출처·최근성 표기)을 넣으면 오퍼 판단·면접에 활용됩니다. 회사 지정 자소서 문항·글자수가 있으면 questions 배열에 구조화 저장하세요(question 필수, max_chars/min_chars/count_mode). 이후 자소서 작성 시 문항별로 validate_cover_letter(min_chars/max_chars/count_mode)로 한도를 점검합니다. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
     inputSchema: JobInputSchema.shape,
     handler: (args) => {
       const { job } = saveJobPosting(args);
@@ -1248,7 +1248,7 @@ export const TOOLS: ToolDef[] = [
     name: 'validate_cover_letter',
     title: '자기소개서 자동 점검 (저장 전 미리보기)',
     description:
-      '자기소개서를 save_cover_letter_version으로 저장하기 직전에 호출하면, 저장하지 않고 미리 점검만 합니다. CareerMate가 LLM 없이 결정론으로 (1) 본문의 정량 수치가 저장된 경력·이력서·프로젝트에 근거가 있는지(없으면 환각 의심 → 저장 시 차단됨), (2) 공고에서 가져온 수치를 본인 성과처럼 쓰지 않았는지, (3) 번역투·제너릭 도입·빈 형용사·블라인드 위반 같은 문체 신호를 세어 돌려줍니다. 또 (4) 글자수를 공백포함·공백제외·UTF-8 byte 세 기준으로 정확히 세고, min_chars/max_chars를 주면 상·하한 충족 여부까지 돌려줍니다(LLM은 글자수를 정확히 못 세므로 이 기능을 쓰세요). 점검은 셀 수 있는 것만 봅니다 — 사실성·동문서답 같은 의미 판단은 당신(AI)이 직접 하세요. 한국 문항형 자소서는 문항마다 글자수 한도가 다르니 각 문항 본문을 그 문항의 한도로 따로 점검하세요. job_id를 주면 공고 수치까지 비교합니다.',
+      '자기소개서를 save_cover_letter_version으로 저장하기 직전에 호출하면, 저장하지 않고 미리 점검만 합니다. CareerMate가 LLM 없이 결정론으로 (1) 본문의 정량 수치가 저장된 경력·이력서·프로젝트에 근거가 있는지(없으면 환각 의심 → 저장 시 차단됨), (2) 공고에서 가져온 수치를 본인 성과처럼 쓰지 않았는지, (3) 번역투·제너릭 도입·빈 형용사·블라인드 위반 같은 문체 신호를 세어 돌려줍니다. 또 (4) 글자수를 공백포함·공백제외·UTF-8 byte 세 기준으로 정확히 세고, min_chars/max_chars를 주면 상·하한 충족 여부까지 돌려줍니다(LLM은 글자수를 정확히 못 세므로 이 기능을 쓰세요). 점검은 셀 수 있는 것만 봅니다 — 사실성·동문서답 같은 의미 판단은 당신(AI)이 직접 하세요. 한국 문항형 자소서는 문항마다 글자수 한도가 다르니 각 문항 본문을 그 문항의 한도로 따로 점검하세요. 공고에 questions가 저장돼 있으면 그 문항의 한도를 min_chars/max_chars/count_mode로 넘겨 점검하세요. job_id를 주면 공고 수치까지 비교합니다.',
     inputSchema: {
       text: z.string().max(200_000).describe('점검할 자기소개서 본문(문항형이면 한 문항 본문)'),
       job_id: z.string().optional().describe('연결할 공고(있으면 공고 수치까지 비교)'),

@@ -90,6 +90,15 @@ export default {
   'jobs.posting.requirements': '자격요건 · 우대사항',
   'jobs.posting.rawText': '공고 원문',
 
+  // ---- cover letter questions (문항형 자소서) ----
+  'jobs.questions.title': '자소서 문항',
+  'jobs.questions.min': '최소 {{n}}{{unit}}',
+  'jobs.questions.max': '최대 {{n}}{{unit}}',
+  'jobs.questions.unitChar': '자',
+  'jobs.questions.unitByte': 'byte',
+  'jobs.questions.modeWithSpace': '(공백포함)',
+  'jobs.questions.modeNoSpace': '(공백제외)',
+
   // ---- fit card ----
   'jobs.fit.title': '적합도 분석',
   'jobs.fit.emptyBody': '아직 분석 전이에요. 이 공고와 내 프로필을 비교한 결과가 여기에 표시됩니다.',

@@ -6,6 +6,7 @@
 ## [Unreleased]
 
 ### 추가 (Added)
+- **자소서 문항 뱅크**: 공고에 회사 지정 자소서 문항·글자수를 구조화 저장(`save_job_posting`의 `questions` — 문항·`min_chars`/`max_chars`/`count_mode`). 공고 상세에 "자소서 문항" 블록으로 노출하고, 문항별 답변은 `validate_cover_letter`의 한도 점검으로 확인합니다.
 - **팔로업 타이밍**: `get_followups`의 지원(applied) 항목에 결정론 영업일 계산 추가 — 지원 후 5~7영업일이면 `followup_timing="due"`(후속 문의 적기), 8영업일 이상이면 `"overdue"`, 달력일 45일 이상 무응답이면 `suggest_on_hold`(보류 이동 제안). 주말 제외·과한 독촉 경고 유지.
 - **프리스크린 이력서 커버리지**: `prescreen_job`이 공고 키워드를 보유 기술 목록뿐 아니라 **대표 이력서 본문**과도 대조(`resume_matched`·`combined_matched`·`combined_coverage`·`resume_checked`). 보유 역량인데 커버리지가 낮으면 이력서에 그 키워드가 안 드러난다는 보강 신호.
 - **오퍼 비교**: 받은 채용 제안을 공고에 연결해 저장(`save_offer` — 만원 단위 현금성 항목의 결정론 연봉 합산 포함)하고, 점수순으로 비교(`compare_offers`·`get_offer`). 대시보드 지원현황 상단에 오퍼 비교 섹션(점수순 카드 + 최종평) 추가.

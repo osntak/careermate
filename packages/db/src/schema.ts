@@ -376,6 +376,14 @@ export const MIGRATIONS: string[] = [
   `
   ALTER TABLE offers ADD COLUMN offer_status TEXT NOT NULL DEFAULT 'open';
   `,
+
+  // v9 — 한국 문항형 자소서: 회사가 지정한 문항·글자수를 공고에 구조화 보관. 한국 자소서는
+  // 회사별 문항형(항목·글자수 제한)이 지배적이라, AI가 문항별로 답변을 쓰고 글자수를 점검할 때
+  // 참조할 원본을 공고 옆에 둔다(별도 엔티티가 아니라 job 컨텍스트에 함께 실린다). JSON 배열을
+  // TEXT에 저장(다른 JSON 필드와 동일). Additive ALTER (runner가 멱등 처리).
+  `
+  ALTER TABLE jobs ADD COLUMN questions TEXT NOT NULL DEFAULT '[]';
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

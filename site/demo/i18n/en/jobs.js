@@ -90,6 +90,15 @@ export default {
   'jobs.posting.requirements': 'Requirements · Preferred',
   'jobs.posting.rawText': 'Original posting',
 
+  // ---- cover letter questions (문항형 자소서) ----
+  'jobs.questions.title': 'Cover letter questions',
+  'jobs.questions.min': 'min {{n}}{{unit}}',
+  'jobs.questions.max': 'max {{n}}{{unit}}',
+  'jobs.questions.unitChar': ' chars',
+  'jobs.questions.unitByte': ' bytes',
+  'jobs.questions.modeWithSpace': ' (incl. spaces)',
+  'jobs.questions.modeNoSpace': ' (excl. spaces)',
+
   // ---- fit card ----
   'jobs.fit.title': 'Fit analysis',
   'jobs.fit.emptyBody': 'Not analyzed yet. The comparison between this posting and your profile will appear here.',

@@ -373,6 +373,20 @@ function PostingCard(job) {
         ...job.requirements.map((r) => el('li', {}, r)))));
   }
 
+  if (job.questions && job.questions.length) {
+    // 한국 문항형 자소서: 회사 지정 문항·글자수 한도. AI가 문항별 답변을 쓰고 한도를
+    // 점검할 원본이자, 사용자가 대시보드에서 요구 문항을 그대로 볼 수 있게 한다.
+    body.push(el('div', { class: 'mt-3' },
+      el('div', { class: 'muted text-sm mb-2' }, t('jobs.questions.title')),
+      el('ol', { class: 'stack-2', style: { margin: 0, paddingLeft: '18px' } },
+        ...job.questions.map((q) => {
+          const label = questionLimitLabel(q);
+          return el('li', {},
+            el('span', {}, q.question),
+            label ? el('span', { class: 'muted text-sm', style: { marginLeft: '6px' } }, label) : null);
+        }))));
+  }
+
   if (job.description) {
     // 원문은 가장 길어 칼럼을 늘리는 주범 — 기본 접힘(아코디언)으로 둔다.
     body.push(el('details', { class: 'disclosure mt-3' },
@@ -383,6 +397,22 @@ function PostingCard(job) {
   }
 
   return Card({ title: t('jobs.posting.title'), body });
+}
+
+// 문항 글자수 한도 라벨(예: "최대 700자(공백포함)"). 한도가 없으면 null.
+// count_mode: with_space=공백포함 · no_space=공백제외 · byte=UTF-8 바이트(공백 구분 없음).
+function questionLimitLabel(q) {
+  const hasMin = typeof q.min_chars === 'number';
+  const hasMax = typeof q.max_chars === 'number';
+  if (!hasMin && !hasMax) return null;
+  const unit = q.count_mode === 'byte' ? t('jobs.questions.unitByte') : t('jobs.questions.unitChar');
+  const suffix = q.count_mode === 'no_space' ? t('jobs.questions.modeNoSpace')
+    : q.count_mode === 'with_space' ? t('jobs.questions.modeWithSpace')
+    : '';
+  const parts = [];
+  if (hasMin) parts.push(t('jobs.questions.min', { n: q.min_chars, unit }));
+  if (hasMax) parts.push(t('jobs.questions.max', { n: q.max_chars, unit }));
+  return `${parts.join(' · ')}${suffix}`;
 }
 
 // Company research the AI saved (overview·인재상·핵심가치·평판) — rendered so the

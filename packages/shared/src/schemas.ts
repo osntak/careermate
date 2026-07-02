@@ -380,6 +380,24 @@ export type CoverLetterRecord = z.infer<typeof CoverLetterRecordSchema>;
 
 /* --------------------------------------------------------------------- Job */
 
+/**
+ * One company-specified cover-letter question (한국 문항형 자소서). Stored on the job so
+ * the AI writes each answer to its own prompt and checks length against that question's
+ * limit. CareerMate counts chars deterministically (checkCharLimit) — it never generates.
+ */
+export const JobQuestionSchema = z.object({
+  no: z.number().int().positive().optional().describe('문항 번호(있으면)'),
+  question: z.string().max(MAX_BODY).describe('문항 텍스트(회사가 제시한 자소서 항목)'),
+  min_chars: z.number().int().positive().optional().describe('글자수 하한(있으면)'),
+  max_chars: z.number().int().positive().optional().describe('글자수 상한(있으면)'),
+  count_mode: z
+    .enum(['with_space', 'no_space', 'byte'])
+    .optional()
+    .describe('글자수 기준: with_space=공백포함(기본)·no_space=공백제외·byte=UTF-8 바이트'),
+  note: optLine.describe('부가 메모(예: "필수", "경험 중심")'),
+});
+export type JobQuestion = z.infer<typeof JobQuestionSchema>;
+
 export const JobInputSchema = z.object({
   company: reqLine,
   position: reqLine.describe('직무/포지션명'),
@@ -395,6 +413,11 @@ export const JobInputSchema = z.object({
   talent_profile: optBody.describe('회사가 강조하는 인재상 (한국 자소서·면접에서 정렬 기준)'),
   core_values: strList.optional().describe('회사 핵심가치 (키워드 배열)'),
   reputation: optBody.describe('회사 평판 요약 — 평점·워라밸·문화 리스크 등 (AI가 company-research 플레이북으로 리서치해 채움; 출처·최근성 표기)'),
+  questions: z
+    .array(JobQuestionSchema)
+    .max(MAX_ITEMS)
+    .optional()
+    .describe('회사 지정 자소서 문항·글자수 — 사용자가 문항을 주면 구조화 저장'),
 });
 export type JobInput = z.infer<typeof JobInputSchema>;
 
@@ -414,6 +437,7 @@ export const JobRecordSchema = z.object({
   talent_profile: z.string().nullable(),
   core_values: z.array(z.string()),
   reputation: z.string().nullable(),
+  questions: z.array(JobQuestionSchema),
 });
 export type JobRecord = z.infer<typeof JobRecordSchema>;
 

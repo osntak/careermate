@@ -503,6 +503,28 @@ section('6) 검증 엔진(verify) — 숫자 출처 게이트');
   const jobCo: any = await tool('save_job_posting').handler({ company: '컬처핏테크', position: '백엔드 엔지니어', talent_profile: '주도적으로 문제를 정의하고 해결하는 사람', core_values: ['고객집착', '실험정신'], company_overview: '핀테크 결제 플랫폼, 최근 송금 서비스 출시' });
   const coJob = (await json('GET', `/api/jobs/${jobCo.data?.id}`)).job;
   ok('공고 기업리서치(인재상·핵심가치·사업개요) 저장·조회', coJob.talent_profile?.includes('주도적') && coJob.core_values?.length === 2 && coJob.company_overview?.includes('핀테크'), JSON.stringify({ t: coJob.talent_profile, cv: coJob.core_values, o: coJob.company_overview }));
+
+  // ⑤ 자소서 문항 뱅크: 회사 지정 문항·글자수를 questions로 저장 → get_job_posting 반환 확인.
+  // 이어서 questions 없이 부분 갱신(같은 url 업서트) 시 기존 문항이 보존되는지 확인.
+  const qUrl = 'https://example.com/jobs/문항뱅크';
+  const jobQ: any = await tool('save_job_posting').handler({
+    company: '문항뱅크사', position: '서비스 기획', url: qUrl,
+    questions: [
+      { no: 1, question: '지원 동기를 서술하세요.', max_chars: 700, count_mode: 'with_space', note: '필수' },
+      { no: 2, question: '가장 도전적이었던 경험은?', min_chars: 300, max_chars: 1000, count_mode: 'no_space' },
+    ],
+  });
+  const qJob = (await tool('get_job_posting').handler({ job_id: jobQ.data?.id })).data as any;
+  ok('공고 자소서 문항 2건 저장·조회(문항·글자수·기준)',
+    qJob?.job?.questions?.length === 2 && qJob.job.questions[0].max_chars === 700 &&
+    qJob.job.questions[0].count_mode === 'with_space' && qJob.job.questions[1].min_chars === 300,
+    JSON.stringify(qJob?.job?.questions));
+  // 부분 갱신: questions 미전달로 같은 url 재저장 → 기존 문항 보존.
+  await tool('save_job_posting').handler({ company: '문항뱅크사', position: '서비스 기획(수정)', url: qUrl });
+  const qJob2 = (await tool('get_job_posting').handler({ job_id: jobQ.data?.id })).data as any;
+  ok('questions 미전달 재저장 시 기존 문항 보존(부분 갱신)',
+    qJob2?.job?.questions?.length === 2 && qJob2.job.position === '서비스 기획(수정)',
+    JSON.stringify({ q: qJob2?.job?.questions?.length, pos: qJob2?.job?.position }));
 }
 
 /* ------------------ 7. 배치 입력 + 멱등 upsert (스킬/경력/프로젝트) */

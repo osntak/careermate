@@ -662,6 +662,7 @@ function mapJob(r: any): JobRecord {
     talent_profile: r.talent_profile ?? null,
     core_values: fromJson(r.core_values, []),
     reputation: r.reputation ?? null,
+    questions: fromJson(r.questions, []),
     created_at: r.created_at,
     updated_at: r.updated_at,
   };
@@ -694,7 +695,7 @@ export const jobRepo = {
     if (existing) {
       const m = { ...existing, ...input } as JobRecord;
       db.prepare(
-        `UPDATE jobs SET company=?,position=?,url=?,location=?,employment_type=?,description=?,requirements=?,keywords=?,deadline=?,source=?,company_overview=?,talent_profile=?,core_values=?,reputation=?,updated_at=? WHERE id=?`,
+        `UPDATE jobs SET company=?,position=?,url=?,location=?,employment_type=?,description=?,requirements=?,keywords=?,deadline=?,source=?,company_overview=?,talent_profile=?,core_values=?,reputation=?,questions=?,updated_at=? WHERE id=?`,
       ).run(
         m.company,
         m.position,
@@ -710,6 +711,9 @@ export const jobRepo = {
         m.talent_profile ?? null,
         toJson(m.core_values ?? []),
         m.reputation ?? null,
+        // questions omitted from input → m keeps existing.questions (preserved);
+        // provided → replaced. Same merge semantics as the other JSON fields.
+        toJson(m.questions ?? []),
         ts,
         existing.id,
       );
@@ -717,8 +721,8 @@ export const jobRepo = {
     }
     const newJobId = id ?? newId('job_');
     db.prepare(
-      `INSERT INTO jobs (id,company,position,url,location,employment_type,description,requirements,keywords,deadline,source,company_overview,talent_profile,core_values,reputation,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO jobs (id,company,position,url,location,employment_type,description,requirements,keywords,deadline,source,company_overview,talent_profile,core_values,reputation,questions,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     ).run(
       newJobId,
       input.company,
@@ -735,6 +739,7 @@ export const jobRepo = {
       input.talent_profile ?? null,
       toJson(input.core_values ?? []),
       input.reputation ?? null,
+      toJson(input.questions ?? []),
       ts,
       ts,
     );

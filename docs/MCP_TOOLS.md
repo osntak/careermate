@@ -142,7 +142,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
 | `search_jobs` | 키워드로 무인증 공개 잡보드(원티드·점핏)에서 공고를 *가져옴*(저장은 안 함) | `keyword`(필수), `sources?`, `limit?`(기본 10) | `{ query, results[](회사·직무·url·지역·경력·기술·마감), providers[] }` | 사용자가 "○○ 공고 찾아줘"라고 할 때. 결과를 보여주고 **고른 것만** save_job_posting | ✅ |
-| `save_job_posting` | 채용공고 저장(있으면 갱신). 저장 시 지원(application) 항목 자동 생성 | `company`, `position`(필수), `url?`, `location?`, `employment_type?`, `description?`, `requirements?`, `keywords?`, `deadline?`, `source?` | 저장된 `JobRecord`(`job_id` 포함) | 공고를 DB에 등록/갱신할 때 | ✏️ |
+| `save_job_posting` | 채용공고 저장(있으면 갱신). 저장 시 지원(application) 항목 자동 생성 | `company`, `position`(필수), `url?`, `location?`, `employment_type?`, `description?`, `requirements?`, `keywords?`, `deadline?`, `source?`, `questions?`(회사 지정 자소서 문항·글자수: `question`·`min_chars`·`max_chars`·`count_mode`) | 저장된 `JobRecord`(`job_id` 포함) | 공고를 DB에 등록/갱신할 때 | ✏️ |
 | `get_job_posting` | 공고 1건 상세 조회 | `job_id` | `{ job, fit, application, cover_letters, interview }` | 한 공고의 분석·상태·자소서·면접 자료를 한 번에 볼 때 | ✅ |
 | `list_jobs` | 저장된 모든 공고를 지원 상태·적합도 점수와 함께 목록화 | 없음 | 공고 메타 포함 배열 | 전체 공고를 훑어볼 때 | ✅ |
 | `prescreen_job` | 공고 키워드 ↔ 보유 기술 목록 **+ 대표 이력서 본문** 겹침을 결정론으로 계산(값싼 사전 필터, LLM 없음) | `job_id` | `{ job_keywords, matched[], missing[], coverage, user_skill_count, resume_matched[], combined_matched[], combined_coverage, resume_checked }` | 본격 적합도 분석 전 "깊게 볼 가치 있나" 빠르게 가늠할 때(여러 공고 우선순위). combined_coverage가 낮은데 보유 역량이면 이력서 보강 신호 | ✅ |
@@ -288,7 +288,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
-| `validate_cover_letter` | 저장하지 않고 미리 점검만 — 저장 시 차단될 항목·문체 신호를 보여줌 | `text`(필수), `job_id?`, `strict?` | 점검 리포트(`blocking[]`·신호·수치 출처 분석) | `save_cover_letter_version`으로 저장하기 직전 미리 확인할 때 | ✅ |
+| `validate_cover_letter` | 저장하지 않고 미리 점검만 — 저장 시 차단될 항목·문체 신호를 보여줌. 글자수도 3기준으로 세고 한도 충족 여부 반환 | `text`(필수), `job_id?`, `strict?`, `min_chars?`, `max_chars?`, `count_mode?` | 점검 리포트(`blocking[]`·신호·수치 출처 분석·`charLimit`) | `save_cover_letter_version`으로 저장하기 직전 미리 확인할 때. 공고 `questions`에 문항별 한도가 있으면 그 값을 넘겨 문항마다 점검 | ✅ |
 | `set_verify_mode` | 저장 전 자동 점검의 엄격도 변경(기본/엄격). 엄격 모드는 이력서 본문에 근거 없는 수치까지 차단 | `strict`(true=엄격, false=끄기) | `{ strict }` | 사용자가 "엄격하게 봐줘"에 동의해 모드를 바꿀 때(이번 한 건만이면 모드 대신 `strict:true`를 인자로) | ✏️ |
 
 - `validate_cover_letter`의 `blocking`이 비어 있지 않으면, 같은 본문을 `save_cover_letter_version`으로 저장할 때도 막힙니다(의도한 값이면 `force:true`로 저장).
