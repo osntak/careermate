@@ -6,6 +6,10 @@ export default {
   'applications.offers.unit': '만원',
   'applications.offers.noScore': 'No score',
   'applications.offers.acceptBy': 'Accept by {{date}}',
+  'applications.offers.expired': 'Deadline passed',
+  'applications.offers.past': 'Past offers · {{count}} (accepted/declined)',
+  'applications.offers.status.accepted': 'Accepted',
+  'applications.offers.status.declined': 'Declined',
 
   // deadline D-day chip
   'applications.dday.future': 'Due in {{n}}d',

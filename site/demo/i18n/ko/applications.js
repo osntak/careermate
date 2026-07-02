@@ -6,6 +6,10 @@ export default {
   'applications.offers.unit': '만원',
   'applications.offers.noScore': '점수 미정',
   'applications.offers.acceptBy': '수락 마감 {{date}}',
+  'applications.offers.expired': '수락 마감 지남',
+  'applications.offers.past': '지난 오퍼 {{count}}건 (수락·거절)',
+  'applications.offers.status.accepted': '수락',
+  'applications.offers.status.declined': '거절',
 
   // deadline D-day chip
   'applications.dday.future': '마감 D-{{n}}',

@@ -118,12 +118,26 @@ export async function render(ctx) {
 // Offers — sorted by the AI's score (server pre-sorts). The score + verdict were
 // written by the connected AI at save time, so this renders without any LLM. The
 // precise head-to-head comparison happens in the AI chat via compare_offers.
+//
+// Lifecycle-aware: only OPEN offers deserve the top of the pipeline (they carry
+// accept deadlines — the most time-sensitive decision in the whole search).
+// Accepted/declined offers are kept as career records (terms history feeds the
+// next negotiation) but demoted to a collapsed "past offers" line.
 function OffersSection(offers) {
-  return el('div', { class: 'stack-3' },
-    el('div', { class: 'app-group__head' },
-      el('span', { class: 'app-group__title' }, t('applications.offers.title')),
-      el('span', { class: 'app-group__count tnum' }, t('applications.group.count', { count: offers.length }))),
-    ...offers.map(OfferCard));
+  const status = (o) => o.offer_status || 'open';
+  const active = offers.filter((o) => status(o) === 'open');
+  const past = offers.filter((o) => status(o) !== 'open');
+  const children = [];
+  if (active.length) {
+    children.push(
+      el('div', { class: 'app-group__head' },
+        el('span', { class: 'app-group__title' }, t('applications.offers.title')),
+        el('span', { class: 'app-group__count tnum' }, t('applications.group.count', { count: active.length }))),
+      ...active.map(OfferCard),
+    );
+  }
+  if (past.length) children.push(PastOffers(past));
+  return el('div', { class: 'stack-3' }, ...children);
 }
 
 function OfferCard(o) {
@@ -135,12 +149,41 @@ function OfferCard(o) {
   const score = o.ai_score != null
     ? el('span', { class: `strong tnum ${scoreClass(o.ai_score)}` }, String(o.ai_score))
     : el('span', { class: 'muted' }, t('applications.offers.noScore'));
+  // Deadline passed on a still-open offer: flag it, never auto-hide — deadlines
+  // get extended in negotiation, so the call is the user's (or the AI's), not ours.
+  const expired = !!o.accept_deadline && o.accept_deadline < new Date().toISOString().slice(0, 10);
+  const actions = expired
+    ? el('span', { class: 'flex gap-2', style: { alignItems: 'center' } },
+        Badge('on_hold', t('applications.offers.expired')), score)
+    : score;
   return Card({
     title: o.company,
     sub: meta.join(' · '),
-    actions: score,
+    actions,
     body: o.verdict ? el('p', { class: 'muted', style: { marginTop: '6px' } }, o.verdict) : null,
     clickable: true,
     onClick: () => navigate(`/jobs/${o.job_id}`),
   });
+}
+
+// Accepted/declined offers, one compact row each inside a collapsed disclosure.
+function PastOffers(past) {
+  const rows = past.map((o) =>
+    el('div', { class: 'flex gap-2', style: { alignItems: 'center', padding: '6px 0' } },
+      Badge(o.offer_status === 'accepted' ? 'final_passed' : 'rejected',
+        t(`applications.offers.status.${o.offer_status}`)),
+      el('span', {
+        class: 'strong',
+        style: { cursor: 'pointer' },
+        activate: () => navigate(`/jobs/${o.job_id}`),
+      }, o.company),
+      o.total_comp_annual_est != null
+        ? el('span', { class: 'muted text-sm' },
+            `${t('applications.offers.est')} ${o.total_comp_annual_est.toLocaleString()}${t('applications.offers.unit')}`)
+        : null,
+    ));
+  return el('details', {},
+    el('summary', { class: 'muted text-sm', style: { cursor: 'pointer' } },
+      t('applications.offers.past', { count: past.length })),
+    ...rows);
 }
