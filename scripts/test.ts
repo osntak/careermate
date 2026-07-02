@@ -159,6 +159,19 @@ const tool = (name: string) => {
   return t;
 };
 
+/* prescreen(A-2): 대표 이력서가 아직 없을 때 resume_checked=false + combined=스킬만.
+   (이 지점에는 저장된 이력서가 없다 — 첫 add_resume은 아래 내보내기 섹션에서 발생.) */
+{
+  const { prescreenJob } = await import('../packages/core/src/summary.ts');
+  const pre = prescreenJob(apiJob.id) as any; // apiJob keywords=['Java']
+  ok(
+    'prescreen: 이력서 없으면 resume_checked=false + combined은 스킬만',
+    !!pre && pre.resume_checked === false && pre.resume_matched.length === 0 &&
+      pre.combined_matched.length === pre.matched.length && pre.combined_coverage === pre.coverage,
+    JSON.stringify(pre && { rc: pre.resume_checked, rm: pre.resume_matched }),
+  );
+}
+
 /* MCP 어노테이션 정직성(출시 전 감사 회귀 잠금) — 프라이버시 주장("외부로 안 나감")은
    이 힌트가 사실일 때만 성립한다. 외부 통신 도구·비가역 도구 집합을 정확히 고정. */
 {
@@ -307,6 +320,52 @@ ok(
   Array.isArray(sumFuture.followups) &&
     sumFuture.followups.some((f: any) => f.job.company === '후속테스트회사' && f.days_since >= 11 && f.days_since <= 13),
 );
+
+/* A-1. 팔로업 타이밍 규칙(결정론 영업일) — getActionDigest에 now 주입 */
+{
+  const { getActionDigest, businessDaysSince } = await import('../packages/core/src/summary.ts');
+  // 금요일(2026-01-02) 지원 → 다음주 금요일(2026-01-09) = 5영업일(주말 제외)
+  ok(
+    '영업일 계산: 금요일 지원→다음주 금요일 = 5영업일',
+    businessDaysSince('2026-01-02T09:00:00', new Date('2026-01-09T09:00:00')) === 5,
+    String(businessDaysSince('2026-01-02T09:00:00', new Date('2026-01-09T09:00:00'))),
+  );
+  ok('영업일 계산: 주말만 경과하면 0영업일', businessDaysSince('2026-01-02T09:00:00', new Date('2026-01-04T09:00:00')) === 0);
+
+  const timJob = (await tool('save_job_posting').handler({ company: '타이밍테스트회사', position: '직무' })).data as any;
+  await tool('update_application_status').handler({ job_id: timJob.id, status: 'applied' });
+  const findTim = (d: any) => d.followups.find((f: any) => f.job.company === '타이밍테스트회사');
+  const due = findTim(getActionDigest(new Date(Date.now() + 9 * 86400000)));
+  ok(
+    'get_followups 타이밍: 지원 9일 후 followup_timing=due(5~7영업일)',
+    !!due && due.followup_timing === 'due' && due.business_days_since >= 5 && due.business_days_since <= 7,
+    JSON.stringify(due && { t: due.followup_timing, b: due.business_days_since }),
+  );
+  const over = findTim(getActionDigest(new Date(Date.now() + 20 * 86400000)));
+  ok(
+    'get_followups 타이밍: 지원 20일 후 followup_timing=overdue(8영업일+)',
+    !!over && over.followup_timing === 'overdue' && over.business_days_since >= 8,
+    JSON.stringify(over && { t: over.followup_timing, b: over.business_days_since }),
+  );
+  const hold = findTim(getActionDigest(new Date(Date.now() + 50 * 86400000)));
+  ok('get_followups: 45일+ 무응답이면 suggest_on_hold=true', !!hold && hold.suggest_on_hold === true, JSON.stringify(hold && hold.suggest_on_hold));
+}
+
+/* A-2. prescreen: 대표 이력서 본문에만 있는 키워드가 resume_matched·combined에 잡히는지 */
+{
+  const { prescreenJob } = await import('../packages/core/src/summary.ts');
+  const covJob = (await tool('save_job_posting').handler({ company: '커버리지테스트회사', position: '직무', keywords: ['Kubernetes', 'GraphQL'] })).data as any;
+  // 스킬 목록엔 없고 대표 이력서 본문에만 'Kubernetes'가 등장하도록 저장(방금 저장 → 최신=대표).
+  await tool('add_resume').handler({ title: '커버리지 이력서', kind: 'resume', content: 'AWS EKS 위에서 Kubernetes 클러스터를 운영했습니다.' });
+  const pre = prescreenJob(covJob.id) as any;
+  ok(
+    'prescreen: 이력서 본문 키워드가 resume_matched·combined에 잡히고 combined_coverage>coverage',
+    !!pre && pre.resume_checked === true &&
+      pre.resume_matched.includes('Kubernetes') && pre.combined_matched.includes('Kubernetes') &&
+      !pre.matched.includes('Kubernetes') && (pre.combined_coverage ?? 0) > (pre.coverage ?? 0),
+    JSON.stringify(pre && { rc: pre.resume_checked, rm: pre.resume_matched, cc: pre.combined_coverage, c: pre.coverage }),
+  );
+}
 
 /* 구조화 항목·문서 삭제 (MCP) — confirm 게이트 */
 const exExpRec = (await tool('add_experience').handler({ experiences: [{ company: '삭제할경력', role: '직무' }] })).data as any;

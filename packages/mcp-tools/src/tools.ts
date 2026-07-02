@@ -1020,7 +1020,7 @@ export const TOOLS: ToolDef[] = [
     name: 'get_followups',
     title: '후속 조치 알림(놓친 지원·마감·면접준비)',
     description:
-      '지금 챙겨야 할 것들을 한 번에 돌려줍니다: ① 응답 없이 오래된 지원(지원 후 무응답·서류합격 후 일정대기·면접 후 결과대기) ② 임박했거나 지난 지원 마감(지원 전 단계) ③ 합격했는데 아직 면접 준비가 없는 공고. 사용자가 "내 지원 현황 어때?", "뭐 챙겨야 해?", "후속 연락할 거 있어?"라고 묻거나, 세션을 이어가며 놓친 게 없는지 먼저 점검할 때 사용하세요. 읽기 전용입니다. 응답의 reason은 사용자 언어로 풀어 전하고, 후속 문의는 강요하지 말고 선택지로 제안하세요(채용 관행상 과한 독촉은 역효과).',
+      '지금 챙겨야 할 것들을 한 번에 돌려줍니다: ① 응답 없이 오래된 지원(지원 후 무응답·서류합격 후 일정대기·면접 후 결과대기) ② 임박했거나 지난 지원 마감(지원 전 단계) ③ 합격했는데 아직 면접 준비가 없는 공고. 사용자가 "내 지원 현황 어때?", "뭐 챙겨야 해?", "후속 연락할 거 있어?"라고 묻거나, 세션을 이어가며 놓친 게 없는지 먼저 점검할 때 사용하세요. 읽기 전용입니다. 지원(applied) 항목에는 결정론 팔로업 타이밍이 붙습니다: `followup_timing="due"`는 지원 후 5~7영업일(주말 제외)로 정중한 후속 문의 적기, `"overdue"`는 8영업일 이상으로 적기가 지났다는 뜻이며, `business_days_since`는 경과 영업일 수입니다. 달력일 45일 이상 무응답이면 `suggest_on_hold=true`가 붙으니 "보류(on_hold)로 옮길까요?"라고 제안하세요. 응답의 reason은 사용자 언어로 풀어 전하고, 후속 문의는 강요하지 말고 선택지로 제안하세요(채용 관행상 과한 독촉은 역효과 — 문의는 정중히 1회).',
     inputSchema: {},
     readOnly: true,
     handler: () => {
@@ -1078,16 +1078,23 @@ export const TOOLS: ToolDef[] = [
     name: 'prescreen_job',
     title: '공고 사전 프리스크린(키워드 겹침)',
     description:
-      '저장된 공고의 핵심 키워드를 사용자의 보유 기술·프로젝트/경력 기술스택과 대조해 "이 공고를 깊게 볼 가치가 있는지"를 빠르게 가늠합니다. LLM 없이 셀 수 있는 키워드 겹침(matched/missing/coverage)만 돌려주는 값싼 사전 필터이며, **진짜 적합도 판단은 당신(AI)이 get_application_context로 맥락을 받아 직접 수행**합니다(이 도구는 그 대체가 아닙니다). 사용자가 공고를 여러 개 훑으며 우선순위를 정하거나 "이거 지원할 만해?"라고 물을 때, 본격 분석 전에 가볍게 호출하세요. coverage가 낮아도 키워드 미기재일 수 있으니 단정하지 말고, 표기되지 않은 역량은 사용자에게 확인하세요. 읽기 전용입니다.',
+      '저장된 공고의 핵심 키워드를 **사용자의 보유 기술·프로젝트/경력 기술스택(구조화 스킬)과 대표 이력서 본문 양쪽**에 대조해 "이 공고를 깊게 볼 가치가 있는지"를 빠르게 가늠합니다. LLM 없이 셀 수 있는 키워드 겹침만 돌려주는 값싼 사전 필터입니다: `matched`(스킬 목록에서 발견)·`resume_matched`(이력서 본문에서 발견)·`combined_matched`(둘의 합집합)·`combined_coverage`(합집합 커버리지 0~1)·`resume_checked`(대표 이력서 존재 여부). **진짜 적합도 판단은 당신(AI)이 get_application_context로 맥락을 받아 직접 수행**합니다(이 도구는 그 대체가 아닙니다). 사용자가 공고를 여러 개 훑으며 우선순위를 정하거나 "이거 지원할 만해?"라고 물을 때 본격 분석 전에 가볍게 호출하세요. **combined_coverage가 낮은데 실제로는 보유한 역량이라면, 이력서 본문에 그 키워드가 안 드러나는 것이니 이력서 보강(해당 키워드 노출)을 제안하세요**(ATS 키워드 매칭에 유효). coverage가 낮아도 키워드 미기재일 수 있으니 단정하지 말고, 표기되지 않은 역량은 사용자에게 확인하세요. 읽기 전용입니다.',
     inputSchema: { job_id: z.string() },
     readOnly: true,
     handler: (args) => {
       const r = prescreenJob(args.job_id);
       if (!r) return fail('공고를 찾을 수 없습니다. 먼저 save_job_posting으로 저장하세요.');
-      if (r.coverage == null)
+      if (r.combined_coverage == null)
         return ok('이 공고에 저장된 핵심 키워드가 없어 겹침을 셀 수 없습니다. save_job_posting의 keywords에 핵심 키워드를 정리해 넣으면 프리스크린이 가능합니다.', r);
-      const pct = Math.round(r.coverage * 100);
-      return ok(`키워드 겹침 ${pct}% — 보유 ${r.matched.length}/${r.job_keywords.length}개. 부족: ${r.missing.join(', ') || '없음'}. (셀 수 있는 겹침일 뿐, 실제 적합도는 직접 판단하세요.)`, r);
+      const pct = Math.round(r.combined_coverage * 100);
+      const combinedMissing = r.job_keywords.filter((k) => !r.combined_matched.includes(k));
+      const resumeNote = r.resume_checked
+        ? ''
+        : ' (대표 이력서가 없어 스킬 목록만 대조했어요 — 이력서를 저장하면 본문 키워드까지 대조합니다.)';
+      return ok(
+        `키워드 커버리지 ${pct}% — 스킬+대표 이력서 본문에서 ${r.combined_matched.length}/${r.job_keywords.length}개 확인.${resumeNote} 아직 안 드러난 키워드: ${combinedMissing.join(', ') || '없음'}. (셀 수 있는 겹침일 뿐 실제 적합도는 직접 판단하세요. 보유 역량인데 안 드러났다면 이력서 보강을 제안하세요.)`,
+        r,
+      );
     },
   },
   {

@@ -22,6 +22,7 @@ import {
   experienceRepo,
   projectRepo,
   timelineRepo,
+  documentRepo,
 } from '@careermate/db';
 import { getOnboardingStatus } from './onboarding.ts';
 
@@ -75,6 +76,31 @@ function daysSinceTimestamp(iso: string | null | undefined, now: Date): number |
   const d = new Date(iso);
   if (isNaN(d.getTime())) return null;
   return Math.floor((now.getTime() - d.getTime()) / DAY_MS);
+}
+
+/**
+ * Business days (Mon–Fri) elapsed strictly after an ISO timestamp's local date up
+ * to `now`'s local date, inclusive of the end date. Weekends excluded; public
+ * holidays are ignored (deterministic, no calendar dependency). Null if unparseable.
+ * e.g. applied Friday → next Friday counts 5 business days (Mon…Fri).
+ */
+export function businessDaysSince(iso: string | null | undefined, now: Date): number | null {
+  if (!iso) return null;
+  const start = new Date(iso);
+  if (isNaN(start.getTime())) return null;
+  const s = new Date(start);
+  s.setHours(0, 0, 0, 0);
+  const e = new Date(now);
+  e.setHours(0, 0, 0, 0);
+  if (e.getTime() <= s.getTime()) return 0;
+  let count = 0;
+  const cursor = new Date(s);
+  while (cursor.getTime() < e.getTime()) {
+    cursor.setDate(cursor.getDate() + 1);
+    const dow = cursor.getDay();
+    if (dow !== 0 && dow !== 6) count++;
+  }
+  return count;
 }
 
 export function jobWithMeta(job: JobRecord): JobWithMeta {
@@ -176,12 +202,26 @@ export function listRecentActivity(limit = 20): ActivityRecord[] {
 const POST_PASS_STALE_DAYS = 7; // document_passed → interview scheduling wait
 const POST_INTERVIEW_STALE_DAYS = 7; // interview → result wait
 
+// Deterministic follow-up timing for applied-but-silent postings (community
+// research U-timing: "when should I follow up?" is the #1 job-seeker anxiety).
+// Counted in business days from the apply date — the 5–7 day window is the widely
+// advised sweet spot; earlier reads as pushy, later means the moment has passed.
+const FOLLOWUP_DUE_BIZ_DAYS = 5; // 5–7 business days: prime window to follow up (once, politely)
+const FOLLOWUP_OVERDUE_BIZ_DAYS = 8; // ≥8 business days: follow-up window has passed
+const FOLLOWUP_ONHOLD_CAL_DAYS = 45; // ≥45 calendar days silent: suggest moving to on_hold
+
 export interface FollowupItem {
   job: JobRecord;
   status: ApplicationStatus;
   status_label: string;
   days_since: number;
   reason: string;
+  /** Business days since applying — present only for 'applied' items in the follow-up window. */
+  business_days_since?: number;
+  /** 'due' at 5–7 business days, 'overdue' at ≥8 — advisory nudge, not a hard rule. */
+  followup_timing?: 'due' | 'overdue';
+  /** ≥45 calendar days with no response: hint the AI to offer moving this to on_hold. */
+  suggest_on_hold?: boolean;
 }
 
 export interface ActionDigest {
@@ -207,9 +247,26 @@ export function getActionDigest(now: Date = new Date()): ActionDigest {
     const job = jobRepo.get(a.job_id);
     if (!job) continue;
     if (a.status === 'applied') {
-      const days = daysSinceTimestamp(a.applied_at, now);
-      if (days != null && days >= FOLLOWUP_STALE_DAYS)
-        followups.push({ job, status: a.status, status_label: APPLICATION_STATUS_LABELS[a.status], days_since: days, reason: `지원 후 ${days}일째 응답 없음 — 정중한 후속 문의를 고려할 시점` });
+      // Surface once the business-day follow-up window opens (≈5 business days),
+      // regardless of the softer calendar-day home-lane threshold.
+      const cal = daysSinceTimestamp(a.applied_at, now);
+      const biz = businessDaysSince(a.applied_at, now);
+      if (biz != null && biz >= FOLLOWUP_DUE_BIZ_DAYS) {
+        const overdue = biz >= FOLLOWUP_OVERDUE_BIZ_DAYS;
+        const item: FollowupItem = {
+          job,
+          status: a.status,
+          status_label: APPLICATION_STATUS_LABELS[a.status],
+          days_since: cal ?? 0,
+          business_days_since: biz,
+          followup_timing: overdue ? 'overdue' : 'due',
+          reason: overdue
+            ? `지원 후 ${biz}영업일 경과 — 후속 문의 적기가 지났습니다(무리한 독촉은 역효과이니 아직 안 했다면 정중히 1회만)`
+            : `지원 후 ${biz}영업일 — 팔로업 적기(문의는 정중히 1회)`,
+        };
+        if (cal != null && cal >= FOLLOWUP_ONHOLD_CAL_DAYS) item.suggest_on_hold = true;
+        followups.push(item);
+      }
     } else if (a.status === 'document_passed') {
       const days = daysSinceTimestamp(a.updated_at, now);
       if (days != null && days >= POST_PASS_STALE_DAYS)
@@ -264,6 +321,14 @@ export interface JobPrescreen {
   /** matched / total keywords (0..1); null when the job has no keywords to screen. */
   coverage: number | null;
   user_skill_count: number;
+  /** Keywords found (case-insensitive) in the primary résumé body text. */
+  resume_matched: string[];
+  /** Union of structured-skill matches and résumé-body matches. */
+  combined_matched: string[];
+  /** combined_matched / total keywords (0..1); null when the job has no keywords. */
+  combined_coverage: number | null;
+  /** False when no résumé exists to check the body against (combined == skills only). */
+  resume_checked: boolean;
 }
 
 export function prescreenJob(jobId: string): JobPrescreen | null {
@@ -275,19 +340,42 @@ export function prescreenJob(jobId: string): JobPrescreen | null {
   for (const p of projectRepo.list()) for (const t of p.tech ?? []) userTokens.add(normToken(t));
   userTokens.delete('');
 
+  // Primary résumé (is_primary first, else most recent) body text for keyword matching.
+  const resume = documentRepo.primary('resume');
+  const resume_checked = resume != null;
+  const resumeText = (resume?.content ?? '').toLowerCase();
+
   const keywords = (job.keywords ?? []).filter((k) => k && k.trim());
   const matched: string[] = [];
   const missing: string[] = [];
+  const resume_matched: string[] = [];
   for (const kw of keywords) {
     const n = normToken(kw);
-    const hit =
+    const skillHit =
       userTokens.has(n) ||
       // substring match only for tokens ≥3 chars (avoid "c"/"r" matching everything).
       (n.length >= 3 && [...userTokens].some((u) => u.length >= 3 && (u.includes(n) || n.includes(u))));
-    (hit ? matched : missing).push(kw);
+    (skillHit ? matched : missing).push(kw);
+    // Résumé-body match: keyword appears verbatim (case-insensitive) in the résumé text.
+    // Guard tokens ≥2 chars to avoid trivial one-letter substrings matching everything.
+    if (resume_checked && n.length >= 2 && resumeText.includes(n)) resume_matched.push(kw);
   }
   const coverage = keywords.length ? matched.length / keywords.length : null;
-  return { job_id: jobId, job_keywords: keywords, matched, missing, coverage, user_skill_count: userTokens.size };
+  const combinedSet = new Set([...matched, ...resume_matched]);
+  const combined_matched = keywords.filter((k) => combinedSet.has(k));
+  const combined_coverage = keywords.length ? combined_matched.length / keywords.length : null;
+  return {
+    job_id: jobId,
+    job_keywords: keywords,
+    matched,
+    missing,
+    coverage,
+    user_skill_count: userTokens.size,
+    resume_matched,
+    combined_matched,
+    combined_coverage,
+    resume_checked,
+  };
 }
 
 /* ----------------------------------------------------------- pipeline stats */
