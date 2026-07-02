@@ -6,7 +6,7 @@ import {
   el, get, post, put, del, icon, navigate, Card, Badge, Btn, SubmitBtn,
   EmptyState, Chips, Field, Input, Textarea, Select,
   openModal, closeModal, confirmDialog, toastOk, toastError,
-  fmtDate, scoreClass, mount, meta, linesToArray, csvToArray,
+  fmtDate, scoreClass, mount, meta, linesToArray, csvToArray, daysUntil, scheduleDdayBadge,
 } from '/lib.js';
 import { t } from '/i18n.js';
 
@@ -383,7 +383,7 @@ function PostingCard(job) {
           const label = questionLimitLabel(q);
           return el('li', {},
             el('span', {}, q.question),
-            label ? el('span', { class: 'muted text-sm', style: { marginLeft: '6px' } }, label) : null);
+            label ? el('span', { class: 'muted text-sm', style: { marginLeft: '8px' } }, label) : null);
         }))));
   }
 
@@ -398,10 +398,10 @@ function PostingCard(job) {
       el('div', { class: 'muted text-sm mb-2' }, t('jobs.schedule.title')),
       el('ul', { class: 'stack-2', style: { margin: 0, padding: 0, listStyle: 'none' } },
         ...sorted.map((s) => {
-          const dday = scheduleDday(s.date);
+          const dDay = daysUntil(s.date);
           const when = s.time ? `${fmtDate(s.date)} ${s.time}` : fmtDate(s.date);
-          return el('li', { class: `flex gap-2 center${dday.past ? ' muted' : ''}` },
-            scheduleDdayBadge(dday),
+          return el('li', { class: `flex gap-2 center${dDay != null && dDay < 0 ? ' muted' : ''}` },
+            scheduleDdayBadge(dDay),
             el('span', { class: 'strong' }, s.label),
             el('span', { class: 'text-sm' }, when),
             s.note ? el('span', { class: 'muted text-sm' }, s.note) : null);
@@ -434,23 +434,6 @@ function questionLimitLabel(q) {
   if (hasMin) parts.push(t('jobs.questions.min', { n: q.min_chars, unit }));
   if (hasMax) parts.push(t('jobs.questions.max', { n: q.max_chars, unit }));
   return `${parts.join(' · ')}${suffix}`;
-}
-
-// Whole days from local midnight today to a YYYY-MM-DD date (future > 0, today = 0, past < 0),
-// plus a `past` flag for dimming already-elapsed stages. Mirrors the server's daysUntilDate.
-function scheduleDday(dateStr) {
-  const d = new Date(`${dateStr}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dDay = Math.round((d.getTime() - today.getTime()) / 86400000);
-  return { dDay, past: dDay < 0 };
-}
-
-// 전형 일정 D-day 배지: 오늘=빨강, 미래=D-{{n}}, 지난 일정=회색 "지남".
-function scheduleDdayBadge({ dDay, past }) {
-  if (past) return Badge('draft', t('jobs.schedule.past'));
-  if (dDay === 0) return Badge('rejected', t('jobs.schedule.today'));
-  return Badge('interview', t('jobs.schedule.dday', { n: dDay }));
 }
 
 // Company research the AI saved (overview·인재상·핵심가치·평판) — rendered so the

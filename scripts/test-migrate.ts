@@ -24,7 +24,7 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { MIGRATIONS, migrate } from '../packages/db/src/schema.ts';
+import { MIGRATIONS, migrate, ALTER_ADD_COLUMN_RE } from '../packages/db/src/schema.ts';
 import { getDb, closeDb } from '../packages/db/src/connection.ts';
 
 let pass = 0,
@@ -341,6 +341,17 @@ console.log('\n6) 업그레이드 직전 자동 백업 — getDb()가 마이그�
   ok('신규 설치에는 스냅샷 없음', freshBackups.length === 0, freshBackups.join(','));
   closeDb();
   delete process.env.CAREERMATE_DATA_DIR;
+}
+
+console.log('\n7) ADD COLUMN 스타일 계약 — 모든 ADD COLUMN이 러너 정규식에 잡히는지');
+{
+  // Loose scan: any "ALTER TABLE … ADD COLUMN" occurrence (multi-line/inline included).
+  const loose = (MIGRATIONS.join('\n').match(/ALTER TABLE[^;]+ADD COLUMN/gi) || []).length;
+  // Strict: only one-statement-per-line ALTERs the idempotent runner can drop.
+  let strict = 0;
+  for (const sql of MIGRATIONS) strict += (sql.match(new RegExp(ALTER_ADD_COLUMN_RE.source, 'gm')) || []).length;
+  ok(`모든 ADD COLUMN(${loose})이 러너 정규식에 매칭(${strict}) — 비정형 ALTER 유입 차단`,
+    loose > 0 && loose === strict, `loose=${loose} strict=${strict}`);
 }
 
 console.log(`\nMIGRATE_VERDICT ${fail === 0 ? 'PASS' : 'FAIL'}  (pass=${pass} fail=${fail})`);

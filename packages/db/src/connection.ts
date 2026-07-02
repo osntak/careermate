@@ -16,6 +16,17 @@ let _db: DatabaseSync | null = null;
 const PRE_MIGRATE_KEEP = 5;
 
 /**
+ * `VACUUM INTO` a destination path, with the guard both backup callers need. The
+ * data dir can be set via env, so `destPath` isn't fully trusted: reject NUL/newline
+ * (can't be embedded safely in the SQL string literal) and single-quote-escape the
+ * rest. Throws on an unsafe path so the caller can fall back to fs.copyFileSync.
+ */
+export function vacuumInto(db: DatabaseSync, destPath: string): void {
+  if (/[\0\n\r]/.test(destPath)) throw new Error('backup path not safe for SQL literal');
+  db.exec(`VACUUM INTO '${destPath.replace(/'/g, "''")}'`);
+}
+
+/**
  * Snapshot the DB into backups/ right before a schema upgrade runs. The DB is
  * the user's only copy, so even though each migration is transactional, a bad
  * migration shipped in an update must never be able to destroy data without a
@@ -38,8 +49,7 @@ function preMigrationBackup(db: DatabaseSync): void {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const dest = path.join(dir, `pre-migrate-v${from}-${stamp}.sqlite`);
     try {
-      if (/[\0\n\r]/.test(dest)) throw new Error('backup path not safe for SQL literal');
-      db.exec(`VACUUM INTO '${dest.replace(/'/g, "''")}'`);
+      vacuumInto(db, dest);
     } catch {
       fs.copyFileSync(getDbPath(), dest); // WAL is checkpointed on close; copy is a coarse fallback
     }

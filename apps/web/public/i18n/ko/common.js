@@ -14,6 +14,11 @@ export default {
   'common.fmtHtml': 'HTML',
   'common.fmtMarkdown': 'Markdown',
 
+  // 전형 일정 D-day 배지(홈 액션레인 + 공고 상세 공유). 마감 D-day(applications.dday.*)와는 별개.
+  'schedule.dday.today': 'D-day',
+  'schedule.dday.future': 'D-{{n}}',
+  'schedule.dday.past': '지남',
+
   'toast.copied': '클립보드에 복사했습니다.',
   'toast.copyFailed': '복사에 실패했습니다. 직접 선택해 복사해 주세요.',
   'toast.errorTitle': '오류',

@@ -6,6 +6,7 @@
 import {
   el, get, icon, navigate, Card, Badge, Btn, ListRow, CheckRow,
   Stat, PageHead, fmtDate, fmtRelative, scoreClass, STATUS_COLOR, statusColor, mount,
+  scheduleDdayBadge,
 } from '/lib.js';
 import { t } from '/i18n.js';
 
@@ -192,13 +193,6 @@ function ddayBadge(daysLeft) {
   if (daysLeft < 0) return Badge('rejected', t('applications.dday.past'));
   if (daysLeft === 0) return Badge('rejected', t('applications.dday.today'));
   return Badge('interview', t('applications.dday.future', { n: daysLeft }));
-}
-
-// hiring-schedule stage D-day (0 = today). Uses a neutral "D-{{n}}" label (these are
-// stage dates, not application deadlines), turning red only when it's today.
-function scheduleDdayBadge(dDay) {
-  if (dDay === 0) return Badge('rejected', t('home.actionLane.scheduleToday'));
-  return Badge('interview', t('home.actionLane.scheduleDday', { n: dDay }));
 }
 
 function ActionLane(s) {

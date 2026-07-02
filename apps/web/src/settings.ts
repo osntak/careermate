@@ -9,7 +9,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import type { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
-import { getDb, getDbPath, getBackupsDir, getDataDir, getExportsDir, tx } from '@careermate/db';
+import { getDb, getDbPath, getBackupsDir, getDataDir, getExportsDir, tx, vacuumInto } from '@careermate/db';
 import { BUNDLED } from '@careermate/shared';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -373,10 +373,8 @@ export function createBackup(): { backup_path: string; json_path: string } {
     throw new Error('백업 경로가 백업 폴더를 벗어났습니다.');
   }
 
-  const safeForLiteral = !/[\0\n\r]/.test(dbBackup);
   try {
-    if (!safeForLiteral) throw new Error('backup path not safe for SQL literal');
-    getDb().exec(`VACUUM INTO '${dbBackup.replace(/'/g, "''")}'`);
+    vacuumInto(getDb(), dbBackup);
   } catch {
     fs.copyFileSync(getDbPath(), dbBackup);
   }

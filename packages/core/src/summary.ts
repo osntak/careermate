@@ -146,6 +146,9 @@ export function getHomeSummary(now: Date = new Date()): HomeSummary {
   const applications = applicationRepo.list();
   const coverLetters = coverLetterRepo.list();
   const statusByJob = new Map(applications.map((a) => [a.job_id, a]));
+  // Index once instead of a per-application jobRepo.get / interviewRepo.getByJob (N+1).
+  const jobById = new Map(jobs.map((j) => [j.id, j]));
+  const preppedJobIds = new Set(interviewRepo.list().map((p) => p.job_id));
 
   const status_breakdown = (Object.keys(APPLICATION_STATUS_LABELS) as ApplicationStatus[]).map((status) => ({
     status,
@@ -157,9 +160,9 @@ export function getHomeSummary(now: Date = new Date()): HomeSummary {
 
   // Interview to-do: passed-to-interview stages without saved prep yet.
   const interview_todo = applications
-    .filter((a) => INTERVIEW_UNLOCK_STATUSES.includes(a.status) && !interviewRepo.getByJob(a.job_id))
+    .filter((a) => INTERVIEW_UNLOCK_STATUSES.includes(a.status) && !preppedJobIds.has(a.job_id))
     .map((a) => {
-      const job = jobRepo.get(a.job_id);
+      const job = jobById.get(a.job_id);
       return job ? { job, status_label: APPLICATION_STATUS_LABELS[a.status] } : null;
     })
     .filter((x): x is { job: JobRecord; status_label: string } => x !== null);
@@ -188,7 +191,7 @@ export function getHomeSummary(now: Date = new Date()): HomeSummary {
       const biz = businessDaysSince(a.applied_at, now);
       if (biz == null || biz < FOLLOWUP_DUE_BIZ_DAYS) return null;
       const days_since = daysSinceTimestamp(a.applied_at, now) ?? 0;
-      const job = jobRepo.get(a.job_id);
+      const job = jobById.get(a.job_id);
       return job ? { job, days_since } : null;
     })
     .filter((x): x is { job: JobRecord; days_since: number } => x !== null)
@@ -213,7 +216,7 @@ export function getHomeSummary(now: Date = new Date()): HomeSummary {
     status_breakdown,
     recent_jobs: jobs.slice(0, 6).map(jobWithMeta),
     in_progress: active.slice(0, 6).map((application) => {
-      const job = jobRepo.get(application.job_id);
+      const job = jobById.get(application.job_id) ?? null;
       return {
         application,
         job,
@@ -305,10 +308,13 @@ export function getActionDigest(now: Date = new Date()): ActionDigest {
   const applications = applicationRepo.list();
   const jobs = jobRepo.list();
   const statusByJob = new Map(applications.map((a) => [a.job_id, a]));
+  // Index once instead of a per-application jobRepo.get / interviewRepo.getByJob (N+1).
+  const jobById = new Map(jobs.map((j) => [j.id, j]));
+  const preppedJobIds = new Set(interviewRepo.list().map((p) => p.job_id));
 
   const followups: FollowupItem[] = [];
   for (const a of applications) {
-    const job = jobRepo.get(a.job_id);
+    const job = jobById.get(a.job_id);
     if (!job) continue;
     if (a.status === 'applied') {
       // Surface once the business-day follow-up window opens (≈5 business days),
@@ -355,9 +361,9 @@ export function getActionDigest(now: Date = new Date()): ActionDigest {
     .sort((a, b) => a.days_left - b.days_left);
 
   const interview_todo = applications
-    .filter((a) => INTERVIEW_UNLOCK_STATUSES.includes(a.status) && !interviewRepo.getByJob(a.job_id))
+    .filter((a) => INTERVIEW_UNLOCK_STATUSES.includes(a.status) && !preppedJobIds.has(a.job_id))
     .map((a) => {
-      const job = jobRepo.get(a.job_id);
+      const job = jobById.get(a.job_id);
       return job ? { job, status_label: APPLICATION_STATUS_LABELS[a.status] } : null;
     })
     .filter((x): x is { job: JobRecord; status_label: string } => x !== null);

@@ -2,18 +2,15 @@
 // (no horizontal scroll). Change a status inline to move an item between groups.
 import {
   el, get, put, navigate, EmptyState, Btn, ListRow, Badge, Card,
-  Select, scoreClass, statusColor, mount, toast, toastOk, toastError, todayLocalISO,
+  Select, scoreClass, statusColor, mount, toast, toastOk, toastError, todayLocalISO, daysUntil,
 } from '/lib.js';
 import { t } from '/i18n.js';
 
-// deadline(YYYY-MM-DD) → "Due in 7d" / "Due today" / "Overdue" (null if absent/invalid)
+// deadline(YYYY-MM-DD) → "Due in 7d" / "Due today" / "Overdue" (null if absent/invalid).
+// daysUntil shares the server's local-midnight rule (core daysUntilDate).
 function ddayLabel(deadline) {
-  if (!deadline) return null;
-  const d = new Date(`${deadline}T00:00:00`);
-  if (isNaN(d.getTime())) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Math.round((d.getTime() - today.getTime()) / 86400000);
+  const days = daysUntil(deadline);
+  if (days == null) return null;
   if (days > 0) return t('applications.dday.future', { n: days });
   if (days === 0) return t('applications.dday.today');
   return t('applications.dday.past');
@@ -173,7 +170,7 @@ function OfferCard(o) {
 // Accepted/declined offers, one compact row each inside a collapsed disclosure.
 function PastOffers(past) {
   const rows = past.map((o) =>
-    el('div', { class: 'flex gap-2', style: { alignItems: 'center', padding: '6px 0' } },
+    el('div', { class: 'flex gap-2', style: { alignItems: 'center', padding: '8px 0' } },
       Badge(o.offer_status === 'accepted' ? 'final_passed' : 'rejected',
         t(`applications.offers.status.${o.offer_status}`)),
       el('span', {

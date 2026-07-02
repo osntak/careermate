@@ -14,6 +14,12 @@ export default {
   'common.fmtHtml': 'HTML',
   'common.fmtMarkdown': 'Markdown',
 
+  // Hiring-schedule stage D-day badge (shared by Home action lane + job detail).
+  // Separate from the deadline D-day labels (applications.dday.*).
+  'schedule.dday.today': 'D-day',
+  'schedule.dday.future': 'D-{{n}}',
+  'schedule.dday.past': 'Past',
+
   'toast.copied': 'Copied to clipboard.',
   'toast.copyFailed': "Couldn't copy. Please select and copy it manually.",
   'toast.errorTitle': 'Error',

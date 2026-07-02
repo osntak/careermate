@@ -99,11 +99,8 @@ export default {
   'jobs.questions.modeWithSpace': '(공백포함)',
   'jobs.questions.modeNoSpace': '(공백제외)',
 
-  // ---- hiring schedule (전형 일정) ----
+  // ---- hiring schedule (전형 일정) ---- (D-day 배지는 공용 schedule.dday.* 사용)
   'jobs.schedule.title': '전형 일정',
-  'jobs.schedule.today': 'D-day',
-  'jobs.schedule.dday': 'D-{{n}}',
-  'jobs.schedule.past': '지남',
 
   // ---- fit card ----
   'jobs.fit.title': '적합도 분석',

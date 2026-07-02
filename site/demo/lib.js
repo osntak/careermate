@@ -226,6 +226,17 @@ export function navigate(hash) { location.hash = hash.startsWith('#') ? hash : '
 export function Badge(status, label) {
   return el('span', { class: `badge badge--${status}` }, el('span', { class: 'dot' }), label);
 }
+/**
+ * Hiring-schedule stage D-day badge (면접·인적성·발표 date), shared by the Home action
+ * lane and the job-detail schedule list so label + colour never diverge: past = grey
+ * "지남", today = red "D-day", future = amber "D-{{n}}". Pass a D-day computed with the
+ * same local-midnight rule as the server (see daysUntil / core daysUntilDate).
+ */
+export function scheduleDdayBadge(dDay) {
+  if (dDay < 0) return Badge('draft', t('schedule.dday.past'));
+  if (dDay === 0) return Badge('rejected', t('schedule.dday.today'));
+  return Badge('interview', t('schedule.dday.future', { n: dDay }));
+}
 export function Btn(label, { icon: ic, variant = '', sm, onClick, type, disabled, title } = {}) {
   const cls = ['btn', variant && `btn--${variant}`, sm && 'btn--sm'].filter(Boolean).join(' ');
   return el('button', { class: cls, onClick, type: type || 'button', disabled, title }, ic && icon(ic), label && el('span', {}, label));

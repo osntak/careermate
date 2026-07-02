@@ -433,9 +433,21 @@ function columnExists(db: DatabaseSync, table: string, column: string): boolean 
   return rows.some((r) => r.name === column);
 }
 
-// One `ALTER TABLE <t> ADD COLUMN <c> …;` statement on its own line (how all
-// column-adding migrations here are written).
+// Migrations that manage their own BEGIN/COMMIT, by zero-based index into MIGRATIONS.
+// Only v2 (index 1) does: its FK rebuild toggles PRAGMA foreign_keys, a no-op inside
+// an open transaction, so the runner must NOT wrap it. Register any future
+// self-transactional migration here (a plain `sql.includes('BEGIN;')` sniff would
+// misfire if a normal migration ever contained the substring, e.g. in a comment).
+const SELF_TRANSACTIONAL_MIGRATIONS = new Set<number>([1]);
+
+// Style contract for column-adding migrations: every `ALTER TABLE <t> ADD COLUMN <c>
+// …;` MUST be a single statement on its own line so this regex can find it and the
+// idempotent-runner can drop it when the column already exists. A multi-column or
+// inline-with-other-DDL ALTER would slip past skipExistingColumns and crash a
+// partial-migration re-run. scripts/test-migrate.ts guards this with a count check
+// (loose ALTER…ADD COLUMN scan === strict per-line matches). Keep new ALTERs one-per-line.
 const ALTER_ADD_COLUMN_RE = /^[ \t]*ALTER TABLE\s+(\w+)\s+ADD COLUMN\s+(\w+)[^;]*;[ \t]*$/gm;
+export { ALTER_ADD_COLUMN_RE };
 
 /** Drop ADD COLUMN statements whose column already exists (idempotent re-run). */
 function skipExistingColumns(db: DatabaseSync, sql: string): string {
@@ -447,7 +459,7 @@ function skipExistingColumns(db: DatabaseSync, sql: string): string {
 function applyMigration(db: DatabaseSync, v: number): void {
   const sql = MIGRATIONS[v]!;
 
-  if (sql.includes('BEGIN;')) {
+  if (SELF_TRANSACTIONAL_MIGRATIONS.has(v)) {
     // Self-transactional migration (v2 toggles PRAGMA foreign_keys, which is a
     // no-op inside an open transaction, so it must manage BEGIN/COMMIT itself).
     // Stamp right after; if the process dies in the tiny window between the two

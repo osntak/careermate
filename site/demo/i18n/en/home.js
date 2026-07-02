@@ -62,8 +62,6 @@ export default {
   'home.actionLane.title': 'What to do next',
   'home.actionLane.viewAll': 'View all',
   'home.actionLane.interviewPrep': 'Interview prep',
-  'home.actionLane.scheduleToday': 'D-day',
-  'home.actionLane.scheduleDday': 'D-{{n}}',
   'home.actionLane.followup': 'Follow up · {{n}}d',
   'home.actionLane.empty': 'Nothing to handle right now. Try analyzing a new posting.',
   'home.placeholder.dash': '—',

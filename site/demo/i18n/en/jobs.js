@@ -99,11 +99,8 @@ export default {
   'jobs.questions.modeWithSpace': ' (incl. spaces)',
   'jobs.questions.modeNoSpace': ' (excl. spaces)',
 
-  // ---- hiring schedule (전형 일정) ----
+  // ---- hiring schedule (전형 일정) ---- (D-day badge uses shared schedule.dday.*)
   'jobs.schedule.title': 'Hiring schedule',
-  'jobs.schedule.today': 'D-day',
-  'jobs.schedule.dday': 'D-{{n}}',
-  'jobs.schedule.past': 'Past',
 
   // ---- fit card ----
   'jobs.fit.title': 'Fit analysis',
