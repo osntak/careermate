@@ -242,6 +242,19 @@ const tool = (name: string) => {
     JSON.stringify({ byStage: stats.rejected_by_stage, unrecorded: stats.rejected_unrecorded }),
   );
 }
+/* 탈락 회고 불변식(upsert): rejected(stage 기록됨) → applied로 되살리면 rejected_stage가
+   NULL로 초기화된다(탈락이 아닌데 단계가 남으면 안 됨). 웹 PUT /api/applications/:jobId 경유. */
+{
+  const rj = (await tool('save_job_posting').handler({ company: '되살림회고사', position: '백엔드' })).data as any;
+  await tool('update_application_status').handler({ job_id: rj.id, status: 'rejected', rejected_stage: 'final' });
+  const before = (await json('GET', '/api/applications')).applications.find((a: any) => a.job_id === rj.id);
+  ok('되살림 전제: rejected_stage=final 기록', before?.rejected_stage === 'final', JSON.stringify(before?.rejected_stage));
+  await authed('PUT', `/api/applications/${rj.id}`, { status: 'applied' });
+  const after = (await json('GET', '/api/applications')).applications.find((a: any) => a.job_id === rj.id);
+  ok('upsert로 rejected→applied 전이 시 rejected_stage=NULL 초기화',
+    after?.status === 'applied' && after?.rejected_stage == null, JSON.stringify({ s: after?.status, rs: after?.rejected_stage }));
+}
+
 /* get_application_context: 오늘 날짜(today) 주입 — 연차·재직기간 환산 기준일(LLM이 현재일 모름 보정) */
 const ctxToday = await tool('get_application_context').handler({});
 ok(
@@ -398,6 +411,22 @@ ok(
   );
 }
 
+/* A-2b. prescreen 본문 매칭 정확도: ASCII 토큰은 단어 경계로만(‘AI’가 email/detail에 오탐 없음,
+   ‘Kotlin’은 단독 등장 시 매칭), 한글 토큰은 substring 유지(‘결제’가 ‘결제시스템’에 매칭). */
+{
+  const { prescreenJob } = await import('../packages/core/src/summary.ts');
+  const wbJob = (await tool('save_job_posting').handler({ company: '경계매칭회사', position: '직무', keywords: ['AI', 'Kotlin', '결제'] })).data as any;
+  // 방금 저장한 이력서가 최신=대표. 본문엔 email·detail(‘ai’ 부분문자열 함정) + Kotlin + 결제시스템.
+  await tool('add_resume').handler({ title: '경계매칭 이력서', kind: 'resume', content: 'email 상세 detail — Kotlin 백엔드와 결제시스템을 운영했습니다.' });
+  const pre = prescreenJob(wbJob.id) as any;
+  ok(
+    'prescreen: 본문 ASCII 토큰은 단어 경계 매칭(‘AI’ 미매칭) · ‘Kotlin’ 매칭 · 한글 ‘결제’ substring 매칭',
+    !!pre && !pre.resume_matched.includes('AI') &&
+      pre.resume_matched.includes('Kotlin') && pre.resume_matched.includes('결제'),
+    JSON.stringify(pre && { rm: pre.resume_matched }),
+  );
+}
+
 /* A-3. 전형 일정 다이제스트: 미래 일정이 upcoming_schedule에 D-day와 함께 잡히고,
    같은 날짜 두 공고 일정이 schedule_conflicts로 감지되는지(날짜는 new Date 기준 상대 계산으로
    생성해 결정론 유지 — 서버의 today 계산과 동일한 로컬 날짜). */
@@ -423,6 +452,17 @@ ok(
     !!conflict && conflict.items.length >= 2 &&
       conflict.items.some((i: any) => i.company === '일정A사') && conflict.items.some((i: any) => i.company === '일정B사'),
     JSON.stringify(conflict && { date: conflict.date, n: conflict.items.length }));
+
+  // 같은 공고의 두 단계가 같은 날 → 충돌 아님(서로 다른 공고 2건 이상일 때만 충돌).
+  const dSame = localDate(40);
+  await tool('save_job_posting').handler({ company: '단일공고일정사', position: '백엔드', schedule: [
+    { label: '1차 면접', date: dSame, time: '10:00' },
+    { label: '2차 면접', date: dSame, time: '14:00' },
+  ] });
+  const dg2 = getActionDigest() as any;
+  ok('getActionDigest: 같은 공고의 같은 날 2단계는 schedule_conflicts 아님',
+    !(dg2.schedule_conflicts || []).some((c: any) => c.date === dSame),
+    JSON.stringify((dg2.schedule_conflicts || []).map((c: any) => c.date)));
 }
 
 /* 구조화 항목·문서 삭제 (MCP) — confirm 게이트 */

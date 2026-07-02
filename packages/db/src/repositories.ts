@@ -889,14 +889,18 @@ export const applicationRepo = {
     // A status change through upsert must respect the same lifecycle gate as setStatus.
     if (input.status && input.status !== app.status) assertStatusTransition(app.status, input.status);
     const m = { ...app, ...input } as ApplicationRecord;
+    // rejected_stage is only meaningful while status is 'rejected' (same invariant as
+    // setStatus): clear it on any transition back out, preserve it when staying
+    // rejected. ApplicationInput carries no rejected_stage, so m keeps the stored value.
+    const rejectedStageValue = m.status === 'rejected' ? m.rejected_stage ?? null : null;
     getDb()
       .prepare(
-        `UPDATE applications SET status=?,resume_id=?,cover_letter_id=?,applied_at=?,notes=?,updated_at=? WHERE id=?`,
+        `UPDATE applications SET status=?,resume_id=?,cover_letter_id=?,applied_at=?,notes=?,rejected_stage=?,updated_at=? WHERE id=?`,
       )
       // Coerce undefined → null: node:sqlite rejects undefined bindings, and a
       // caller that spreads explicit `undefined` fields (e.g. updateApplicationStatus
       // with a doc-less submission) would otherwise crash here mid-write.
-      .run(m.status, m.resume_id ?? null, m.cover_letter_id ?? null, m.applied_at ?? null, m.notes ?? null, now(), app.id);
+      .run(m.status, m.resume_id ?? null, m.cover_letter_id ?? null, m.applied_at ?? null, m.notes ?? null, rejectedStageValue, now(), app.id);
     return this.get(app.id)!;
   },
   setStatus(

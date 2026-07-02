@@ -184,6 +184,24 @@ export function scoreClass(score) {
   if (score >= 50) return 'score-mid';
   return 'score-weak';
 }
+/* --------------------------------------------------------------- date math */
+// Local-calendar helpers. The server (core daysUntilDate) computes D-days from LOCAL
+// midnight; mirror that here so the dashboard never disagrees by a day near midnight
+// or across timezones — toISOString() would use UTC and can drift the date.
+/** Today as a local YYYY-MM-DD string (not UTC). */
+export function todayLocalISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+/** Whole days from local midnight today to a YYYY-MM-DD date (future > 0, today = 0, past < 0); null if unparseable. */
+export function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (isNaN(d.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - today.getTime()) / 86400000);
+}
 /** Textarea (newline-separated) → trimmed array, empties dropped. */
 export function linesToArray(str) { return String(str || '').split('\n').map((s) => s.trim()).filter(Boolean); }
 /** CSV ("a, b, c") → trimmed array, empties dropped. */

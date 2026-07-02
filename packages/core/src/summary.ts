@@ -60,8 +60,6 @@ const ACTIVE: ApplicationStatus[] = ['draft', 'planned', 'applied', 'document_pa
 const DEADLINE_ACTIONABLE: ApplicationStatus[] = ['draft', 'planned'];
 // Surface a deadline once it's within this many days (overdue items are always shown).
 const DEADLINE_SOON_DAYS = 14;
-// Suggest a follow-up when an application has sat in 'applied' this many days with no response.
-const FOLLOWUP_STALE_DAYS = 10;
 // Surface a hiring-schedule stage (면접·인적성·발표) once it's within this many days (today = 0).
 const SCHEDULE_SOON_DAYS = 7;
 const DAY_MS = 86400000;
@@ -180,12 +178,16 @@ export function getHomeSummary(now: Date = new Date()): HomeSummary {
     .sort((a, b) => a.days_left - b.days_left)
     .slice(0, 5);
 
-  // Follow-up nudges: applications sitting in 'applied' with no response for a while.
+  // Follow-up nudges: applications sitting in 'applied' with no response. Gate on
+  // BUSINESS days with the same predicate as getActionDigest (FOLLOWUP_DUE_BIZ_DAYS)
+  // so Home and the AI digest surface a follow-up at the same moment; the displayed
+  // days_since stays in calendar days.
   const followups = applications
     .filter((a) => a.status === 'applied')
     .map((a) => {
-      const days_since = daysSinceTimestamp(a.applied_at, now);
-      if (days_since == null || days_since < FOLLOWUP_STALE_DAYS) return null;
+      const biz = businessDaysSince(a.applied_at, now);
+      if (biz == null || biz < FOLLOWUP_DUE_BIZ_DAYS) return null;
+      const days_since = daysSinceTimestamp(a.applied_at, now) ?? 0;
       const job = jobRepo.get(a.job_id);
       return job ? { job, days_since } : null;
     })
@@ -276,7 +278,7 @@ export interface UpcomingScheduleItem {
   d_day: number;
 }
 
-/** Two or more stages landing on the same date (across postings) — a scheduling collision. */
+/** Two or more DIFFERENT postings landing a stage on the same date — a scheduling collision. */
 export interface ScheduleConflict {
   date: string;
   items: { job_id: string; company: string; position: string; label: string; time?: string }[];
@@ -383,7 +385,11 @@ export function getActionDigest(now: Date = new Date()): ActionDigest {
   }
   const schedule_conflicts: ScheduleConflict[] = [];
   for (const [date, items] of byDate) {
-    if (items.length < 2) continue;
+    // A conflict means two DIFFERENT postings collide on one date. Multiple stages
+    // of the SAME posting on a day (e.g. back-to-back rounds) is a normal itinerary,
+    // not a clash — gate on distinct job_id ≥ 2.
+    const distinctJobs = new Set(items.map((x) => x.job.id));
+    if (distinctJobs.size < 2) continue;
     schedule_conflicts.push({
       date,
       items: items.map((x) => ({
@@ -411,6 +417,18 @@ export function getActionDigest(now: Date = new Date()): ActionDigest {
 
 const normToken = (s: string): string =>
   s.toLowerCase().trim().replace(/^[.,/()\s]+|[.,/()\s]+$/g, '');
+
+// Résumé-body keyword match. A pure-ASCII tech token (java, ai, c#, node.js) must
+// match only as a whole token — bounded by non-[a-z0-9] — so 'ai' does NOT hit
+// 'email' nor 'java' 'javascript'. Non-ASCII tokens (Korean 결제) keep a substring
+// test so '결제' still matches '결제시스템' (Korean has no ASCII word boundaries).
+// Both `token` and `text` arrive lowercased; caller guards length ≥ 2.
+const ASCII_TOKEN_RE = /^[a-z0-9+#.]+$/;
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function resumeBodyHasToken(text: string, token: string): boolean {
+  if (!ASCII_TOKEN_RE.test(token)) return text.includes(token);
+  return new RegExp(`(?<![a-z0-9])${escapeRegExp(token)}(?![a-z0-9])`, 'i').test(text);
+}
 
 export interface JobPrescreen {
   job_id: string;
@@ -455,9 +473,9 @@ export function prescreenJob(jobId: string): JobPrescreen | null {
       // substring match only for tokens ≥3 chars (avoid "c"/"r" matching everything).
       (n.length >= 3 && [...userTokens].some((u) => u.length >= 3 && (u.includes(n) || n.includes(u))));
     (skillHit ? matched : missing).push(kw);
-    // Résumé-body match: keyword appears verbatim (case-insensitive) in the résumé text.
-    // Guard tokens ≥2 chars to avoid trivial one-letter substrings matching everything.
-    if (resume_checked && n.length >= 2 && resumeText.includes(n)) resume_matched.push(kw);
+    // Résumé-body match: keyword appears as a whole token in the résumé text (see
+    // resumeBodyHasToken). Guard tokens ≥2 chars to avoid trivial short matches.
+    if (resume_checked && n.length >= 2 && resumeBodyHasToken(resumeText, n)) resume_matched.push(kw);
   }
   const coverage = keywords.length ? matched.length / keywords.length : null;
   const combinedSet = new Set([...matched, ...resume_matched]);

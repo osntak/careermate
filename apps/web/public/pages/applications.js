@@ -2,7 +2,7 @@
 // (no horizontal scroll). Change a status inline to move an item between groups.
 import {
   el, get, put, navigate, EmptyState, Btn, ListRow, Badge, Card,
-  Select, scoreClass, statusColor, mount, toast, toastOk, toastError,
+  Select, scoreClass, statusColor, mount, toast, toastOk, toastError, todayLocalISO,
 } from '/lib.js';
 import { t } from '/i18n.js';
 
@@ -155,7 +155,7 @@ function OfferCard(o) {
     : el('span', { class: 'muted' }, t('applications.offers.noScore'));
   // Deadline passed on a still-open offer: flag it, never auto-hide — deadlines
   // get extended in negotiation, so the call is the user's (or the AI's), not ours.
-  const expired = !!o.accept_deadline && o.accept_deadline < new Date().toISOString().slice(0, 10);
+  const expired = !!o.accept_deadline && o.accept_deadline < todayLocalISO();
   const actions = expired
     ? el('span', { class: 'flex gap-2', style: { alignItems: 'center' } },
         Badge('on_hold', t('applications.offers.expired')), score)
