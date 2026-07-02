@@ -82,14 +82,17 @@
       <div class="hero__main">
         <span class="pill-badge">
           <span class="pill-badge__dot" aria-hidden="true"></span>
-          로컬 전용 · 가입 없음
+          CareerMate는 무료 · 내 PC에만
         </span>
         <h1 class="hero__title">
-          AI에게 말하면<br />
-          커리어가 정리됩니다
+          공고에 맞춘 자소서와<br />
+          적합도 분석을 말 한마디로
         </h1>
         <p class="hero__lede">
-          이력서, 공고, 자기소개서, 지원 현황까지. 말하면 내 컴퓨터에 저장됩니다.
+          분석하고 써주는 건 평소 쓰던 AI가, 결과 보관은 CareerMate가 맡습니다. 모든 데이터는 내 컴퓨터에만 남습니다.
+        </p>
+        <p class="hero__note">
+          이미 쓰는 AI(<strong>Claude·ChatGPT 유료 플랜</strong> 등)에 연결해 쓰는 도구예요. <strong>CareerMate 자체는 무료·오픈소스</strong>입니다.
         </p>
 
         <ul class="trust-strip" aria-label="안심 포인트">
@@ -112,29 +115,29 @@
           <div class="command-card__head">
             <span class="command-card__dots" aria-hidden="true"><i></i><i></i><i></i></span>
             <span class="command-card__title">내 AI 앱</span>
-            <span class="command-card__status" data-demo-status>문서 등록</span>
+            <span class="command-card__status" data-demo-status>공고 분석</span>
           </div>
           <div class="command-card__file">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg>
-            <span data-demo-file>자기소개서.pdf</span>
-            <strong data-demo-file-state>업로드됨</strong>
+            <span data-demo-file>recruit.example.com/product-designer</span>
+            <strong data-demo-file-state>링크</strong>
           </div>
           <div class="command-card__body">
             <div class="command-card__bubble command-card__bubble--user">
               <span>나</span>
-              <p data-demo-command>이 자기소개서 읽고 CareerMate에 등록해줘.</p>
+              <p data-demo-command>이 공고 분석해서 내 경력에 맞춰줘.</p>
             </div>
             <div class="command-card__bubble command-card__bubble--ai">
               <span>AI</span>
-              <p data-demo-result>문서를 읽고 자기소개서 버전으로 저장했어요. 핵심 경험 4개도 함께 정리했습니다.</p>
+              <p data-demo-result>요구 역량과 내 경험을 비교했어요. 강조하면 좋은 키워드는 협업, 실험, 정량 개선입니다.</p>
             </div>
           </div>
           <ol class="command-card__steps" aria-label="예시 선택">
-            <li><button class="is-active" type="button" data-demo-step="0" aria-current="true">문서</button></li>
+            <li><button class="is-active" type="button" data-demo-step="0" aria-current="true">공고 분석</button></li>
             <li><button type="button" data-demo-step="1">기술서</button></li>
             <li><button type="button" data-demo-step="2">대시보드</button></li>
             <li><button type="button" data-demo-step="3">공고 검색</button></li>
-            <li><button type="button" data-demo-step="4">공고 분석</button></li>
+            <li><button type="button" data-demo-step="4">문서</button></li>
             <li><button type="button" data-demo-step="5">자소서</button></li>
             <li><button type="button" data-demo-step="6">면접</button></li>
           </ol>
@@ -297,15 +300,15 @@
     <!-- ======================================================= install -->
     <section id="install" class="section">
       <div class="section__head section__head--center">
-        <h2>설치는 세 단계면 충분합니다</h2>
-        <p>앱을 열고, 아래 문장을 붙여넣고, 연결됐는지만 확인하세요.</p>
+        <h2>앱에서 문장 하나 붙여넣으면 AI가 설치를 진행해요</h2>
+        <p>평소 쓰던 AI 앱을 열고, 아래 문장을 붙여넣은 뒤 연결됐는지만 확인하세요.</p>
       </div>
 
       <div class="quick-start" aria-label="빠른 설치 순서">
         <article class="quick-start__step">
           <span>1</span>
           <h3>AI 앱 선택</h3>
-          <p>Claude나 Codex처럼 폴더를 열 수 있는 AI를 고릅니다.</p>
+          <p>당신 컴퓨터에서 직접 작업할 수 있는 AI(예: Claude 데스크톱·Claude Code, Codex)를 고릅니다. Claude·ChatGPT 유료 플랜 등 이미 쓰는 AI에 연결해요.</p>
           <a href="start.html">내게 맞는 길 보기</a>
         </article>
         <article class="quick-start__step">
@@ -326,13 +329,18 @@
         <pre id="code-prompt-quick">https://careermate.life/llms-install.txt 를 읽고, 그 안내대로 CareerMate를 이 폴더에 설치하고 연결해줘. 설치가 끝나면 앱 재시작 방법과 대시보드 주소(http://127.0.0.1:4319), 이력서를 등록하는 방법도 알려줘.</pre>
       </div>
 
-      <p class="install-footnote install-footnote--label">터미널 명령어</p>
-      <div class="code code--install">
-        <button class="copy-btn" type="button" data-copy-target="code-npx-quick">복사</button>
-        <pre id="code-npx-quick">npx -y careermate init</pre>
-      </div>
+      <details class="acc">
+        <summary>터미널이 익숙하다면 — 직접 명령어로 <span class="acc__hint">npx</span></summary>
+        <div class="acc__body">
+          <p class="install-footnote install-footnote--label" style="margin:.4rem 0 8px">터미널 명령어</p>
+          <div class="code code--install">
+            <button class="copy-btn" type="button" data-copy-target="code-npx-quick">복사</button>
+            <pre id="code-npx-quick">npx -y careermate init</pre>
+          </div>
+        </div>
+      </details>
 
-      <p class="install-footnote">웹·모바일 AI 앱은 내 컴퓨터의 로컬 도구를 직접 열 수 없어 연결 대상이 아닙니다.</p>
+      <p class="install-footnote" style="margin-top:20px">웹·모바일 AI 앱은 내 컴퓨터의 로컬 도구를 직접 열 수 없어 연결 대상이 아닙니다.</p>
     </section>
 
     <!-- ======================================================= privacy -->
@@ -343,12 +351,16 @@
         </div>
         <div class="privacy-card__text">
           <h2>당신의 데이터는 당신 컴퓨터를 떠나지 않습니다</h2>
-          <p>대시보드 서버는 <code>127.0.0.1</code>(이 컴퓨터)에만 바인딩되어 외부에서 접근할 수 없습니다.<br />MCP 서버가 외부로 내보내는 것은 (끌 수 있는) <strong>최신 버전 확인</strong>뿐이며, <strong>당신의 커리어 데이터는 전송하지 않습니다.</strong> 분석·글쓰기는 당신이 직접 고른 AI가 수행합니다.</p>
+          <p>이력서·자기소개서·지원 현황은 모두 <strong>이 컴퓨터 안에만</strong> 저장되고, <strong>인터넷으로 전송되지 않습니다.</strong> 분석·글쓰기는 당신이 직접 고른 AI가 수행합니다.</p>
           <ul class="privacy-card__list">
             <li><strong>저장 위치</strong> <code>~/.careermate/careermate.sqlite</code></li>
             <li><strong>내보내기</strong> 자기소개서 등을 <code>~/.careermate/exports</code>로</li>
             <li><strong>삭제·관리</strong> 대시보드 <strong>설정(Settings)</strong>에서 직접</li>
           </ul>
+          <details class="privacy-card__note">
+            <summary>기술적으로 어떻게 막나요?</summary>
+            대시보드 화면은 <code>127.0.0.1</code>(이 컴퓨터)에서만 열리도록 묶여 있어 외부에서 접근할 수 없습니다. 백그라운드 연결 도구가 밖으로 내보내는 것은 (끌 수 있는) <strong>최신 버전 확인</strong>뿐이며, 그 외에는 어떤 커리어 데이터도 네트워크로 보내지 않습니다.
+          </details>
         </div>
       </div>
     </section>
