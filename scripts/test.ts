@@ -185,6 +185,19 @@ const tool = (name: string) => {
   );
   ok('readOnly 도구에 destructive/idempotent 오지정 없음', TOOLS.every((t) => !t.readOnly || (!t.destructive && !t.idempotent)));
 }
+
+/* 오퍼 생명주기(offer_status) — 기본 open, 부분 갱신 시 조건 보존, 수락 시 최종합격 넛지 */
+{
+  const j = (await tool('save_job_posting').handler({ company: '오퍼상태사', position: '백엔드' })).data as any;
+  const o1 = (await tool('save_offer').handler({ job_id: j.id, base_salary: 6000 })).data as any;
+  ok('오퍼 기본 상태 open', o1.offer_status === 'open', JSON.stringify(o1.offer_status));
+  const o2 = (await tool('save_offer').handler({ job_id: j.id, offer_status: 'declined' })).data as any;
+  ok('declined 갱신 + 기존 조건(base_salary) 보존 — 삭제 아님', o2.offer_status === 'declined' && o2.base_salary === 6000, JSON.stringify({ s: o2.offer_status, b: o2.base_salary }));
+  const o3 = (await tool('save_offer').handler({ job_id: j.id, offer_status: 'accepted' })).data as any;
+  ok('accepted 저장 시 최종 합격 상태 갱신 넛지', o3.offer_status === 'accepted' && o3.suggested_next_action?.next_tool === 'update_application_status', JSON.stringify(o3.suggested_next_action));
+  const cmp = (await tool('compare_offers').handler({})).data as any[];
+  ok('compare_offers 응답에 offer_status 포함', cmp.some((x) => x.job_id === j.id && x.offer_status === 'accepted'));
+}
 /* get_application_context: 오늘 날짜(today) 주입 — 연차·재직기간 환산 기준일(LLM이 현재일 모름 보정) */
 const ctxToday = await tool('get_application_context').handler({});
 ok(

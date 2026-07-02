@@ -368,6 +368,14 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX IF NOT EXISTS idx_offers_job ON offers(job_id);
   ALTER TABLE jobs ADD COLUMN reputation TEXT;
   `,
+
+  // v8 — offer lifecycle status. 지원 상태(전형 깔때기 = 회사의 프로세스)와 직교하는
+  // "내 응답" 축: open(진행)/accepted(수락)/declined(거절). declined여도 행을 지우지
+  // 않는다 — 조건(연봉·처우) 히스토리는 다음 협상의 자산이라, 대시보드가 접힌
+  // '지난 오퍼'로 강등해 보여줄 뿐이다. Additive ALTER (runner가 멱등 처리).
+  `
+  ALTER TABLE offers ADD COLUMN offer_status TEXT NOT NULL DEFAULT 'open';
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

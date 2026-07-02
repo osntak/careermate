@@ -1056,6 +1056,7 @@ function mapOffer(r: any): OfferRecord {
   return {
     id: r.id,
     job_id: r.job_id,
+    offer_status: r.offer_status ?? 'open',
     base_salary: base,
     bonus_amount: bonus,
     welfare_amount: welfare,
@@ -1091,8 +1092,9 @@ export const offerRepo = {
     const s = (v: string | undefined, prev: string | null | undefined) => (v ?? prev ?? null);
     if (existing) {
       db.prepare(
-        `UPDATE offers SET base_salary=?,bonus_amount=?,welfare_amount=?,signing_amount=?,equity_note=?,comp_note=?,work_arrangement=?,contract_type=?,accept_deadline=?,ai_score=?,verdict=?,notes=?,updated_at=? WHERE id=?`,
+        `UPDATE offers SET offer_status=?,base_salary=?,bonus_amount=?,welfare_amount=?,signing_amount=?,equity_note=?,comp_note=?,work_arrangement=?,contract_type=?,accept_deadline=?,ai_score=?,verdict=?,notes=?,updated_at=? WHERE id=?`,
       ).run(
+        input.offer_status ?? existing.offer_status,
         n(input.base_salary, existing.base_salary),
         n(input.bonus_amount, existing.bonus_amount),
         n(input.welfare_amount, existing.welfare_amount),
@@ -1112,11 +1114,12 @@ export const offerRepo = {
     }
     const id = newId('ofr_');
     db.prepare(
-      `INSERT INTO offers (id,job_id,base_salary,bonus_amount,welfare_amount,signing_amount,equity_note,comp_note,work_arrangement,contract_type,accept_deadline,ai_score,verdict,notes,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO offers (id,job_id,offer_status,base_salary,bonus_amount,welfare_amount,signing_amount,equity_note,comp_note,work_arrangement,contract_type,accept_deadline,ai_score,verdict,notes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     ).run(
       id,
       input.job_id,
+      input.offer_status ?? 'open',
       input.base_salary ?? null,
       input.bonus_amount ?? null,
       input.welfare_amount ?? null,

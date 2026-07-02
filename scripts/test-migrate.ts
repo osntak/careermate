@@ -39,7 +39,7 @@ const ok = (name: string, cond: boolean, extra = '') => {
   }
 };
 
-const LATEST = MIGRATIONS.length; // v1..v7
+const LATEST = MIGRATIONS.length; // v1..v8
 const T = '2026-01-01T00:00:00.000Z';
 
 function newDb(): DatabaseSync {
@@ -50,8 +50,8 @@ function newDb(): DatabaseSync {
   return db;
 }
 
-console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v7)`);
-ok('MIGRATIONS 길이 7', LATEST === 7, String(LATEST));
+console.log(`\n0) MIGRATIONS = ${LATEST}개 (v1..v8)`);
+ok('MIGRATIONS 길이 8', LATEST === 8, String(LATEST));
 
 console.log('\n1) 신규 설치 — from=0 전체 빌드');
 {
@@ -146,6 +146,24 @@ console.log('\n2) 업그레이드 from=1 — v1 구버전 DB에 실데이터 적
   const ver = (db.prepare(`SELECT value FROM _meta WHERE key='schema_version'`).get() as { value: string }).value;
   ok(`schema_version = ${LATEST} 기록`, ver === String(LATEST), ver);
 
+  db.close();
+}
+
+console.log('\n2-1) v7→v8 — 기존 오퍼 행에 offer_status=open 백필');
+{
+  const db = newDb();
+  for (let i = 0; i < 7; i++) db.exec(MIGRATIONS[i]!);
+  db.exec(`CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
+  db.prepare(`INSERT INTO _meta (key,value) VALUES ('schema_version','7')`).run();
+  db.prepare(`INSERT INTO jobs (id,company,position,created_at,updated_at) VALUES ('job-o','회사O','백엔드',?,?)`).run(T, T);
+  db.prepare(`INSERT INTO offers (id,job_id,base_salary,created_at,updated_at) VALUES ('ofr-1','job-o',6000,?,?)`).run(T, T);
+
+  const r = migrate(db);
+  ok(`v7→v${LATEST} 업그레이드`, r.from === 7 && r.to === LATEST, JSON.stringify(r));
+  const o = db.prepare(`SELECT offer_status, base_salary FROM offers WHERE id='ofr-1'`).get() as
+    | { offer_status: string; base_salary: number }
+    | undefined;
+  ok('기존 오퍼 offer_status=open 백필 + 데이터 보존', !!o && o.offer_status === 'open' && o.base_salary === 6000, JSON.stringify(o));
   db.close();
 }
 

@@ -419,11 +419,21 @@ export type JobRecord = z.infer<typeof JobRecordSchema>;
 
 /* ------------------------------------------------------------------- Offer */
 
+/** Offer lifecycle — MY response to the company's proposal. Orthogonal to the
+ *  application's 8-stage status (which tracks the COMPANY's process): together
+ *  they can express e.g. "최종 합격했지만 내가 거절" (final_passed + declined). */
+export const OFFER_STATUSES = ['open', 'accepted', 'declined'] as const;
+export type OfferStatus = (typeof OFFER_STATUSES)[number];
+
 /** Job offer for comparison. Cash pieces are 만원(numeric) so the server can sum an
  *  annual estimate deterministically; equity/other stay free-text. ai_score/verdict
  *  are produced by the connected AI at save time (CareerMate has no LLM). */
 export const OfferInputSchema = z.object({
   job_id: reqLine,
+  offer_status: z
+    .enum(OFFER_STATUSES)
+    .optional()
+    .describe('오퍼 상태 — open(진행 중)/accepted(수락)/declined(거절). 생략 시 기존 값 유지(신규 저장은 open)'),
   base_salary: z.number().nonnegative().optional().describe('기본급/연봉 (만원)'),
   bonus_amount: z.number().nonnegative().optional().describe('연 성과급·상여 기대액 (만원)'),
   welfare_amount: z.number().nonnegative().optional().describe('복지포인트 등 연환산 (만원)'),
@@ -442,6 +452,7 @@ export type OfferInput = z.infer<typeof OfferInputSchema>;
 export const OfferRecordSchema = z.object({
   ...baseRecord,
   job_id: z.string(),
+  offer_status: z.enum(OFFER_STATUSES),
   base_salary: z.number().nullable(),
   bonus_amount: z.number().nullable(),
   welfare_amount: z.number().nullable(),

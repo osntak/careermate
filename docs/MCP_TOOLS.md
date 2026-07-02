@@ -161,8 +161,8 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
-| `save_offer` | 오퍼 저장(공고당 1건, 갱신). 현금성은 만원 단위 숫자, AI가 `ai_score`·`verdict`(최종평) 함께 작성 | `job_id`(필수), `base_salary?`·`bonus_amount?`·`welfare_amount?`·`signing_amount?`(만원), `equity_note?`, `comp_note?`, `work_arrangement?`, `contract_type?`, `accept_deadline?`, `ai_score?`, `verdict?`, `notes?` | 저장된 오퍼(+`total_comp_annual_est` 결정론 합산) | 사용자가 오퍼를 받아 저장·평가할 때 | ✏️ |
-| `compare_offers` | 저장된 모든 오퍼를 점수순으로 회사·직무·현금성 총액추정·최종평과 함께 반환 | 없음 | `OfferWithJob[]`(점수 desc) | "오퍼 비교해줘" 또는 여러 오퍼를 함께 판단할 때 | ✅ |
+| `save_offer` | 오퍼 저장(공고당 1건, 갱신). 현금성은 만원 단위 숫자, AI가 `ai_score`·`verdict`(최종평) 함께 작성. `offer_status`로 진행 상태(open/accepted/declined)를 기록 — 거절해도 삭제하지 않고 조건 기록으로 보존 | `job_id`(필수), `offer_status?`(open/accepted/declined), `base_salary?`·`bonus_amount?`·`welfare_amount?`·`signing_amount?`(만원), `equity_note?`, `comp_note?`, `work_arrangement?`, `contract_type?`, `accept_deadline?`, `ai_score?`, `verdict?`, `notes?` | 저장된 오퍼(+`total_comp_annual_est` 결정론 합산). accepted 저장 시 지원 상태(최종 합격) 갱신 제안 동봉 | 사용자가 오퍼를 받아 저장·평가할 때, 또는 "그 오퍼 거절했어/수락했어"라고 할 때 | ✏️ |
+| `compare_offers` | 저장된 모든 오퍼를 점수순으로 회사·직무·현금성 총액추정·최종평·`offer_status`와 함께 반환 — 비교는 진행 중(open) 위주, 지난 오퍼는 과거 조건 기준점으로만 | 없음 | `OfferWithJob[]`(점수 desc) | "오퍼 비교해줘" 또는 여러 오퍼를 함께 판단할 때 | ✅ |
 | `get_offer` | 특정 공고의 오퍼 1건 조회 | `job_id` | 오퍼 또는 `null` | 한 공고의 오퍼를 확인할 때 | ✅ |
 
 - `total_comp_annual_est`(연 현금성 추정) = 기본급 + 성과급 + 복지(일시금 제외), CareerMate가 결정론으로 합산. 없으면 `null`.

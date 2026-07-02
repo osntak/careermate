@@ -1095,18 +1095,34 @@ export const TOOLS: ToolDef[] = [
     idempotent: true, // 공고당 1건 업서트
     title: '오퍼(제안) 저장',
     description:
-      '받은 채용 제안(오퍼)을 공고에 연결해 저장합니다(공고당 1건, 다시 저장하면 갱신). 현금성 항목은 **만원 단위 숫자**로 — base_salary(기본급/연봉)·bonus_amount(연 성과급·상여 기대액)·welfare_amount(복지포인트 등 연환산)·signing_amount(사이닝 일시금). 주식/스톡옵션은 가치평가가 모호하니 equity_note에 텍스트로, 그 외 보상은 comp_note에. 근무형태·계약형태·수락 마감일(accept_deadline)도 저장하세요. **당신(AI)이 이 오퍼를 종합 평가해 ai_score(0~100)와 verdict(최종평 — "어떤 상황이면 이 회사가 좋다" 식 한두 문장)를 함께 채워 저장하세요** — CareerMate엔 LLM이 없어 이 점수·평이 대시보드에 그대로 표시됩니다. 회사 평판이 판단에 필요하면 공고의 reputation을 먼저 채워두세요. 여러 오퍼의 정밀 비교는 compare_offers로 데이터를 받아 당신이 직접 하세요(총보상·성장·안정성·워라밸).',
+      '받은 채용 제안(오퍼)을 공고에 연결해 저장합니다(공고당 1건, 다시 저장하면 갱신). 현금성 항목은 **만원 단위 숫자**로 — base_salary(기본급/연봉)·bonus_amount(연 성과급·상여 기대액)·welfare_amount(복지포인트 등 연환산)·signing_amount(사이닝 일시금). 주식/스톡옵션은 가치평가가 모호하니 equity_note에 텍스트로, 그 외 보상은 comp_note에. 근무형태·계약형태·수락 마감일(accept_deadline)도 저장하세요. **당신(AI)이 이 오퍼를 종합 평가해 ai_score(0~100)와 verdict(최종평 — "어떤 상황이면 이 회사가 좋다" 식 한두 문장)를 함께 채워 저장하세요** — CareerMate엔 LLM이 없어 이 점수·평이 대시보드에 그대로 표시됩니다. 회사 평판이 판단에 필요하면 공고의 reputation을 먼저 채워두세요. 여러 오퍼의 정밀 비교는 compare_offers로 데이터를 받아 당신이 직접 하세요(총보상·성장·안정성·워라밸). **오퍼의 진행 상태는 offer_status로 기록하세요** — open(기본, 진행 중)/accepted(수락)/declined(거절). 사용자가 "그 오퍼 거절했어/수락하기로 했어"라고 하면 이 도구로 offer_status만 갱신하면 됩니다 — 삭제하지 않습니다(연봉·조건 기록은 다음 협상의 자산이고, 대시보드가 지난 오퍼로 접어서 보여줍니다). accepted로 저장하면 지원 상태(최종 합격) 갱신도 함께 제안하세요.',
     inputSchema: OfferInputSchema.shape,
     handler: (args) => {
       try {
         const offer = saveOffer(args);
         const total = offer.total_comp_annual_est;
-        const msg =
+        const statusLabel =
+          offer.offer_status === 'accepted' ? ' · 수락' : offer.offer_status === 'declined' ? ' · 거절' : '';
+        const user_message =
           `'${offer.company}' 오퍼를 저장했어요` +
           (offer.ai_score != null ? ` (점수 ${offer.ai_score})` : '') +
           (total != null ? ` · 추정 연 현금성 ${total.toLocaleString()}만원` : '') +
+          statusLabel +
           '.';
-        return ok(msg, offer);
+        // 수락한 오퍼인데 지원 상태가 아직 최종 합격이 아니면 상태 갱신을 제안한다
+        // (오퍼 상태 = 내 응답, 지원 상태 = 전형 결과 — 직교 축이라 자동 변경 대신 제안).
+        const app = applicationRepo.getByJob(offer.job_id);
+        const suggested_next_action =
+          offer.offer_status === 'accepted' && app?.status !== 'final_passed'
+            ? {
+                prompt: "지원 상태도 '최종 합격'으로 바꿀까요?",
+                next_tool: 'update_application_status',
+              }
+            : null;
+        const msg = suggested_next_action
+          ? `${user_message}\n\n사용자에게 지원 상태를 '최종 합격'으로 함께 바꿀지 물어보세요.`
+          : user_message;
+        return ok(msg, { ...offer, user_message, suggested_next_action });
       } catch (e) {
         return fail(e instanceof Error ? e.message : '저장 실패');
       }
@@ -1116,7 +1132,7 @@ export const TOOLS: ToolDef[] = [
     name: 'compare_offers',
     title: '오퍼 비교',
     description:
-      '저장된 모든 오퍼를 **점수순(당신이 매긴 ai_score)** 으로 회사·직무·추정 연 현금성 총액·근무형태·수락마감·최종평과 함께 돌려줍니다. total_comp_annual_est는 CareerMate가 결정론으로 합산한 추정치(기본급+성과급+복지, 일시금 제외)입니다. "어느 오퍼가 나은지"의 정밀 판단은 이 데이터를 받아 당신이 offer-evaluation·salary-negotiation 관점(총보상·성장·안정성·워라밸·회사 평판)으로 직접 하세요. 사용자가 "오퍼 비교해줘"라고 할 때 사용합니다. 읽기 전용입니다.',
+      '저장된 모든 오퍼를 **점수순(당신이 매긴 ai_score)** 으로 회사·직무·추정 연 현금성 총액·근무형태·수락마감·최종평과 함께 돌려줍니다. total_comp_annual_est는 CareerMate가 결정론으로 합산한 추정치(기본급+성과급+복지, 일시금 제외)입니다. 각 오퍼에는 offer_status(open/accepted/declined)가 포함되니 **비교는 진행 중(open) 오퍼 위주로** 하고, 수락·거절된 지난 오퍼는 기준점(과거 조건)으로만 참고하세요. "어느 오퍼가 나은지"의 정밀 판단은 이 데이터를 받아 당신이 offer-evaluation·salary-negotiation 관점(총보상·성장·안정성·워라밸·회사 평판)으로 직접 하세요. 사용자가 "오퍼 비교해줘"라고 할 때 사용합니다. 읽기 전용입니다.',
     inputSchema: {},
     readOnly: true,
     handler: () => {
