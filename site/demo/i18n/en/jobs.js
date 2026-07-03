@@ -68,6 +68,8 @@ export default {
   'jobs.detail.deleteMessage': "Delete the '{{company}} · {{position}}' posting? Its linked application records will be removed too.",
   'jobs.detail.deleteConfirm': 'Delete',
   'jobs.detail.deleted': 'Posting deleted.',
+  'jobs.detail.dangerZone': 'Danger zone',
+  'jobs.detail.dangerZoneHint': 'Deletes this posting along with its fit analysis, cover letters, interview prep, and application records. This cannot be undone.',
   'jobs.detail.list': 'Postings',
   'jobs.detail.statusLabel': 'Status',
   'jobs.detail.openPosting': 'Original posting',

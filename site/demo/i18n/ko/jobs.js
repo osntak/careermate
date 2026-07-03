@@ -68,6 +68,8 @@ export default {
   'jobs.detail.deleteMessage': "'{{company}} · {{position}}' 공고를 삭제할까요? 연결된 지원 기록도 함께 사라집니다.",
   'jobs.detail.deleteConfirm': '삭제',
   'jobs.detail.deleted': '공고를 삭제했어요.',
+  'jobs.detail.dangerZone': '위험 구역',
+  'jobs.detail.dangerZoneHint': '이 공고와 연결된 적합도 분석·자기소개서·면접 자료·지원 기록이 함께 삭제됩니다. 되돌릴 수 없어요.',
   'jobs.detail.list': '목록',
   'jobs.detail.statusLabel': '상태',
   'jobs.detail.openPosting': '공고 원문',

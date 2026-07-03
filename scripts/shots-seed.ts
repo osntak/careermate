@@ -14,8 +14,15 @@ import {
 } from '@careermate/db';
 import {
   saveProfile, saveJobPosting, saveFitAnalysis, saveCoverLetterVersion,
-  updateApplicationStatus, saveInterviewPrep, addResume,
+  updateApplicationStatus, saveInterviewPrep, addResume, saveOffer,
 } from '@careermate/core';
+
+// Schedule dates are relative to run time so D-day badges stay alive in screenshots.
+function daysFromNow(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
 
 if (profileRepo.get()?.name) {
   console.error('⚠️  데이터가 이미 있습니다. 마케팅 시드는 빈 throwaway 폴더에서만 실행하세요.');
@@ -87,11 +94,17 @@ function job(spec: {
   description: string; requirements: string[]; keywords: string[];
   status: string; score?: number; fit?: { summary: string; strengths: string[]; gaps: string[]; matched: string[]; missing: string[] };
   cover?: { title: string; content: string };
+  company_overview?: string; talent_profile?: string; core_values?: string[]; reputation?: string;
+  questions?: { no?: number; question: string; min_chars?: number; max_chars?: number; count_mode?: 'with_space' | 'no_space' | 'byte' }[];
+  schedule?: { label: string; date: string; time?: string; note?: string }[];
 }) {
   const { job: j } = saveJobPosting({
     company: spec.company, position: spec.position, url: `https://example.com/${encodeURIComponent(spec.company)}`,
     location: spec.location, employment_type: '정규직', description: spec.description,
     requirements: spec.requirements, keywords: spec.keywords, deadline: spec.deadline, source: '데모',
+    company_overview: spec.company_overview, talent_profile: spec.talent_profile,
+    core_values: spec.core_values, reputation: spec.reputation,
+    questions: spec.questions, schedule: spec.schedule,
   });
   if (spec.fit && spec.score != null) {
     saveFitAnalysis({
@@ -152,11 +165,31 @@ const toss = job({
   status: 'document_passed', score: 88,
   fit: { summary: '결제·정산 경험과 대규모 트래픽 이력이 요구사항과 강하게 일치합니다.', strengths: ['결제/정산 5년', 'p99 개선 성과', 'Kafka 이벤트 처리'], gaps: ['Kotlin 실무 경험 부족', 'MSA 리딩 제한적'], matched: ['Java', 'Spring', 'Kafka', '결제'], missing: ['Kotlin', 'MSA'] },
   cover: { title: '토스 백엔드 자기소개서', content: '저는 결제 시스템의 "한 푼도 틀리면 안 된다"는 긴장감 속에서 성장했습니다...(데모)' },
+  company_overview: '토스(비바리퍼블리카)는 송금·결제·투자·대출을 아우르는 금융 슈퍼앱을 운영합니다. 자체 결제·정산 인프라를 직접 만들어 운영합니다.',
+  talent_profile: '스스로 문제를 정의하고 끝까지 파고드는 사람, 성과를 숫자로 증명하는 사람을 선호합니다.',
+  core_values: ['오너십', '임팩트', '투명한 소통', '빠른 실행'],
+  reputation: '보상·성장 기회는 업계 상위권으로 평가받습니다. 실행 속도가 빨라 업무 강도가 높다는 후기가 있어 워라밸 기대치는 확인이 필요합니다. (공개 리뷰 요약)',
+  questions: [
+    { no: 1, question: '지원 동기와 입사 후 이루고 싶은 목표를 서술해 주세요.', max_chars: 700, count_mode: 'with_space' },
+    { no: 2, question: '가장 도전적이었던 기술 과제와 해결 과정을 구체적으로 작성해 주세요.', min_chars: 500, max_chars: 1000, count_mode: 'with_space' },
+  ],
+  schedule: [
+    { label: '1차 기술 면접', date: daysFromNow(5), time: '14:00', note: '화상 · 라이브 코딩 포함' },
+    { label: '2차 임원 면접', date: daysFromNow(12), time: '10:30', note: '오프라인 · 강남 오피스' },
+  ],
 });
 saveCoverLetterVersion({
   cover_letter_id: toss.coverLetterId,
   content: '저는 결제 시스템의 "한 푼도 틀리면 안 된다"는 긴장감 속에서 성장했습니다. 페이테크에서 결제 승인 API의 p99 응답시간을 320ms에서 110ms로 줄이며...(데모 v2)',
   note: '지원동기와 정량 성과 보강', source: 'edit',
+});
+saveOffer({
+  job_id: toss.jobId, offer_status: 'open',
+  base_salary: 6800, bonus_amount: 1200, welfare_amount: 300, signing_amount: 1000,
+  work_arrangement: '하이브리드(주 2회 재택)', contract_type: '정규직', accept_deadline: daysFromNow(14),
+  ai_score: 84,
+  verdict: '보상 총액이 현재 대비 뚜렷이 높고 결제 도메인 성장성이 좋습니다. 워라밸이 우선이라면 근무 형태 조건을 협의해 두길 권합니다.',
+  notes: '경쟁사 오퍼 대비 사이닝보너스가 강점.',
 });
 
 // 지원 완료
@@ -189,4 +222,4 @@ job({
 
 console.log('✅ 마케팅용 데모 데이터를 생성했습니다.');
 console.log(`   위치: ${getDataDir()}`);
-console.log('   공고 6건(최종합격·면접·서류합격·지원·예정·보류) · 적합도 6 · 자기소개서 4 · 면접 준비 1');
+console.log('   공고 6건(최종합격·면접·서류합격·지원·예정·보류) · 적합도 6 · 자기소개서 4 · 면접 준비 1 · 오퍼 1(토스, 문항·전형일정·회사 리서치 포함)');

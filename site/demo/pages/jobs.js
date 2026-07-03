@@ -314,11 +314,11 @@ async function renderDetail(ctx, jobId) {
   ]);
 
   // --- Page head ------------------------------------------------------------
-  // 수정은 상단바(ctx.setActions)에만 둔다 — 여기엔 상태 변경·원문·삭제만.
+  // 수정은 상단바(ctx.setActions)에만 둔다 — 여기엔 상태 변경·원문만.
+  // 삭제는 위험 액션이라 페이지 최하단 '위험 구역'으로 강등한다(아래 DangerZone).
   const headActions = el('div', { class: 'flex gap-2 center wrap' },
     statusSelect,
     job.url ? el('a', { class: 'btn btn--ghost btn--sm', href: job.url, attrs: { target: '_blank', rel: 'noopener noreferrer' } }, icon('external'), el('span', {}, t('jobs.detail.openPosting'))) : null,
-    delBtn,
   );
 
   const head = el('div', { class: 'page-head' },
@@ -344,8 +344,21 @@ async function renderDetail(ctx, jobId) {
     FitCard(job.fit),
     TimelineCard(job.timeline),
     RelatedCard(job.related),
+    DangerZone(delBtn),
   );
   mount(ctx.view, wrap);
+}
+
+// Delete is destructive, so it sits at the very bottom in a quiet 위험 구역 row
+// (not a card, per the design guide) instead of competing in the top-right header.
+function DangerZone(delBtn) {
+  return el('div', { class: 'stack-2', style: { marginTop: '8px' } },
+    el('div', { class: 'divider' }),
+    el('div', { class: 'flex between center wrap gap-3' },
+      el('div', { style: { maxWidth: '440px' } },
+        el('div', { class: 'strong text-sm' }, t('jobs.detail.dangerZone')),
+        el('div', { class: 'muted text-sm', style: { lineHeight: '1.6' } }, t('jobs.detail.dangerZoneHint'))),
+      delBtn));
 }
 
 /* ----------------------------------------------------------- detail cards */

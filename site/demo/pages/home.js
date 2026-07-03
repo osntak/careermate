@@ -142,6 +142,14 @@ function Pipeline(breakdown) {
   if (total === 0) {
     body = el('p', { class: 'muted', style: { margin: 0 } },
       t('home.pipeline.empty'));
+  } else if (total < 3) {
+    // Too few applications for a stacked bar to read as anything but noise —
+    // show the current stage(s) as one calm line until the pipeline fills in.
+    const detail = PIPE_ORDER.filter((st) => c(st) > 0)
+      .map((st) => t('home.pipeline.small.item', { status: t('status.' + st), count: c(st) }))
+      .join(' · ');
+    body = el('p', { class: 'muted', style: { margin: 0 } },
+      t('home.pipeline.small', { detail }));
   } else {
     const segs = PIPE_ORDER.filter((st) => c(st) > 0).map((st) =>
       el('div', {
@@ -211,7 +219,7 @@ function ActionLane(s) {
     push(it.job.id, ListRow({
       leading: statusDot('document_passed'),
       title: it.job.company,
-      sub: it.job.position,
+      sub: t('home.actionLane.reason.interview'),
       trailing: el('span', { class: 'badge badge--accent' }, el('span', { class: 'dot' }), t('home.actionLane.interviewPrep')),
       onClick: () => navigate(`/jobs/${it.job.id}`),
     }));
@@ -231,7 +239,7 @@ function ActionLane(s) {
     push(it.job.id, ListRow({
       leading: statusDot(it.status),
       title: it.job.company,
-      sub: it.job.position,
+      sub: t('home.actionLane.reason.deadline'),
       trailing: ddayBadge(it.days_left),
       onClick: () => navigate(`/jobs/${it.job.id}`),
     }));
@@ -240,8 +248,8 @@ function ActionLane(s) {
     push(it.job.id, ListRow({
       leading: statusDot('applied'),
       title: it.job.company,
-      sub: it.job.position,
-      trailing: Badge('accent', t('home.actionLane.followup', { n: it.days_since })),
+      sub: t('home.actionLane.reason.followup', { n: it.days_since }),
+      trailing: Badge('accent', t('home.actionLane.followupBadge')),
       onClick: () => navigate(`/jobs/${it.job.id}`),
     }));
   }

@@ -47,6 +47,9 @@ export default {
   'home.pipeline.title': 'Application pipeline',
   'home.pipeline.openBoard': 'Open board',
   'home.pipeline.empty': 'No application stages yet. Set an application status on a posting and your pipeline fills in here.',
+  // small-sample fallback (< 3 applications): show the current stage as one line
+  'home.pipeline.small.item': '{{status}} · {{count}}',
+  'home.pipeline.small': '{{detail}} — your stage flow shows here as applications add up',
   'home.pipeline.stage.applied': 'Applied',
   'home.pipeline.stage.documentPassed': 'Screening passed',
   'home.pipeline.stage.interview': 'Interview',
@@ -62,7 +65,11 @@ export default {
   'home.actionLane.title': 'What to do next',
   'home.actionLane.viewAll': 'View all',
   'home.actionLane.interviewPrep': 'Interview prep',
-  'home.actionLane.followup': 'Follow up · {{n}}d',
+  'home.actionLane.followupBadge': 'Follow up',
+  // per-type reason / next-action line
+  'home.actionLane.reason.interview': 'Time to start interview prep',
+  'home.actionLane.reason.deadline': 'Application deadline',
+  'home.actionLane.reason.followup': 'Applied {{n}}d ago · time to follow up',
   'home.actionLane.empty': 'Nothing to handle right now. Try analyzing a new posting.',
   'home.placeholder.dash': '—',
 
