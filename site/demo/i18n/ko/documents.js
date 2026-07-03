@@ -28,6 +28,7 @@ export default {
   'documents.cover.primary': '대표',
   'documents.cover.open': '열기',
   'documents.cover.copy': '복사',
+  'documents.cover.more': '더보기',
   'documents.cover.setPrimary': '대표 지정',
   'documents.cover.delete': '삭제',
   'documents.cover.noContent': '아직 내용이 없습니다.',

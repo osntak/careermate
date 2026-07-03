@@ -547,7 +547,12 @@ function CoverLettersCard(coverLetters) {
           icon('file', 'muted'),
           el('div', {},
             el('div', { class: 'strong' }, cl.title),
-            el('div', { class: 'muted text-sm' }, t('jobs.cover.versions', { count: cl.version_count ?? 1 })))),
+            // Preview line: version count + last-updated date so the row isn't a bare
+            // title. (The latest version's note isn't in this response — listByJob maps
+            // without versions — so we fall back to the date per the design.)
+            el('div', { class: 'muted text-sm' },
+              t('jobs.cover.versions', { count: cl.version_count ?? 1 }),
+              cl.updated_at ? ` · ${fmtDate(cl.updated_at)}` : ''))),
         icon('chevronRight', 'muted')))),
   });
 }

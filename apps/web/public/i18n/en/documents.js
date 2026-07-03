@@ -28,6 +28,7 @@ export default {
   'documents.cover.primary': 'Primary',
   'documents.cover.open': 'Open',
   'documents.cover.copy': 'Copy',
+  'documents.cover.more': 'More',
   'documents.cover.setPrimary': 'Set as primary',
   'documents.cover.delete': 'Delete',
   'documents.cover.noContent': 'No content yet.',

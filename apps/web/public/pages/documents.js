@@ -1,9 +1,9 @@
 // Documents — cover letters (with version history), career descriptions, and résumés/other documents.
 // XSS-safe: all DB/user text rendered via el() textContent / .doc-preview (never innerHTML).
 import {
-  el, get, post, put, del, Card, Badge, Btn, IconBtn, SubmitBtn, EmptyState,
+  el, get, post, put, del, Card, Badge, Btn, SubmitBtn, EmptyState,
   Field, Input, Textarea, Select, openModal, confirmDialog,
-  toastOk, toastError, copyText, fmtRelative, mount, meta, ExportMenu,
+  toastOk, toastError, copyText, fmtRelative, mount, meta, ExportMenu, Menu,
 } from '/lib.js';
 import { t } from '/i18n.js';
 
@@ -144,12 +144,16 @@ function CoverRow(cl, reload) {
     cl.is_primary ? Badge('accent', t('documents.cover.primary')) : null,
   );
 
+  // Two primary actions stay visible (열기·내보내기); the rest fold into an
+  // overflow menu so the row reads calmly instead of a wall of five buttons.
   const actions = el('div', { class: 'flex gap-2 wrap' },
     Btn(t('documents.cover.open'), { sm: true, icon: 'external', onClick: () => openCoverDetail(cl.id, reload) }),
-    Btn(t('documents.cover.copy'), { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(cl.current_content || ''), disabled: !cl.current_content }),
     ExportMenu(`/api/export/cover-letter/${cl.id}`),
-    cl.is_primary ? null : Btn(t('documents.cover.setPrimary'), { sm: true, variant: 'ghost', icon: 'check', onClick: () => setPrimaryCover(cl.id, reload) }),
-    IconBtn('trash', { variant: 'danger', title: t('documents.cover.delete'), onClick: () => removeCover(cl, reload) }),
+    Menu(t('documents.cover.more'), [
+      cl.current_content ? { label: t('documents.cover.copy'), icon: 'copy', onClick: () => copyText(cl.current_content || '') } : null,
+      cl.is_primary ? null : { label: t('documents.cover.setPrimary'), icon: 'check', onClick: () => setPrimaryCover(cl.id, reload) },
+      { label: t('documents.cover.delete'), icon: 'trash', danger: true, onClick: () => removeCover(cl, reload) },
+    ], { sm: true, icon: null }),
   );
 
   return Card({
