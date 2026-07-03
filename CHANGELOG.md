@@ -3,9 +3,10 @@
 이 프로젝트의 주요 변경 사항을 기록합니다. 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를
 따르고, 버전은 [유의적 버전(SemVer)](https://semver.org/lang/ko/)을 따릅니다.
 
-## [Unreleased]
+## [0.0.9] - 2026-07-03
 
 ### 추가 (Added)
+- **자소서 품질 계층 강화(경험 디깅·탐지관 2-pass)**: 자소서 작성 전 AI가 사용자에게 경험을 파고드는 인터뷰(가장 막혔던 순간·실패한 첫 시도·버린 대안)를 하고 사용자의 원문 표현을 본문에 살리도록 전문가 절차를 확장했습니다. 저장 전 "AI 탐지 심사역" 관점의 2차 자기 점검, 문항 간 성과 배분(같은 성과 재탕 금지), 모티프 반복 상한, 지원동기 문항의 회사 선등장, NCS 경험기술서 시간순 앵커, 면접 준비의 미확인 수치 폴백 문장 규칙 등이 함께 들어갔습니다. 블라인드 벤치마크(채용담당자 페르소나 심판)에서 자소서·경력기술서·NCS·면접 준비 전 유형이 일반 LLM 산출물 대비 전승했고, 이 검증 하네스는 `docs/dev/eval/`에 상설화했습니다.
 - **전형 일정**: 공고에 면접·인적성·AI역검·발표 등 단계별 날짜를 구조화 저장(`save_job_posting`의 `schedule` — `label`·`date` 필수, `time` 선택). 면접초대 메일·발표 공지를 붙여넣으면 AI가 날짜를 추출해 저장하고, 서버가 D-day와 같은 날짜 충돌을 결정론으로 계산합니다(`get_followups`에 `upcoming_schedule`·`schedule_conflicts`). 대시보드 홈 "이번에 할 일"에 다가오는 일정(7일 내) D-day 항목, 공고 상세에 "전형 일정" 블록(날짜순·D-day·지난 일정 흐리게)을 노출합니다.
 - **탈락 회고**: 지원을 불합격으로 바꿀 때 어느 전형 단계에서 떨어졌는지 기록(`update_application_status`의 `rejected_stage` — 서류/인적성·AI역검/면접/최종·처우/기타). 미기록 시 회고를 유도하고, `get_pipeline_stats`에 단계별 탈락 분포(`rejected_by_stage`·`rejected_unrecorded`)를 더해 "서류는 붙는데 면접에서 떨어진다" 같은 패턴을 로컬 데이터로 드러냅니다. 대시보드 지원 현황의 불합격 행에 탈락 단계를 병기합니다.
 - **자소서 문항 뱅크**: 공고에 회사 지정 자소서 문항·글자수를 구조화 저장(`save_job_posting`의 `questions` — 문항·`min_chars`/`max_chars`/`count_mode`). 공고 상세에 "자소서 문항" 블록으로 노출하고, 문항별 답변은 `validate_cover_letter`의 한도 점검으로 확인합니다.
@@ -19,10 +20,14 @@
 - **스키마 마이그레이션 하드닝**: 마이그레이션별 개별 트랜잭션 + 성공 즉시 버전 기록(중간 실패 시 부팅 크래시 루프 제거), `ADD COLUMN` 자가치유(부분 적용 상태 복구), 업그레이드 직전 자동 백업 스냅샷(`backups/pre-migrate-*.sqlite`, 최근 5개 보관).
 - **MCP 도구 어노테이션 정직화**: 외부 통신이 실제로 있는 3종(`search_jobs`·`check_for_update`·`update_careermate`)만 `openWorldHint=true`로 표시하고, 비가역 도구(`delete_*`·`update_careermate`)에 `destructiveHint`, 문서화된 업서트에 `idempotentHint`를 방출.
 - **공고 검색 User-Agent 정직화**: 브라우저 위장 UA를 제거하고 `careermate/<버전>`으로 자신을 밝힘(두 잡보드 모두 정상 응답 실측 확인).
-- CI를 3-OS 매트릭스(ubuntu·windows·macos)로 확장하고, npm 게시 전 전체 테스트 + 배포 번들(`dist/mcp.mjs`) 실기동 스모크를 게이트로 추가.
+- **프라이버시 문구 정밀화**: "외부 전송 없음"에 실제 예외(선택적 버전 확인·공고 검색 시 검색 키워드)를 명시하고, 초기화 시 자동 백업이 `backups/` 폴더에 남는다는 사실과 완전 삭제 방법을 대시보드·FAQ에 고지. "AI와 대화하면 내 데이터는 어디로 가나요?" FAQ 신설.
+- 랜딩·README 개편: 결과 중심 헤드라인, 유료 AI 구독 전제 정직 노출, Quick Start 사용자/개발자 2트랙, 대시보드 스크린샷 추가.
+- CI를 3-OS(ubuntu·windows·macos)·Node 3버전(22·24·25) 매트릭스로 확장하고, npm 게시 전 전체 테스트 + 배포 번들(`dist/mcp.mjs`) 실기동 스모크를 게이트로 추가.
 
 ### 수정 (Fixed)
 - 공고 삭제 시 연결된 오퍼를 명시적으로 함께 삭제(FK CASCADE 의존 제거).
+- 대시보드 접근성: 문서·면접 탭 키보드 조작(role/aria-selected/Enter·Space) 지원, `prefers-reduced-motion` 존중, 오퍼 수락 마감 판정을 로컬 날짜 기준으로 통일.
+- 공고 프리스크린의 짧은 영문 키워드 오탐(`AI`가 `email`에 매칭되던 문제)을 단어 경계 매칭으로 수정, 같은 공고의 연속 전형 단계가 "일정 충돌"로 오탐되던 문제 수정.
 
 ## [0.0.8] - 2026-06-29
 
@@ -110,6 +115,9 @@
 - 내보내기 HTML 인젝션 무력화(raw `<img>`/`<script>`, `javascript:` 링크, 링크 속성·제목 인젝션).
 - 민감 정보(이력서·자소서 본문) 로그·에러 응답 비노출.
 
+[0.0.9]: https://github.com/osntak/careermate/releases/tag/v0.0.9
+[0.0.8]: https://github.com/osntak/careermate/releases/tag/v0.0.8
+[0.0.7]: https://github.com/osntak/careermate/releases/tag/v0.0.7
 [0.0.5]: https://github.com/osntak/careermate/releases/tag/v0.0.5
 [0.0.4]: https://github.com/osntak/careermate/releases/tag/v0.0.4
 [0.0.3]: https://github.com/osntak/careermate/releases/tag/v0.0.3
