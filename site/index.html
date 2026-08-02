@@ -14,6 +14,7 @@
   </script>
   <title>CareerMate — 공고에 맞춘 자소서·적합도 분석, 내 PC에만</title>
   <meta name="description" content="Codex·Claude 같은 AI에게 이력서 등록, 공고 분석, 자기소개서 작성, 지원 현황 관리를 말로 시키세요. CareerMate는 결과를 이 컴퓨터 안에 정리합니다." />
+  <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://careermate.life/" />
   <link rel="alternate" hreflang="ko" href="https://careermate.life/" />
   <link rel="alternate" hreflang="en" href="https://careermate.life/en" />
@@ -44,6 +45,51 @@
   <meta name="twitter:title" content="CareerMate — 공고에 맞춘 자소서·적합도 분석, 내 PC에만" />
   <meta name="twitter:description" content="이력서·자기소개서·지원 현황을 이 컴퓨터 안에서. 데이터는 외부로 나가지 않습니다." />
   <meta name="twitter:image" content="https://careermate.life/og.png" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://careermate.life/#organization",
+        "name": "CareerMate",
+        "url": "https://careermate.life/",
+        "logo": "https://careermate.life/icon-512.png",
+        "sameAs": [
+          "https://github.com/osntak/careermate",
+          "https://www.npmjs.com/package/careermate"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://careermate.life/#website",
+        "name": "CareerMate",
+        "url": "https://careermate.life/",
+        "inLanguage": ["ko", "en"],
+        "publisher": { "@id": "https://careermate.life/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://careermate.life/#software",
+        "name": "CareerMate",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Windows, macOS, Linux",
+        "url": "https://careermate.life/",
+        "image": "https://careermate.life/og.png",
+        "description": "AI와 함께 쓰는 로컬 전용 커리어 워크스페이스입니다. 이력서, 채용공고, 자기소개서, 지원 현황을 사용자 컴퓨터 안에 저장합니다.",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "softwareHelp": "https://careermate.life/start",
+        "downloadUrl": "https://www.npmjs.com/package/careermate",
+        "publisher": { "@id": "https://careermate.life/#organization" }
+      }
+    ]
+  }
+  </script>
 
   <link rel="preload" href="fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="style.css" />

@@ -14,6 +14,7 @@
   </script>
   <title>CareerMate — Tailored cover letters & fit analysis, on your PC only</title>
   <meta name="description" content="Tell an AI like Claude or Codex to register your resume, analyze postings, write cover letters, and track applications. CareerMate keeps the results on your own computer." />
+  <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://careermate.life/en" />
   <link rel="alternate" hreflang="ko" href="https://careermate.life/" />
   <link rel="alternate" hreflang="en" href="https://careermate.life/en" />
@@ -43,6 +44,51 @@
   <meta name="twitter:title" content="CareerMate — Tailored cover letters & fit analysis, on your PC only" />
   <meta name="twitter:description" content="Resume, cover letters, applications — on your own computer. Your data never leaves." />
   <meta name="twitter:image" content="https://careermate.life/og-en.png" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://careermate.life/#organization",
+        "name": "CareerMate",
+        "url": "https://careermate.life/",
+        "logo": "https://careermate.life/icon-512.png",
+        "sameAs": [
+          "https://github.com/osntak/careermate",
+          "https://www.npmjs.com/package/careermate"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://careermate.life/#website",
+        "name": "CareerMate",
+        "url": "https://careermate.life/",
+        "inLanguage": ["ko", "en"],
+        "publisher": { "@id": "https://careermate.life/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://careermate.life/#software",
+        "name": "CareerMate",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Windows, macOS, Linux",
+        "url": "https://careermate.life/en",
+        "image": "https://careermate.life/og-en.png",
+        "description": "A local-first career workspace for AI-assisted resumes, job-posting analysis, cover letters, and application tracking. CareerMate stores the data on your own computer.",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "softwareHelp": "https://careermate.life/en/start",
+        "downloadUrl": "https://www.npmjs.com/package/careermate",
+        "publisher": { "@id": "https://careermate.life/#organization" }
+      }
+    ]
+  }
+  </script>
 
   <link rel="preload" href="/fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/style.css" />
