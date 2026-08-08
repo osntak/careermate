@@ -19,7 +19,8 @@ const PRE_MIGRATE_KEEP = 5;
  * `VACUUM INTO` a destination path, with the guard both backup callers need. The
  * data dir can be set via env, so `destPath` isn't fully trusted: reject NUL/newline
  * (can't be embedded safely in the SQL string literal) and single-quote-escape the
- * rest. Throws on an unsafe path so the caller can fall back to fs.copyFileSync.
+ * rest. A failure is intentionally surfaced: copying only the live main SQLite
+ * file while WAL is active can produce a stale or incomplete snapshot.
  */
 export function vacuumInto(db: DatabaseSync, destPath: string): void {
   if (/[\0\n\r]/.test(destPath)) throw new Error('backup path not safe for SQL literal');
@@ -47,11 +48,9 @@ function preMigrationBackup(db: DatabaseSync): void {
     const dir = getBackupsDir();
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const dest = path.join(dir, `pre-migrate-v${from}-${stamp}.sqlite`);
-    try {
-      vacuumInto(db, dest);
-    } catch {
-      fs.copyFileSync(getDbPath(), dest); // WAL is checkpointed on close; copy is a coarse fallback
-    }
+    // Never fall back to copying only the main file while WAL is active. If a
+    // consistent snapshot cannot be created, the migration must not start.
+    vacuumInto(db, dest);
 
     // Prune old snapshots (ISO stamp in the name → lexicographic sort == time sort).
     // fs.unlinkSync only — rmSync hard-crashes on Node 25/Windows.
