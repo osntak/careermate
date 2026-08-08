@@ -62,7 +62,7 @@ try {
   const verified = provenanceRepo.setHumanVerified('experience', exp.id, true);
   ok('사람 확인 상태 저장', verified.verified_by_human && !!verified.verified_at);
 
-  const job = jobRepo.add({
+  const job = jobRepo.upsert({
     company: '테스트회사',
     position: '프론트엔드 개발자',
     requirements: ['TypeScript', 'React', '테스트 자동화'],
