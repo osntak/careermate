@@ -6,7 +6,13 @@ import {
   getExperienceReuseMap,
   diffCoverLetterVersions,
 } from '@careermate/core';
-import { getDataDir, getDbPath, getBackupsDir, provenanceRepo } from '@careermate/db';
+import {
+  getDataDir,
+  getDbPath,
+  getBackupsDir,
+  provenanceRepo,
+  interviewRetrospectiveRepo,
+} from '@careermate/db';
 import { APP_VERSION } from '@careermate/shared';
 import { Router, readJsonBody } from './http.ts';
 
@@ -32,6 +38,18 @@ const VerifyInputSchema = z.object({
   entity_type: z.string().trim().min(1).max(100),
   entity_id: z.string().trim().min(1).max(200),
   verified: z.boolean(),
+});
+
+const RetrospectiveInputSchema = z.object({
+  id: z.string().max(200).optional(),
+  job_id: z.string().trim().min(1).max(200),
+  interview_round: z.string().max(200).nullable().optional(),
+  occurred_at: z.string().max(100).nullable().optional(),
+  questions: z.array(z.string().max(2_000)).max(200).optional(),
+  strong_answers: z.array(z.string().max(2_000)).max(200).optional(),
+  weak_answers: z.array(z.string().max(2_000)).max(200).optional(),
+  follow_up_actions: z.array(z.string().max(2_000)).max(200).optional(),
+  notes: z.string().max(20_000).nullable().optional(),
 });
 
 export function registerDiagnosticRoutes(router: Router): void {
@@ -73,6 +91,7 @@ export function registerDiagnosticRoutes(router: Router): void {
       data_health: getDataHealthReport(),
       unverified_entities: provenanceRepo.listUnverified(),
       reuse_map: getExperienceReuseMap(),
+      interview_retrospectives: interviewRetrospectiveRepo.listAll(50),
     };
   });
 
@@ -88,6 +107,19 @@ export function registerDiagnosticRoutes(router: Router): void {
       ctx.query.get('after') ?? '',
     ),
   }));
+
+  router.get('/api/interview-retrospectives', () => ({ items: interviewRetrospectiveRepo.listAll() }));
+  router.get('/api/interview-retrospectives/:jobId', (ctx) => ({
+    items: interviewRetrospectiveRepo.listByJob(ctx.params.jobId!),
+  }));
+  router.post('/api/interview-retrospectives', async (ctx) => {
+    const input = await readJsonBody(ctx.req, RetrospectiveInputSchema);
+    return { retrospective: interviewRetrospectiveRepo.save(input) };
+  });
+  router.delete('/api/interview-retrospectives/:id', (ctx) => ({
+    ok: interviewRetrospectiveRepo.remove(ctx.params.id!),
+  }));
+
   router.get('/api/provenance/unverified', () => ({ items: provenanceRepo.listUnverified() }));
   router.get('/api/provenance/:type/:id', (ctx) => ({
     provenance: provenanceRepo.get(ctx.params.type!, ctx.params.id!),
