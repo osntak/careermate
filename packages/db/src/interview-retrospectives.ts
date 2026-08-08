@@ -31,6 +31,11 @@ function ensureTable(): void {
     );
     CREATE INDEX IF NOT EXISTS idx_interview_retrospectives_job
       ON interview_retrospectives(job_id, occurred_at DESC, updated_at DESC);
+    CREATE TRIGGER IF NOT EXISTS trg_interview_retrospectives_delete_job
+      AFTER DELETE ON jobs
+      BEGIN
+        DELETE FROM interview_retrospectives WHERE job_id = OLD.id;
+      END;
   `);
 }
 
@@ -137,3 +142,8 @@ export const interviewRetrospectiveRepo = {
     return getDb().prepare(`DELETE FROM interview_retrospectives WHERE id = ?`).run(retrospectiveId).changes > 0;
   },
 };
+
+// Keep the table available before settings import/export enumerates sqlite_master.
+// This also installs the job-deletion cleanup trigger for databases created before
+// interview retrospectives were introduced.
+ensureTable();
