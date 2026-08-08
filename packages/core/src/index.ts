@@ -10,4 +10,5 @@ export * from './jobsearch.ts';
 export * from './offers.ts';
 export * from './data-health.ts';
 export * from './fit-explain.ts';
+export * from './reuse-insights.ts';
 export * from './verify/index.ts';
