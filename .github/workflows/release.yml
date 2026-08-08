@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   release:
@@ -58,7 +57,7 @@ jobs:
       - name: Dist bundle smoke
         run: npm run test:dist
 
-      - name: Publish to npm with provenance
+      - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -67,7 +66,7 @@ jobs:
           if npm view "$PKG@$VER" version >/dev/null 2>&1; then
             echo "::notice::$PKG@$VER already exists; skipping publish"
           else
-            npm publish --access public --provenance
+            npm publish --access public
           fi
 
       - name: Build release bundles
