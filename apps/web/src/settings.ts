@@ -361,7 +361,7 @@ export function restoreBackup(raw: unknown): {
   };
 }
 
-/** Copy the live SQLite file + a JSON dump into the backups directory. */
+/** Create a consistent SQLite snapshot and matching JSON dump. */
 export function createBackup(): { backup_path: string; json_path: string } {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const dir = getBackupsDir();
@@ -374,11 +374,22 @@ export function createBackup(): { backup_path: string; json_path: string } {
   }
 
   try {
+    // VACUUM INTO produces a transactionally consistent standalone database.
+    // Never copy only the live main file while WAL is active.
     vacuumInto(getDb(), dbBackup);
-  } catch {
-    fs.copyFileSync(getDbPath(), dbBackup);
+    fs.writeFileSync(jsonBackup, JSON.stringify(exportAll(), null, 2), 'utf8');
+  } catch (err) {
+    // A backup is one logical artifact. Do not leave a partial SQLite/JSON pair
+    // that the UI could later present as a successful restore point.
+    for (const partial of [dbBackup, jsonBackup]) {
+      try {
+        if (fs.existsSync(partial)) fs.unlinkSync(partial);
+      } catch {
+        /* best-effort cleanup; surface the original failure */
+      }
+    }
+    throw err;
   }
-  fs.writeFileSync(jsonBackup, JSON.stringify(exportAll(), null, 2), 'utf8');
   return { backup_path: dbBackup, json_path: jsonBackup };
 }
 
