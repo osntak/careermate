@@ -65,6 +65,16 @@ function id(): string {
 }
 
 export const interviewRetrospectiveRepo = {
+  listAll(limit = 100): InterviewRetrospective[] {
+    ensureTable();
+    const safeLimit = Math.max(1, Math.min(500, Math.floor(limit)));
+    return (
+      getDb()
+        .prepare(`SELECT * FROM interview_retrospectives ORDER BY occurred_at DESC, updated_at DESC LIMIT ?`)
+        .all(safeLimit) as any[]
+    ).map(map);
+  },
+
   listByJob(jobId: string): InterviewRetrospective[] {
     ensureTable();
     return (
