@@ -13,17 +13,16 @@
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@careermate/shared": ["packages/shared/src/index.ts"],
-      "@careermate/db": ["packages/db/src/index.ts"],
-      "@careermate/core": ["packages/core/src/index.ts"],
-      "@careermate/mcp-tools": ["packages/mcp-tools/src/index.ts"],
-      "@careermate/exporters": ["packages/exporters/src/index.ts"],
-      "@careermate/parsers": ["packages/parsers/src/index.ts"],
-      "@careermate/prompts": ["packages/prompts/src/index.ts"],
-      "@careermate/workflows": ["packages/workflows/src/index.ts"],
-      "@careermate/knowledge": ["packages/knowledge/src/index.ts"]
+      "@careermate/shared": ["./packages/shared/src/index.ts"],
+      "@careermate/db": ["./packages/db/src/index.ts"],
+      "@careermate/core": ["./packages/core/src/index.ts"],
+      "@careermate/mcp-tools": ["./packages/mcp-tools/src/index.ts"],
+      "@careermate/exporters": ["./packages/exporters/src/index.ts"],
+      "@careermate/parsers": ["./packages/parsers/src/index.ts"],
+      "@careermate/prompts": ["./packages/prompts/src/index.ts"],
+      "@careermate/workflows": ["./packages/workflows/src/index.ts"],
+      "@careermate/knowledge": ["./packages/knowledge/src/index.ts"]
     }
   },
   "include": ["packages/**/*.ts", "apps/**/*.ts", "scripts/**/*.ts"],
