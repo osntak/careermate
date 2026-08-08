@@ -12,6 +12,8 @@ const {
   jobRepo,
   fitRepo,
   provenanceRepo,
+  interviewRetrospectiveRepo,
+  getDb,
   closeDb,
 } = await import('../packages/db/src/index.ts');
 const { getDataHealthReport, getExplainableFitAnalysis } = await import('../packages/core/src/index.ts');
@@ -29,6 +31,14 @@ function ok(name: string, condition: boolean, detail = ''): void {
 }
 
 try {
+  const sidecarTables = new Set(
+    (getDb()
+      .prepare(`SELECT name FROM sqlite_master WHERE type = 'table'`)
+      .all() as Array<{ name: string }>).map((row) => row.name),
+  );
+  ok('새 설치에서도 출처 테이블을 즉시 준비', sidecarTables.has('entity_provenance'));
+  ok('새 설치에서도 면접 회고 테이블을 즉시 준비', sidecarTables.has('interview_retrospectives'));
+
   const exp = experienceRepo.add({
     company: '테스트회사',
     role: '개발자',
@@ -82,6 +92,15 @@ try {
   ok('요구사항 충족률 계산', explained?.requirement_coverage === 67, String(explained?.requirement_coverage));
   ok('근거 강도 계산', (explained?.evidence_strength ?? 0) > 0);
   ok('위험·행동 제안 노출', !!explained?.risks.length && !!explained?.recommended_actions.length);
+
+  interviewRetrospectiveRepo.save({
+    job_id: job.id,
+    interview_round: '1차',
+    questions: ['최근 프로젝트를 설명해 주세요.'],
+  });
+  ok('면접 회고 저장', interviewRetrospectiveRepo.listByJob(job.id).length === 1);
+  jobRepo.remove(job.id);
+  ok('공고 삭제 시 면접 회고 자동 정리', interviewRetrospectiveRepo.listByJob(job.id).length === 0);
 } finally {
   closeDb();
   fs.rmSync(tmp, { recursive: true, force: true });
