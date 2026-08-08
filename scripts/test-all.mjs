@@ -1,16 +1,4 @@
-// Aggregating test runner. Runs EVERY suite to completion — no `&&` short-circuit
-// — so one environment-sensitive failure can't hide the rest. The bridge suite,
-// for example, needs a bindable localhost port and a detached child process; in a
-// sandboxed shell it fails, and under the old `&&` chain that failure silently
-// skipped test-verify / test-parsers / test-migrate / the main e2e. Here all eight
-// always run, you see exactly which failed, and the process exits non-zero iff any
-// suite failed (so CI still catches real regressions).
-//
-// Two suite kinds:
-//  - 'sentinel': a tsx test whose process exit code is unreliable on Windows
-//    (top-level await + process.exit() corrupts it — see scripts/run.mjs). Trust a
-//    stdout verdict string instead of the exit code.
-//  - 'exit': a plain-Node script with a reliable exit code.
+// Aggregating test runner. Runs EVERY suite to completion — no `&&` short-circuit.
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 
@@ -22,10 +10,10 @@ const SUITES = [
   { name: 'verify', kind: 'sentinel', script: 'scripts/test-verify.ts', sentinel: 'VERIFY_VERDICT PASS' },
   { name: 'parsers', kind: 'sentinel', script: 'scripts/test-parsers.ts', sentinel: 'PARSERS_VERDICT PASS' },
   { name: 'migrate', kind: 'sentinel', script: 'scripts/test-migrate.ts', sentinel: 'MIGRATE_VERDICT PASS' },
+  { name: 'review hardening', kind: 'sentinel', script: 'scripts/test-review.ts', sentinel: 'REVIEW_VERDICT PASS' },
   { name: 'core+api', kind: 'sentinel', script: 'scripts/test.ts', sentinel: 'TEST_VERDICT PASS' },
 ];
 
-// Drop the noisy Windows libuv teardown lines (same filter as run.mjs).
 const clean = (s) =>
   (s || '')
     .split('\n')
