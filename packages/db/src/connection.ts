@@ -28,10 +28,9 @@ export function vacuumInto(db: DatabaseSync, destPath: string): void {
 
 /**
  * Snapshot the DB into backups/ right before a schema upgrade runs. The DB is
- * the user's only copy, so even though each migration is transactional, a bad
- * migration shipped in an update must never be able to destroy data without a
- * restore point. Best-effort: a failed backup logs to stderr but does not block
- * boot (blocking would take both the dashboard and the MCP server down).
+ * the user's only copy, so a schema upgrade must not proceed without a restore
+ * point. Operators may explicitly opt out for emergency recovery with
+ * CAREERMATE_ALLOW_UNBACKED_MIGRATION=1.
  */
 function preMigrationBackup(db: DatabaseSync): void {
   try {
@@ -70,9 +69,17 @@ function preMigrationBackup(db: DatabaseSync): void {
       }
     }
   } catch (err) {
-    // stderr only — stdout is the MCP transport channel.
-    console.error(
-      `[careermate] 업그레이드 전 자동 백업 실패(마이그레이션은 계속 진행): ${err instanceof Error ? err.message : String(err)}`,
+    const reason = err instanceof Error ? err.message : String(err);
+    if (process.env.CAREERMATE_ALLOW_UNBACKED_MIGRATION === '1') {
+      console.error(
+        `[careermate] 업그레이드 전 자동 백업 실패 — 명시적 우회로 마이그레이션을 계속합니다: ${reason}`,
+      );
+      return;
+    }
+    throw new Error(
+      `데이터베이스 업그레이드 전 백업을 만들지 못해 시작을 중단했습니다. ` +
+        `데이터 위치를 확인하고 다시 시도하세요. 긴급 복구 시에만 ` +
+        `CAREERMATE_ALLOW_UNBACKED_MIGRATION=1을 설정할 수 있습니다. 원인: ${reason}`,
     );
   }
 }
@@ -80,13 +87,22 @@ function preMigrationBackup(db: DatabaseSync): void {
 export function getDb(): DatabaseSync {
   if (_db) return _db;
   const db = new DatabaseSync(getDbPath());
-  db.exec('PRAGMA journal_mode = WAL;');
-  db.exec('PRAGMA foreign_keys = ON;');
-  db.exec('PRAGMA busy_timeout = 5000;');
-  preMigrationBackup(db);
-  migrate(db);
-  _db = db;
-  return db;
+  try {
+    db.exec('PRAGMA journal_mode = WAL;');
+    db.exec('PRAGMA foreign_keys = ON;');
+    db.exec('PRAGMA busy_timeout = 5000;');
+    preMigrationBackup(db);
+    migrate(db);
+    _db = db;
+    return db;
+  } catch (err) {
+    try {
+      db.close();
+    } catch {
+      /* best-effort */
+    }
+    throw err;
+  }
 }
 
 export function closeDb(): void {
@@ -99,19 +115,24 @@ export function closeDb(): void {
 let _inTx = false;
 
 /**
- * Run `fn` inside a single transaction so multi-statement writes are atomic:
- * any thrown error rolls back every statement instead of leaving a half-written
- * row. node:sqlite has no transaction() helper, so we drive BEGIN/COMMIT/ROLLBACK
- * directly. Re-entrant: a nested tx() call joins the outer transaction (SQLite
- * has no nested transactions), so only the outermost call commits or rolls back.
+ * Run `fn` inside a single synchronous transaction so multi-statement writes are
+ * atomic. Promise-returning callbacks are rejected because committing before an
+ * async callback settles would silently break transaction guarantees.
  */
 export function tx<T>(fn: () => T): T {
-  if (_inTx) return fn();
+  if (_inTx) {
+    const nested = fn();
+    if (nested instanceof Promise) throw new TypeError('tx() does not accept async callbacks');
+    return nested;
+  }
   const db = getDb();
   db.exec('BEGIN');
   _inTx = true;
   try {
     const result = fn();
+    if (result instanceof Promise) {
+      throw new TypeError('tx() does not accept async callbacks');
+    }
     db.exec('COMMIT');
     return result;
   } catch (err) {

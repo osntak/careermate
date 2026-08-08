@@ -5,7 +5,7 @@
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getDb, writeRuntimeInfo, clearRuntimeInfo } from '@careermate/db';
+import { getDb, closeDb, writeRuntimeInfo, clearRuntimeInfo } from '@careermate/db';
 import { BUNDLED, CareerMateError } from '@careermate/shared';
 import { checkRequest, injectToken } from './security.ts';
 import { Router, sendJson, sendDownload, serveStatic, HttpError } from './http.ts';
@@ -86,12 +86,8 @@ export function createServer(): http.Server {
       if (err instanceof HttpError) {
         sendJson(res, err.status, { error: err.message, code: err.code });
       } else if (err instanceof CareerMateError) {
-        // Expected domain failure (공고 없음, 금지된 전환, 저장 게이트 …). Its message is
-        // user-facing Korean guidance — surface it with the right status, exactly
-        // as the MCP layer relays e.message. Mirrors how chat shows the real reason.
         sendJson(res, err.httpStatus, { error: err.message, code: err.code });
       } else {
-        // Never leak résumé/cover-letter content into logs or responses.
         const message = err instanceof Error ? err.message : '알 수 없는 오류';
         console.error('[careermate] 요청 처리 중 오류:', message);
         sendJson(res, 500, { error: '서버 오류가 발생했습니다.' });
@@ -106,16 +102,11 @@ export function createServer(): http.Server {
  * network.
  */
 export function startServer(preferredPort: number): Promise<StartedServer> {
-  // Ensure the DB exists/migrated before accepting requests.
   getDb();
   const server = createServer();
 
   return new Promise((resolve, reject) => {
     let attempt = 0;
-    // Persistent handlers (attached once). Re-calling server.listen() on the same
-    // server for retries must NOT pass a one-time 'listening' callback per attempt:
-    // those accumulate and all fire on the eventual bind, so the FIRST (wrong) port
-    // would win the resolve. Instead read the real bound port from server.address().
     const onError = (e: NodeJS.ErrnoException) => {
       if (e.code === 'EADDRINUSE' && attempt < 15) {
         attempt++;
@@ -131,14 +122,26 @@ export function startServer(preferredPort: number): Promise<StartedServer> {
       const port = typeof addr === 'object' && addr ? addr.port : preferredPort;
       setServerPort(port);
       const url = `http://127.0.0.1:${port}`;
-      // Publish our address so the MCP server (a separate process) can find us.
       writeRuntimeInfo({ url, port, pid: process.pid, started_at: new Date().toISOString() });
-      const cleanup = () => {
+
+      let closing = false;
+      const cleanup = (): void => {
+        if (closing) return;
+        closing = true;
         clearRuntimeInfo();
-        process.exit(0);
+        server.close(() => {
+          try {
+            closeDb();
+          } finally {
+            process.exitCode = 0;
+          }
+        });
+        // Existing keep-alive connections should not block a user-requested exit.
+        server.closeIdleConnections?.();
       };
-      process.on('SIGINT', cleanup);
-      process.on('SIGTERM', cleanup);
+      process.once('SIGINT', cleanup);
+      process.once('SIGTERM', cleanup);
+
       resolve({ server, port, url });
     });
     server.listen(preferredPort, '127.0.0.1');
