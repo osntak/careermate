@@ -1,24 +1,18 @@
 name: Release
 
-# 버전 태그(예: v0.0.1)를 push하면:
-#   1) npm에 자동 게시 (GitHub Actions 시크릿 NPM_TOKEN 사용)
-#   2) careermate.mcpb와 폴더 설치용 zip 빌드 후 같은 태그의 GitHub Release에 첨부
-#
-# 사전 1회 설정: 레포 Settings → Secrets and variables → Actions →
-#   New repository secret → 이름 NPM_TOKEN, 값은 npmjs.com에서 발급한
-#   Automation 토큰(Publish 권한). 이미 등록돼 있으면 그대로 동작합니다.
-
 on:
   push:
     tags:
       - 'v*'
 
 permissions:
-  contents: write   # GitHub Release 생성/자산 업로드
+  contents: write
+  id-token: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,74 +22,62 @@ jobs:
         with:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
+          cache: npm
 
       - name: Install deps
         run: npm ci
 
-      - name: Tag와 package.json 버전 일치 확인
+      - name: Verify tag and package version
         run: |
           PKG="$(node -p "require('./package.json').version")"
           TAG="${GITHUB_REF_NAME#v}"
           echo "package.json=$PKG  tag=$TAG"
-          test "$PKG" = "$TAG" || { echo "::error::tag v$TAG != package.json $PKG — 버전을 맞춰주세요."; exit 1; }
+          test "$PKG" = "$TAG" || { echo "::error::tag v$TAG != package.json $PKG"; exit 1; }
 
       - name: Typecheck
         run: npm run typecheck
 
-      # 게시 게이트: typecheck만으로 npm에 올리지 않습니다. 전체 스위트 + 사용자가
-      # 받는 dist 번들 실기동까지 통과해야 게시. (로컬 npm publish도 package.json의
-      # prepublishOnly가 같은 게이트를 겁니다.)
-      - name: Test (전체 스위트)
+      - name: Test
         run: npm test
 
-      - name: Dist bundle smoke (dist/mcp.mjs 실기동)
+      - name: Dist bundle smoke
         run: npm run test:dist
 
-      # NPM_TOKEN(Automation 토큰)으로 게시. setup-node가 만든 .npmrc가
-      # NODE_AUTH_TOKEN을 읽어 인증합니다. 토큰이 없거나 권한이 없으면 404가 납니다.
-      # 멱등 처리: 같은 버전이 이미 레지스트리에 있으면 건너뜁니다. (로컬에서 먼저
-      # 게시했거나 워크플로우를 재실행해도 "cannot publish over ... 0.1.x" E403으로
-      # 깨지지 않도록.)
-      - name: Publish to npm
+      - name: Publish to npm with provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           PKG="$(node -p "require('./package.json').name")"
           VER="$(node -p "require('./package.json').version")"
           if npm view "$PKG@$VER" version >/dev/null 2>&1; then
-            echo "::notice::$PKG@$VER 가 이미 npm에 있어 게시를 건너뜁니다."
+            echo "::notice::$PKG@$VER already exists; skipping publish"
           else
-            npm publish
+            npm publish --access public --provenance
           fi
 
-      # npm publish가 실패해도 GitHub Release와 .mcpb/zip은 남깁니다.
-      - name: Build .mcpb bundle
-        id: build_mcpb
-        if: always()
+      - name: Build release bundles
         run: npm run build:mcpb
 
-      - name: Verify release artifacts
-        id: verify_artifacts
-        if: always()
+      - name: Generate SBOM and checksums
         run: |
-          test -s dist/careermate.mcpb || { echo "::error::dist/careermate.mcpb 가 없습니다."; exit 1; }
-          test -s dist/careermate.zip || { echo "::error::dist/careermate.zip 이 없습니다."; exit 1; }
-          cmp -s dist/careermate.mcpb dist/careermate.zip || { echo "::error::.mcpb와 .zip 내용이 다릅니다."; exit 1; }
-          ls -lh dist/careermate.mcpb dist/careermate.zip
+          test -s dist/careermate.mcpb
+          test -s dist/careermate.zip
+          cmp -s dist/careermate.mcpb dist/careermate.zip
+          npm sbom --sbom-format cyclonedx > dist/sbom.cdx.json
+          cd dist
+          sha256sum careermate.mcpb careermate.zip sbom.cdx.json > SHA256SUMS.txt
+          test -s SHA256SUMS.txt
 
-      - name: Attach MCPB artifacts to GitHub Release
-        if: always() && steps.verify_artifacts.outcome == 'success'
+      - name: Attach artifacts to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release create "$GITHUB_REF_NAME" \
-              --title "CareerMate $GITHUB_REF_NAME" --generate-notes
+            gh release create "$GITHUB_REF_NAME" --title "CareerMate $GITHUB_REF_NAME" --generate-notes
           fi
           gh release upload "$GITHUB_REF_NAME" \
             dist/careermate.mcpb \
             dist/careermate.zip \
+            dist/sbom.cdx.json \
+            dist/SHA256SUMS.txt \
             --clobber
-
-      # .mcpb/zip은 더 이상 레포에 커밋하지 않는다. 위 "Attach MCPB artifacts"가 올린
-      # Release 자산을, 랜딩(careermate.life)·INSTALL이 latest/download URL로 직접 가리킨다.
