@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'release/v*'
 
 permissions:
   contents: write
@@ -27,12 +29,25 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Verify tag and package version
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            RELEASE_TAG="$GITHUB_REF_NAME"
+          else
+            RELEASE_TAG="${GITHUB_REF_NAME#release/}"
+          fi
+          [[ "$RELEASE_TAG" == v* ]] || { echo "::error::release ref must resolve to v*"; exit 1; }
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Verify release and package version
         run: |
           PKG="$(node -p "require('./package.json').version")"
-          TAG="${GITHUB_REF_NAME#v}"
-          echo "package.json=$PKG  tag=$TAG"
-          test "$PKG" = "$TAG" || { echo "::error::tag v$TAG != package.json $PKG"; exit 1; }
+          TAG="${{ steps.release.outputs.tag }}"
+          VER="${TAG#v}"
+          echo "package.json=$PKG  release=$TAG"
+          test "$PKG" = "$VER" || { echo "::error::release $TAG != package.json $PKG"; exit 1; }
 
       - name: Typecheck
         run: npm run typecheck
@@ -71,11 +86,12 @@ jobs:
       - name: Attach artifacts to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release create "$GITHUB_REF_NAME" --title "CareerMate $GITHUB_REF_NAME" --generate-notes
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "CareerMate $RELEASE_TAG" --generate-notes
           fi
-          gh release upload "$GITHUB_REF_NAME" \
+          gh release upload "$RELEASE_TAG" \
             dist/careermate.mcpb \
             dist/careermate.zip \
             dist/sbom.cdx.json \
