@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'careermate-review-'));
 process.env.CAREERMATE_DATA_DIR = tmp;
@@ -19,6 +20,7 @@ const {
 const { getDataHealthReport, getExplainableFitAnalysis } = await import('../packages/core/src/index.ts');
 const { CAREERMATE_SYSTEM_PROMPT } = await import('../packages/prompts/src/system.ts');
 const { toSafeToolError } = await import('../apps/mcp/src/safe-error.ts');
+const { createBackup } = await import('../apps/web/src/settings.ts');
 
 let pass = 0;
 let fail = 0;
@@ -42,6 +44,13 @@ try {
   ok('SQLite busy 오류를 재시도 가능 메시지로 변환', toSafeToolError(new Error('SQLITE_BUSY: database is locked')).includes('잠시 후 다시 시도'));
   ok('SQLite corrupt 오류를 복구 필요 메시지로 변환', toSafeToolError(new Error('SQLITE_CORRUPT')).includes('백업 복원'));
 
+  const connectionSource = fs.readFileSync(new URL('../packages/db/src/connection.ts', import.meta.url), 'utf8');
+  const settingsSource = fs.readFileSync(new URL('../apps/web/src/settings.ts', import.meta.url), 'utf8');
+  ok(
+    'WAL 사용 중 메인 DB 파일만 복사하는 백업 fallback 금지',
+    !connectionSource.includes('copyFileSync(getDbPath()') && !settingsSource.includes('copyFileSync(getDbPath()'),
+  );
+
   const sidecarTables = new Set(
     (getDb()
       .prepare(`SELECT name FROM sqlite_master WHERE type = 'table'`)
@@ -57,6 +66,20 @@ try {
     end_date: '2025-01',
     is_current: true,
   });
+
+  const backup = createBackup();
+  ok('SQLite와 JSON 백업 쌍 생성', fs.existsSync(backup.backup_path) && fs.existsSync(backup.json_path));
+  const snapshot = new DatabaseSync(backup.backup_path, { readOnly: true });
+  try {
+    const snapExp = snapshot.prepare(`SELECT company FROM experiences WHERE id=?`).get(exp.id) as
+      | { company: string }
+      | undefined;
+    ok('WAL 활성 상태 백업에 최신 커밋 포함', snapExp?.company === '테스트회사');
+    ok('백업 SQLite 무결성 검사', snapshot.prepare(`PRAGMA integrity_check`).get() !== undefined);
+  } finally {
+    snapshot.close();
+  }
+
   projectRepo.add({ name: '중복 프로젝트' });
   projectRepo.add({ name: '중복 프로젝트', role: '프론트엔드' });
 
