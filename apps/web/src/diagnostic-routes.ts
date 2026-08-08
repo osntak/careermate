@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import { z } from 'zod';
-import { getDataHealthReport, getExplainableFitAnalysis } from '@careermate/core';
+import {
+  getDataHealthReport,
+  getExplainableFitAnalysis,
+  getExperienceReuseMap,
+  diffCoverLetterVersions,
+} from '@careermate/core';
 import { getDataDir, getDbPath, getBackupsDir, provenanceRepo } from '@careermate/db';
 import { APP_VERSION } from '@careermate/shared';
 import { Router, readJsonBody } from './http.ts';
@@ -67,12 +72,21 @@ export function registerDiagnosticRoutes(router: Router): void {
       checks,
       data_health: getDataHealthReport(),
       unverified_entities: provenanceRepo.listUnverified(),
+      reuse_map: getExperienceReuseMap(),
     };
   });
 
   router.get('/api/data-health', () => getDataHealthReport());
+  router.get('/api/reuse-map', () => ({ items: getExperienceReuseMap() }));
   router.get('/api/fit/:jobId/explain', (ctx) => ({
     fit: getExplainableFitAnalysis(ctx.params.jobId!),
+  }));
+  router.get('/api/cover-letters/:coverLetterId/diff', (ctx) => ({
+    diff: diffCoverLetterVersions(
+      ctx.params.coverLetterId!,
+      ctx.query.get('before') ?? '',
+      ctx.query.get('after') ?? '',
+    ),
   }));
   router.get('/api/provenance/unverified', () => ({ items: provenanceRepo.listUnverified() }));
   router.get('/api/provenance/:type/:id', (ctx) => ({
