@@ -17,6 +17,8 @@ const {
   closeDb,
 } = await import('../packages/db/src/index.ts');
 const { getDataHealthReport, getExplainableFitAnalysis } = await import('../packages/core/src/index.ts');
+const { CAREERMATE_SYSTEM_PROMPT } = await import('../packages/prompts/src/system.ts');
+const { toSafeToolError } = await import('../apps/mcp/src/safe-error.ts');
 
 let pass = 0;
 let fail = 0;
@@ -31,6 +33,15 @@ function ok(name: string, condition: boolean, detail = ''): void {
 }
 
 try {
+  ok('전역 지침은 전체 컨텍스트 강제 조회를 금지', CAREERMATE_SYSTEM_PROMPT.includes('전체 데이터를 습관적으로 불러오지 않습니다'));
+  ok('전역 지침은 임의 저장을 금지', CAREERMATE_SYSTEM_PROMPT.includes('임의로 저장하지 않습니다'));
+  ok('전역 지침은 파괴적 작업 확인을 요구', CAREERMATE_SYSTEM_PROMPT.includes('명시적 확인 후 실행'));
+
+  const leaked = toSafeToolError(new Error('SQL failed at C:\\Users\\홍길동\\career.db: SELECT * FROM resumes WHERE content="secret"'));
+  ok('알 수 없는 MCP 오류에서 내부 경로와 SQL 차단', !leaked.includes('Users') && !leaked.includes('SELECT') && !leaked.includes('secret'));
+  ok('SQLite busy 오류를 재시도 가능 메시지로 변환', toSafeToolError(new Error('SQLITE_BUSY: database is locked')).includes('잠시 후 다시 시도'));
+  ok('SQLite corrupt 오류를 복구 필요 메시지로 변환', toSafeToolError(new Error('SQLITE_CORRUPT')).includes('백업 복원'));
+
   const sidecarTables = new Set(
     (getDb()
       .prepare(`SELECT name FROM sqlite_master WHERE type = 'table'`)
