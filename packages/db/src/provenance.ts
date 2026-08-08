@@ -118,3 +118,8 @@ export const provenanceRepo = {
     });
   },
 };
+
+// Backup import discovers allowed tables from sqlite_master before any provenance
+// endpoint is called. Create this sidecar table when @careermate/db loads so a
+// backup made on another machine is accepted on a completely fresh installation.
+ensureTable();
