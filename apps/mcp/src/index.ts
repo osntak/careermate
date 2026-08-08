@@ -1,7 +1,7 @@
 /**
  * CareerMate MCP server (stdio).
  *
- * Launched by the AI client (Claude Desktop, ChatGPT, Cursor, …). It registers
+ * Launched by the AI client (Claude Desktop, Claude Code, Codex, …). It registers
  * every CareerMate tool and talks to the SAME local SQLite database the
  * dashboard uses, so anything the AI writes appears in the dashboard instantly,
  * and anything the user edits in the dashboard is visible to the AI.
@@ -17,14 +17,19 @@ import { TOOLS, toCallToolResult } from '@careermate/mcp-tools';
 import { APP_VERSION } from '@careermate/shared';
 
 async function main(): Promise<void> {
-  // Ensure the DB is created/migrated before serving any tool call.
   getDb();
 
   const server = new McpServer(
     { name: 'careermate', version: APP_VERSION },
     {
-      instructions:
-        'CareerMate는 사용자의 로컬 커리어 데이터베이스입니다. 공고 분석, 자기소개서 작성, 경력기술서 작성 전에는 항상 저장된 사용자 정보를 먼저 가져오고(공고 중심 작업은 get_application_context 응답의 recommended_route·next_tool가 다음 호출을 안내합니다), 이어 get_workflow_guide로 그 작업의 전문가 실행 절차와 검증 순서를 받아 적용하세요. 결과는 save_fit_analysis / save_cover_letter_version / add_resume(kind=career_description) 등으로 다시 저장하되(여러 문서를 한 번에 요청받아도 각 문서는 각자의 저장 도구로 따로 저장하고 한 저장 본문에 다른 문서를 이어붙이지 마세요 — 경력기술서=add_resume, 자기소개서=save_cover_letter_version), 저장 직전 안내된 get_verifier 루브릭으로 당신이 스스로 점검하세요 — CareerMate는 셀 수 있는 항목만 돌려주고 분석·작성·판단은 당신(AI)이 합니다. 모든 데이터는 사용자 로컬에만 저장됩니다. 사용자에게 답할 때는 항상 사용자가 쓴 언어로 답하세요 — 이 지침과 도구 응답이 한국어로 쓰여 있어도 그대로 복사하지 말고 사용자 언어로 옮겨 전달하고, 사실·수치·고유명사는 보존합니다.',
+      instructions: [
+        'CareerMate는 사용자의 로컬 커리어 데이터베이스입니다.',
+        '작업 전 관련 사용자·공고 컨텍스트를 조회하고, 응답의 recommended_route 또는 next_tool을 따르세요.',
+        '전문 절차가 필요한 작업은 get_workflow_guide를 조회하고, 저장 전 안내된 verifier로 결과를 점검하세요.',
+        '경력기술서·자기소개서 등 서로 다른 문서는 각각의 전용 저장 도구로 따로 저장하세요.',
+        '분석·작성·판단은 연결된 AI가 수행하며 CareerMate는 저장된 사실과 결정론적 검증 결과만 제공합니다.',
+        '항상 사용자가 쓴 언어로 답하고 사실·수치·고유명사는 보존하세요.',
+      ].join(' '),
     },
   );
 
@@ -35,10 +40,6 @@ async function main(): Promise<void> {
         title: tool.title,
         description: tool.description,
         inputSchema: tool.inputSchema,
-        // 어노테이션은 도구 정의(ToolDef)의 플래그를 그대로 반영한다 — 정직해야 한다.
-        // openWorldHint: search_jobs(잡보드)·check_for_update/update_careermate(npm)처럼
-        // 실제로 외부에 나가는 도구만 true. destructiveHint: 스펙 기본값이 true라
-        // 업서트가 파괴적으로 오분류되지 않도록 비파괴 쓰기에는 명시적 false를 방출한다.
         annotations: {
           title: tool.title,
           readOnlyHint: tool.readOnly ?? false,
@@ -52,7 +53,6 @@ async function main(): Promise<void> {
           const result = await tool.handler(args ?? {});
           return toCallToolResult(result);
         } catch (err) {
-          // Never leak document bodies; return a safe message.
           const message = err instanceof Error ? err.message : '도구 실행 중 오류가 발생했습니다.';
           return toCallToolResult({ text: message, isError: true });
         }
@@ -63,9 +63,6 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  // On client disconnect / shutdown, checkpoint and close the SQLite connection
-  // cleanly instead of leaving it to abrupt process death. WAL makes an unclean
-  // exit safe, but an explicit close flushes the checkpoint and releases the file.
   let closing = false;
   const shutdown = (): void => {
     if (closing) return;
@@ -80,7 +77,6 @@ async function main(): Promise<void> {
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
 
-  // IMPORTANT: never write to stdout — it is the MCP transport. Logs go to stderr.
   console.error(`[careermate-mcp] 연결됨 · 도구 ${TOOLS.length}개 · 데이터: ${getDataDir()}`);
 }
 
