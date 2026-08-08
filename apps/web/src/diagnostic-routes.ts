@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { z } from 'zod';
-import { getDataHealthReport } from '@careermate/core';
+import { getDataHealthReport, getExplainableFitAnalysis } from '@careermate/core';
 import { getDataDir, getDbPath, getBackupsDir, provenanceRepo } from '@careermate/db';
 import { APP_VERSION } from '@careermate/shared';
 import { Router, readJsonBody } from './http.ts';
@@ -35,12 +35,7 @@ export function registerDiagnosticRoutes(router: Router): void {
     const dbPath = getDbPath();
     const backupsDir = getBackupsDir();
     const checks = [
-      {
-        id: 'database',
-        ok: fs.existsSync(dbPath),
-        label: '로컬 데이터베이스',
-        detail: dbPath,
-      },
+      { id: 'database', ok: fs.existsSync(dbPath), label: '로컬 데이터베이스', detail: dbPath },
       {
         id: 'data_dir',
         ok: fs.existsSync(dataDir) && writable(dataDir),
@@ -76,6 +71,9 @@ export function registerDiagnosticRoutes(router: Router): void {
   });
 
   router.get('/api/data-health', () => getDataHealthReport());
+  router.get('/api/fit/:jobId/explain', (ctx) => ({
+    fit: getExplainableFitAnalysis(ctx.params.jobId!),
+  }));
   router.get('/api/provenance/unverified', () => ({ items: provenanceRepo.listUnverified() }));
   router.get('/api/provenance/:type/:id', (ctx) => ({
     provenance: provenanceRepo.get(ctx.params.type!, ctx.params.id!),
