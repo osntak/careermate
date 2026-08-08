@@ -2,49 +2,36 @@
  * Job search import — pull postings from key-free public job-board endpoints by
  * keyword, so the AI can offer real listings the user can save into CareerMate.
  *
- * Scope & boundaries (deliberate):
- *  - INBOUND only. We fetch publicly visible postings; we send only the search
- *    keyword, never the user's stored data. (Privacy = no user data leaves; this
- *    does not violate it.)
- *  - No WAF bypass, no auth keys. These providers' own frontends call these JSON
- *    endpoints unauthenticated; a plain fetch suffices. We do NOT bundle a
- *    scraper/anti-bot evasion (that's the legally dangerous part — see
- *    .claude/work/research/research_0004). Sites requiring keys (Saramin oapi,
- *    고용24) or that forbid it in robots.txt (JobKorea search) are excluded here.
- *  - Honest User-Agent. We identify ourselves as careermate (verified live:
- *    both providers answer 200 to it), never as a spoofed browser — "no bot
- *    evasion" must include not lying about who is asking.
- *  - Read-only w.r.t. the DB. This returns candidates; the AI shows them and the
- *    user picks which to save via save_job_posting (no auto-dumping into the DB).
- *
- * Providers are unofficial public endpoints — if a response shape changes, only
- * the affected provider's parser needs updating (others keep working).
+ * CareerMate is local-first: only the search keyword leaves the machine. Stored
+ * profile, résumé, application, and document data are never sent to providers.
+ * Provider endpoints are unofficial and therefore validated at runtime; a shape
+ * change degrades only that provider instead of silently returning corrupt rows.
  */
 
+import { z } from 'zod';
 import { APP_VERSION } from '@careermate/shared';
 
 export interface JobSearchResult {
-  /** Provider id, e.g. 'wanted' | 'jumpit'. */
   source: string;
   company: string;
   position: string;
-  /** Canonical posting URL the user can open. */
   url: string;
   location?: string;
-  /** Required experience, human-readable (e.g. '신입', '5~20년'). */
   experience?: string;
-  /** Tech stack / tags when the provider exposes them. */
   keywords?: string[];
-  /** Application deadline as YYYY-MM-DD when known. */
   deadline?: string;
-  /** Provider-native id (for dedup / detail fetch). */
   external_id: string;
 }
 
+export type ProviderStatus = 'healthy' | 'degraded' | 'unavailable';
+
 export interface ProviderOutcome {
   source: string;
+  label: string;
   ok: boolean;
+  status: ProviderStatus;
   count: number;
+  checked_at: string;
   error?: string;
 }
 
@@ -55,24 +42,20 @@ export interface JobSearchResponse {
 }
 
 export interface JobSearchOptions {
-  /** Which providers to query. Defaults to all registered. */
   sources?: string[];
-  /** Max results per provider (1–50). Default 10. */
   limit?: number;
-  /** Per-request timeout in ms. Default 10000. */
   timeoutMs?: number;
 }
 
 const UA = `careermate/${APP_VERSION} (+https://careermate.life)`;
 
-/** Slice an ISO timestamp / date string to YYYY-MM-DD; undefined if not a date. */
 function toYmd(v: unknown): string | undefined {
   if (typeof v !== 'string' || v.length < 10) return undefined;
   const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
   return m ? m[1] : undefined;
 }
 
-async function getJson(url: string, timeoutMs: number): Promise<any> {
+async function getJson(url: string, timeoutMs: number): Promise<unknown> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -81,6 +64,8 @@ async function getJson(url: string, timeoutMs: number): Promise<any> {
       signal: ctrl.signal,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const type = res.headers.get('content-type') ?? '';
+    if (!type.includes('json')) throw new Error(`unexpected content-type: ${type || 'unknown'}`);
     return await res.json();
   } finally {
     clearTimeout(timer);
@@ -93,7 +78,41 @@ interface Provider {
   search(query: string, limit: number, timeoutMs: number): Promise<JobSearchResult[]>;
 }
 
-/** Wanted (wanted.co.kr) — public v4 jobs JSON, no auth. IT/startup roles. */
+const wantedSchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.union([z.string(), z.number()]),
+      position: z.string().min(1),
+      company: z.object({ name: z.string().min(1) }),
+      annual_from: z.number().nullable().optional(),
+      annual_to: z.number().nullable().optional(),
+      due_time: z.string().nullable().optional(),
+      address: z
+        .object({ location: z.string().optional(), full_location: z.string().optional() })
+        .nullable()
+        .optional(),
+    }).passthrough(),
+  ),
+}).passthrough();
+
+const jumpitSchema = z.object({
+  result: z.object({
+    positions: z.array(
+      z.object({
+        id: z.union([z.string(), z.number()]),
+        companyName: z.string().min(1),
+        title: z.string().min(1),
+        locations: z.array(z.string()).optional(),
+        newcomer: z.boolean().optional(),
+        minCareer: z.number().nullable().optional(),
+        maxCareer: z.number().nullable().optional(),
+        techStacks: z.array(z.string()).optional(),
+        closedAt: z.string().nullable().optional(),
+      }).passthrough(),
+    ),
+  }).passthrough(),
+}).passthrough();
+
 const wanted: Provider = {
   id: 'wanted',
   label: '원티드',
@@ -101,81 +120,103 @@ const wanted: Provider = {
     const url =
       `https://www.wanted.co.kr/api/v4/jobs?country=kr&locations=all&years=-1` +
       `&job_sort=job.latest_order&limit=${limit}&offset=0&query=${encodeURIComponent(query)}`;
-    const j = await getJson(url, timeoutMs);
-    const rows: any[] = Array.isArray(j?.data) ? j.data : [];
-    return rows.map((r) => {
+    const j = wantedSchema.parse(await getJson(url, timeoutMs));
+    return j.data.map((r) => {
       const annual =
         r.annual_from || r.annual_to
           ? `${r.annual_from ?? 0}~${r.annual_to ?? '?'}년`
           : undefined;
       return {
         source: 'wanted',
-        company: r.company?.name ?? '',
-        position: r.position ?? '',
+        company: r.company.name,
+        position: r.position,
         url: `https://www.wanted.co.kr/wd/${r.id}`,
-        location: r.address?.location ?? r.address?.full_location ?? undefined,
+        location: r.address?.location ?? r.address?.full_location,
         experience: annual,
         deadline: toYmd(r.due_time),
         external_id: String(r.id),
-      } as JobSearchResult;
+      };
     });
   },
 };
 
-/** Jumpit (jumpit.co.kr) — public positions JSON, no auth. Dev roles, tech stacks. */
 const jumpit: Provider = {
   id: 'jumpit',
   label: '점핏',
   async search(query, limit, timeoutMs) {
     const url =
       `https://api.jumpit.co.kr/api/positions?sort=rsp_rate&page=1&keyword=${encodeURIComponent(query)}`;
-    const j = await getJson(url, timeoutMs);
-    const rows: any[] = Array.isArray(j?.result?.positions) ? j.result.positions : [];
-    return rows.slice(0, limit).map((p) => ({
+    const j = jumpitSchema.parse(await getJson(url, timeoutMs));
+    return j.result.positions.slice(0, limit).map((p) => ({
       source: 'jumpit',
-      company: p.companyName ?? '',
-      position: p.title ?? '',
+      company: p.companyName,
+      position: p.title,
       url: `https://www.jumpit.co.kr/position/${p.id}`,
-      location: Array.isArray(p.locations) ? p.locations[0] : undefined,
+      location: p.locations?.[0],
       experience: p.newcomer
         ? '신입'
         : p.minCareer != null
           ? `${p.minCareer}~${p.maxCareer ?? p.minCareer}년`
           : undefined,
-      keywords: Array.isArray(p.techStacks) ? p.techStacks : undefined,
+      keywords: p.techStacks,
       deadline: toYmd(p.closedAt),
       external_id: String(p.id),
-    } as JobSearchResult));
+    }));
   },
 };
 
 const PROVIDERS: Provider[] = [wanted, jumpit];
-
-/** Registered provider ids (key-free, no WAF bypass). */
 export const JOB_SEARCH_SOURCES = PROVIDERS.map((p) => p.id);
 
-/**
- * Search key-free public job boards by keyword. Each provider runs independently;
- * one failing (network/timeout/shape change) does not sink the others. Results
- * are returned for the AI to present — saving is a separate explicit step.
- */
+function providerError(e: unknown): { status: ProviderStatus; error: string } {
+  if (e instanceof z.ZodError) {
+    const first = e.issues[0];
+    return {
+      status: 'degraded',
+      error: `provider response changed${first ? ` (${first.path.join('.') || 'root'})` : ''}`,
+    };
+  }
+  const message = e instanceof Error ? e.message : String(e);
+  return { status: 'unavailable', error: message };
+}
+
 export async function searchJobs(query: string, opts: JobSearchOptions = {}): Promise<JobSearchResponse> {
   const q = (query ?? '').trim();
   if (!q) return { query: '', results: [], providers: [] };
   const limit = Math.min(50, Math.max(1, opts.limit ?? 10));
-  const timeoutMs = opts.timeoutMs ?? 10000;
+  const timeoutMs = Math.min(30_000, Math.max(1_000, opts.timeoutMs ?? 10_000));
   const chosen = opts.sources?.length
     ? PROVIDERS.filter((p) => opts.sources!.includes(p.id))
     : PROVIDERS;
 
   const settled = await Promise.all(
     chosen.map(async (p): Promise<{ outcome: ProviderOutcome; results: JobSearchResult[] }> => {
+      const checked_at = new Date().toISOString();
       try {
         const results = await p.search(q, limit, timeoutMs);
-        return { outcome: { source: p.id, ok: true, count: results.length }, results };
-      } catch (e) {
         return {
-          outcome: { source: p.id, ok: false, count: 0, error: e instanceof Error ? e.message : String(e) },
+          outcome: {
+            source: p.id,
+            label: p.label,
+            ok: true,
+            status: 'healthy',
+            count: results.length,
+            checked_at,
+          },
+          results,
+        };
+      } catch (e) {
+        const failure = providerError(e);
+        return {
+          outcome: {
+            source: p.id,
+            label: p.label,
+            ok: false,
+            status: failure.status,
+            count: 0,
+            checked_at,
+            error: failure.error,
+          },
           results: [],
         };
       }
