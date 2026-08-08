@@ -8,6 +8,7 @@ export * from './runtime.ts';
 export * from './connection.ts';
 export * from './settings.ts';
 export * from './provenance.ts';
+export * from './interview-retrospectives.ts';
 export { migrate, MIGRATIONS } from './schema.ts';
 export {
   profileRepo,
