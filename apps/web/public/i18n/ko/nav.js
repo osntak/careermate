@@ -6,6 +6,7 @@ export default {
   'nav.applications': '지원 현황',
   'nav.documents': '문서',
   'nav.interview': '면접 준비',
+  'nav.insights': '진단·인사이트',
   'nav.settings': '설정',
   'nav.section.workspace': '워크스페이스',
   'nav.section.system': '시스템',
