@@ -1,8 +1,9 @@
 import fs from 'node:fs';
+import { z } from 'zod';
 import { getDataHealthReport } from '@careermate/core';
-import { getDataDir, getDbPath, getBackupsDir } from '@careermate/db';
+import { getDataDir, getDbPath, getBackupsDir, provenanceRepo } from '@careermate/db';
 import { APP_VERSION } from '@careermate/shared';
-import { Router } from './http.ts';
+import { Router, readJsonBody } from './http.ts';
 
 function writable(path: string): boolean {
   try {
@@ -12,6 +13,21 @@ function writable(path: string): boolean {
     return false;
   }
 }
+
+const ProvenanceInputSchema = z.object({
+  entity_type: z.string().trim().min(1).max(100),
+  entity_id: z.string().trim().min(1).max(200),
+  source: z.enum(['human', 'ai', 'import', 'document']),
+  source_document_id: z.string().max(200).nullable().optional(),
+  source_excerpt: z.string().max(2_000).nullable().optional(),
+  verified_by_human: z.boolean().optional(),
+});
+
+const VerifyInputSchema = z.object({
+  entity_type: z.string().trim().min(1).max(100),
+  entity_id: z.string().trim().min(1).max(200),
+  verified: z.boolean(),
+});
 
 export function registerDiagnosticRoutes(router: Router): void {
   router.get('/api/diagnostics', () => {
@@ -55,8 +71,23 @@ export function registerDiagnosticRoutes(router: Router): void {
       },
       checks,
       data_health: getDataHealthReport(),
+      unverified_entities: provenanceRepo.listUnverified(),
     };
   });
 
   router.get('/api/data-health', () => getDataHealthReport());
+  router.get('/api/provenance/unverified', () => ({ items: provenanceRepo.listUnverified() }));
+  router.get('/api/provenance/:type/:id', (ctx) => ({
+    provenance: provenanceRepo.get(ctx.params.type!, ctx.params.id!),
+  }));
+  router.post('/api/provenance', async (ctx) => {
+    const input = await readJsonBody(ctx.req, ProvenanceInputSchema);
+    return { provenance: provenanceRepo.save(input) };
+  });
+  router.post('/api/provenance/verify', async (ctx) => {
+    const input = await readJsonBody(ctx.req, VerifyInputSchema);
+    return {
+      provenance: provenanceRepo.setHumanVerified(input.entity_type, input.entity_id, input.verified),
+    };
+  });
 }
