@@ -4,7 +4,7 @@
 
 각 단계는 순서대로 수행하되, 무엇을 할지 **먼저 사용자의 언어로 쉽게 설명하고 사용자의 동의를 받은 뒤** 실행하세요. 확실하지 않으면 추측하지 말고 사용자에게 확인합니다.
 
-> Claude Desktop만 쓰는 사용자는 터미널이 필요 없습니다. 이 경우 `careermate.zip`을 압축 해제해 폴더로 추가하는 경로(아래 5단계)를 안내하세요. `.mcpb` 직접 추가는 일부 Claude Desktop 버전에서 실패하는 알려진 이슈가 있습니다.
+> 공개 설치의 기본 경로는 npm/npx입니다. Claude Desktop만 쓰고 소스나 내부 번들을 이미 받은 사용자는 `careermate.zip`을 압축 해제해 폴더로 추가하는 보조 경로(아래 5단계)를 안내하세요. `.mcpb` 직접 추가는 일부 Claude Desktop 버전에서 실패하는 알려진 이슈가 있습니다.
 
 > **빈 폴더에서 시작**한다면(소스를 미리 받지 않는 경우) 이 런북의 공개본을 에이전트에게 주세요: **https://careermate.life/llms-install.txt** — 에이전트가 그 URL을 직접 읽고 npm으로 자동 설치·연결합니다.
 
@@ -26,7 +26,7 @@
 
 | 내가 누구인가 | MCP 등록 방식 |
 |---|---|
-| 사용자가 **Claude Desktop**을 쓰는 경우 | `careermate.zip` 압축 해제 후 폴더 추가 — **터미널 불필요** (`.mcpb` 직접 추가는 known issue) |
+| 사용자가 **Claude Desktop**을 쓰고 소스/내부 번들이 있는 경우 | `careermate.zip` 압축 해제 후 폴더 추가 — **터미널 불필요** (`.mcpb` 직접 추가는 known issue) |
 | **Claude Code** | 사용자가 여는 작업 폴더의 프로젝트 `.mcp.json`, 또는 `claude mcp add` (첫 실행 시 1회 승인) |
 | **Codex** (OpenAI Codex CLI) | `~/.codex/config.toml`의 `[mcp_servers.careermate]` 테이블, 또는 `codex mcp add` |
 
@@ -113,7 +113,7 @@ npm run init
 
 | 클라이언트 | 등록 결과 |
 |---|---|
-| **Claude Desktop** | `careermate.zip` 압축 해제 후 폴더 추가(아래) — `init`과 별개. `.mcpb` 직접 추가는 known issue |
+| **Claude Desktop** | 소스/내부 번들이 있으면 `careermate.zip` 압축 해제 후 폴더 추가(아래) — `init`과 별개. `.mcpb` 직접 추가는 known issue |
 | **Claude Code** | 현재 작업 폴더에 `.mcp.json` + `.claude/settings.local.json`(데이터 도구 사전 허용) 기록 → 첫 실행 시 폴더 **"신뢰" 1회**만 |
 | **Codex** | `~/.codex/config.toml`의 `[mcp_servers.careermate]` 기록 → Codex 안에서 `/mcp`로 확인 |
 
@@ -148,13 +148,13 @@ npm run init -- --print
 
 ### Claude Desktop — ZIP 폴더 설치 (터미널 불필요)
 
-1. `npm run build:mcpb`로 만들어진 **`dist/careermate.zip`** 을 압축 해제합니다.
+1. 소스나 내부 번들이 있는 경우 `npm run build:mcpb`로 만들어진 **`dist/careermate.zip`** 을 압축 해제합니다.
 2. Claude Desktop의 **Settings → Extensions → Advanced settings → Install extension…** 에서 압축을 푼 폴더를 추가합니다.
 3. Claude Desktop을 **완전히 재시작**합니다.
 
 `.mcpb` 직접 추가는 일부 Claude Desktop 버전에서 설치 창이 뜨지 않거나 실패하는 알려진 이슈가 있습니다. `careermate.zip`은 같은 번들을 폴더 설치용으로 제공하는 파일이며, 폴더 안에는 같은 `manifest.json`과 서버 코드가 들어 있습니다.
 
-> 참고: `careermate.mcpb`와 `careermate.zip`은 GitHub Release에서 내려받을 수 있습니다. 소스를 받은 경우 `npm run build:mcpb`로 둘 다 직접 빌드할 수 있습니다. 둘 다 잘 안 되면 **터미널에서 `npx -y careermate init`** 가 가장 간단한 대안입니다.
+> 참고: 공개 설치의 기본 경로는 **터미널에서 `npx -y careermate init`** 입니다. `careermate.mcpb`와 `careermate.zip`은 소스나 내부 번들이 있을 때 `npm run build:mcpb`로 직접 만들 수 있습니다.
 
 ### init 직후 마무리
 
@@ -223,7 +223,7 @@ npm start
 |---|---|
 | **포트 충돌** (4319 사용 중) | 자동 폴백되니 터미널의 실제 주소를 확인. 포트를 고정하려면 `CAREERMATE_PORT` 환경변수를 설정 후 재실행. AI가 백그라운드로 열었을 때의 실행 로그는 `~/.careermate/server.log`에 남습니다. |
 | **MCP가 연결되지 않음** | ① 등록 경로가 맞는지 ② `node --version`이 22.5.0 이상인지 ③ `npm install`을 마쳤는지 확인 → 그다음 **AI 클라이언트를 완전히 재시작**. 폴더를 옮겼다면 `npm run init`을 다시 실행. |
-| **Claude `.mcpb` 파일 설치가 무반응/실패** | 알려진 이슈입니다. `careermate.zip`을 내려받아 압축 해제 → Claude Desktop 확장 설정에서 압축을 푼 폴더를 추가. 그래도 안 되면 `npx -y careermate init` 경로로 등록. |
+| **Claude `.mcpb` 파일 설치가 무반응/실패** | 알려진 이슈입니다. 소스나 내부 번들이 있다면 `careermate.zip`을 압축 해제 → Claude Desktop 확장 설정에서 압축을 푼 폴더를 추가. 그래도 안 되면 `npx -y careermate init` 경로로 등록. |
 | **무엇이 잘못됐는지 모를 때** | `npm run doctor`로 Node·데이터 폴더·DB·도구 개수·대시보드 상태를 한 번에 점검. |
 | **데이터 위치 확인** | `~/.careermate` (Windows: `%USERPROFILE%\.careermate`). 데이터 폴더를 옮기려면 `CAREERMATE_DATA_DIR` 환경변수 사용. |
 | **DB 스키마 문제** | `npm run migrate` — 여러 번 실행해도 안전합니다(idempotent). |

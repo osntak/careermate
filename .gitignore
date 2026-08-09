@@ -39,7 +39,7 @@ Thumbs.db
 # Maintainer AI dev harness (work-log engine + SessionStart hook) — not part of the product
 .claude/
 
-# Committed build artifact removed from the repo; the landing serves it from the GitHub Release asset
+# Generated bundle artifacts; public install defaults to npm/npx, not committed binaries.
 site/careermate.mcpb
 site/careermate.zip
 

@@ -6,13 +6,6 @@
   "license": "MIT",
   "author": "CareerMate",
   "homepage": "https://careermate.life",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/osntak/careermate.git"
-  },
-  "bugs": {
-    "url": "https://github.com/osntak/careermate/issues"
-  },
   "keywords": [
     "career",
     "resume",

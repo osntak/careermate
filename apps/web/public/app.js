@@ -24,10 +24,6 @@ const actionsEl = document.getElementById('topbar-actions');
 const routeStatusEl = document.getElementById('route-status');
 const moduleCache = new Map();
 
-function removePrivateRepositoryLinks(root = document) {
-  root.querySelectorAll?.('a[href*="github.com/osntak/careermate"]').forEach((link) => link.remove());
-}
-
 function parseHash() {
   const raw = location.hash.replace(/^#\/?/, '');
   const segments = raw.split('/').filter(Boolean);
@@ -95,7 +91,6 @@ async function route() {
     if (token !== renderToken) return;
     clear(view);
     await mod.render(ctx);
-    removePrivateRepositoryLinks(view);
     if (routeStatusEl) routeStatusEl.textContent = titleEl.textContent || t('nav.' + def.id);
   } catch (err) {
     if (token !== renderToken) return;
@@ -142,7 +137,6 @@ function localizeShell() {
     faq.href = en ? 'https://careermate.life/en/faq' : 'https://careermate.life/faq';
     faq.title = en ? 'FAQ' : '자주 묻는 질문';
   }
-  removePrivateRepositoryLinks();
 }
 
 async function boot() {

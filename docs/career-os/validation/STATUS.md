@@ -454,7 +454,7 @@ fit §0a에 '출처 밖 고유명사는 예시로도 금지' 1줄 추가가 fit-
 감사 핸드오프(`runs/HANDOFF-guidance-followup.md`)를 수행. 다중 에이전트 워크플로우로 조사·검증(ground-truth 대조 + adversarial refute). 출력-품질 A/B 게이트는 아래 분류대로 적용.
 
 **§2 즉시수정(배선/문서/사실오류 — 출력-품질 아님, A/B 불요) — 5건 main 푸시(631d19a·873cac5·c6cf009·3bb8b7b):**
-- AGENTS.md: 지원·문의·버그 라우팅 규칙 신설(GitHub Issues·osntak@gmail.com·대시보드 '도움말·문제 신고' 카드·SECURITY.md 비공개 절차·개인정보 경고) + export 패리티(export_resume·export_profile) + 인입폴더 흐름(open_inbox→read_inbox).
+- AGENTS.md: 지원·문의·버그 라우팅 규칙 신설(공개 이메일·대시보드 '도움말·문제 신고' 카드·개인정보 경고) + export 패리티(export_resume·export_profile) + 인입폴더 흐름(open_inbox→read_inbox).
 - README career-os: career-description EOP 누락 보정(§1 표·§5 목록·§6 6종 명시).
 - tools.ts: read_inbox/open_inbox 사실오류 수정(PDF도 extractDocument로 추출됨 — '추출 안 함' 단정 제거).
 - verifier C8 충돌: ats-compat(키워드 표면 0.70 advisory) ↔ responsiveness-on-target(필수요건 응답 80% critical) 두 축이 다름을 cross-note(임계값·게이트 무변경).

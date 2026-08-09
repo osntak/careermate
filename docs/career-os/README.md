@@ -1,6 +1,6 @@
 # Career-OS — 외부 LLM 실행 진입점 (단일 입구)
 
-> ✅ **상태(2026-06): 이 라우팅·EOP 적용은 이제 런타임에 배선되어 있다(Phase B-1).** 연결된 AI는 `get_workflow_guide`로 작업별 실행 절차(EOP)와 적용할 플레이북·검증기 순서를 받고, `get_playbook`/`get_verifier`로 이 폴더의 지식을 실제로 받아 적용한다. `get_application_context`도 `recommended_route`·`verifier_sequence`·`next_tool`를 함께 돌려준다. 아직 구현하지 않은 범위(B-2: det 점수 계산·저장 게이트·마이그레이션)와 패키지 구조는 [`implementation/README.md`](https://github.com/osntak/careermate/blob/main/docs/career-os/implementation/README.md) 참고.
+> ✅ **상태(2026-06): 이 라우팅·EOP 적용은 이제 런타임에 배선되어 있다(Phase B-1).** 연결된 AI는 `get_workflow_guide`로 작업별 실행 절차(EOP)와 적용할 플레이북·검증기 순서를 받고, `get_playbook`/`get_verifier`로 이 폴더의 지식을 실제로 받아 적용한다. `get_application_context`도 `recommended_route`·`verifier_sequence`·`next_tool`를 함께 돌려준다. 아직 구현하지 않은 범위(B-2: det 점수 계산·저장 게이트·마이그레이션)와 패키지 구조는 [`implementation/README.md`](implementation/README.md) 참고.
 
 > **여기서 시작하라.** CareerMate는 수동적 지식이 아니라, 외부 AI가 사용자 대면 결과를 내기 전에 적용해야 하는
 > **실행형 플레이북(EOP)·검증 루브릭·라우팅·출력 계약**을 제공한다. 두뇌=외부 AI(당신), CareerMate=실행 기질(substrate). 내부 LLM 없음.
@@ -9,7 +9,7 @@
 > 보조(런타임 아님): `validation/`(리서치 출처 + 다중 LLM(cross-vendor) 검증 하니스) · `implementation/`(CareerMate 개발자용 Phase B 내부 설계).
 >
 > EOP(Expert Operating Procedure) = 한 기능을 *시니어 전문가처럼* 수행하는 실행 절차. 검증된 리서치(`validation/research/`)에 근거하고
-> [`validation/PROTOCOL.md`](https://github.com/osntak/careermate/blob/main/docs/career-os/validation/PROTOCOL.md)의 다중 LLM(cross-vendor) 교차검증으로 단단해진다.
+> [`validation/PROTOCOL.md`](validation/PROTOCOL.md)의 다중 LLM(cross-vendor) 교차검증으로 단단해진다.
 
 ## 0. 절대 원칙 — 근거 우선순위
 ```

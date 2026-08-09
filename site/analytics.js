@@ -19,14 +19,6 @@
   var ALLOWED_HOSTS = ['careermate.life', 'www.careermate.life'];
   if (ALLOWED_HOSTS.indexOf(location.hostname) === -1) return;
 
-  // The repository is private. Never expose repository navigation from the
-  // public marketing/demo surfaces, including links created by demo pages.
-  scrubPrivateRepositoryLinks();
-  new MutationObserver(scrubPrivateRepositoryLinks).observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-  });
-
   // 1. Vercel Web Analytics.
   window.va = window.va || function () {
     (window.vaq = window.vaq || []).push(arguments);
@@ -53,44 +45,6 @@
   if (location.pathname.indexOf('/demo') === 0) {
     window.addEventListener('hashchange', function () {
       window.va('event', { name: 'demo_route', data: { route: currentRoute() } });
-    });
-  }
-
-  function scrubPrivateRepositoryLinks() {
-    document.querySelectorAll('a[href*="github.com/osntak/careermate"]').forEach(function (link) {
-      link.remove();
-    });
-
-    document.querySelectorAll('script[type="application/ld+json"]').forEach(function (script) {
-      if (script.dataset.privateRepoScrubbed === 'true') return;
-      try {
-        var data = JSON.parse(script.textContent || '{}');
-        scrubJsonLd(data);
-        script.textContent = JSON.stringify(data);
-        script.dataset.privateRepoScrubbed = 'true';
-      } catch (_) { /* keep unrelated/invalid structured data untouched */ }
-    });
-  }
-
-  function scrubJsonLd(value) {
-    if (!value || typeof value !== 'object') return;
-    if (Array.isArray(value)) {
-      for (var i = value.length - 1; i >= 0; i -= 1) {
-        if (typeof value[i] === 'string' && value[i].indexOf('github.com/osntak/careermate') !== -1) {
-          value.splice(i, 1);
-        } else {
-          scrubJsonLd(value[i]);
-        }
-      }
-      return;
-    }
-    Object.keys(value).forEach(function (key) {
-      var child = value[key];
-      if (typeof child === 'string' && child.indexOf('github.com/osntak/careermate') !== -1) {
-        delete value[key];
-      } else {
-        scrubJsonLd(child);
-      }
     });
   }
 

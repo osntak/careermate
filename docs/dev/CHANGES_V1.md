@@ -96,7 +96,7 @@ Electron · exe · Gateway · WebSocket · oneTimeToken · 클라우드 저장/�
 | 항목 | 현재 상태 | 비고 |
 |---|---|---|
 | npm 게시 | 예정 | `careermate@0.0.1`로 게시 예정. `npx -y careermate init` 경로. 소스 기반도 유효. |
-| `.mcpb` Release | 예정 | `v0.0.1` Release에 `careermate.mcpb` 첨부 예정. careermate.life·GitHub Release에서 다운로드. |
+| `.mcpb` bundle | 예정 | `careermate.mcpb` 번들은 maintainer 빌드 산출물로 생성. 공개 설치 기본 경로는 npm/npx. |
 | 공개 repo URL | **확정** | 정본 `osntak/careermate`(git remote 기준, 소문자 — 도메인과 일치). |
 | THIRD_PARTY_NOTICES | **보완 필요** | 서드파티 고지 정리 미완. |
 

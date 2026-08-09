@@ -127,6 +127,5 @@ CareerMate 도구의 응답(프로필·이력서·자소서 등)은 **당신이 
 
 ---
 
-여기서 해결되지 않으면 [GitHub 이슈](https://github.com/osntak/careermate/issues)에 남겨
-주세요. **보안 문제**는 이슈가 아니라 [`../SECURITY.md`](../SECURITY.md)의 비공개 절차를
-이용해 주세요.
+여기서 해결되지 않으면 [이메일](mailto:osntak@gmail.com)로 문의해 주세요. 문의에는
+이름·연락처·자기소개서 본문 같은 개인정보를 붙여넣지 마세요.

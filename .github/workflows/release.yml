@@ -58,6 +58,7 @@ jobs:
         run: npm run test:dist
 
       - name: Publish to npm
+        if: github.ref_type == 'tag'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -82,7 +83,8 @@ jobs:
           sha256sum careermate.mcpb careermate.zip sbom.cdx.json > SHA256SUMS.txt
           test -s SHA256SUMS.txt
 
-      - name: Attach artifacts to GitHub Release
+      - name: Attach artifacts to repository release
+        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
@@ -94,5 +96,4 @@ jobs:
             dist/careermate.mcpb \
             dist/careermate.zip \
             dist/sbom.cdx.json \
-            dist/SHA256SUMS.txt \
-            --clobber
+            dist/SHA256SUMS.txt

@@ -135,10 +135,27 @@ try {
   ok('면접 회고 저장', interviewRetrospectiveRepo.listByJob(job.id).length === 1);
   jobRepo.remove(job.id);
   ok('공고 삭제 시 면접 회고 자동 정리', interviewRetrospectiveRepo.listByJob(job.id).length === 0);
+} catch (err) {
+  fail++;
+  console.error(err instanceof Error ? err.stack || err.message : String(err));
 } finally {
-  closeDb();
-  fs.rmSync(tmp, { recursive: true, force: true });
+  const nodeMajor = Number(process.versions.node.split('.')[0] ?? '0');
+  const skipNativeCleanup = process.platform === 'win32' && nodeMajor >= 25;
+  if (!skipNativeCleanup) {
+    try {
+      closeDb();
+    } catch (err) {
+      fail++;
+      console.error(`closeDb cleanup failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    try {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    } catch (err) {
+      fail++;
+      console.error(`temp cleanup failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  console.log(`\nREVIEW_VERDICT ${fail === 0 ? 'PASS' : 'FAIL'} (${pass} passed, ${fail} failed)`);
 }
 
-console.log(`\nREVIEW_VERDICT ${fail === 0 ? 'PASS' : 'FAIL'} (${pass} passed, ${fail} failed)`);
 process.exitCode = fail === 0 ? 0 : 1;

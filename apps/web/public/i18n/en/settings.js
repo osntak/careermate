@@ -123,8 +123,6 @@ export default {
 
   // help / report a problem
   'settings.support.title': 'Help & report a problem',
-  'settings.support.sub': 'Report bugs on GitHub Issues, ask how-to questions in Discussions, or email us for anything else.',
-  'settings.support.report': 'Report a problem',
-  'settings.support.ask': 'Ask a question',
+  'settings.support.sub': 'Report bugs, questions, and feature requests by email. Do not include private career data in support messages.',
   'settings.support.email': 'Email us',
 };

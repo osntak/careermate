@@ -8,12 +8,8 @@
   "author": {
     "name": "CareerMate"
   },
-  "homepage": "https://github.com/osntak/careermate",
-  "documentation": "https://github.com/osntak/careermate/blob/main/docs/MCP_TOOLS.md",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/osntak/careermate"
-  },
+  "homepage": "https://careermate.life",
+  "documentation": "https://careermate.life/llms-install.txt",
   "license": "MIT",
   "keywords": [
     "career",

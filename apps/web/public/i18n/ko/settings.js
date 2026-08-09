@@ -123,8 +123,6 @@ export default {
 
   // help / report a problem
   'settings.support.title': '도움말·문제 신고',
-  'settings.support.sub': '버그는 GitHub 이슈로, 사용법 질문은 Discussions로, 그 밖의 문의는 이메일로 보내 주세요.',
-  'settings.support.report': '문제 신고',
-  'settings.support.ask': '질문하기',
+  'settings.support.sub': '\ubc84\uadf8, \uc0ac\uc6a9\ubc95 \uc9c8\ubb38, \uae30\ub2a5 \uc694\uccad\uc740 \uc774\uba54\uc77c\ub85c \ubcf4\ub0b4 \uc8fc\uc138\uc694. \ubb38\uc758\uc5d0\ub294 \uac1c\uc778 \ucee4\ub9ac\uc5b4 \ub370\uc774\ud130\ub97c \ub123\uc9c0 \ub9c8\uc138\uc694.',
   'settings.support.email': '이메일 문의',
 };

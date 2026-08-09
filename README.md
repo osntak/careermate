@@ -98,7 +98,7 @@ npx -y careermate init
 
 #### ③ `careermate.zip` (Claude Desktop "채팅" 앱 전용 · Node 불필요 폴백)
 
-터미널·Node 없이 붙이는 **유일한 길**입니다. [최신 GitHub Release](https://github.com/osntak/careermate/releases/latest)에서 `careermate.zip`을 내려받아 압축 해제한 뒤, Claude Desktop의 **Settings → Extensions → Advanced settings → Install extension…** 에서 압축을 푼 폴더를 추가하고 재시작합니다. (소스에서 직접 만들려면 `npm run build:mcpb` → `dist/careermate.zip`.) 단 Claude Desktop **내장 Node 버전에 의존해 불안정할 수 있습니다**(Node<22.5면 동작 불가).
+터미널·Node 없이 붙이는 보조 경로입니다. 소스나 내부 번들이 있으면 `npm run build:mcpb`로 `dist/careermate.zip`을 만든 뒤 압축 해제하고, Claude Desktop의 **Settings → Extensions → Advanced settings → Install extension…** 에서 압축을 푼 폴더를 추가한 뒤 재시작합니다. 단 Claude Desktop **내장 Node 버전에 의존해 불안정할 수 있습니다**(Node<22.5면 동작 불가). 공개 설치의 기본 경로는 위의 `npx -y careermate init`입니다.
 
 `.mcpb` 직접 추가는 일부 Claude Desktop 버전에서 실패하는 알려진 이슈가 있어, 현재는 ZIP 압축 해제 후 폴더 추가를 권장합니다. `.mcpb`와 `.zip`은 같은 번들입니다.
 
@@ -107,7 +107,8 @@ npx -y careermate init
 ### B. 소스로 개발/기여하려면
 
 ```bash
-git clone https://github.com/osntak/careermate.git && cd careermate
+# Source development requires repository access.
+# Clone your private checkout, then cd into it.
 npm install     # 빌드 단계 없음 — TypeScript를 tsx로 바로 실행
 npm start       # 대시보드 http://127.0.0.1:4319 (포트 사용 중이면 다음 빈 포트로 폴백, Ctrl+C 종료)
 npm run seed    # (선택) 데모 데이터로 둘러보기
@@ -214,7 +215,7 @@ CareerMate/
 | `npm run doctor` | 설치/환경 점검 |
 | `npm run seed` | 예시 데이터 삽입 |
 | `npm run build` | 배포용 플레인 JS 번들(`dist/`) 생성 (esbuild) |
-| `npm run build:mcpb` | Claude Desktop용 번들 빌드 → `dist/careermate.mcpb`와 폴더 설치용 `dist/careermate.zip` 생성(+ `site/`로 복사). manifest+서버코드를 한 파일로 묶어 배포. |
+| `npm run build:mcpb` | Claude Desktop용 번들 빌드 → `dist/careermate.mcpb`와 폴더 설치용 `dist/careermate.zip` 생성(+ maintainer용 `site/` 복사). manifest+서버코드를 한 파일로 묶음. |
 | `npm test` | E2E 테스트 실행 |
 | `npm run test:ui` | Playwright UI 스모크 테스트 |
 | `npm run typecheck` | 타입 검사 (`tsc --noEmit`) |
@@ -379,7 +380,7 @@ For other clients (Cursor, Cline, Windsurf, …), `npx -y careermate init -- --p
 
 #### ③ `careermate.zip` (Claude Desktop "chat" app only · no-Node fallback)
 
-This is the **only path with no terminal and no Node**. Download `careermate.zip` from the [latest GitHub Release](https://github.com/osntak/careermate/releases/latest), unzip it, add the extracted folder through Claude Desktop's **Settings → Extensions → Advanced settings → Install extension…**, then restart. (To build it from source: `npm run build:mcpb` → `dist/careermate.zip`.) Note that it **depends on Claude Desktop's bundled Node version** (won't work if that Node is < 22.5).
+This is the no-terminal/no-Node fallback path. If you have the source or an internal bundle, run `npm run build:mcpb`, unzip `dist/careermate.zip`, add the extracted folder through Claude Desktop's **Settings → Extensions → Advanced settings → Install extension…**, then restart. It **depends on Claude Desktop's bundled Node version** (won't work if that Node is < 22.5). The public default install path is `npx -y careermate init`.
 
 Direct `.mcpb` install is a known issue in some Claude Desktop builds, so the ZIP folder path is the recommended no-terminal route. The `.mcpb` and `.zip` assets contain the same bundle.
 
@@ -388,7 +389,8 @@ After connecting, **fully restart** the AI client and verify the connection by a
 ### B. Develop / contribute from source
 
 ```bash
-git clone https://github.com/osntak/careermate.git && cd careermate
+# Source development requires repository access.
+# Clone your private checkout, then cd into it.
 npm install     # no build step — TypeScript runs directly via tsx
 npm start       # dashboard at http://127.0.0.1:4319 (falls back to the next free port; Ctrl+C to stop)
 npm run seed    # (optional) explore with demo data
@@ -495,7 +497,7 @@ CareerMate/
 | `npm run doctor` | Check installation/environment |
 | `npm run seed` | Insert example data |
 | `npm run build` | Build the plain-JS distribution bundle (`dist/`) via esbuild |
-| `npm run build:mcpb` | Build the Claude Desktop bundle → `dist/careermate.mcpb` plus unpacked-folder fallback `dist/careermate.zip` (also copied to `site/`). Packs manifest + server code for distribution. |
+| `npm run build:mcpb` | Build the Claude Desktop bundle → `dist/careermate.mcpb` plus unpacked-folder fallback `dist/careermate.zip` (also copied to `site/` for maintainers). Packs manifest + server code. |
 | `npm test` | Run E2E tests |
 | `npm run test:ui` | Playwright UI smoke tests |
 | `npm run typecheck` | Type check (`tsc --noEmit`) |

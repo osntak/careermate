@@ -134,10 +134,8 @@ function main() {
   assertFile(ZIP_OUT);
   assertSameFile(OUT, ZIP_OUT);
   console.log(`   폴더 설치용 ZIP: ${ZIP_OUT}`);
-
-  // 랜딩 페이지(site/)가 .mcpb와 폴더 설치용 .zip을 직접 서빙할 수 있다.
-  // private repo라 GitHub Release 다운로드가 막혀, 빌드 결과를 페이지로 복사해 다운로드
-  // 버튼을 항상 최신으로 유지한다. site/ 는 배포 소스라 사이트와 함께 배포된다.
+  // Keep optional local/site bundle copies current when maintainers build them.
+  // Public installation defaults to npm/npx; these artifacts are helper outputs.
   console.log('\n4) 랜딩 페이지로 복사…');
   const pageDir = path.join(ROOT, 'site');
   if (fs.existsSync(pageDir)) {
@@ -147,7 +145,7 @@ function main() {
     fs.copyFileSync(ZIP_OUT, zipPageCopy);
     console.log(`   복사 완료: ${pageCopy}`);
     console.log(`   복사 완료: ${zipPageCopy}`);
-    console.log('   배포: site/ 를 배포하면 유저가 .mcpb 직접 설치 또는 ZIP 압축 해제 후 폴더 설치를 선택할 수 있습니다.');
+    console.log('   참고: site/ 복사본은 maintainer용 보조 산출물입니다. 공개 설치 기본 경로는 npm/npx입니다.');
   } else {
     console.log(`   건너뜀: ${pageDir} 없음 — 페이지 호스팅 복사 생략.`);
   }

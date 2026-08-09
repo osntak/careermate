@@ -18,7 +18,7 @@ function ensureTable(): void {
   getDb().exec(`
     CREATE TABLE IF NOT EXISTS interview_retrospectives (
       id TEXT PRIMARY KEY,
-      job_id TEXT NOT NULL,
+      job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
       interview_round TEXT,
       occurred_at TEXT,
       questions TEXT NOT NULL DEFAULT '[]',
@@ -31,11 +31,7 @@ function ensureTable(): void {
     );
     CREATE INDEX IF NOT EXISTS idx_interview_retrospectives_job
       ON interview_retrospectives(job_id, occurred_at DESC, updated_at DESC);
-    CREATE TRIGGER IF NOT EXISTS trg_interview_retrospectives_delete_job
-      AFTER DELETE ON jobs
-      BEGIN
-        DELETE FROM interview_retrospectives WHERE job_id = OLD.id;
-      END;
+    DROP TRIGGER IF EXISTS trg_interview_retrospectives_delete_job;
   `);
 }
 
