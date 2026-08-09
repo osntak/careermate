@@ -2,7 +2,6 @@
 export default {
   // 공통
   'settings.copy': '복사',
-  'settings.confirm': '확인',
   'settings.cancel': '취소',
   'settings.copyPath': '경로 복사',
 

@@ -2,7 +2,6 @@
 export default {
   // shared
   'settings.copy': 'Copy',
-  'settings.confirm': 'OK',
   'settings.cancel': 'Cancel',
   'settings.copyPath': 'Copy path',
 

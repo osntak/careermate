@@ -73,6 +73,7 @@ function Connection(info) {
       toastOk(isDemo ? t('settings.connection.shortcutDemoToast') : t('settings.connection.shortcutToast'));
       openModal({
         title: isDemo ? t('settings.connection.shortcutDemoTitle') : t('settings.connection.shortcutTitle'),
+        intent: 'contextual',
         body: el('div', { class: 'stack-3' },
           el('div', { class: 'callout' },
             icon('info'),
@@ -86,8 +87,8 @@ function Connection(info) {
             ...kvRow(t('settings.connection.shortcutFolder'), shortcut.shortcut_dir, true),
             ...kvRow(t('settings.connection.shortcutLauncher'), shortcut.launcher_path, true))),
         footer: (close) => [
-          Btn(t('settings.copyPath'), { icon: 'copy', onClick: () => copyText(shortcut.launcher_path) }),
-          Btn(t('settings.confirm'), { variant: 'primary', onClick: close }),
+          Btn(t('settings.copyPath'), { icon: 'copy', variant: 'primary', onClick: () => copyText(shortcut.launcher_path) }),
+          Btn(t('common.close'), { variant: 'ghost', onClick: close }),
         ],
       });
     } catch (e) {
@@ -360,6 +361,7 @@ function openImportModal({ fileName, backup, preview, rerender }) {
   openModal({
     title: t('settings.import.title'),
     size: 'lg',
+    intent: 'alert',
     body: el('div', { class: 'stack-3' },
       el('div', { class: 'callout' },
         icon('info'),
@@ -432,6 +434,7 @@ function DangerZone(ctx) {
 
     openModal({
       title: t('settings.reset.title'),
+      intent: 'alert',
       body: el('div', { class: 'stack-3' },
         el('div', { class: 'callout' },
           icon('info'),

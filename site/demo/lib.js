@@ -441,17 +441,19 @@ export function closeModal() {
 }
 /**
  * Open a modal. `render(close)` returns the modal body content. Provide title,
- * optional footer buttons via `footer(close)`. Returns nothing; call closeModal().
+ * optional footer buttons via `footer(close)`. `intent` only changes
+ * interruption weight; pages should not hand-roll dialog styles.
  */
-export function openModal({ title, body, footer, size }) {
+export function openModal({ title, body, footer, size, intent = 'dialog' }) {
   const root = ensureModalRoot();
   const close = closeModal;
+  root.dataset.intent = intent;
   modalReturnFocus = document.activeElement; // restored by closeModal
   const closeBtn = IconBtn('plus', { title: t('common.close'), onClick: close }); // rotated to look like ×
   closeBtn.style.transform = 'rotate(45deg)';
   const modal = el('div', {
-    class: `modal${size === 'lg' ? ' modal--lg' : ''}`,
-    attrs: { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'modal-title' },
+    class: `modal${size === 'lg' ? ' modal--lg' : ''}${intent === 'alert' ? ' modal--alert' : ''}`,
+    attrs: { role: intent === 'alert' ? 'alertdialog' : 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'modal-title' },
   },
     el('div', { class: 'modal__head' }, el('h3', { id: 'modal-title' }, title), el('div', { class: 'topbar__spacer' }), closeBtn),
   );
@@ -482,6 +484,7 @@ export function confirmDialog({ title = t('common.confirm'), message, confirmLab
   return new Promise((resolve) => {
     openModal({
       title,
+      intent: danger ? 'alert' : 'dialog',
       body: el('p', { class: 'text-secondary', style: { margin: 0, lineHeight: '1.6' } }, message),
       footer: (close) => [
         Btn(t('common.cancel'), { onClick: () => { close(); resolve(false); } }),

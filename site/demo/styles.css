@@ -476,10 +476,13 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .modal-root { position: fixed; inset: 0; z-index: 60; display: none; }
 .modal-root.is-open { display: block; }
 .modal__scrim { position: absolute; inset: 0; background: rgba(16,16,20,.42); backdrop-filter: blur(2px); animation: fade .15s; }
+.modal-root[data-intent="contextual"] .modal__scrim { background: rgba(16,16,20,.22); backdrop-filter: blur(1px); }
+.modal-root[data-intent="alert"] .modal__scrim { background: rgba(16,16,20,.52); }
 .modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: min(640px, calc(100vw - 32px));
   max-height: calc(100vh - 48px); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg); display: flex; flex-direction: column; animation: pop .16s ease; }
 .modal--lg { width: min(880px, calc(100vw - 32px)); }
+.modal--alert { width: min(520px, calc(100vw - 32px)); }
 .modal__head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
 .modal__head h3 { font-size: 15px; }
 .modal__body { padding: 20px; overflow-y: auto; }
@@ -488,6 +491,7 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .modal__error[hidden] { display: none; }
 .modal__foot { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
 @keyframes pop { from { transform: translate(-50%,-46%); opacity: 0; } to { transform: translate(-50%,-50%); opacity: 1; } }
+@keyframes sheetup { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* Dropdown menu (Menu/ExportMenu) — fixed popover anchored to its trigger so it
@@ -579,6 +583,13 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
   .card__head{ align-items: flex-start; flex-wrap: wrap; }
   .card__head .right{ margin-left: 0; width: 100%; justify-content: flex-start; }
   .page-head{ flex-wrap: wrap; }
+  .modal-root[data-intent="contextual"] .modal{
+    top: auto; left: 0; right: 0; bottom: 0; transform: none; width: 100%;
+    max-height: min(86vh, calc(100vh - 24px)); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-bottom: 0; animation: sheetup .16s ease;
+  }
+  .modal-root[data-intent="contextual"] .modal__foot{ justify-content: stretch; }
+  .modal-root[data-intent="contextual"] .modal__foot .btn{ flex: 1 1 auto; justify-content: center; }
 }
 
 /* ---------- reduced motion ----------
