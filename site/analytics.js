@@ -8,7 +8,7 @@
 // Signals collected here:
 //   1. Vercel Web Analytics: cookieless traffic analytics.
 //   2. Vercel Speed Insights: optional Core Web Vitals collection.
-//   3. Google Analytics 4: optional, cookieless by default through Consent Mode.
+//   3. Google Analytics 4: first-party analytics only; ad signals stay disabled.
 //
 // GA4 uses send_page_view:false so pageviews are controlled explicitly. That
 // lets the demo hash router report virtual pageviews for routes like #/jobs.
@@ -70,7 +70,7 @@
       ad_storage: 'denied',
       ad_user_data: 'denied',
       ad_personalization: 'denied',
-      analytics_storage: 'denied',
+      analytics_storage: 'granted',
     });
     gtag('js', new Date());
     gtag('config', id, {
@@ -87,10 +87,12 @@
 
   function sendGaPageview() {
     if (!window.gtag) return;
-    window.gtag('event', 'page_view', {
+    var params = {
       page_path: location.pathname + location.search + location.hash,
       page_location: location.href,
       page_title: document.title,
-    });
+    };
+    if (/[?&]ga_debug=1(?:&|$)/.test(location.search)) params.debug_mode = true;
+    window.gtag('event', 'page_view', params);
   }
 })();
