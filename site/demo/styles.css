@@ -467,6 +467,7 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 /* min-width:0 overrides a grid item's default min-width:auto so the 1fr column
    can shrink below its content — otherwise a long path/value overflows the grid. */
 .kv dd { margin: 0; min-width: 0; }
+.kv__value-wrap { min-width: 0; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.5; }
 .settings-action-row { align-items: flex-start; min-width: 0; }
 .settings-action-row__main { flex: 1 1 auto; min-width: 0; }
 .settings-action-row__main > div:last-child { min-width: 0; }
@@ -511,6 +512,7 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 
 /* ----------------------------------------------------------------- toast */
 .toasts { position: fixed; bottom: 20px; right: 20px; z-index: 80; display: flex; flex-direction: column; gap: 10px; }
+body[data-modal-intent] .toasts { top: 20px; bottom: auto; }
 .toast { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius);
   box-shadow: var(--shadow-md); padding: 12px 16px; min-width: 260px; max-width: 380px; animation: slidein .2s ease; font-size: 14px; }
 .toast--success { border-left-color: var(--green); }
@@ -590,6 +592,14 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
   }
   .modal-root[data-intent="contextual"] .modal__foot{ justify-content: stretch; }
   .modal-root[data-intent="contextual"] .modal__foot .btn{ flex: 1 1 auto; justify-content: center; }
+  .modal__foot{
+    justify-content: stretch; flex-wrap: wrap;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+  .modal__foot .btn{ flex: 1 1 0; min-width: 0; min-height: 44px; justify-content: center; }
+  .toasts{ left: 16px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); }
+  body[data-modal-intent] .toasts{ top: calc(var(--topbar-h) + 16px); bottom: auto; }
+  .toast{ width: 100%; min-width: 0; max-width: none; }
 }
 
 /* ---------- reduced motion ----------

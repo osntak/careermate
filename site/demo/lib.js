@@ -411,6 +411,9 @@ export function Spinner() { return el('div', { class: 'view' }, el('div', { clas
 
 /* ------------------------------------------------------------------ toast */
 let toastRoot;
+function clearToasts() {
+  if (toastRoot) clear(toastRoot);
+}
 export function toast(message, { title, type = 'default', timeout = 3800 } = {}) {
   if (!toastRoot) { toastRoot = el('div', { class: 'toasts' }); document.body.append(toastRoot); }
   const t = el('div', { class: `toast toast--${type}` },
@@ -436,6 +439,7 @@ function ensureModalRoot() {
 }
 export function closeModal() {
   if (modalRoot) { modalRoot.classList.remove('is-open'); clear(modalRoot); }
+  delete document.body.dataset.modalIntent;
   // Return focus to whatever opened the modal so keyboard users aren't dumped at the page top.
   if (modalReturnFocus) { try { modalReturnFocus.focus(); } catch { /* element gone */ } modalReturnFocus = null; }
 }
@@ -447,7 +451,9 @@ export function closeModal() {
 export function openModal({ title, body, footer, size, intent = 'dialog' }) {
   const root = ensureModalRoot();
   const close = closeModal;
+  if (intent === 'contextual' || intent === 'alert') clearToasts();
   root.dataset.intent = intent;
+  document.body.dataset.modalIntent = intent;
   modalReturnFocus = document.activeElement; // restored by closeModal
   const closeBtn = IconBtn('plus', { title: t('common.close'), onClick: close }); // rotated to look like ×
   closeBtn.style.transform = 'rotate(45deg)';

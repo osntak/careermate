@@ -16,8 +16,6 @@ export default {
 
   // 연결 상태
   'settings.connection.title': '연결 상태',
-  'settings.connection.shortcutDemoToast': '데모 바로가기 동작을 미리 보여드려요.',
-  'settings.connection.shortcutToast': '대시보드 바로가기를 만들었어요.',
   'settings.connection.shortcutDemoTitle': '바로가기 미리보기',
   'settings.connection.shortcutTitle': '바로가기 생성',
   'settings.connection.shortcutDemoCalloutTitle': '데모에서는 파일을 만들지 않습니다',

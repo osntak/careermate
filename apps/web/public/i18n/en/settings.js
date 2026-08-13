@@ -16,8 +16,6 @@ export default {
 
   // connection
   'settings.connection.title': 'Connection',
-  'settings.connection.shortcutDemoToast': "Here's a preview of how the shortcut works.",
-  'settings.connection.shortcutToast': 'Created a dashboard shortcut.',
   'settings.connection.shortcutDemoTitle': 'Shortcut preview',
   'settings.connection.shortcutTitle': 'Shortcut created',
   'settings.connection.shortcutDemoCalloutTitle': "The demo doesn't create files",

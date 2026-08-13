@@ -72,4 +72,5 @@ body.has-demo-bar .topbar { top: var(--demo-bar-h); }
   .demo-bar__text { display: none; }
   .demo-bar__link[href="/#install"] { display: none; }
   #demo-bar { gap: 8px; padding: 0 10px; }
+  body.has-demo-bar[data-modal-intent] .toasts { top: calc(var(--demo-bar-h) + var(--topbar-h) + 16px); }
 }

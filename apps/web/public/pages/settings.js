@@ -30,12 +30,16 @@ export async function render(ctx) {
 }
 
 /* ----------------------------------------------------- 데이터 저장 위치 */
-function kvRow(label, value, copyable) {
+function kvRow(label, value, copyable, { wrapValue = false } = {}) {
   return [
     el('dt', {}, label),
     el('dd', {},
       el('div', { class: 'flex between gap-3' },
-        el('span', { class: 'truncate tnum', style: { fontFamily: 'var(--mono, ui-monospace, monospace)' }, title: value }, value || '—'),
+        el('span', {
+          class: `${wrapValue ? 'kv__value-wrap' : 'truncate'} tnum`,
+          style: { fontFamily: 'var(--mono, ui-monospace, monospace)' },
+          title: value,
+        }, value || '—'),
         copyable && value
           ? IconBtn('copy', { title: t('settings.copy'), onClick: () => copyText(value) })
           : null)),
@@ -70,7 +74,6 @@ function Connection(info) {
   async function createShortcut() {
     try {
       const { shortcut } = await post('/api/settings/dashboard-shortcut', { open: true });
-      toastOk(isDemo ? t('settings.connection.shortcutDemoToast') : t('settings.connection.shortcutToast'));
       openModal({
         title: isDemo ? t('settings.connection.shortcutDemoTitle') : t('settings.connection.shortcutTitle'),
         intent: 'contextual',
@@ -84,8 +87,8 @@ function Connection(info) {
                   ? t('settings.connection.shortcutDemoCalloutBody')
                   : t('settings.connection.shortcutCalloutBody')))),
           el('dl', { class: 'kv' },
-            ...kvRow(t('settings.connection.shortcutFolder'), shortcut.shortcut_dir, true),
-            ...kvRow(t('settings.connection.shortcutLauncher'), shortcut.launcher_path, true))),
+            ...kvRow(t('settings.connection.shortcutFolder'), shortcut.shortcut_dir, true, { wrapValue: true }),
+            ...kvRow(t('settings.connection.shortcutLauncher'), shortcut.launcher_path, true, { wrapValue: true }))),
         footer: (close) => [
           Btn(t('settings.copyPath'), { icon: 'copy', variant: 'primary', onClick: () => copyText(shortcut.launcher_path) }),
           Btn(t('common.close'), { variant: 'ghost', onClick: close }),
