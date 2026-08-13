@@ -21,6 +21,7 @@ export async function render(ctx) {
   const root = el('div', { class: 'stack-4' });
 
   const panel = el('div', {});
+  let activeHasItems = true;
   // Tabs are keyboard-operable (activate = role/tabindex/Enter·Space), with tab
   // semantics for AT — role은 attrs가 먼저 tab으로 지정하므로 activate의 button 기본값을 덮지 않는다.
   const makeTab = (key, label) =>
@@ -43,7 +44,7 @@ export async function render(ctx) {
       node.classList.toggle('is-active', tab === key);
       node.setAttribute('aria-selected', String(tab === key));
     }
-    setActions();
+    ctx.setActions([]);
     renderPanel();
   }
 
@@ -74,9 +75,14 @@ export async function render(ctx) {
   async function renderPanel() {
     mount(panel, el('div', { class: 'muted text-sm' }, t('documents.loading')));
     try {
-      if (tab === 'cover') mount(panel, await CoverLettersTab(reload));
-      else if (tab === 'career') mount(panel, await CareerDescriptionsTab(reload));
-      else mount(panel, await DocumentsTab(reload));
+      const content = tab === 'cover'
+        ? await CoverLettersTab(reload)
+        : tab === 'career'
+          ? await CareerDescriptionsTab(reload)
+          : await DocumentsTab(reload);
+      activeHasItems = content.dataset.hasItems === 'true';
+      mount(panel, content);
+      setActions();
       applyFilter();
       await openRequestedDocument();
     } catch (err) {
@@ -102,6 +108,10 @@ export async function render(ctx) {
 
   // topbar: search (filters the active tab) + the tab's create action
   function setActions() {
+    if (!activeHasItems) {
+      ctx.setActions([]);
+      return;
+    }
     const placeholder = tab === 'cover' ? t('documents.search.cover') : tab === 'career' ? t('documents.search.career') : t('documents.search.docs');
     const search = Input({ type: 'search', placeholder, value: query, attrs: { 'aria-label': t('documents.search.aria') } });
     search.classList.add('input--inline');
@@ -115,7 +125,7 @@ export async function render(ctx) {
   }
 
   mount(ctx.view, root);
-  setActions();
+  ctx.setActions([]);
   await renderPanel();
 }
 
@@ -124,6 +134,7 @@ export async function render(ctx) {
 async function CoverLettersTab(reload) {
   const { cover_letters: list } = await get('/api/cover-letters');
   const wrap = el('div', { class: 'stack-3' });
+  wrap.dataset.hasItems = list.length ? 'true' : 'false';
 
   if (!list.length) {
     return mountInto(wrap, EmptyState({
@@ -376,6 +387,7 @@ async function CareerDescriptionsTab(reload) {
   const [{ documents: list }, m] = await Promise.all([get('/api/documents?kind=career_description'), meta()]);
   const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, t('kind.' + k.value)]));
   const wrap = el('div', { class: 'stack-3' });
+  wrap.dataset.hasItems = list.length ? 'true' : 'false';
 
   if (!list.length) {
     return mountInto(wrap, EmptyState({
@@ -397,6 +409,7 @@ async function DocumentsTab(reload) {
   const list = (documents || []).filter((doc) => doc.kind !== 'career_description');
   const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, t('kind.' + k.value)]));
   const wrap = el('div', { class: 'stack-3' });
+  wrap.dataset.hasItems = list.length ? 'true' : 'false';
 
   if (!list.length) {
     return mountInto(wrap, EmptyState({

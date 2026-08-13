@@ -39,6 +39,7 @@ Status codes (for Badge + classes): draft(작성 중), planned(지원 예정), a
 ## Conventions
 - Build forms with Field+Input/Textarea/Select inside `openModal`; submit → post/put → toastOk → closeModal → re-render the page (re-run render or refetch+remount) → `ctx.refreshNav()` if counts changed.
 - Always provide a friendly empty state (see home.js) with an action.
+- For tabbed list pages, set topbar search/create actions after the active tab's data is loaded. If that tab is empty, hide topbar actions and keep exactly one `EmptyState` CTA.
 - Tables/rows that navigate use `class:'is-clickable'` + onClick navigate.
 - Dense, calm, real-product feel. Avoid emoji-heavy or flashy "AI" styling.
 - Tabs: render a `.tabs` bar; clicking re-renders the panel; keep selected tab in a local variable (or in `location.hash` query if you prefer, but local is fine).

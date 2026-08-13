@@ -262,13 +262,15 @@ function ActionLane(s) {
       onClick: it.job ? () => navigate(`/jobs/${it.job.id}`) : null,
     }));
   }
-  return Card({
+  const card = Card({
     title: t('home.actionLane.title'),
     actions: rows.length ? Btn(t('home.actionLane.viewAll'), { sm: true, variant: 'ghost', onClick: () => navigate('/applications') }) : null,
     body: rows.length
       ? el('div', {}, ...rows)
       : el('p', { class: 'muted', style: { margin: 0 } }, t('home.actionLane.empty')),
   });
+  card.classList.add('home-action-card');
+  return card;
 }
 
 /* ----------------------------------------------- recent jobs */

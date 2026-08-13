@@ -406,6 +406,10 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .list-row:focus-within .row-action { opacity: 1; pointer-events: auto; }
 @media (hover: none) { .list-row .row-action { opacity: 1; pointer-events: auto; } }
 
+/* Home's "next action" lane is scanned repeatedly on mobile, so keep it tighter
+   than generic cards while preserving the shared ListRow structure. */
+.home-action-card .list-row__trail .badge { max-width: 116px; overflow: hidden; text-overflow: ellipsis; }
+
 /* ----------------------------------------------------------------- pipeline bar + funnel
    Visualizes the application status_breakdown. Segment color == badge--{status} hue,
    so a colour means the same stage everywhere (board, badges, here). */
@@ -584,6 +588,11 @@ body[data-modal-intent] .toasts { top: 20px; bottom: auto; }
   .settings-action-row > .btn{ width: 100%; justify-content: center; }
   .card__head{ align-items: flex-start; flex-wrap: wrap; }
   .card__head .right{ margin-left: 0; width: 100%; justify-content: flex-start; }
+  .home-action-card .card__head{ align-items: center; flex-wrap: nowrap; padding: 12px 14px; }
+  .home-action-card .card__head .right{ margin-left: auto; width: auto; justify-content: flex-end; }
+  .home-action-card .card__body{ padding: 8px 14px; }
+  .home-action-card .list-row{ gap: 10px; padding: 8px 0; }
+  .home-action-card .list-row__trail{ gap: 6px; }
   .page-head{ flex-wrap: wrap; }
   .modal-root[data-intent="contextual"] .modal{
     top: auto; left: 0; right: 0; bottom: 0; transform: none; width: 100%;

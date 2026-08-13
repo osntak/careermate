@@ -97,6 +97,12 @@ function injectDemo(htmlPath) {
     '<link rel="stylesheet" href="/demo/styles.css" />\n  <link rel="stylesheet" href="/demo/demo.css" />',
   );
 
+  // The public demo is part of the marketing site, not the local-only app shell,
+  // so keep the shared static-site analytics tag when regenerating site/demo.
+  if (!html.includes('/analytics.js')) {
+    html = html.replace('</head>', '  <script src="/analytics.js" defer></script>\n</head>');
+  }
+
   // Shim must run before app.js. Both are ES modules; module scripts execute in
   // document order, so placing the shim immediately before app.js guarantees the
   // fetch patch is installed before any page code calls it.
