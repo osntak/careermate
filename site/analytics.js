@@ -8,7 +8,7 @@
 // Signals collected here:
 //   1. Vercel Web Analytics: cookieless traffic analytics.
 //   2. Vercel Speed Insights: optional Core Web Vitals collection.
-//   3. Google Analytics 4: first-party analytics only; ad signals stay disabled.
+//   3. Google Analytics 4: page views plus privacy-safe marketing interactions.
 //
 // GA4 uses send_page_view:false so pageviews are controlled explicitly. That
 // lets the demo hash router report virtual pageviews for routes like #/jobs.
@@ -82,7 +82,13 @@
     loadScript('https://www.googletagmanager.com/gtag/js?id=' + id);
 
     sendGaPageview();
+    bindMarketingEvents();
     window.addEventListener('hashchange', sendGaPageview);
+  }
+
+  function sendGaEvent(name, params) {
+    if (!window.gtag) return;
+    window.gtag('event', name, params || {});
   }
 
   function sendGaPageview() {
@@ -94,5 +100,77 @@
     };
     if (/[?&]ga_debug=1(?:&|$)/.test(location.search)) params.debug_mode = true;
     window.gtag('event', 'page_view', params);
+  }
+
+  function bindMarketingEvents() {
+    document.addEventListener('click', function (event) {
+      var target = event.target;
+      if (!target || !target.closest) return;
+
+      var demoStep = target.closest('[data-demo-step]');
+      if (demoStep) {
+        sendGaEvent('demo_step', {
+          step: demoStep.getAttribute('data-demo-step') || '',
+          label: safeText(demoStep.textContent),
+          page_path: location.pathname,
+        });
+        return;
+      }
+
+      var copyButton = target.closest('.copy-btn');
+      if (copyButton) {
+        sendGaEvent('copy_install_command', {
+          target: copyButton.getAttribute('data-copy-target') || 'unknown',
+          page_path: location.pathname,
+        });
+        return;
+      }
+
+      var link = target.closest('a[href]');
+      if (!link) return;
+
+      var url;
+      try { url = new URL(link.getAttribute('href'), location.href); } catch (e) { return; }
+
+      var path = url.pathname.replace(/\.html$/, '') || '/';
+      var text = safeText(link.textContent);
+
+      if (url.hostname !== location.hostname) {
+        sendGaEvent('outbound_click', {
+          link_domain: url.hostname,
+          link_path: path,
+          link_text: text,
+          page_path: location.pathname,
+        });
+        return;
+      }
+
+      if (path === '/en' || path.indexOf('/en/') === 0 || (location.pathname.indexOf('/en') === 0 && path === '/')) {
+        sendGaEvent('language_switch', {
+          destination: path,
+          page_path: location.pathname,
+        });
+      }
+
+      if (path === '/start' || path === '/en/start' || path === '/demo/' || path === '/demo') {
+        sendGaEvent('cta_click', {
+          destination: path,
+          link_text: text,
+          page_path: location.pathname,
+        });
+      }
+
+      if (path.indexOf('/guides/') === 0 && path !== '/guides/') {
+        sendGaEvent('guide_click', {
+          destination: path,
+          link_text: text,
+          page_path: location.pathname,
+        });
+      }
+    }, true);
+  }
+
+  function safeText(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   }
 })();
