@@ -83,12 +83,17 @@
 
     sendGaPageview();
     bindMarketingEvents();
+    bindEngagementEvents();
     window.addEventListener('hashchange', sendGaPageview);
   }
 
   function sendGaEvent(name, params) {
     if (!window.gtag) return;
     window.gtag('event', name, params || {});
+  }
+
+  function normalizedPagePath() {
+    return location.pathname + location.hash;
   }
 
   function sendGaPageview() {
@@ -112,7 +117,7 @@
         sendGaEvent('demo_step', {
           step: demoStep.getAttribute('data-demo-step') || '',
           label: safeText(demoStep.textContent),
-          page_path: location.pathname,
+          page_path: normalizedPagePath(),
         });
         return;
       }
@@ -121,9 +126,18 @@
       if (copyButton) {
         sendGaEvent('copy_install_command', {
           target: copyButton.getAttribute('data-copy-target') || 'unknown',
-          page_path: location.pathname,
+          page_path: normalizedPagePath(),
         });
         return;
+      }
+
+      var detailsSummary = target.closest('summary');
+      if (detailsSummary && detailsSummary.parentElement && detailsSummary.parentElement.tagName === 'DETAILS') {
+        sendGaEvent('details_toggle', {
+          label: safeText(detailsSummary.textContent),
+          state: detailsSummary.parentElement.open ? 'close' : 'open',
+          page_path: normalizedPagePath(),
+        });
       }
 
       var link = target.closest('a[href]');
@@ -135,12 +149,21 @@
       var path = url.pathname.replace(/\.html$/, '') || '/';
       var text = safeText(link.textContent);
 
+      if (url.protocol === 'mailto:') {
+        sendGaEvent('contact_click', {
+          method: 'email',
+          link_text: text,
+          page_path: normalizedPagePath(),
+        });
+        return;
+      }
+
       if (url.hostname !== location.hostname) {
         sendGaEvent('outbound_click', {
           link_domain: url.hostname,
           link_path: path,
           link_text: text,
-          page_path: location.pathname,
+          page_path: normalizedPagePath(),
         });
         return;
       }
@@ -148,15 +171,23 @@
       if (path === '/en' || path.indexOf('/en/') === 0 || (location.pathname.indexOf('/en') === 0 && path === '/')) {
         sendGaEvent('language_switch', {
           destination: path,
-          page_path: location.pathname,
+          page_path: normalizedPagePath(),
         });
       }
 
-      if (path === '/start' || path === '/en/start' || path === '/demo/' || path === '/demo') {
-        sendGaEvent('cta_click', {
+      if (path === '/start' || path === '/en/start') {
+        sendGaEvent('begin_install', {
           destination: path,
           link_text: text,
-          page_path: location.pathname,
+          page_path: normalizedPagePath(),
+        });
+      }
+
+      if (path === '/demo/' || path === '/demo') {
+        sendGaEvent('view_demo', {
+          destination: path,
+          link_text: text,
+          page_path: normalizedPagePath(),
         });
       }
 
@@ -164,10 +195,75 @@
         sendGaEvent('guide_click', {
           destination: path,
           link_text: text,
-          page_path: location.pathname,
+          page_path: normalizedPagePath(),
+        });
+      }
+
+      if (url.hash && url.pathname === location.pathname) {
+        sendGaEvent('anchor_click', {
+          anchor: url.hash.slice(1),
+          link_text: text,
+          page_path: normalizedPagePath(),
         });
       }
     }, true);
+  }
+
+  function bindEngagementEvents() {
+    var sentDepth = {};
+    var sentTime = {};
+    var depthMarks = [25, 50, 75, 90];
+    var timeMarks = [30, 60, 120];
+
+    function onScroll() {
+      var doc = document.documentElement;
+      var body = document.body;
+      var scrollTop = window.pageYOffset || doc.scrollTop || body.scrollTop || 0;
+      var viewport = window.innerHeight || doc.clientHeight || 0;
+      var height = Math.max(body.scrollHeight, doc.scrollHeight, body.offsetHeight, doc.offsetHeight, doc.clientHeight);
+      if (!height) return;
+      var percent = Math.min(100, Math.round(((scrollTop + viewport) / height) * 100));
+      depthMarks.forEach(function (mark) {
+        if (percent >= mark && !sentDepth[mark]) {
+          sentDepth[mark] = true;
+          sendGaEvent('scroll_depth', { percent: mark, page_path: normalizedPagePath() });
+        }
+      });
+    }
+
+    window.addEventListener('scroll', throttle(onScroll, 300), { passive: true });
+    window.addEventListener('load', onScroll);
+
+    timeMarks.forEach(function (seconds) {
+      window.setTimeout(function () {
+        if (document.visibilityState === 'visible' && !sentTime[seconds]) {
+          sentTime[seconds] = true;
+          sendGaEvent('engaged_time', { seconds: seconds, page_path: normalizedPagePath() });
+        }
+      }, seconds * 1000);
+    });
+  }
+
+  function throttle(fn, wait) {
+    var last = 0;
+    var timer = null;
+    return function () {
+      var now = Date.now();
+      var remaining = wait - (now - last);
+      var args = arguments;
+      var ctx = this;
+      if (remaining <= 0) {
+        if (timer) { window.clearTimeout(timer); timer = null; }
+        last = now;
+        fn.apply(ctx, args);
+      } else if (!timer) {
+        timer = window.setTimeout(function () {
+          last = Date.now();
+          timer = null;
+          fn.apply(ctx, args);
+        }, remaining);
+      }
+    };
   }
 
   function safeText(value) {
