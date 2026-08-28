@@ -36,7 +36,7 @@
 
   // 3. Google Analytics 4.
   // This public measurement ID is not a secret. Set to '' to disable GA4.
-  var GA_MEASUREMENT_ID = 'G-HK9KWTYCBD';
+  var GA_MEASUREMENT_ID = 'G-DTXRZ5P776';
   if (/^G-[A-Z0-9]+$/.test(GA_MEASUREMENT_ID)) {
     initGoogleAnalytics(GA_MEASUREMENT_ID);
   }
