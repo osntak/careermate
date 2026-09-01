@@ -25,8 +25,9 @@
   };
   loadScript('/_vercel/insights/script.js');
 
-  // 2. Vercel Speed Insights. Enable only after the Vercel project is configured.
-  var ENABLE_SPEED_INSIGHTS = false;
+  // 2. Vercel Speed Insights. The public site is served by Vercel, so collect
+  // anonymous Core Web Vitals alongside traffic data.
+  var ENABLE_SPEED_INSIGHTS = true;
   if (ENABLE_SPEED_INSIGHTS) {
     window.si = window.si || function () {
       (window.siq = window.siq || []).push(arguments);
@@ -108,6 +109,41 @@
   }
 
   function bindMarketingEvents() {
+    var lastInstallPath = '';
+
+    document.addEventListener('change', function (event) {
+      var input = event.target;
+      if (!input || input.tagName !== 'INPUT' || input.type !== 'radio') return;
+
+      if (input.name === 'sub') {
+        sendGaEvent('select_ai_client', {
+          ai_client: input.value || 'unknown',
+          page_path: normalizedPagePath(),
+        });
+      } else if (input.name === 'os') {
+        sendGaEvent('select_os', {
+          operating_system: input.value || 'unknown',
+          page_path: normalizedPagePath(),
+        });
+      } else {
+        return;
+      }
+
+      var client = document.querySelector('input[name="sub"]:checked');
+      var os = document.querySelector('input[name="os"]:checked');
+      if (client && os) {
+        var installPath = client.value + ':' + os.value;
+        if (installPath !== lastInstallPath) {
+          lastInstallPath = installPath;
+          sendGaEvent('view_install_path', {
+            ai_client: client.value,
+            operating_system: os.value,
+            page_path: normalizedPagePath(),
+          });
+        }
+      }
+    }, true);
+
     document.addEventListener('click', function (event) {
       var target = event.target;
       if (!target || !target.closest) return;
@@ -133,11 +169,20 @@
 
       var detailsSummary = target.closest('summary');
       if (detailsSummary && detailsSummary.parentElement && detailsSummary.parentElement.tagName === 'DETAILS') {
+        var nextState = detailsSummary.parentElement.open ? 'close' : 'open';
         sendGaEvent('details_toggle', {
           label: safeText(detailsSummary.textContent),
-          state: detailsSummary.parentElement.open ? 'close' : 'open',
+          state: nextState,
           page_path: normalizedPagePath(),
         });
+        if (nextState === 'open' && detailsSummary.closest('.path')) {
+          var path = detailsSummary.closest('.path');
+          sendGaEvent('open_install_method', {
+            ai_client: path.getAttribute('data-sub') || 'unknown',
+            method: safeText(detailsSummary.textContent),
+            page_path: normalizedPagePath(),
+          });
+        }
       }
 
       var link = target.closest('a[href]');
@@ -148,11 +193,13 @@
 
       var path = url.pathname.replace(/\.html$/, '') || '/';
       var text = safeText(link.textContent);
+      var ctaLocation = elementLocation(link);
 
       if (url.protocol === 'mailto:') {
         sendGaEvent('contact_click', {
           method: 'email',
           link_text: text,
+          cta_location: ctaLocation,
           page_path: normalizedPagePath(),
         });
         return;
@@ -163,6 +210,7 @@
           link_domain: url.hostname,
           link_path: path,
           link_text: text,
+          cta_location: ctaLocation,
           page_path: normalizedPagePath(),
         });
         return;
@@ -179,6 +227,7 @@
         sendGaEvent('begin_install', {
           destination: path,
           link_text: text,
+          cta_location: ctaLocation,
           page_path: normalizedPagePath(),
         });
       }
@@ -187,14 +236,22 @@
         sendGaEvent('view_demo', {
           destination: path,
           link_text: text,
+          cta_location: ctaLocation,
           page_path: normalizedPagePath(),
         });
       }
 
-      if (path.indexOf('/guides/') === 0 && path !== '/guides/') {
+      if (path === '/guides' || path === '/guides/') {
+        sendGaEvent('view_guides', {
+          link_text: text,
+          cta_location: ctaLocation,
+          page_path: normalizedPagePath(),
+        });
+      } else if (path.indexOf('/guides/') === 0) {
         sendGaEvent('guide_click', {
           destination: path,
           link_text: text,
+          cta_location: ctaLocation,
           page_path: normalizedPagePath(),
         });
       }
@@ -268,5 +325,13 @@
 
   function safeText(value) {
     return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  }
+
+  function elementLocation(element) {
+    if (element.closest('nav')) return 'navigation';
+    if (element.closest('footer')) return 'footer';
+    if (element.closest('.hero')) return 'hero';
+    var section = element.closest('section[id]');
+    return section ? section.id : 'body';
   }
 })();

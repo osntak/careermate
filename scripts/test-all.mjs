@@ -11,6 +11,7 @@ const SUITES = [
   { name: 'parsers', kind: 'sentinel', script: 'scripts/test-parsers.ts', sentinel: 'PARSERS_VERDICT PASS' },
   { name: 'migrate', kind: 'sentinel', script: 'scripts/test-migrate.ts', sentinel: 'MIGRATE_VERDICT PASS' },
   { name: 'review hardening', kind: 'sentinel', script: 'scripts/test-review.ts', sentinel: 'REVIEW_VERDICT PASS' },
+  { name: 'site growth', kind: 'sentinel', script: 'scripts/test-site.mjs', sentinel: 'SITE_GROWTH_VERDICT PASS' },
   { name: 'core+api', kind: 'sentinel', script: 'scripts/test.ts', sentinel: 'TEST_VERDICT PASS' },
 ];
 

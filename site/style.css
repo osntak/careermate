@@ -257,6 +257,8 @@ html[lang="en"] .hero__title { font-size: 2.4rem; }
   padding: 5px 11px; border-radius: 999px;
 }
 .trust-strip li::before { content: "✓"; color: var(--accent); font-weight: 700; }
+.trust-strip a { color: inherit; text-decoration-color: var(--accent-border); text-underline-offset: 3px; }
+.trust-strip a:hover { color: var(--accent); }
 
 /* hero call-to-action — two install paths */
 .hero__cta { margin: 26px 0 0; display: flex; flex-wrap: wrap; gap: 10px; }
