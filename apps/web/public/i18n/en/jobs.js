@@ -1,5 +1,9 @@
-// Postings page — list + detail
+// Applications menu, list view (#/jobs) + posting detail
 export default {
+  // ---- view switch (list #/jobs, by stage #/applications) ----
+  'jobs.view.list': 'List',
+  'jobs.view.byStage': 'By stage',
+
   // ---- list mode ----
   'jobs.list.empty.title': 'No saved postings yet',
   'jobs.list.empty.body': 'Add a posting you are interested in to track its fit and your progress. Or just tell your connected AI “find backend jobs” and it will fetch postings and save them here.',
@@ -70,7 +74,7 @@ export default {
   'jobs.detail.deleted': 'Posting deleted.',
   'jobs.detail.dangerZone': 'Danger zone',
   'jobs.detail.dangerZoneHint': 'Deletes this posting along with its fit analysis, cover letters, interview prep, and application records. This cannot be undone.',
-  'jobs.detail.list': 'Postings',
+  'jobs.detail.list': 'List',
   'jobs.detail.statusLabel': 'Status',
   'jobs.detail.openPosting': 'Original posting',
 

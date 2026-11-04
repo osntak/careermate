@@ -2,9 +2,8 @@
 export default {
   'nav.home': '홈',
   'nav.profile': '프로필',
-  'nav.jobs': '채용공고',
+  'nav.jobs': '지원 관리',
   'nav.search': '공고 찾기',
-  'nav.applications': '지원 현황',
   'nav.documents': '문서',
   'nav.interview': '면접 준비',
   'nav.settings': '설정',

@@ -1,4 +1,4 @@
-// Applications page.
+// Applications menu, by-stage view (#/applications).
 export default {
   // offers comparison
   'applications.offers.title': 'Offer comparison',
@@ -19,7 +19,6 @@ export default {
   // empty state
   'applications.empty.title': 'No applications yet',
   'applications.empty.body': 'Add a posting and your applications will be organized by status.',
-  'applications.empty.action': 'Browse postings',
 
   // status group
   'applications.group.count': { one: '{{count}} item', other: '{{count}} items' },

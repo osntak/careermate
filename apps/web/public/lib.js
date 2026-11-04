@@ -417,6 +417,11 @@ export function EmptyState({ iconName = 'inbox', title, body, action }) {
     action,
   );
 }
+/** Tab-styled links between sibling routes (two views of one menu). Plain anchors, so the hash router does the rest. */
+export function ViewSwitch(items, activeHref) {
+  return el('div', { class: 'tabs' }, ...items.map(({ href, label }) =>
+    el('a', { class: `tab${href === activeHref ? ' is-active' : ''}`, href, attrs: href === activeHref ? { 'aria-current': 'page' } : {} }, label)));
+}
 export function Chips(items, { accent } = {}) {
   return el('div', { class: 'chips' }, ...(items || []).map((t) => el('span', { class: `chip${accent ? ' chip--accent' : ''}` }, t)));
 }

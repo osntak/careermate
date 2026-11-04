@@ -32,7 +32,7 @@ export default {
   'search.alsoOn': 'Also on',
   'search.save': 'Save',
   'search.savedBadge': 'Saved',
-  'search.savedToast': 'Saved to Postings.',
+  'search.savedToast': 'Saved to Applications.',
   'search.sort.note': 'Newest postings first. Wanted and Jumpit postings have no posting date and come after.',
   'search.site.wanted': 'Wanted',
   'search.site.jumpit': 'Jumpit',

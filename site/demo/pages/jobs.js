@@ -4,7 +4,7 @@
 // saved data with manual fallbacks throughout.
 import {
   el, get, post, put, del, icon, navigate, Card, Badge, Btn, SubmitBtn,
-  EmptyState, Chips, Field, Input, Textarea, Select,
+  EmptyState, Chips, Field, Input, Textarea, Select, ViewSwitch,
   openModal, closeModal, confirmDialog, toastOk, toastError,
   fmtDate, scoreClass, mount, meta, linesToArray, csvToArray, daysUntil, scheduleDdayBadge,
 } from '/demo/lib.js';
@@ -17,9 +17,17 @@ export async function render(ctx) {
 
 /* =============================================================== List mode */
 
+// 지원 관리 has two views of the same postings; both list pages start with this switch.
+export function applicationsViewSwitch(activeHref) {
+  return ViewSwitch([
+    { href: '#/jobs', label: t('jobs.view.list') },
+    { href: '#/applications', label: t('jobs.view.byStage') },
+  ], activeHref);
+}
+
 async function renderList(ctx) {
   const { jobs } = await get('/api/jobs');
-  const wrap = el('div', { class: 'stack-4' });
+  const wrap = el('div', { class: 'stack-4' }, applicationsViewSwitch('#/jobs'));
 
   if (!jobs.length) {
     ctx.setActions([]); // 단일 1차 액션은 빈 상태에만 둔다
@@ -186,7 +194,7 @@ function jobForm(ctx, { job, onSaved }) {
   return { form, submit, bindSubmit };
 }
 
-function openJobModal(ctx) {
+export function openJobModal(ctx) {
   const built = jobForm(ctx, {
     job: null,
     onSaved: async (res) => {

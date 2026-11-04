@@ -679,6 +679,8 @@ const ROUTES = [
     applications: db.applications.map((a) => ({ ...a, status_label: t('status.' + a.status), job: db.jobs.find((j) => j.id === a.job_id), fit_score: fitByJob(a.job_id)?.score ?? null })),
     board_order: BOARD_ORDER,
   })],
+  // The seed has no offers; without this route the by-stage view fails to load.
+  ['GET', /^\/api\/offers$/, () => ({ offers: [] })],
   ['PUT', /^\/api\/applications\/([^/]+)\/status$/, (p, body) => {
     const job = db.jobs.find((j) => j.id === p[0]);
     if (!job) return { __status: 404, error: d('err_job_not_found') };
