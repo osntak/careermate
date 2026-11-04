@@ -428,21 +428,15 @@ html[lang="en"] .hero__title { font-size: 2.4rem; }
 /* ----------------------------------------------------------------- install */
 /* The first install view is intentionally short: three human steps, one
    pasteable prompt, and one developer command. */
-.quick-start {
-  max-width: 840px; margin: 0 auto 18px;
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-}
+.quick-start { max-width: 840px; margin: 0 auto 18px; border-top: 1px solid var(--border); }
 .quick-start__step {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 19px; min-height: 184px;
+  display: grid; grid-template-columns: 28px 1fr; column-gap: 10px;
+  padding: 16px 0; border-bottom: 1px solid var(--border);
 }
-.quick-start__step span {
-  width: 28px; height: 28px; display: grid; place-items: center; border-radius: 999px;
-  background: var(--accent-soft); border: 1px solid var(--accent-border); color: var(--accent);
-  font-weight: 750; font-size: 13px;
-}
-.quick-start__step h3 { margin-top: 13px; font-size: 16px; font-weight: 720; }
-.quick-start__step p { margin-top: 7px; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
+.quick-start__step span { grid-row: 1 / span 3; font-weight: 700; font-size: 16px; color: var(--text-tertiary); }
+.quick-start__step > :not(span) { grid-column: 2; justify-self: start; }
+.quick-start__step h3 { font-size: 16px; font-weight: 700; }
+.quick-start__step p { margin-top: 4px; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
 .quick-start__step a {
   display: inline-flex; margin-top: 10px; color: var(--accent); font-size: 13px; font-weight: 700;
 }
@@ -611,8 +605,6 @@ kbd {
   .cards-3 { grid-template-columns: 1fr; gap: 24px; }
   .checks { grid-template-columns: 1fr; }
   .trouble { grid-template-columns: 1fr; }
-  .quick-start { grid-template-columns: 1fr; max-width: 720px; }
-  .quick-start__step { min-height: 0; }
   /* Logo-only brand on mobile keeps the sticky nav quiet and compact. */
   .nav__name { display: none; }
   .nav__links a { display: none; }
