@@ -194,6 +194,7 @@ const ACTIVE = ['draft', 'planned', 'applied', 'document_passed', 'interview'];
 
 /* --------------------------------------------------------------- the DB */
 let db = getLang() === 'en' ? buildSeedEn() : buildSeed();
+const demoVerified = new Set();
 let seq = 1000;
 const nid = (p) => `${p}${++seq}`;
 const nowIso = () => new Date().toISOString();
@@ -770,6 +771,34 @@ const ROUTES = [
     reuse_map: [],
     interview_retrospectives: [],
   })],
+
+  // Profile row signals. Reuse mirrors core getExperienceReuseMap (name found in the
+  // letter text); the second seed experience stands in for one the AI saved unchecked.
+  ['GET', /^\/api\/reuse-map$/, () => {
+    const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const ref = (kind, entity_id, needles) => {
+      const hits = db.coverLetters.filter((c) => needles.some((n) => norm(n).length >= 2 && norm(c.current_content).includes(norm(n))));
+      const cover_letters = hits.map((c) => {
+        const job = db.jobs.find((j) => j.id === c.job_id);
+        return { id: c.id, title: c.title, job_id: c.job_id, company: job?.company ?? null, position: job?.position ?? null };
+      });
+      return { kind, entity_id, cover_letters, reuse_count: cover_letters.length };
+    };
+    return {
+      items: [
+        ...db.experiences.map((x) => ref('experience', x.id, [x.company, x.role])),
+        ...db.projects.map((x) => ref('project', x.id, [x.name])),
+      ],
+    };
+  }],
+  ['GET', /^\/api\/provenance\/unverified$/, () => ({
+    items: db.experiences.filter((x) => x.id === 'e2' && !demoVerified.has(x.id))
+      .map((x) => ({ entity_type: 'experience', entity_id: x.id, source: 'ai', verified_by_human: false })),
+  })],
+  ['POST', /^\/api\/provenance\/verify$/, (_p, body) => {
+    if (body.verified) demoVerified.add(body.entity_id);
+    return { provenance: { entity_type: body.entity_type, entity_id: body.entity_id, verified_by_human: !!body.verified } };
+  }],
 
   /* parse helper (deterministic, no AI) */
   ['POST', /^\/api\/parse\/job$/, (_p, body) => cleanPosting(body.raw || '')],

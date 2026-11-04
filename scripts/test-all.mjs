@@ -4,6 +4,7 @@ import process from 'node:process';
 
 const SUITES = [
   { name: 'i18n keys', kind: 'exit', script: 'scripts/check-i18n-keys.mjs' },
+  { name: 'web syntax', kind: 'exit', script: 'scripts/check-web-syntax.mjs' },
   { name: 'i18n', kind: 'sentinel', script: 'scripts/test-i18n.ts', sentinel: 'I18N_VERDICT PASS' },
   { name: 'init', kind: 'sentinel', script: 'scripts/test-init.ts', sentinel: 'INIT_TEST_VERDICT PASS' },
   { name: 'bridge', kind: 'sentinel', script: 'scripts/test-bridge.ts', sentinel: 'BRIDGE_TEST_VERDICT PASS' },
