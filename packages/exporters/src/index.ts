@@ -114,7 +114,8 @@ export function coverLetterToHtml(
   return {
     filename: exportName([cl.title, opts?.profile?.name], 'html', 'cover_letter'),
     mimeType: HTML_MIME,
-    content: toPrintableHtml(cl.title, coverLetterBody(cl, opts)),
+    // Not cl.title: it is the internal version label and would become the PDF title.
+    content: toPrintableHtml([opts?.profile?.name, '자기소개서'].filter(Boolean).join(' · '), coverLetterBody(cl, opts)),
   };
 }
 
@@ -171,7 +172,9 @@ export function resumeToHtml(
   return {
     filename: exportName([doc.title, profile?.name], 'html', doc.kind),
     mimeType: HTML_MIME,
-    content: toPrintableHtml(doc.title, md.content, resumeFooter(doc, profile)),
+    // The saved title is an internal label ("이력서 v10 (공고명, 한 장 구성)"); <title> becomes
+    // the PDF's title and the viewer tab, so it gets the same "이름 · 종류" as the footer.
+    content: toPrintableHtml(resumeFooter(doc, profile) || DOCUMENT_KIND_LABELS[doc.kind] || doc.kind, md.content, resumeFooter(doc, profile)),
   };
 }
 
