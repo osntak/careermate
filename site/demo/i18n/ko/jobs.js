@@ -143,7 +143,7 @@ export default {
   'jobs.applied.otherJob': '다른 공고 연결',
   'jobs.applied.primary': '대표',
   'jobs.applied.noCovers': '이 공고의 자기소개서가 아직 없어요.',
-  'jobs.applied.noDocs': '문서함에 저장된 이력서·경력기술서·포트폴리오가 없어요.',
+  'jobs.applied.noDocs': '내 자료에 저장된 이력서·경력기술서·포트폴리오가 없어요.',
   'jobs.applied.toggleOther': '다른 자기소개서',
   'jobs.applied.toggleScoped': '이 공고 자기소개서만',
   'jobs.applied.fieldSubmittedAt': '제출일',

@@ -94,7 +94,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 
 ## 3-1. 경력·프로젝트·기술스택 (Experiences / Projects / Skills)
 
-이력서 본문(`add_resume`)과 별개로, **구조화된** 경력·프로젝트·기술을 각각의 테이블에 항목 단위로 저장합니다. `get_application_context`의 `experiences`/`projects`/`skills`로 노출되며, `get_onboarding_status`의 `has_experience`/`has_skills`와 프로필 완성도(0~100) 계산에 직접 반영됩니다. (대시보드의 Profile 페이지에서도 같은 데이터를 편집합니다.)
+이력서 본문(`add_resume`)과 별개로, **구조화된** 경력·프로젝트·기술을 각각의 테이블에 항목 단위로 저장합니다. `get_application_context`의 `experiences`/`projects`/`skills`로 노출되며, `get_onboarding_status`의 `has_experience`/`has_skills`와 프로필 완성도(0~100) 계산에 직접 반영됩니다. (대시보드의 내 자료 메뉴, 프로필 보기에서도 같은 데이터를 편집합니다.)
 
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
@@ -233,7 +233,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 - Word(`.docx`)는 ATS 제출에 알맞은 단일 컬럼 표준 레이아웃입니다(회사 지정 양식 채우기는 아직 지원하지 않습니다).
 - HTML은 인쇄용으로, 브라우저에서 PDF로 저장할 수 있습니다.
 - `export_profile`의 `json`은 [JSON Resume](https://jsonresume.org) v1.0.0 표준 형식입니다 — 100+ 테마(HTML/PDF 렌더)·다른 이력서/ATS 도구와 상호운용됩니다. 빈 필드는 생략하고 저장된 날짜는 그대로 내보냅니다.
-- 대시보드의 Documents·Profile 페이지에서 직접 다운로드할 수도 있습니다.
+- 대시보드의 자기소개서·내 자료 메뉴에서 직접 다운로드할 수도 있습니다.
 
 ---
 

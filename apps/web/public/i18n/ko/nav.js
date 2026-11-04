@@ -1,10 +1,10 @@
 // 사이드바 내비게이션 + 라우팅/셸.
 export default {
   'nav.home': '홈',
-  'nav.profile': '프로필',
+  'nav.profile': '내 자료',
   'nav.jobs': '지원 관리',
   'nav.search': '공고 찾기',
-  'nav.documents': '문서',
+  'nav.documents': '자기소개서',
   'nav.interview': '면접 준비',
   'nav.settings': '설정',
   'nav.section.workspace': '워크스페이스',

@@ -1,7 +1,6 @@
-// 문서 페이지 — 자기소개서/경력기술서/이력서·포트폴리오.
+// 자기소개서 메뉴, 그리고 내 자료의 경력기술서·이력서·포트폴리오 보기.
 export default {
-  // tabs
-  'documents.tab.cover': '자기소개서',
+  // 내 자료 전환 탭 (프로필 탭 이름은 profile.title)
   'documents.tab.career': '경력기술서',
   'documents.tab.docs': '이력서·포트폴리오',
 

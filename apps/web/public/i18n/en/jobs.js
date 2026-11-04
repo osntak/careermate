@@ -143,7 +143,7 @@ export default {
   'jobs.applied.otherJob': 'Linked to another posting',
   'jobs.applied.primary': 'Primary',
   'jobs.applied.noCovers': "There's no cover letter for this posting yet.",
-  'jobs.applied.noDocs': 'No resumes, career descriptions, or portfolios saved in your documents.',
+  'jobs.applied.noDocs': 'No resumes, career descriptions, or portfolios saved in My materials.',
   'jobs.applied.toggleOther': 'Other cover letters',
   'jobs.applied.toggleScoped': 'Only this posting',
   'jobs.applied.fieldSubmittedAt': 'Submitted on',
