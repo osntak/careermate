@@ -35,7 +35,7 @@
 - **AI와 대화로 모든 작업** — MCP 도구로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
 - **지원 상태 8단계 관리** — `draft`(작성 중) · `planned`(지원 예정) · `applied`(지원 완료) · `document_passed`(서류 합격) · `interview`(면접 진행) · `final_passed`(최종 합격) · `rejected`(불합격) · `on_hold`(보류). `document_passed` 이상에서는 면접 준비를 다음 행동으로 제안합니다.
 - **자기소개서 버전 관리** — 공고별로 자소서 버전을 쌓고 타임라인으로 비교, 파일로 내보내기.
-- **공고 검색·가져오기** — 키워드(직무·기술)로 원티드·점핏 같은 공개 채용 사이트에서 공고를 바로 가져와, 마음에 드는 것만 저장. 키 발급·설치 없이 동작하며, 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음, 보내는 건 검색어뿐).
+- **공고 검색·가져오기** — 키워드(직무·기술)나 직무 분류로 원티드·점핏·리멤버·사람인 같은 공개 채용 사이트에서 공고를 바로 가져와, 마음에 드는 것만 저장. 키 발급·설치 없이 동작하며, 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음, 보내는 건 검색어뿐).
 - **채용공고 파싱** — 붙여넣거나 가져온 공고 텍스트를 구조화해 저장.
 - **로컬 대시보드** — 프레임워크·CDN 없는 바닐라 JS로 만든 7페이지 웹 화면(다크모드 지원).
 - **데이터 내보내기/삭제** — Settings 페이지에서 직접.
@@ -317,7 +317,7 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 - **Everything through conversation with AI** — MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
 - **8-stage application status** — `draft` · `planned` · `applied` · `document_passed` · `interview` · `final_passed` · `rejected` · `on_hold`. Interview prep is suggested at `document_passed` or later.
 - **Cover-letter versioning** — Stack versions per posting, compare on a timeline, export to a file.
-- **Job search & import** — Pull postings by keyword (role/skill) straight from public job boards (e.g. Wanted, Jumpit) and save only the ones you like. No API key or setup; it only *fetches* public postings (no bot-protection bypass, no bulk harvesting — only the search keyword is sent).
+- **Job search & import** — Pull postings by keyword (role/skill) or job category straight from public job boards (Wanted, Jumpit, Remember, Saramin) and save only the ones you like. No API key or setup; it only *fetches* public postings (no bot-protection bypass, no bulk harvesting — only the search keyword is sent).
 - **Job-posting parsing** — Turn pasted or imported posting text into structured records.
 - **Local dashboard** — A 7-page web UI built with framework-free, CDN-free vanilla JS (dark mode supported).
 - **Export / delete your data** — Directly from the Settings page.

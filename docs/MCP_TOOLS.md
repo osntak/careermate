@@ -141,7 +141,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
-| `search_jobs` | 키워드로 무인증 공개 잡보드(원티드·점핏)에서 공고를 *가져옴*(저장은 안 함) | `keyword`(필수), `sources?`, `limit?`(기본 10) | `{ query, results[](회사·직무·url·지역·경력·기술·마감), providers[] }` | 사용자가 "○○ 공고 찾아줘"라고 할 때. 결과를 보여주고 **고른 것만** save_job_posting | ✅ |
+| `search_jobs` | 키워드나 직무 조건으로 무인증 공개 잡보드(원티드·점핏·리멤버·사람인)에서 공고를 *가져옴*(저장은 안 함) | `keyword`(필수, 직무 조건만 쓸 땐 빈 문자열), `sources?`, `limit?`(기본 10), `remember_category?`("SW개발>프론트엔드"), `saramin_category?`(직무 코드 "92") | `{ query, results[](회사·직무·url·지역·경력·기술·마감, 사람인은 category_codes), providers[] }` | 사용자가 "○○ 공고 찾아줘"라고 할 때. 결과를 보여주고 **고른 것만** save_job_posting | ✅ |
 | `save_job_posting` | 채용공고 저장(있으면 갱신). 저장 시 지원(application) 항목 자동 생성 | `company`, `position`(필수), `url?`, `location?`, `employment_type?`, `description?`, `requirements?`, `keywords?`, `deadline?`, `source?`, `questions?`(회사 지정 자소서 문항·글자수: `question`·`min_chars`·`max_chars`·`count_mode`), `schedule?`(전형 일정: `label`·`date`(YYYY-MM-DD) 필수·`time`(HH:MM)·`note`) | 저장된 `JobRecord`(`job_id` 포함) | 공고를 DB에 등록/갱신할 때 | ✏️ |
 | `get_job_posting` | 공고 1건 상세 조회 | `job_id` | `{ job, fit, application, cover_letters, interview }` | 한 공고의 분석·상태·자소서·면접 자료를 한 번에 볼 때 | ✅ |
 | `list_jobs` | 저장된 모든 공고를 지원 상태·적합도 점수와 함께 목록화 | 없음 | 공고 메타 포함 배열 | 전체 공고를 훑어볼 때 | ✅ |
