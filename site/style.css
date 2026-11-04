@@ -363,10 +363,15 @@ html[lang="en"] .hero__title { font-size: 2.4rem; }
    (never covering the screenshot). The frame shrinks to fit; on small screens
    the padding collapses and arrows overlap the edges instead. */
 .carousel { position: relative; max-width: 936px; margin: 0 auto; padding: 0 54px; }
-.carousel__viewport { overflow: hidden; border-radius: var(--radius-lg); }
-.carousel__track { display: flex; transition: transform .42s cubic-bezier(.22,.61,.36,1); }
-@media (prefers-reduced-motion: reduce) { .carousel__track { transition: none; } }
-.slide { flex: 0 0 100%; min-width: 0; margin: 0; } /* reset <figure> default margin so each slide is exactly 100% (translateX math) */
+/* native horizontal scroll + snap: the finger drags the slide on touch screens */
+.carousel__viewport {
+  overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  overscroll-behavior-x: contain; scrollbar-width: none; border-radius: var(--radius-lg);
+}
+.carousel__viewport::-webkit-scrollbar { display: none; }
+@media (prefers-reduced-motion: reduce) { .carousel__viewport { scroll-behavior: auto; } }
+.carousel__track { display: flex; }
+.slide { flex: 0 0 100%; min-width: 0; margin: 0; scroll-snap-align: start; scroll-snap-stop: always; } /* reset <figure> default margin so each slide is exactly one viewport wide */
 .slide figcaption { margin-top: 14px; text-align: center; font-size: 13.5px; color: var(--text-secondary); }
 .slide figcaption strong { color: var(--text); font-weight: 650; }
 
@@ -410,19 +415,30 @@ html[lang="en"] .hero__title { font-size: 2.4rem; }
 .carousel__arrow--next { right: 0; }
 
 /* dots */
-.carousel__dots { display: flex; justify-content: center; gap: 8px; margin-top: 18px; }
+/* the transparent border widens the tap target to 24px without changing the visible dot */
+.carousel__dots { display: flex; justify-content: center; margin-top: 10px; }
 .carousel__dot {
-  width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px;
-  background: var(--border-strong); cursor: pointer; transition: background .15s, width .15s;
+  box-sizing: content-box; width: 8px; height: 8px; padding: 0;
+  border: 8px solid transparent; border-radius: 999px; background-clip: padding-box;
+  background-color: var(--border-strong); cursor: pointer; transition: background-color .15s, width .15s;
 }
-.carousel__dot:hover { background: var(--text-tertiary); }
-.carousel__dot.is-active { width: 22px; background: var(--accent); }
+.carousel__dot:hover { background-color: var(--text-tertiary); }
+.carousel__dot.is-active { width: 22px; background-color: var(--accent); }
 
 @media (max-width: 640px) {
   .carousel { padding: 0; }
   .carousel__arrow--prev { left: 6px; }
   .carousel__arrow--next { right: 6px; }
 }
+
+/* ------------------------------------------------------------------ guides */
+.article, .guide { max-width: 760px; margin: 0 auto; padding: 44px 24px 72px; }
+.article h1, .guide h1 { font-size: clamp(1.8rem, 4vw, 2.2rem); line-height: 1.25; margin: 0 0 14px; }
+.article h2 { font-size: 1.3rem; margin: 40px 0 10px; }
+.article p, .article li { font-size: 1.03rem; line-height: 1.8; }
+.article .lead, .guide__lead { font-size: 1.08rem; line-height: 1.75; color: var(--text-secondary); }
+.crumb { display: inline-block; margin-bottom: 20px; font-size: 14px; }
+.cta { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
 
 /* ----------------------------------------------------------------- install */
 /* The first install view is intentionally short: three human steps, one
@@ -544,10 +560,11 @@ kbd {
 }
 .acc > summary {
   cursor: pointer; list-style: none; padding: 15px 17px; font-weight: 650; font-size: 14.5px;
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 10px; position: relative; padding-right: 44px;
 }
 .acc > summary::-webkit-details-marker { display: none; }
-.acc > summary::after { content: '＋'; margin-left: auto; color: var(--text-tertiary); font-weight: 400; }
+/* pinned to the first line so a wrapped question never pushes it onto its own row */
+.acc > summary::after { content: '＋'; position: absolute; right: 17px; top: 15px; color: var(--text-tertiary); font-weight: 400; }
 .acc[open] > summary::after { content: '－'; }
 .acc > summary:hover { background: var(--surface-hover); }
 .acc__hint { font-weight: 500; font-size: 12.5px; color: var(--text-tertiary); }
