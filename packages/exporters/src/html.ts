@@ -96,7 +96,17 @@ export function toPrintableHtml(title: string, bodyMarkdown: string, footer?: st
     margin: 18mm 16mm;${footerCss}
   }
   @media print {
-    html, body { background: #fff; font-size: 10pt; }
+    /* Screen spacing (line-height 1.7, 1.4em heading gaps) pushed a one-page résumé
+       (about 1,800 characters) onto two printed pages. */
+    html, body { background: #fff; font-size: 10pt; line-height: 1.45; }
+    h1, h2, h3, h4, h5, h6 { margin: 0.9em 0 0.3em; }
+    h1 { font-size: 1.6em; padding-bottom: 0.15em; }
+    h2 { font-size: 1.2em; }
+    h3 { font-size: 1.05em; }
+    p { margin: 0.3em 0; }
+    ul, ol { margin: 0.2em 0 0.4em; }
+    li { margin: 0.05em 0; }
+    hr { margin: 0.8em 0; }
     .page {
       max-width: none;
       margin: 0;

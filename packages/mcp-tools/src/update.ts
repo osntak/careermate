@@ -260,7 +260,9 @@ function npmInstallLatest(prefix: string): Promise<{ ok: boolean; error?: string
       resolve(r);
     };
     // Windows에서 .cmd 직접 spawn은 Node 보안 변경으로 까다롭다 → cmd /c로 명령 문자열을 넘겨
-    // prefix 경로의 공백까지 안전히 인용한다. 그 외 OS는 배열 인자(셸 없음)로 실행.
+    // prefix 경로의 공백까지 안전히 인용한다. 이때 windowsVerbatimArguments가 없으면 Node가
+    // 인자 속 따옴표를 \"로 바꿔 넘기고, cmd는 \"를 모르므로 npm이 따옴표를 경로 글자로 받아
+    // `<prefix>\"<prefix>"`로 설치하려다 실패한다. 그 외 OS는 배열 인자(셸 없음)로 실행.
     const [cmd, args] =
       process.platform === 'win32'
         ? ['cmd', ['/c', `npm install --prefix "${prefix}" careermate@latest`]]
@@ -270,7 +272,11 @@ function npmInstallLatest(prefix: string): Promise<{ ok: boolean; error?: string
       // stdout은 반드시 'ignore'로 흘려보낸다 — 읽지 않은 채 pipe로 두면 npm의 많은 출력이
       // 파이프 버퍼를 채워 설치가 멈추고(=120s 타임아웃) 반파 위험으로 이어진다. stderr만
       // 캡처해 실패 메시지로 쓴다. cwd는 설치 대상 패키지 안이 아니라 prefix로 고정한다.
-      child = spawn(cmd as string, args as string[], { cwd: prefix, stdio: ['ignore', 'ignore', 'pipe'] });
+      child = spawn(cmd as string, args as string[], {
+        cwd: prefix,
+        stdio: ['ignore', 'ignore', 'pipe'],
+        windowsVerbatimArguments: process.platform === 'win32',
+      });
     } catch (e) {
       done({ ok: false, error: e instanceof Error ? e.message : String(e) });
       return;
@@ -331,7 +337,11 @@ export async function runSelfUpdate(): Promise<UpdateResult> {
       ok: false,
       from,
       to: latest,
-      message: `업데이트 설치에 실패했습니다: ${installed.error}`,
+      message:
+        `업데이트 설치에 실패했습니다: ${installed.error}` +
+        (process.platform === 'win32'
+          ? ' Windows에서는 실행 중인 CareerMate가 설치 폴더를 잡고 있으면 덮어쓰기가 막힙니다. AI 앱을 완전히 종료하거나 CareerMate 연결을 끊고, 대시보드 창도 닫은 뒤 아래 명령을 실행해 주세요.'
+          : ''),
       manual: manualCommand(),
     };
   }

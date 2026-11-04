@@ -50,9 +50,16 @@ export function toCallToolResult(r: ToolResult) {
   }
   const isPlainObject =
     typeof r.data === 'object' && r.data !== null && !Array.isArray(r.data);
+  // Clients that read structuredContent and skip `content` (Codex and others) saw only
+  // the small metadata object: get_verifier came back as `{"id":"truthfulness"}` with no
+  // rubric. So the human text rides along as `text` unless the payload already has one.
+  const structured =
+    isPlainObject && !('text' in (r.data as object))
+      ? { ...(r.data as Record<string, unknown>), text: r.text }
+      : (r.data as Record<string, unknown>);
   return {
     content: blocks,
-    ...(isPlainObject ? { structuredContent: r.data as Record<string, unknown> } : {}),
+    ...(isPlainObject ? { structuredContent: structured } : {}),
     ...(r.isError ? { isError: true } : {}),
   };
 }

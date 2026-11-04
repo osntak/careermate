@@ -17,9 +17,8 @@ CareerMate는 **로컬 우선(local-first)** 도구입니다. 모든 커리어 �
 
 보안 취약점을 발견하면 **공개 이슈로 올리지 말고** 비공개로 신고해 주세요:
 
-1. GitHub 저장소의 **Security → Report a vulnerability**
-   ([GitHub Security Advisories](https://github.com/osntak/careermate/security/advisories/new))를
-   사용해 비공개로 보고합니다.
+1. 제목에 `[보안]`을 붙여 [osntak@gmail.com](mailto:osntak@gmail.com)으로 보냅니다.
+   (소스 저장소가 비공개라 GitHub Security Advisories는 외부에서 쓸 수 없습니다.)
 2. 재현 절차, 영향 범위, 가능하면 PoC를 포함해 주세요.
 
 가능한 한 빠르게 확인 응답을 드리고, 수정 후 공개 일정을 함께 조율합니다.
@@ -70,8 +69,8 @@ latest version — see [`INSTALL.md`](INSTALL.md) and the `check_for_update` /
 If you find a security vulnerability, **do not open a public issue** — report it
 privately:
 
-1. Use **Security → Report a vulnerability** on the GitHub repository
-   ([GitHub Security Advisories](https://github.com/osntak/careermate/security/advisories/new)).
+1. Email [osntak@gmail.com](mailto:osntak@gmail.com) with `[Security]` in the subject.
+   (The source repository is private, so GitHub Security Advisories can't be used from outside.)
 2. Please include reproduction steps, the scope of impact, and a PoC if you have one.
 
 We'll acknowledge your report as quickly as we can and coordinate a disclosure timeline
