@@ -11,8 +11,9 @@ import documents from './ko/documents.js';
 import profile from './ko/profile.js';
 import interview from './ko/interview.js';
 import applications from './ko/applications.js';
+import search from './ko/search.js';
 
 export default {
   ...common, ...nav, ...status, ...settings,
-  ...home, ...jobs, ...documents, ...profile, ...interview, ...applications,
+  ...home, ...jobs, ...documents, ...profile, ...interview, ...applications, ...search,
 };

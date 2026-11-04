@@ -11,6 +11,7 @@ import { checkRequest, injectToken } from './security.ts';
 import { Router, sendJson, sendDownload, serveStatic, HttpError } from './http.ts';
 import { registerApiRoutes, isDownload } from './routes.ts';
 import { registerDiagnosticRoutes } from './diagnostic-routes.ts';
+import { registerJobSearchRoutes } from './job-search-routes.ts';
 import { setServerPort } from './info.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,6 +21,7 @@ const LANDING_URL = 'https://careermate.life/';
 const router = new Router();
 registerApiRoutes(router);
 registerDiagnosticRoutes(router);
+registerJobSearchRoutes(router);
 
 export interface StartedServer {
   server: http.Server;
