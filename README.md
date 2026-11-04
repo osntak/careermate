@@ -134,15 +134,14 @@ AI 클라이언트에 연결된 상태라면 "대시보드 열어줘"만으로�
 
 ---
 
-## 대시보드 8페이지
+## 대시보드 메뉴 7개
 
 | 페이지 | 설명 |
 | --- | --- |
 | **Home** | 현재 상태·다음 할 일 한눈에. |
 | **Profile** | 프로필, 경력(experiences), 프로젝트, 스킬 관리. |
 | **공고 찾기** | 원티드·점핏·리멤버·사람인을 검색어·직무·경력 연차·오늘 게시로 찾고, 클릭 한 번으로 저장. |
-| **Jobs** | 저장한 채용공고 목록과 상세(공고 내용·핏 분석). |
-| **Applications** | 지원 현황을 8단계 상태로 보는 칸반 보드. |
+| **지원 관리** | 저장한 공고를 목록으로 보거나 8단계 지원 상태별로 묶어 보고, 공고마다 상세(공고 내용·핏 분석)를 연다. |
 | **Documents** | 자기소개서 버전 타임라인과 이력서. |
 | **Interview** | 면접 준비 자료(`document_passed` 이상에서 해금). |
 | **Settings** | 데이터 내보내기·삭제, 환경 정보. |
@@ -417,15 +416,14 @@ More in [`docs/FAQ.md`](docs/FAQ.md). For **security issues**, use the private p
 
 ---
 
-## The 8 dashboard pages
+## The 7 dashboard menus
 
 | Page | Description |
 | --- | --- |
 | **Home** | Current status and next steps at a glance. |
 | **Profile** | Manage profile, experiences, projects, and skills. |
 | **Find jobs** | Search Wanted, Jumpit, Remember and Saramin by keyword, job category, years of experience or "posted today", and save a posting in one click. |
-| **Jobs** | List and detail of saved postings (posting content + fit analysis). |
-| **Applications** | A kanban board showing your pipeline across the 8 statuses. |
+| **Applications** | Your saved postings as a list or grouped by the 8 application statuses, each with a detail page (posting content + fit analysis). |
 | **Documents** | Cover-letter version timeline and resumes. |
 | **Interview** | Interview prep materials and interview-stage next steps. |
 | **Settings** | Export/delete data, environment info. |

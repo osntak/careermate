@@ -1,5 +1,9 @@
 // 공고(jobs) 페이지 — 목록 + 상세
 export default {
+  // ---- 지원 관리 보기 전환(목록 #/jobs, 단계별 #/applications) ----
+  'jobs.view.list': '목록',
+  'jobs.view.byStage': '단계별',
+
   // ---- list mode ----
   'jobs.list.empty.title': '저장된 공고가 없어요',
   'jobs.list.empty.body': '관심 있는 채용공고를 추가해 적합도와 진행 상태를 관리해 보세요. 연결된 AI에게 “백엔드 공고 찾아줘”처럼 말하면 공고를 찾아 여기에 저장해 줍니다.',

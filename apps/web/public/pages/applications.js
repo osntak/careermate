@@ -1,10 +1,12 @@
-// Applications — every application grouped by status in a calm VERTICAL list
-// (no horizontal scroll). Change a status inline to move an item between groups.
+// Applications, by-stage view of 지원 관리 (#/applications; the list view is #/jobs).
+// Every application grouped by status in a calm VERTICAL list (no horizontal
+// scroll). Change a status inline to move an item between groups.
 import {
   el, get, put, navigate, EmptyState, Btn, ListRow, Badge, Card,
   Select, scoreClass, statusColor, mount, toast, toastOk, toastError, todayLocalISO, daysUntil,
 } from '/lib.js';
 import { t } from '/i18n.js';
+import { applicationsViewSwitch, openJobModal } from '/pages/jobs.js';
 
 // deadline(YYYY-MM-DD) → "Due in 7d" / "Due today" / "Overdue" (null if absent/invalid).
 // daysUntil shares the server's local-midnight rule (core daysUntilDate).
@@ -24,11 +26,12 @@ export async function render(ctx) {
   const offers = (offersRes && offersRes.offers) || [];
 
   if (!applications.length) {
-    mount(ctx.view, el('div', { class: 'stack-4' }, EmptyState({
+    // Same single primary action as the empty list view, so neither view sends the user to the other.
+    mount(ctx.view, el('div', { class: 'stack-4' }, applicationsViewSwitch('#/applications'), EmptyState({
       iconName: 'layers',
       title: t('applications.empty.title'),
       body: t('applications.empty.body'),
-      action: Btn(t('applications.empty.action'), { icon: 'briefcase', variant: 'primary', onClick: () => navigate('/jobs') }),
+      action: Btn(t('jobs.list.addJob'), { icon: 'plus', variant: 'primary', onClick: () => openJobModal(ctx) }),
     })));
     return;
   }
@@ -40,7 +43,7 @@ export async function render(ctx) {
   const byStatus = {};
   for (const app of applications) (byStatus[app.status] || (byStatus[app.status] = [])).push(app);
 
-  const wrap = el('div', { class: 'stack-4' });
+  const wrap = el('div', { class: 'stack-4' }, applicationsViewSwitch('#/applications'));
   if (offers.length) wrap.append(OffersSection(offers));
   for (const code of boardOrder) {
     const apps = byStatus[code];

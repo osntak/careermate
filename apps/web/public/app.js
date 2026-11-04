@@ -10,8 +10,11 @@ const ROUTES = [
   { id: 'home', icon: 'home', module: '/pages/home.js' },
   { id: 'profile', icon: 'user', module: '/pages/profile.js' },
   { id: 'search', icon: 'search', module: '/pages/search.js' },
-  { id: 'jobs', icon: 'briefcase', module: '/pages/jobs.js', countKey: 'jobs' },
-  { id: 'applications', icon: 'layers', module: '/pages/applications.js', countKey: 'active_applications' },
+  // 지원 관리: one nav item, two views of the same postings, #/jobs (list) and
+  // #/applications (by stage). The by-stage route has no nav item of its own;
+  // navAs lends it the list item's highlight and title.
+  { id: 'jobs', icon: 'briefcase', module: '/pages/jobs.js', countKey: 'active_applications' },
+  { id: 'applications', module: '/pages/applications.js', navAs: 'jobs' },
   { id: 'documents', icon: 'file', module: '/pages/documents.js', countKey: 'cover_letters' },
   { id: 'interview', icon: 'mic', module: '/pages/interview.js', countKey: 'interview_pending' },
   { id: 'settings', icon: 'settings', module: '/pages/settings.js' },
@@ -34,11 +37,14 @@ function renderNav(counts = {}) {
   clear(navEl);
   navEl.append(el('div', { class: 'nav__label' }, t('nav.section.workspace')));
   const { page } = parseHash();
+  const current = ROUTES.find((r) => r.id === page);
+  const activeId = current ? current.navAs || current.id : page;
   for (const r of ROUTES) {
+    if (r.navAs) continue;
     if (r.id === 'settings') navEl.append(el('div', { class: 'nav__label' }, t('nav.section.system')));
     const count = r.countKey ? counts[r.countKey] : null;
     navEl.append(el('a', {
-      class: `nav__item${page === r.id ? ' is-active' : ''}`,
+      class: `nav__item${activeId === r.id ? ' is-active' : ''}`,
       href: `#/${r.id}`,
     }, icon(r.icon), el('span', {}, t('nav.' + r.id)),
       count ? el('span', { class: 'nav__badge tnum' }, String(count)) : null));
@@ -69,8 +75,9 @@ async function route() {
   if (page === 'insights') { location.replace('#/settings'); return; }
   const def = ROUTES.find((r) => r.id === page) || ROUTES[0];
 
-  navEl.querySelectorAll('.nav__item').forEach((n) => n.classList.toggle('is-active', n.getAttribute('href') === `#/${def.id}`));
-  const pageTitle = t('nav.' + def.id);
+  const navId = def.navAs || def.id;
+  navEl.querySelectorAll('.nav__item').forEach((n) => n.classList.toggle('is-active', n.getAttribute('href') === `#/${navId}`));
+  const pageTitle = t('nav.' + navId);
   titleEl.textContent = pageTitle;
   document.title = `${pageTitle} · CareerMate`;
   clear(actionsEl);
@@ -93,7 +100,7 @@ async function route() {
     if (token !== renderToken) return;
     clear(view);
     await mod.render(ctx);
-    if (routeStatusEl) routeStatusEl.textContent = titleEl.textContent || t('nav.' + def.id);
+    if (routeStatusEl) routeStatusEl.textContent = titleEl.textContent || pageTitle;
   } catch (err) {
     if (token !== renderToken) return;
     clear(view);

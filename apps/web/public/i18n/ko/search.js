@@ -32,7 +32,7 @@ export default {
   'search.alsoOn': '함께 올라온 곳',
   'search.save': '저장',
   'search.savedBadge': '저장됨',
-  'search.savedToast': '채용공고에 저장했습니다.',
+  'search.savedToast': '지원 관리에 저장했습니다.',
   'search.sort.note': '게시일이 최신인 공고부터 보입니다. 게시일이 없는 원티드·점핏 공고는 뒤에 붙습니다.',
   'search.site.wanted': '원티드',
   'search.site.jumpit': '점핏',

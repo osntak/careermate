@@ -1,4 +1,4 @@
-// 지원 현황 페이지.
+// 지원 관리 단계별 보기(#/applications).
 export default {
   // offers comparison
   'applications.offers.title': '오퍼 비교',
@@ -19,7 +19,6 @@ export default {
   // empty state
   'applications.empty.title': '아직 지원 내역이 없어요',
   'applications.empty.body': '공고를 추가하면 지원이 상태별로 정리됩니다.',
-  'applications.empty.action': '공고 보러 가기',
 
   // status group
   'applications.group.count': '{{count}}건',
