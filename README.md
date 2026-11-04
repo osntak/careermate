@@ -13,7 +13,7 @@
 ## 핵심 철학
 
 - **MCP 우선** — 새 앱 사용법을 익힐 필요가 없습니다. 내 컴퓨터에서 동작하는 AI 에이전트(Claude Desktop·Claude Code·Codex 등 로컬 MCP 클라이언트)와 대화하면, 그 AI가 CareerMate의 로컬 MCP 도구를 호출해 당신의 커리어 DB를 읽고 씁니다.
-- **로컬 우선** — 모든 데이터는 당신의 컴퓨터에만 저장됩니다(`~/.careermate`). 저장된 개인 데이터는 외부 서버로 전송하지 않습니다 — 외부로 나가는 것은 선택적 버전 확인과 공고 검색 시 **검색 키워드**뿐입니다(아래 [보안 / 프라이버시](#보안--프라이버시) 참고). 대시보드 웹 서버는 `127.0.0.1`(이 컴퓨터)에만 연결됩니다.
+- **로컬 우선** — 모든 데이터는 당신의 컴퓨터에만 저장됩니다(`~/.careermate`). 저장된 개인 데이터는 외부 서버로 전송하지 않습니다 — 외부로 나가는 것은 선택적 버전 확인과 공고 검색 시 **검색 키워드·직무 조건**뿐입니다(아래 [보안 / 프라이버시](#보안--프라이버시) 참고). 대시보드 웹 서버는 `127.0.0.1`(이 컴퓨터)에만 연결됩니다.
 - **LLM 비내장** — CareerMate 안에는 AI가 들어 있지 않습니다. 분석·글쓰기 같은 “생각하는 일”은 **당신의 AI**가 하고, CareerMate는 데이터를 **안전하게 보관·조회**하는 역할만 합니다.
 
 > 쉽게 말해: 당신의 AI가 “두뇌”, CareerMate는 그 두뇌가 꺼내 쓰는 “커리어 서랍장”입니다.
@@ -35,12 +35,12 @@
 - **AI와 대화로 모든 작업** — MCP 도구로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
 - **지원 상태 8단계 관리** — `draft`(작성 중) · `planned`(지원 예정) · `applied`(지원 완료) · `document_passed`(서류 합격) · `interview`(면접 진행) · `final_passed`(최종 합격) · `rejected`(불합격) · `on_hold`(보류). `document_passed` 이상에서는 면접 준비를 다음 행동으로 제안합니다.
 - **자기소개서 버전 관리** — 공고별로 자소서 버전을 쌓고 타임라인으로 비교, 파일로 내보내기.
-- **공고 검색·가져오기** — 키워드(직무·기술)나 직무 분류로 원티드·점핏·리멤버·사람인 같은 공개 채용 사이트에서 공고를 바로 가져와, 마음에 드는 것만 저장. 키 발급·설치 없이 동작하며, 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음, 보내는 건 검색어뿐).
+- **공고 검색·가져오기** — 키워드(직무·기술)나 직무 분류로 원티드·점핏·리멤버·사람인 같은 공개 채용 사이트에서 공고를 바로 가져와, 마음에 드는 것만 저장. 영업·회계·간호·생산직 등 모든 직군의 분류표가 내장돼 있어, 내 직무를 검색 조건으로 저장해 두면 "오늘 올라온 공고 보여줘" 한마디로 새 공고만 볼 수 있습니다(여러 사이트에 함께 올라온 공고는 한 줄로 합침). 키 발급·설치 없이 동작하며, 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음, 보내는 건 검색어·직무 조건뿐).
 - **채용공고 파싱** — 붙여넣거나 가져온 공고 텍스트를 구조화해 저장.
 - **로컬 대시보드** — 프레임워크·CDN 없는 바닐라 JS로 만든 7페이지 웹 화면(다크모드 지원).
 - **데이터 내보내기/삭제** — Settings 페이지에서 직접.
 
-> **예: 공고 검색** — "백엔드 공고 찾아줘"라고 하면 AI가 공개 사이트에서 공고를 모아 이렇게 보여주고, 고른 것만 저장합니다:
+> **예: 공고 검색** — "백엔드 공고 찾아줘"라고 하면 AI가 공개 사이트에서 공고를 모아 이렇게 보여주고, 고른 것만 저장합니다(직무를 저장해 뒀다면 "오늘 올라온 공고 보여줘"만으로도 됩니다):
 >
 > > "백엔드" 공고 6건을 찾았어요 (원티드·점핏):
 > > 1. **미소(miso)** — 백엔드 개발자 (Node.js) · 서울 · 경력 5~11년
@@ -159,7 +159,7 @@ AI 클라이언트에 연결된 상태라면 "대시보드 열어줘"만으로�
 | 이력서 | `read_document` · `add_resume` · `get_resumes` · `export_resume` · `delete_resume` · `open_inbox` · `read_inbox` |
 | 경력·프로젝트·스킬 | `add_experience` · `get_experiences` · `delete_experience` · `add_project` · `get_projects` · `delete_project` · `add_skill` · `get_skills` · `delete_skill` |
 | 자기소개서 | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
-| 채용공고 | `search_jobs` · `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
+| 채용공고 | `search_jobs` · `find_job_categories` · `get_job_search_preferences` · `set_job_search_preferences` · `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
 | 오퍼(제안) | `save_offer` · `compare_offers` · `get_offer` |
 | 핵심 컨텍스트 | **`get_application_context`** (지원에 필요한 맥락을 한 번에 모아줌) |
 | 핏 분석 | `save_fit_analysis` |
@@ -245,7 +245,7 @@ CareerMate/
 - **정적 파일 보호** — 경로 traversal(상위 폴더 탈출) 차단.
 - **본문 크기 제한** — 요청 본문 8MB 제한.
 - **민감 정보 비노출** — 이력서·자기소개서 본문은 로그나 에러 응답에 노출되지 않습니다.
-- **사용자 데이터 외부 전송 없음** — CareerMate는 당신의 프로필·이력서·자소서 등 **개인 데이터를 외부로 보내지 않습니다.** 모든 데이터는 당신의 컴퓨터에만 남습니다. 외부로 나가는 네트워크 호출은 (1) 선택적 버전 확인, (2) 공고 검색(공개 잡보드)뿐이며, 이때도 **보내는 것은 검색 키워드뿐**(개인 데이터 아님)이고 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음). 내보내기·삭제는 대시보드 **Settings**에서 직접 할 수 있습니다.
+- **사용자 데이터 외부 전송 없음** — CareerMate는 당신의 프로필·이력서·자소서 등 **개인 데이터를 외부로 보내지 않습니다.** 모든 데이터는 당신의 컴퓨터에만 남습니다. 외부로 나가는 네트워크 호출은 (1) 선택적 버전 확인, (2) 공고 검색(공개 잡보드)뿐이며, 이때도 **보내는 것은 검색 키워드·직무 조건뿐**(개인 데이터 아님)이고 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음). 내보내기·삭제는 대시보드 **Settings**에서 직접 할 수 있습니다.
 
 ---
 
@@ -295,7 +295,7 @@ MIT 라이선스 — 전문은 [`LICENSE`](LICENSE) 파일을 참고하세요.
 ## Core philosophy
 
 - **MCP-first** — No new app to learn. You talk to an AI agent running on your machine (Claude Desktop, Claude Code, Codex, and other local MCP clients), and that AI calls CareerMate's local MCP tools to read and write your career database.
-- **Local-first** — All data lives only on your computer (`~/.careermate`). Your stored personal data is never sent to external servers — the only outbound calls are the optional version check and the **search keyword** during job search (see [Security / privacy](#security--privacy) below). The dashboard web server binds only to `127.0.0.1` (this machine).
+- **Local-first** — All data lives only on your computer (`~/.careermate`). Your stored personal data is never sent to external servers — the only outbound calls are the optional version check and the **search keyword and job category** during job search (see [Security / privacy](#security--privacy) below). The dashboard web server binds only to `127.0.0.1` (this machine).
 - **No built-in LLM** — There is no AI inside CareerMate. The "thinking" — analysis, writing — is done by **your AI**; CareerMate only stores and serves the data safely.
 
 > In short: your AI is the "brain," and CareerMate is the "career drawer" it reaches into.
@@ -317,12 +317,12 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 - **Everything through conversation with AI** — MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
 - **8-stage application status** — `draft` · `planned` · `applied` · `document_passed` · `interview` · `final_passed` · `rejected` · `on_hold`. Interview prep is suggested at `document_passed` or later.
 - **Cover-letter versioning** — Stack versions per posting, compare on a timeline, export to a file.
-- **Job search & import** — Pull postings by keyword (role/skill) or job category straight from public job boards (Wanted, Jumpit, Remember, Saramin) and save only the ones you like. No API key or setup; it only *fetches* public postings (no bot-protection bypass, no bulk harvesting — only the search keyword is sent).
+- **Job search & import** — Pull postings by keyword (role/skill) or job category straight from public job boards (Wanted, Jumpit, Remember, Saramin) and save only the ones you like. Category tables for every occupation (sales, accounting, nursing, manufacturing...) are built in: save your role as a search condition and "show me today's new postings" returns only new ones, with the same posting from several boards folded into one row. No API key or setup; it only *fetches* public postings (no bot-protection bypass, no bulk harvesting; only the search keyword and job category are sent).
 - **Job-posting parsing** — Turn pasted or imported posting text into structured records.
 - **Local dashboard** — A 7-page web UI built with framework-free, CDN-free vanilla JS (dark mode supported).
 - **Export / delete your data** — Directly from the Settings page.
 
-> **Example: job search** — Ask "find backend jobs" and the AI gathers postings from public boards, presents them like this, and saves only the ones you pick:
+> **Example: job search** — Ask "find backend jobs" and the AI gathers postings from public boards, presents them like this, and saves only the ones you pick (with a saved role, "show me today's new postings" is enough):
 >
 > > Found 6 "backend" postings (Wanted · Jumpit):
 > > 1. **miso** — Backend Developer (Node.js) · Seoul · 5–11 yrs
@@ -441,7 +441,7 @@ Dark mode is supported.
 | Resume | `read_document` · `add_resume` · `get_resumes` · `export_resume` · `delete_resume` · `open_inbox` · `read_inbox` |
 | Experience / projects / skills | `add_experience` · `get_experiences` · `delete_experience` · `add_project` · `get_projects` · `delete_project` · `add_skill` · `get_skills` · `delete_skill` |
 | Cover letter | `get_cover_letters` · `save_cover_letter_version` · `delete_cover_letter` · `export_cover_letter` |
-| Job posting | `search_jobs` · `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
+| Job posting | `search_jobs` · `find_job_categories` · `get_job_search_preferences` · `set_job_search_preferences` · `save_job_posting` · `get_job_posting` · `list_jobs` · `prescreen_job` · `delete_job_posting` |
 | Offer | `save_offer` · `compare_offers` · `get_offer` |
 | Core context | **`get_application_context`** (gathers all context needed for an application in one call) |
 | Fit analysis | `save_fit_analysis` |
@@ -528,7 +528,7 @@ CareerMate/
 - **Static-file protection** — Path traversal (escaping the parent folder) is blocked.
 - **Body size limit** — Request bodies are capped at 8MB.
 - **No sensitive-data leakage** — Resume and cover-letter content is never exposed in logs or error responses.
-- **No personal-data transmission** — CareerMate never sends your personal data (profile, resumes, cover letters) anywhere; all data stays only on your computer. The only outbound network calls are (1) the optional version check and (2) job search (public job boards) — and even then only the **search keyword** is sent (no personal data), to *fetch* public postings (no bot-protection bypass, no automated bulk harvesting). Export and delete are available directly in the dashboard **Settings**.
+- **No personal-data transmission** — CareerMate never sends your personal data (profile, resumes, cover letters) anywhere; all data stays only on your computer. The only outbound network calls are (1) the optional version check and (2) job search (public job boards) — and even then only the **search keyword and job category** are sent (no personal data), to *fetch* public postings (no bot-protection bypass, no automated bulk harvesting). Export and delete are available directly in the dashboard **Settings**.
 
 ---
 

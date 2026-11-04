@@ -48,6 +48,8 @@ import {
   getInboxDir,
   getVerifyStrict,
   setVerifyStrict,
+  getJobSearchPreferences,
+  setJobSearchPreferences,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -68,6 +70,9 @@ import {
   prescreenJob,
   searchJobs,
   JOB_SEARCH_SOURCES,
+  findJobCategories,
+  isRememberCategory,
+  isSaraminCategory,
   saveOffer,
   compareOffers,
   getOffer,
@@ -109,6 +114,12 @@ import { getUpdateStatus, getUpdateStatusAsync, runSelfUpdate } from './update.t
 const STATUS_LIST = APPLICATION_STATUSES.map((s) => `${s}(${APPLICATION_STATUS_LABELS[s]})`).join(', ');
 const DELETE_CONFIRMATION = 'DELETE';
 const DASHBOARD_URL = 'http://127.0.0.1:4319';
+
+/** A real calendar day in YYYY-MM-DD (rejects 2026-99-99 and 2026-02-30). */
+const isYmd = (s: string) => {
+  const d = new Date(`${s}T00:00:00Z`);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(d.getTime()) && d.toISOString().startsWith(s);
+};
 
 /** List real, user-dropped files in the inbox (skips hidden/OS/office-lock cruft). */
 function listInboxFiles(dir: string): { name: string; path: string }[] {
@@ -1082,32 +1093,117 @@ export const TOOLS: ToolDef[] = [
     name: 'search_jobs',
     // 외부 공개 잡보드(원티드·점핏·리멤버·사람인)로 검색어·직무 조건이 나가므로 openWorld를 정직하게 표시.
     openWorld: true,
-    title: '공고 검색·가져오기(키워드·직무)',
+    title: '공고 검색·가져오기(키워드·직무·신규)',
     description:
-      `키워드나 직무 조건으로 무인증 공개 채용 사이트(${JOB_SEARCH_SOURCES.join('·')})에서 채용 공고를 가져옵니다. 사용자가 "백엔드 신입 공고 찾아줘", "React 공고 가져와", "내 직무 공고 모아줘"처럼 공고를 찾아 달라고 할 때 사용하세요. 결과(회사·직무·링크·지역·경력·기술스택·마감)를 사용자에게 보기 좋게 보여 주고, **사용자가 관심 있다고 고른 것만** save_job_posting으로 저장하세요(전부 자동 저장하지 마세요). 저장한 공고는 이어서 get_application_context로 분석·자소서로 연결됩니다. ` +
-      `직무 조건: 리멤버는 remember_category("SW개발>프론트엔드"처럼 상위>하위, 상위만도 가능), 사람인은 saramin_category(직무 코드, 예: 프론트엔드 92, 백엔드/서버개발 84. 다른 코드는 사람인 결과의 category_codes에서 확인)로 거릅니다. 직무 조건만 주고 keyword를 비우면 조건을 받은 사이트만 검색합니다. ` +
-      `참고: 이 도구는 외부 공개 페이지에서 공고를 가져오기만 하며(보내는 것은 검색어·직무 조건뿐, 사용자 데이터는 절대 전송하지 않음), 봇 차단 우회는 하지 않습니다. 잡코리아는 robots.txt 제약으로 포함되지 않습니다. 결과가 비어 있으면 키워드를 바꾸거나 사용자에게 공고 URL/본문을 받아 save_job_posting으로 저장하세요.`,
+      `키워드나 직무 조건으로 무인증 공개 채용 사이트(${JOB_SEARCH_SOURCES.join('·')})에서 채용 공고를 가져옵니다. 사용자가 "영업 신입 공고 찾아줘", "React 공고 가져와", "오늘 올라온 내 직무 공고 보여줘"처럼 공고를 찾아 달라고 할 때 사용하세요. 결과(회사·직무·링크·지역·경력·기술·마감·게시일)를 사용자에게 보기 좋게 보여 주고, **사용자가 관심 있다고 고른 것만** save_job_posting으로 저장하세요(전부 자동 저장하지 마세요). 저장한 공고는 이어서 get_application_context로 분석·자소서로 연결됩니다. ` +
+      `직무 조건: 모든 직군(영업·회계·디자인·의료·생산 등)에 쓸 수 있습니다. 값은 짐작하지 말고 find_job_categories로 사용자 직무에 맞는 리멤버 분류("상위>하위")와 사람인 코드를 찾아 넣으세요. keyword와 직무 조건을 모두 비우면 set_job_search_preferences로 저장해 둔 조건을 씁니다(저장된 게 없으면 먼저 저장을 제안하세요). 직무 조건만 있으면 조건을 받은 사이트(리멤버·사람인)만 검색합니다. ` +
+      `새 공고: posted_since("today" 또는 YYYY-MM-DD)를 주면 그날 이후 공고만 남깁니다. 리멤버·사람인은 사이트 게시일로, 날짜를 주지 않는 원티드·점핏은 CareerMate가 처음 본 날(first_seen_at)로 거르므로, 원티드·점핏은 처음 검색한 날엔 전부 새 공고로 보인다고 안내하세요. 여러 사이트에 함께 올라온 같은 공고는 한 줄로 합치고 나머지 링크는 also_on에 둡니다. ` +
+      `참고: 외부로 보내는 것은 검색어·직무 조건뿐이고 사용자 데이터는 전송하지 않으며, 봇 차단 우회는 하지 않습니다. 로컬에는 처음 본 날짜(사이트·공고 번호·날짜)만 기록합니다. 잡코리아는 robots.txt 제약으로 포함되지 않습니다. 결과가 비어 있으면 키워드나 직무 조건을 바꾸거나 사용자에게 공고 URL/본문을 받아 save_job_posting으로 저장하세요.`,
     inputSchema: {
-      keyword: z.string().describe('검색어(직무·기술·키워드). 예: "백엔드", "React 신입". 직무 조건만으로 찾을 땐 빈 문자열'),
+      keyword: z.string().optional().describe('검색어(직무·기술·키워드). 예: "영업", "React 신입". 직무 조건만 쓰거나 저장된 조건을 쓸 땐 생략'),
       sources: z.array(z.enum([...JOB_SEARCH_SOURCES] as [string, ...string[]])).optional().describe(`대상 사이트(생략 시 전체: ${JOB_SEARCH_SOURCES.join('·')})`),
       limit: z.number().optional().describe('사이트별 최대 건수(기본 10, 최대 50)'),
-      remember_category: z.string().optional().describe('리멤버 직무: "상위>하위"(예: "SW개발>프론트엔드") 또는 상위만(예: "SW개발")'),
-      saramin_category: z.string().regex(/^\d+(,\d+)*$/).optional().describe('사람인 직무 코드(쉼표로 여러 개). 예: "92"(프론트엔드), "84"(백엔드/서버개발)'),
+      remember_categories: z.array(z.string()).max(20).optional().describe('리멤버 직무(find_job_categories 결과): "상위>하위" 또는 상위만. 예: ["재무·회계·세무>회계결산"]'),
+      saramin_categories: z.array(z.string().regex(/^\d+$/)).max(20).optional().describe('사람인 직무 코드(find_job_categories 결과). 예: ["322"]'),
+      posted_since: z
+        .string()
+        .refine((s) => s === 'today' || isYmd(s), '"today" 또는 실제 날짜(YYYY-MM-DD)')
+        .optional()
+        .describe('"today" 또는 YYYY-MM-DD. 그날 이후 공고만'),
     },
+    // 공고를 가져오기만 한다. 처음 본 날짜 기록은 사용자 데이터가 아닌 로컬 캐시라 readOnly로 둔다.
     readOnly: true,
     handler: async (args) => {
-      const res = await searchJobs(args.keyword, {
+      let keyword = (args.keyword ?? '').trim();
+      let rememberCategories = args.remember_categories ?? [];
+      let saraminCategories = args.saramin_categories ?? [];
+      let usedSaved = false;
+      if (!keyword && !rememberCategories.length && !saraminCategories.length) {
+        const saved = getJobSearchPreferences();
+        if (!saved.keyword && !saved.remember_categories.length && !saved.saramin_categories.length) {
+          return fail(
+            '검색어나 직무 조건이 없고 저장된 검색 조건도 없습니다. 사용자의 희망 직무를 find_job_categories로 찾아 set_job_search_preferences로 저장하거나, keyword를 주세요.',
+          );
+        }
+        ({ keyword, remember_categories: rememberCategories, saramin_categories: saraminCategories } = saved);
+        usedSaved = true;
+      }
+      const today = new Date().toLocaleDateString('sv-SE');
+      const res = await searchJobs(keyword, {
         sources: args.sources,
         limit: args.limit,
-        rememberCategory: args.remember_category,
-        saraminCategory: args.saramin_category,
+        rememberCategories,
+        saraminCategories,
+        postedSince: args.posted_since === 'today' ? today : args.posted_since,
+        today,
       });
       const failed = res.providers.filter((p) => !p.ok);
       const okCount = res.results.length;
-      const parts = [`'${res.query || '직무 조건'}' 검색 결과 ${okCount}건`];
-      if (failed.length) parts.push(`(일부 사이트 응답 실패: ${failed.map((f) => f.source).join(', ')})`);
-      if (okCount === 0) parts.push('— 키워드를 바꾸거나, 공고 URL/본문을 주시면 직접 저장해 드릴게요.');
-      return ok(parts.join(' '), res);
+      const parts = [`'${res.query || '직무 조건'}' 검색 결과 ${okCount}건${usedSaved ? '(저장된 검색 조건 사용)' : ''}`];
+      if (res.filtered_out) parts.push(`(게시일 기준 ${res.filtered_out}건 제외)`);
+      if (failed.length) parts.push(`(일부 사이트 응답 실패: ${failed.map((f) => `${f.source}: ${f.error ?? f.status}`).join('; ')})`);
+      if (okCount === 0) parts.push('- 키워드나 직무 조건을 바꾸거나, 공고 URL/본문을 주시면 직접 저장해 드릴게요.');
+      return ok(parts.join(' '), {
+        ...res,
+        used_saved_preferences: usedSaved,
+        conditions: { keyword, remember_categories: rememberCategories, saramin_categories: saraminCategories },
+      });
+    },
+  },
+  {
+    name: 'find_job_categories',
+    title: '직무 분류 찾기(리멤버·사람인)',
+    description:
+      '사용자의 직무를 리멤버 직무 분류("상위>하위")와 사람인 직무 코드로 바꿔 줍니다. CareerMate에 내장된 분류표에서 찾으므로 외부 통신이 없습니다. search_jobs나 set_job_search_preferences에 직무 조건을 넣기 전에 호출하세요. 영업·회계·디자인·간호·생산관리 등 모든 직군을 다룹니다. 여러 직무는 쉼표로 구분합니다(예: "경리, 회계"). 결과는 관련도순이니, 그대로 다 넣지 말고 사용자 직무에 맞는 것만 골라 쓰세요. 같은 이름이 다른 분야에 있을 수 있으므로(예: 사람인 "프론트"는 호텔 프런트 데스크) group·kind를 보고 고르세요. 사용자가 직무를 말하지 않았으면 프로필의 희망 직무(desired_roles)를 쓰세요.',
+    inputSchema: {
+      query: z.string().describe('직무 이름(쉼표로 여러 개). 예: "데이터 분석가", "경리, 회계", "간호사"'),
+      limit: z.number().int().min(1).max(100).optional().describe('사이트별 최대 후보 수(기본 20)'),
+    },
+    readOnly: true,
+    handler: (args) => {
+      const r = findJobCategories(args.query, args.limit ?? 20);
+      if (!r.remember.length && !r.saramin.length) {
+        return ok(`'${args.query}'에 맞는 직무 분류를 찾지 못했습니다. 더 일반적인 이름(예: "개발자" 대신 "개발", "웹개발")으로 다시 찾거나 keyword 검색을 쓰세요.`, r);
+      }
+      return ok(`직무 분류 후보: 리멤버 ${r.remember.length}개, 사람인 ${r.saramin.length}개. 사용자 직무에 맞는 것만 골라 쓰세요.`, r);
+    },
+  },
+  {
+    name: 'get_job_search_preferences',
+    title: '저장된 공고 검색 조건 보기',
+    description:
+      'set_job_search_preferences로 저장해 둔 공고 검색 조건(키워드·리멤버 직무·사람인 코드)을 돌려줍니다. 사용자가 "내 검색 조건 뭐야?"라고 묻거나, 저장된 조건으로 search_jobs를 돌리기 전에 확인할 때 쓰세요.',
+    inputSchema: {},
+    readOnly: true,
+    handler: () => {
+      const p = getJobSearchPreferences();
+      const empty = !p.keyword && !p.remember_categories.length && !p.saramin_categories.length;
+      return ok(empty ? '저장된 공고 검색 조건이 없습니다.' : '저장된 공고 검색 조건입니다.', p);
+    },
+  },
+  {
+    name: 'set_job_search_preferences',
+    idempotent: true, // 같은 값 재저장은 무해
+    title: '공고 검색 조건 저장',
+    description:
+      '사용자가 자주 볼 공고 검색 조건을 저장합니다. 저장해 두면 search_jobs를 keyword·직무 조건 없이 불러도 이 조건으로 검색합니다("오늘 새 공고 보여줘"를 매번 다시 묻지 않게). 직무 조건은 find_job_categories로 찾은 값만 넣고, 저장 전에 사용자에게 어떤 직무로 저장할지 확인하세요. 준 필드만 바뀌고, 빈 배열/빈 문자열을 주면 그 항목을 비웁니다.',
+    inputSchema: {
+      keyword: z.string().optional().describe('기본 검색어(선택). 예: "React"'),
+      remember_categories: z.array(z.string()).max(20).optional().describe('리멤버 직무("상위>하위" 또는 상위만)'),
+      saramin_categories: z.array(z.string().regex(/^\d+$/)).max(20).optional().describe('사람인 직무 코드'),
+    },
+    handler: (args) => {
+      const bad = [
+        ...((args.remember_categories ?? []) as string[]).filter((c) => !isRememberCategory(c)),
+        ...((args.saramin_categories ?? []) as string[]).filter((c) => !isSaraminCategory(c)),
+      ];
+      if (bad.length) return fail(`리멤버·사람인 분류표에 없는 값입니다: ${bad.join(', ')}. find_job_categories로 찾은 값을 넣어 주세요.`);
+      const p = setJobSearchPreferences({
+        ...(args.keyword !== undefined ? { keyword: args.keyword.trim() } : {}),
+        ...(args.remember_categories ? { remember_categories: args.remember_categories } : {}),
+        ...(args.saramin_categories ? { saramin_categories: args.saramin_categories } : {}),
+      });
+      return ok('공고 검색 조건을 저장했습니다. 이제 "오늘 올라온 공고 보여줘"라고 하면 이 조건으로 찾아요.', p);
     },
   },
   {

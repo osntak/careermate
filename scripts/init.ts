@@ -399,6 +399,8 @@ const SAFE_TOOLS: readonly string[] = [
   // search_jobs: 공개 잡보드에서 공고를 가져오기만(보내는 건 검색어뿐, 사용자 데이터 미전송).
   // check_for_update와 같은 "네트워크 read" 부류라 사전허용 안전(우회·쓰기 없음).
   'search_jobs',
+  // 직무 분류는 내장 분류표 조회, 검색 조건은 로컬 저장/조회뿐(외부 전송 없음) → 사전허용 안전.
+  'find_job_categories', 'get_job_search_preferences', 'set_job_search_preferences',
   // 오퍼(제안) — 로컬 저장/조회(save_fit_analysis 등과 동급), 외부 전송 없음.
   'save_offer', 'compare_offers', 'get_offer',
   // careermate 자신의 인박스 폴더·대시보드(127.0.0.1)만 여는 로컬 동작 + 인박스 내부 문서 읽기 → 사전허용 안전.

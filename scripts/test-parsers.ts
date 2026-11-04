@@ -252,6 +252,62 @@ async function main() {
       JSON.stringify(r?.keywords) === '["백엔드/서버개발","Docker"]' && JSON.stringify(r?.category_codes) === '["84","214"]',
     );
     ok('지난 달 마감일은 다음 해로', r?.deadline === '2027-01-04', String(r?.deadline));
+    ok('"등록일 26/11/04" → posted_at', r?.posted_at === '2026-11-04', String(r?.posted_at));
+    const edited = parseSaraminList(html.replace('등록일 26/11/04', '수정일 26/11/04'), new Date(2026, 10, 4));
+    ok('"수정일"은 게시일로 치지 않음', edited[0]?.posted_at === undefined, String(edited[0]?.posted_at));
+  }
+
+  console.log('\n9) 직무 분류 찾기(findJobCategories) · 사이트 간 중복 합치기');
+  {
+    const { findJobCategories, isRememberCategory, dedupeAcrossBoards } = await import('../packages/core/src/index.ts');
+    const acc = findJobCategories('경리');
+    ok('비개발 직군: "경리" → 사람인 직무 코드 322', acc.saramin.some((c) => c.code === '322' && c.name === '경리'), JSON.stringify(acc.saramin.slice(0, 3)));
+    const nurse = findJobCategories('간호사');
+    ok('"간호사" → 리멤버 의료·보건>간호사가 1순위', nurse.remember[0] === '의료·보건>간호사', JSON.stringify(nurse.remember.slice(0, 3)));
+    const fe = findJobCategories('프론트엔드 개발자');
+    ok(
+      '긴 직무명도 짧은 분류를 찾음(term ⊃ name)',
+      fe.remember.includes('SW개발>프론트엔드') && fe.saramin.some((c) => c.code === '92'),
+      JSON.stringify({ r: fe.remember.slice(0, 3), s: fe.saramin.slice(0, 3) }),
+    );
+    const multi = findJobCategories('경리, 회계');
+    ok('쉼표로 여러 직무', multi.saramin.some((c) => c.code === '322') && multi.saramin.some((c) => c.code === '2197'));
+    const none = findJobCategories('우주비행사');
+    ok('분류표에 없는 직무는 빈 결과', none.remember.length === 0 && none.saramin.length === 0, JSON.stringify(none));
+    const ai = findJobCategories('AI');
+    ok(
+      '짧은 영문 "AI"는 단어로만 맞춤(AICPA·Medical Affairs 제외)',
+      ai.remember[0] === 'AI·데이터' || ai.remember.includes('AI·데이터>AI·ML·DL'),
+      JSON.stringify(ai.remember.slice(0, 5)),
+    );
+    ok('"AI"가 AICPA·Medical Affairs를 끌어오지 않음', !ai.remember.some((c) => /Medical Affairs/.test(c)) && !ai.saramin.some((c) => /AICPA/i.test(c.name)));
+    const it = findJobCategories('IT');
+    ok('"IT"가 Venture Capital·Git을 끌어오지 않음', !it.remember.some((c) => /Venture Capital|Private Equity/.test(c)) && !it.saramin.some((c) => /^Git$/i.test(c.name)), JSON.stringify(it.saramin.slice(0, 5)));
+    const words = findJobCategories('회계 담당자');
+    ok('띄어 쓴 직무명은 단어 단위로도 찾음("회계 담당자" → 회계결산)', words.remember.includes('재무·회계·세무>회계결산'), JSON.stringify(words.remember.slice(0, 5)));
+    ok(
+      'isRememberCategory: 정확한 "상위>하위"·상위만 통과, 하위만·오타·3단계는 거부',
+      isRememberCategory('SW개발>프론트엔드') && isRememberCategory('영업') && !isRememberCategory('프론트엔드') && !isRememberCategory('SW개발>프런트') && !isRememberCategory('SW개발>프론트엔드>x'),
+    );
+    const { isSaraminCategory } = await import('../packages/core/src/index.ts');
+    ok('isSaraminCategory: 분류표 코드만 통과', isSaraminCategory('322') && isSaraminCategory('92') && !isSaraminCategory('999999'));
+
+    const base = { experience: undefined, location: undefined } as const;
+    const rows = dedupeAcrossBoards([
+      { ...base, source: 'saramin', company: '(주)한화솔루션', position: '디지털 헬스케어 서비스 기획', url: 's', external_id: '1' },
+      { ...base, source: 'remember', company: '한화솔루션(주)', position: '[한화솔루션] 디지털 헬스케어 서비스 기획', url: 'r', external_id: '2', posted_at: '2026-11-03' },
+      { ...base, source: 'remember', company: '다른회사', position: '디지털 헬스케어 서비스 기획', url: 'r2', external_id: '3' },
+    ]);
+    ok(
+      '같은 회사·제목은 한 줄로(첫 사이트 유지, 나머지는 also_on, 게시일 보충)',
+      rows.length === 2 && rows[0].source === 'saramin' && rows[0].also_on?.[0]?.url === 'r' && rows[0].posted_at === '2026-11-03',
+      JSON.stringify(rows),
+    );
+    const tags = dedupeAcrossBoards([
+      { ...base, source: 'saramin', company: '가나', position: '[신입] 회계 담당', url: 'a', external_id: '1' },
+      { ...base, source: 'remember', company: '가나', position: '[경력] 회계 담당', url: 'b', external_id: '2' },
+    ]);
+    ok('[신입]·[경력] 같은 꼬리표가 다르면 다른 공고로 둠(회사명 꼬리표만 무시)', tags.length === 2, JSON.stringify(tags));
   }
 }
 
