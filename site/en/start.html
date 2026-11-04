@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script>
     (function () {
-      try {
-        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
-        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : 'dark');
-      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+      var t;
+      try { t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
-  <title>New here? — Getting started with CareerMate</title>
-  <meta name="description" content="No idea what a terminal is? That's fine. Pick the AI you use and your computer, and we'll walk you through the one install path that fits — from the very start." />
+  <title>CareerMate: Getting started</title>
+  <meta name="description" content="Pick the AI you use and your computer (Windows or Mac) to get step-by-step CareerMate install instructions. With Claude or Codex you can install from the desktop app without a terminal." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://careermate.life/en/start" />
   <link rel="alternate" hreflang="ko" href="https://careermate.life/start" />
@@ -23,15 +23,15 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:locale:alternate" content="ko_KR" />
   <meta property="og:url" content="https://careermate.life/en/start" />
-  <meta property="og:title" content="New here? — Getting started with CareerMate" />
+  <meta property="og:title" content="CareerMate: Getting started" />
   <meta property="og:description" content="Pick the AI you use and your computer, then follow the install path that fits." />
   <meta property="og:image" content="https://careermate.life/og-en.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="CareerMate getting started guide" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="New here? — Getting started with CareerMate" />
-  <meta name="twitter:description" content="A beginner-friendly guide for connecting CareerMate to Claude, Codex, or another local AI agent." />
+  <meta name="twitter:title" content="CareerMate: Getting started" />
+  <meta name="twitter:description" content="A step-by-step guide for connecting CareerMate to Claude, Codex, or another local AI agent." />
   <meta name="twitter:image" content="https://careermate.life/og-en.png" />
   <meta name="twitter:image:alt" content="CareerMate getting started guide" />
   <script type="application/ld+json">
@@ -62,7 +62,7 @@
   <!-- Privacy-friendly analytics for the marketing site only (never the local 127.0.0.1 app). -->
   <script src="/analytics.js" defer></script>
   <style>
-    /* Choice wizard — start.html only. Reuses style.css tokens. */
+    /* Choice wizard, start.html only. Reuses style.css tokens. */
     .wizard { max-width: 920px; margin: 0; }
     .q { margin: 0 0 1.6rem; }
     .q__label { font-weight: 650; margin: 0 0 .7rem; font-size: 1.02rem; }
@@ -124,12 +124,11 @@
   <main id="top">
     <header class="hero hero--solo start-hero">
       <div class="hero__main">
-        <span class="pill-badge"><span class="pill-badge__dot" aria-hidden="true"></span> New here?</span>
-        <h1 class="hero__title">No terminal knowledge needed</h1>
+        <h1 class="hero__title">Install CareerMate</h1>
         <p class="hero__lede">
-          Just pick the <strong>AI you use</strong> and your <strong>computer</strong>, and we'll show you the <strong>one</strong> install path that fits — from the very start.
+          Pick the <strong>AI you use</strong> and your <strong>computer</strong> to see <strong>one</strong> install path, step by step from the start. With Claude or Codex you can install from the desktop app without a terminal.
         </p>
-        <p class="hero__note">You need a <strong>desktop agent that can access local files and commands</strong>, such as Codex or Claude—not a web or mobile chat. CareerMate is <a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">publicly distributed on npm</a>.</p>
+        <p class="hero__note">You need a <strong>desktop agent that can access local files and commands</strong>, such as the Codex or Claude app. Web and mobile chat apps can't install it. CareerMate is <a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">published on npm</a>.</p>
       </div>
     </header>
 
@@ -149,7 +148,7 @@
         </div>
         <!-- Q2 -->
         <div class="q">
-          <p class="q__label"><span class="num">2</span>And your computer?</p>
+          <p class="q__label"><span class="num">2</span>Which computer do you use?</p>
           <div class="choices" id="q-os" role="radiogroup" aria-label="Operating system" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
             <label class="choice"><input type="radio" name="os" value="win" />
               <span class="choice__t">Windows</span></label>
@@ -158,24 +157,24 @@
           </div>
         </div>
 
-        <p class="hint" id="prompt-pick">Pick the two above and the path that fits you appears below.</p>
+        <p class="hint" id="prompt-pick">Pick both and the install steps appear below.</p>
 
         <!-- ============ result ============ -->
         <div class="result" id="result" aria-live="polite">
 
           <!-- ===== Claude → app / CLI ===== -->
           <div class="path" data-sub="claude">
-            <span class="path__tag">For you — Claude</span>
+            <span class="path__tag">Claude users</span>
             <h2>Connect with Claude</h2>
-            <p>There's a path that stays inside the Claude Desktop app, and one that uses the terminal. For most people, <strong>Option 1</strong> is enough.</p>
+            <p>You can install inside the Claude Desktop app or from a terminal. <strong>Option 1</strong> works for most people.</p>
 
             <details class="acc">
-              <summary>Option 1 — Claude Desktop app, Code tab <span class="acc__hint">Recommended</span></summary>
+              <summary>Option 1: Claude Desktop app, Code tab <span class="acc__hint">Recommended</span></summary>
               <div class="acc__body">
               <p class="hint" style="margin:.3rem 0 .8rem">You open a working folder inside the Claude Desktop app and go from there. No separate terminal needed.</p>
               <ol class="steps">
                 <li class="step"><div class="step__no">1</div><div class="step__body">
-                  <h3>Install the Claude Desktop app → sign in</h3>
+                  <h3>Install the Claude Desktop app and sign in</h3>
                   <p>Download it from <a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a>, install, and sign in with your account.</p>
                 </div></li>
                 <li class="step"><div class="step__no">2</div><div class="step__body">
@@ -184,44 +183,44 @@
                   <p class="step__tip os-win">On Windows, only if you see <strong>"Git is required"</strong>, install <a href="https://git-scm.com/download/win" rel="noopener" target="_blank">Git for Windows</a> and restart the Claude Desktop app.</p>
                 </div></li>
                 <li class="step"><div class="step__no">3</div><div class="step__body">
-                  <h3>Paste this one line</h3>
-                  <p class="paste-note">💬 Paste it into the <strong>chat</strong> in the Code tab — it's not a terminal command. This line only reads a public guide page to install, and <strong>your resume and personal info are never uploaded.</strong></p>
+                  <h3>Paste this line</h3>
+                  <p class="paste-note">Paste it into the <strong>chat</strong> in the Code tab. It is not a terminal command. The AI reads only a public guide page to install, and <strong>your resume and personal info are not uploaded.</strong></p>
                   <div class="code"><button class="copy-btn" type="button" data-copy-target="p-claude">Copy</button>
                     <pre id="p-claude">Read https://careermate.life/llms-install.txt and follow it to install and connect CareerMate in this folder. Store the data in this folder under .cm/data, and if anything needs changing on my system (like installing Node), tell me before you run it. When it's done, tell me how to restart the app, how to give you my resume, and the dashboard address (http://127.0.0.1:4319).</pre></div>
                   <p class="step__tip"><strong>You don't need Node already installed.</strong> If it's needed, Claude checks first and helps install it. Approve any permission prompts that appear during install.</p>
                 </div></li>
                 <li class="step"><div class="step__no">4</div><div class="step__body">
-                  <h3>Restart the app → confirm</h3>
-                  <p>Fully quit and reopen the Claude Desktop app (approve the one-time MCP prompt the first time), then say <strong>"check whether CareerMate is connected"</strong> — done.</p>
+                  <h3>Restart the app and check the connection</h3>
+                  <p>Fully quit and reopen the Claude Desktop app (approve the one-time MCP prompt the first time), then say <strong>"check whether CareerMate is connected"</strong>.</p>
                   <p class="recover"><strong>Don't see the tools?</strong> <strong>Fully quit</strong> the app (down to the tray) and reopen it, and make sure you approved the permission prompt that appeared the first time.</p>
                 </div></li>
               </ol>
-              <div class="filenote">📎 <strong>How to add your resume:</strong> attaching the file in the Code tab chat is easiest. If you can't attach, put the file in your working folder and say <em>"read resume.pdf and register it"</em>, or paste the text in.</div>
+              <div class="filenote"><strong>How to add your resume:</strong> attaching the file in the Code tab chat is easiest. If you can't attach, put the file in your working folder and say <em>"read resume.pdf and register it"</em>, or paste the text in.</div>
               </div>
             </details>
 
             <details class="acc">
-              <summary>Option 2 — Claude Code CLI <span class="acc__hint">If you're comfortable with a terminal</span></summary>
+              <summary>Option 2: Claude Code CLI <span class="acc__hint">If you're comfortable with a terminal</span></summary>
               <div class="acc__body">
               <p class="hint" style="margin:.3rem 0 .8rem">You run Claude directly in a terminal. If the terminal is new to you, use Option 1.</p>
               <ol class="steps">
                 <li class="step"><div class="step__no">1</div><div class="step__body">
                   <h3>Install Node.js</h3>
-                  <p class="os-win">Windows: paste into PowerShell →</p>
+                  <p class="os-win">Windows: paste this into PowerShell.</p>
                   <div class="code os-win"><button class="copy-btn" type="button" data-copy-target="p-node-win-cl">Copy</button><pre id="p-node-win-cl">winget install OpenJS.NodeJS.LTS</pre></div>
-                  <p class="os-mac">Mac: paste into Terminal (no Homebrew? install LTS from nodejs.org) →</p>
+                  <p class="os-mac">Mac: paste this into Terminal (without Homebrew, install the LTS from nodejs.org).</p>
                   <div class="code os-mac"><button class="copy-btn" type="button" data-copy-target="p-node-mac-cl">Copy</button><pre id="p-node-mac-cl">brew install node</pre></div>
-                  <p class="step__tip">If the command is tricky, you can also <strong>download the installer and double-click</strong> it (keep clicking "Next") from <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a>. <strong>See the help below</strong> for how to open a terminal.</p>
+                  <p class="step__tip">You can also <strong>download the installer and double-click</strong> it (keep clicking "Next") from <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a>. <strong>See the help below</strong> for how to open a terminal.</p>
                   <p class="step__tip os-win">On Windows, Git for Windows isn't a required CLI step. Install it only if you hit a Bash-related error.</p>
                 </div></li>
                 <li class="step"><div class="step__no">2</div><div class="step__body">
-                  <h3>Install Claude Code → sign in</h3>
+                  <h3>Install Claude Code and sign in</h3>
                   <div class="code"><button class="copy-btn" type="button" data-copy-target="p-cc-install">Copy</button><pre id="p-cc-install">npm install -g @anthropic-ai/claude-code</pre></div>
                   <p class="step__tip">After installing, run <code>claude</code> and a sign-in window opens (your Pro/Max account).</p>
                 </div></li>
                 <li class="step"><div class="step__no">3</div><div class="step__body">
-                  <h3>Run claude in an empty folder → this line</h3>
-                  <p class="paste-note">💬 Paste it <strong>inside the running claude</strong> — it's a message to the AI (not a shell command). It only reads a public guide to install, and <strong>your data is never uploaded.</strong></p>
+                  <h3>Run claude in an empty folder and paste this line</h3>
+                  <p class="paste-note">Paste it <strong>inside the running claude</strong>. It is a message to the AI, not a shell command. The AI reads only a public guide to install, and <strong>your data is not uploaded.</strong></p>
                   <div class="code"><button class="copy-btn" type="button" data-copy-target="p-claude-cli">Copy</button>
                     <pre id="p-claude-cli">Read https://careermate.life/llms-install.txt and follow it to install and connect CareerMate in this folder. Store the data in this folder under .cm/data, and if anything needs changing on my system (like installing Node), tell me before you run it. When it's done, tell me how to restart the app, how to give you my resume, and the dashboard address (http://127.0.0.1:4319).</pre></div>
                   <p class="step__tip">If it asks about <strong>network or permissions</strong> during install, approve once (it's for the npm download).</p>
@@ -232,24 +231,24 @@
                   <p class="recover"><strong>Not showing up?</strong> Check that <code>node --version</code> is v22.5 or higher, and that you restarted claude.</p>
                 </div></li>
               </ol>
-              <div class="filenote">📎 <strong>How to add your resume:</strong> if you can attach files, attach it in chat. If attaching is hard in the terminal, put the file in your working folder and say <em>"read resume.pdf and register it"</em>.</div>
+              <div class="filenote"><strong>How to add your resume:</strong> if you can attach files, attach it in chat. If attaching is hard in the terminal, put the file in your working folder and say <em>"read resume.pdf and register it"</em>.</div>
               </div>
             </details>
           </div>
 
           <!-- ===== ChatGPT paid → Codex app / CLI ===== -->
           <div class="path" data-sub="chatgpt">
-            <span class="path__tag">For you — Codex</span>
+            <span class="path__tag">ChatGPT users (Codex)</span>
             <h2>Connect with Codex</h2>
-            <p>There's a path that stays inside the Codex app, and one that uses the terminal. For most people, <strong>Option 1</strong> is enough.</p>
+            <p>You can install inside the Codex app or from a terminal. <strong>Option 1</strong> works for most people.</p>
 
             <details class="acc">
-              <summary>Option 1 — Codex app <span class="acc__hint">Recommended</span></summary>
+              <summary>Option 1: Codex app <span class="acc__hint">Recommended</span></summary>
               <div class="acc__body">
                 <p class="hint" style="margin:.3rem 0 .8rem">Open a working folder in the Codex app and paste the line below.</p>
                 <ol class="steps">
                   <li class="step"><div class="step__no">1</div><div class="step__body">
-                    <h3>Install the Codex app → sign in</h3>
+                    <h3>Install the Codex app and sign in</h3>
                     <p>Install the <a href="https://developers.openai.com/codex/app" rel="noopener" target="_blank">Codex app</a> and sign in with your ChatGPT account.</p>
                   </div></li>
                   <li class="step"><div class="step__no">2</div><div class="step__body">
@@ -258,21 +257,21 @@
                   </div></li>
                   <li class="step"><div class="step__no">3</div><div class="step__body">
                     <h3>Paste this line</h3>
-                    <p class="paste-note">💬 Paste it into the <strong>chat</strong> in the Codex app. It only reads a public guide to install, and <strong>your data is never uploaded.</strong></p>
+                    <p class="paste-note">Paste it into the <strong>chat</strong> in the Codex app. The AI reads only a public guide to install, and <strong>your data is never uploaded.</strong></p>
                     <div class="code"><button class="copy-btn" type="button" data-copy-target="p-codex">Copy</button>
                       <pre id="p-codex">Read https://careermate.life/llms-install.txt and follow it to install and connect CareerMate in this folder. Store the data in this folder under .cm/data, and if anything needs changing on my system (like installing Node), tell me before you run it. When it's done, tell me how to restart the app, how to give you my resume, and the dashboard address (http://127.0.0.1:4319).</pre></div>
                   </div></li>
                   <li class="step"><div class="step__no">4</div><div class="step__body">
                     <h3>Confirm</h3>
-                    <p>Reopen Codex and say <strong>"check whether CareerMate is connected"</strong> — done.</p>
+                    <p>Reopen Codex and say <strong>"check whether CareerMate is connected"</strong>.</p>
                   </div></li>
                 </ol>
-                <div class="filenote">📎 <strong>How to add your resume:</strong> put the file in your working folder and say <em>"read resume.pdf and register it"</em>, or paste the text into the chat.</div>
+                <div class="filenote"><strong>How to add your resume:</strong> put the file in your working folder and say <em>"read resume.pdf and register it"</em>, or paste the text into the chat.</div>
               </div>
             </details>
 
             <details class="acc">
-              <summary>Option 2 — Codex CLI <span class="acc__hint">If you're comfortable with a terminal</span></summary>
+              <summary>Option 2: Codex CLI <span class="acc__hint">If you're comfortable with a terminal</span></summary>
               <div class="acc__body">
                 <ol class="steps">
                   <li class="step"><div class="step__no">1</div><div class="step__body">
@@ -288,17 +287,17 @@
                     <p>Paste the install line above into the running <code>codex</code>, then confirm with <code>/mcp</code> after it connects.</p>
                   </div></li>
                 </ol>
-                <div class="filenote">📎 <strong>How to add your resume:</strong> put the file in your working folder and say <em>"read resume.pdf and register it"</em>, or paste the text into the chat.</div>
+                <div class="filenote"><strong>How to add your resume:</strong> put the file in your working folder and say <em>"read resume.pdf and register it"</em>, or paste the text into the chat.</div>
               </div>
             </details>
           </div>
 
           <!-- ===== Other (Agent) → paste into any locally-capable AI chat ===== -->
           <div class="path" data-sub="free">
-            <span class="path__tag">For you — Other (Agent)</span>
-            <h2>In any locally-capable AI chat</h2>
-            <p>It doesn't have to be Claude or ChatGPT — any <strong>AI agent that can run commands on your computer</strong> works. Grab an empty folder and paste the one line below into that AI's chat.</p>
-            <p class="hint" style="margin:.2rem 0 0">⚠️ <strong>Free or weaker models may have quality and usage limits.</strong> For the best results we recommend <strong>Claude Pro or ChatGPT Plus</strong>. <strong>CareerMate itself stays free.</strong></p>
+            <span class="path__tag">Other AI (Agent)</span>
+            <h2>Install with another local AI agent</h2>
+            <p>Any <strong>AI agent that can run commands on your computer</strong> works, not only Claude or ChatGPT. Pick an empty folder and paste the line below into that AI's chat.</p>
+            <p class="hint" style="margin:.2rem 0 0"><strong>Free or smaller models may give lower quality output and hit usage limits.</strong> We recommend <strong>Claude Pro or ChatGPT Plus</strong>. <strong>CareerMate itself is free.</strong></p>
 
             <ol class="steps">
               <li class="step"><div class="step__no">1</div><div class="step__body">
@@ -307,7 +306,7 @@
               </div></li>
               <li class="step"><div class="step__no">2</div><div class="step__body">
                 <h3>Paste this line</h3>
-                <p class="paste-note">💬 Paste it into that AI's <strong>chat</strong> — it's not a terminal command. It only reads a public guide to install, and <strong>your data is never uploaded.</strong></p>
+                <p class="paste-note">Paste it into that AI's <strong>chat</strong>. It is not a terminal command. The AI reads only a public guide to install, and <strong>your data is never uploaded.</strong></p>
                 <div class="code"><button class="copy-btn" type="button" data-copy-target="p-other">Copy</button>
                   <pre id="p-other">Read https://careermate.life/llms-install.txt and follow it to install and connect CareerMate in this folder. Store the data in this folder under .cm/data, and if anything needs changing on my system (like installing Node), tell me before you run it. When it's done, tell me how to restart the app, how to give you my resume, and the dashboard address (http://127.0.0.1:4319).</pre></div>
               </div></li>
@@ -317,7 +316,7 @@
                 <p class="recover"><strong>Not showing up?</strong> Check that <code>node --version</code> is v22.5 or higher and that you fully quit and reopened the app.</p>
               </div></li>
             </ol>
-            <div class="filenote">📎 <strong>How to add your resume:</strong> put the file in your working folder and point to it by name/path. If it won't read, paste the text in.</div>
+            <div class="filenote"><strong>How to add your resume:</strong> put the file in your working folder and give the AI its name or path. If it won't read, paste the text in.</div>
           </div>
 
         </div><!-- /result -->
@@ -327,14 +326,14 @@
           <p class="q__label" style="margin-bottom:.6rem">Need more help?</p>
 
           <details class="acc">
-            <summary>New to the terminal (command window)? — how to open it <span class="acc__hint">When using the CLI</span></summary>
+            <summary>How to open a terminal (command window) <span class="acc__hint">When using the CLI</span></summary>
             <div class="acc__body">
               <p>The <strong>terminal</strong> is a window where you type commands one line at a time. Here's how to open it:</p>
               <ul>
-                <li><strong>Windows</strong> — Start button → search <code>PowerShell</code> → run <strong>Windows PowerShell</strong>. Paste with <strong>right-click</strong> or <kbd>Ctrl</kbd>+<kbd>V</kbd>, run with <kbd>Enter</kbd>.</li>
-                <li><strong>Mac</strong> — <kbd>⌘</kbd>+<kbd>Space</kbd> (Spotlight) → type <code>Terminal</code> → run. Paste with <kbd>⌘</kbd>+<kbd>V</kbd>, run with <kbd>Return</kbd>.</li>
+                <li><strong>Windows</strong>: click Start, search for <code>PowerShell</code>, and run <strong>Windows PowerShell</strong>. Paste with <strong>right-click</strong> or <kbd>Ctrl</kbd>+<kbd>V</kbd>, run with <kbd>Enter</kbd>.</li>
+                <li><strong>Mac</strong>: press <kbd>⌘</kbd>+<kbd>Space</kbd> to open Spotlight, type <code>Terminal</code>, and run it. Paste with <kbd>⌘</kbd>+<kbd>V</kbd>, run with <kbd>Return</kbd>.</li>
               </ul>
-              <p class="hint">The order is always the same: <strong>[Copy]</strong> the command → <strong>paste</strong> into the terminal → <strong>Enter</strong>.</p>
+              <p class="hint">Click <strong>[Copy]</strong> next to a command, <strong>paste</strong> it into the terminal, and press <strong>Enter</strong>.</p>
             </div>
           </details>
 
@@ -342,17 +341,17 @@
             <summary>Getting the programs you need <span class="acc__hint">Node · Claude · Codex</span></summary>
             <div class="acc__body">
               <ul>
-                <li><strong>Node.js (LTS)</strong> — <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a> · download the installer and double-click (keep clicking "Next"). Needed for the terminal/CLI paths.</li>
-                <li><strong>Claude Desktop app</strong> — <a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a> · used to open a working folder in the Code tab.</li>
-                <li><strong>Codex app</strong> — <a href="https://developers.openai.com/codex/app" rel="noopener" target="_blank">developers.openai.com/codex/app</a> · used to open a working folder and paste the prompt.</li>
-                <li><strong>Git for Windows</strong> — <a href="https://git-scm.com/download/win" rel="noopener" target="_blank">git-scm.com/download/win</a> · only when the Claude Desktop Code tab on Windows blocks you with <em>"Git is required"</em>.</li>
+                <li><strong>Node.js (LTS)</strong>: download the installer from <a href="https://nodejs.org/" rel="noopener" target="_blank">nodejs.org</a> and double-click it (keep clicking "Next"). Needed for the terminal/CLI options.</li>
+                <li><strong>Claude Desktop app</strong>: <a href="https://claude.ai/download" rel="noopener" target="_blank">claude.ai/download</a>. Used to open a working folder in the Code tab.</li>
+                <li><strong>Codex app</strong>: <a href="https://developers.openai.com/codex/app" rel="noopener" target="_blank">developers.openai.com/codex/app</a>. Used to open a working folder and paste the prompt.</li>
+                <li><strong>Git for Windows</strong>: <a href="https://git-scm.com/download/win" rel="noopener" target="_blank">git-scm.com/download/win</a>. Only needed when the Claude Desktop Code tab on Windows blocks you with <em>"Git is required"</em>.</li>
               </ul>
-              <p class="hint">What to do after downloading is in the steps of "the path that fits me" you picked above.</p>
+              <p class="hint">After installing, follow the steps for the option you picked above.</p>
             </div>
           </details>
         </div>
 
-        <p class="hint" style="margin-top:2rem">Back to the main page → <a href="/en#install">see quick install</a></p>
+        <p class="hint" style="margin-top:2rem"><a href="/en#install">Back to quick install on the main page</a></p>
       </div>
     </section>
   </main>

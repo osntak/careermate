@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- Resolve the saved theme before first paint (default: dark) to avoid a flash. -->
   <script>
     (function () {
-      try {
-        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
-        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : 'dark');
-      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+      var t;
+      try { t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
-  <title>CareerMate — Tailored cover letters & fit analysis, on your PC only</title>
-  <meta name="description" content="Tell an AI like Claude or Codex to register your resume, analyze postings, write cover letters, and track applications. CareerMate keeps the results on your own computer." />
+  <title>CareerMate: job analysis and cover letters, stored on your PC</title>
+  <meta name="description" content="Ask Claude or Codex to analyze a job posting, draft a cover letter, or prep for an interview, and the results are saved in CareerMate on your own computer." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://careermate.life/en" />
   <link rel="alternate" hreflang="ko" href="https://careermate.life/" />
@@ -32,17 +32,17 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:locale:alternate" content="ko_KR" />
   <meta property="og:url" content="https://careermate.life/en" />
-  <meta property="og:title" content="CareerMate — Tailored cover letters & fit analysis, on your PC only" />
-  <meta property="og:description" content="Keep your resume, cover letters, and applications on your own computer. Your AI does the analysis and writing; CareerMate stores the data." />
+  <meta property="og:title" content="CareerMate: job analysis and cover letters, stored on your PC" />
+  <meta property="og:description" content="Your AI app does the analysis and writing. CareerMate keeps your resume, cover letters, and applications on your own computer." />
   <meta property="og:image" content="https://careermate.life/og-en.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="CareerMate — a local-only, MCP career workspace" />
+  <meta property="og:image:alt" content="CareerMate dashboard next to an AI chat example" />
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="CareerMate — Tailored cover letters & fit analysis, on your PC only" />
-  <meta name="twitter:description" content="Resume, cover letters, applications — on your own computer. Your data never leaves." />
+  <meta name="twitter:title" content="CareerMate: job analysis and cover letters, stored on your PC" />
+  <meta name="twitter:description" content="A career log for your resume, cover letters, and applications, kept on your own computer." />
   <meta name="twitter:image" content="https://careermate.life/og-en.png" />
   <script type="application/ld+json">
   {
@@ -74,7 +74,7 @@
         "operatingSystem": "Windows, macOS, Linux",
         "url": "https://careermate.life/en",
         "image": "https://careermate.life/og-en.png",
-        "description": "A local-first career workspace for AI-assisted resumes, job-posting analysis, cover letters, and application tracking. CareerMate stores the data on your own computer.",
+        "description": "A career log you use with an AI app: resumes, job-posting analysis, cover letters, and application tracking, stored on your own computer.",
         "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
@@ -124,23 +124,13 @@
     <!-- ========================================================== hero -->
     <header class="hero">
       <div class="hero__main">
-        <span class="pill-badge">
-          <span class="pill-badge__dot" aria-hidden="true"></span>
-          Free · Public npm package · Local-only
-        </span>
-        <h1 class="hero__title">Just talk to your AI.</h1>
+        <h1 class="hero__title">Job analysis and cover letters, kept on your PC</h1>
         <p class="hero__lede">
-          Your career organizes itself — resumes, postings, cover letters, and applications, saved right on your own computer.
+          Tell Claude or Codex "analyze this posting" or "draft a cover letter" and the result is saved in CareerMate. Everything is saved on your own computer.
         </p>
         <p class="hero__note">
-          Connect it to a <strong>desktop AI agent that can work with local files and commands</strong>, such as Codex or Claude. CareerMate is a free MIT-licensed npm package and needs no separate API key.
+          Works with desktop AI apps that can use local files and commands, such as Claude Desktop, Claude Code, or Codex. Free (MIT license), no API key needed. <a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">npm package</a>
         </p>
-
-        <ul class="trust-strip" aria-label="Peace of mind">
-          <li>Stored only on your computer</li>
-          <li>Nothing uploaded</li>
-          <li><a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">Inspect the package on npm</a></li>
-        </ul>
 
         <div class="hero__cta">
           <a class="btn btn--primary" href="/en/start">Get started</a>
@@ -154,7 +144,6 @@
       <aside class="hero__demo command-demo" data-command-demo aria-label="How people use CareerMate">
         <div class="command-card">
           <div class="command-card__head">
-            <span class="command-card__dots" aria-hidden="true"><i></i><i></i><i></i></span>
             <span class="command-card__title">Your AI app</span>
             <span class="command-card__status" data-demo-status>Job analysis</span>
           </div>
@@ -184,31 +173,28 @@
           </ol>
           <div class="command-card__progress" aria-hidden="true"><span></span></div>
         </div>
-        <p class="hero__demo-note">No commands to memorize. Just say it like this.</p>
+        <p class="hero__demo-note">Example of what you type in your AI app.</p>
       </aside>
     </header>
 
     <!-- ========================================================== how -->
     <section id="how" class="section">
       <div class="section__head">
-        <h2>Tell your AI; review it in CareerMate</h2>
-        <p>No settings to memorize — just keep working on your career the way you'd chat.</p>
+        <h2>How it works</h2>
+        <p>You talk to your AI app. The results show up in a dashboard in your browser.</p>
       </div>
       <div class="cards-3">
         <article class="feature">
-          <span class="feature__no">01</span>
-          <h3>Hand over a file</h3>
-          <p>Register a resume or career document once and reuse the facts for every next role.</p>
+          <h3>Add your resume</h3>
+          <p>Have the AI read your resume or career document once. You don't upload it again for the next posting.</p>
         </article>
         <article class="feature">
-          <span class="feature__no">02</span>
-          <h3>Paste a posting</h3>
-          <p>Drop a job link or text and compare the role with your evidence, strengths, and gaps.</p>
+          <h3>Analyze a posting</h3>
+          <p>Give it a job link or the text. It compares the requirements with your background and notes strengths, gaps, and the evidence for each.</p>
         </article>
         <article class="feature">
-          <span class="feature__no">03</span>
-          <h3>Carry it through interviews</h3>
-          <p>Keep role-specific drafts, application status, and interview questions in one dashboard.</p>
+          <h3>Cover letters and interviews</h3>
+          <p>Cover letter versions, application status, and likely interview questions are filed under each posting.</p>
         </article>
       </div>
     </section>
@@ -217,27 +203,26 @@
     <section id="features" class="section">
       <div class="section__head">
         <h2>What you can ask for</h2>
-        <p>Organize your background once; it carries into every next posting and cover letter.</p>
       </div>
       <div class="checks">
-        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>Register resumes, career docs & cover letters</strong><span>Read a file and organize it into experience, projects, and skills.</span></div></div>
-        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>Find postings on public job boards</strong><span>Wanted, Jumpit, Remember, and Saramin at once, for any occupation from accounting to nursing to backend.</span></div></div>
-        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>Today's postings for your role</strong><span>Save your role once, then see only new postings that fit your years of experience.</span></div></div>
-        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>Save job postings</strong><span>Pull the company, role, and requirements from a link or text.</span></div></div>
-        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>Match your background to a posting</strong><span>Strengths, gaps, and keywords to emphasize, all at once.</span></div></div>
-        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>Per-posting cover letters</strong><span>Stack drafts and revisions as versions you can compare.</span></div></div>
-        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>Track applications</strong><span>From draft to submitted to screening passed to interview.</span></div></div>
-        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>Interview prep</strong><span>Likely questions, STAR answers, and a 1-minute intro draft.</span></div></div>
+        <div class="check"><div><strong>Register resumes, career docs & cover letters</strong><span>Reads the file and saves it as experience, projects, and skills.</span></div></div>
+        <div class="check"><div><strong>Find postings on public job boards</strong><span>Searches Wanted, Jumpit, Remember, and Saramin together. Works for accounting or nursing roles too, not only software.</span></div></div>
+        <div class="check"><div><strong>Today's postings for your role</strong><span>Save your role and see only postings that are new since you last checked. You can also filter by years of experience.</span></div></div>
+        <div class="check"><div><strong>Save job postings</strong><span>Pull the company, role, and requirements from a link or text.</span></div></div>
+        <div class="check"><div><strong>Match your background to a posting</strong><span>Strengths, gaps, and keywords for your cover letter.</span></div></div>
+        <div class="check"><div><strong>Per-posting cover letters</strong><span>Drafts and revisions are kept as versions you can compare.</span></div></div>
+        <div class="check"><div><strong>Track applications</strong><span>From draft to submitted to screening passed to interview.</span></div></div>
+        <div class="check"><div><strong>Interview prep</strong><span>Likely questions, STAR answers, and a 1-minute intro draft.</span></div></div>
       </div>
     </section>
 
     <!-- ======================================================= preview -->
     <section id="preview" class="section">
       <div class="section__head section__head--center">
-        <h2>See your data for yourself</h2>
-        <p>Applications and documents on one screen.</p>
+        <h2>The dashboard</h2>
+        <p>Whatever the AI saves, you can see in a browser dashboard running on your PC.</p>
         <div class="section__cta">
-          <a class="btn btn--primary" href="/demo/">Explore the demo →</a>
+          <a class="btn btn--primary" href="/demo/">Open the demo</a>
         </div>
       </div>
 
@@ -247,85 +232,79 @@
             <figure class="slide">
               <div class="browser">
                 <div class="browser__bar">
-                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
                   <span class="browser__url">127.0.0.1:4319</span>
                 </div>
                 <div class="browser__body">
-                  <img class="shot__img shot__img--light" src="/en/shots/home-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate home dashboard — application pipeline, to-dos, and recent activity" />
-                  <img class="shot__img shot__img--dark" src="/en/shots/home-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate home dashboard (dark) — application pipeline, to-dos, and recent activity" />
+                  <img class="shot__img shot__img--light" src="/en/shots/home-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate home dashboard: application pipeline, to-dos, and recent activity" />
+                  <img class="shot__img shot__img--dark" src="/en/shots/home-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate home dashboard (dark theme): application pipeline, to-dos, and recent activity" />
                 </div>
               </div>
-              <figcaption><strong>Home</strong> — pipeline, to-dos, and activity on one screen</figcaption>
+              <figcaption><strong>Home</strong>: applications by stage, to-dos, recent activity</figcaption>
             </figure>
 
             <figure class="slide">
               <div class="browser">
                 <div class="browser__bar">
-                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
                   <span class="browser__url">127.0.0.1:4319/#/applications</span>
                 </div>
                 <div class="browser__body">
-                  <img class="shot__img shot__img--light" src="/en/shots/applications-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate applications — applications organized by status" />
-                  <img class="shot__img shot__img--dark" src="/en/shots/applications-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate applications (dark) — applications organized by status" />
+                  <img class="shot__img shot__img--light" src="/en/shots/applications-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate applications: applications organized by status" />
+                  <img class="shot__img shot__img--dark" src="/en/shots/applications-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate applications (dark theme): applications organized by status" />
                 </div>
               </div>
-              <figcaption><strong>Applications</strong> — at a glance across 8 stages</figcaption>
+              <figcaption><strong>Applications</strong>: 8 stages, from draft to final offer</figcaption>
             </figure>
 
             <figure class="slide">
               <div class="browser">
                 <div class="browser__bar">
-                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
                   <span class="browser__url">127.0.0.1:4319/#/jobs</span>
                 </div>
                 <div class="browser__body">
-                  <img class="shot__img shot__img--light" src="/en/shots/jobs-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate postings — fit score and progress" />
-                  <img class="shot__img shot__img--dark" src="/en/shots/jobs-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate postings (dark) — fit score and progress" />
+                  <img class="shot__img shot__img--light" src="/en/shots/jobs-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate postings: fit score and progress" />
+                  <img class="shot__img shot__img--dark" src="/en/shots/jobs-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate postings (dark theme): fit score and progress" />
                 </div>
               </div>
-              <figcaption><strong>Postings</strong> — fit score and progress</figcaption>
+              <figcaption><strong>Postings</strong>: fit score and progress</figcaption>
             </figure>
 
             <figure class="slide">
               <div class="browser">
                 <div class="browser__bar">
-                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
                   <span class="browser__url">127.0.0.1:4319/#/documents</span>
                 </div>
                 <div class="browser__body">
-                  <img class="shot__img shot__img--light" src="/en/shots/documents-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate documents — cover letters and resumes kept with versions" />
-                  <img class="shot__img shot__img--dark" src="/en/shots/documents-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate documents (dark) — cover letters and resumes kept with versions" />
+                  <img class="shot__img shot__img--light" src="/en/shots/documents-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate documents: cover letters and resumes kept with versions" />
+                  <img class="shot__img shot__img--dark" src="/en/shots/documents-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate documents (dark theme): cover letters and resumes kept with versions" />
                 </div>
               </div>
-              <figcaption><strong>Documents</strong> — cover letters and resumes, with versions</figcaption>
+              <figcaption><strong>Documents</strong>: cover letters and resumes by version</figcaption>
             </figure>
 
             <figure class="slide">
               <div class="browser">
                 <div class="browser__bar">
-                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
                   <span class="browser__url">127.0.0.1:4319/#/interview</span>
                 </div>
                 <div class="browser__body">
-                  <img class="shot__img shot__img--light" src="/en/shots/interview-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate interview prep — likely questions, STAR, and a 1-minute intro" />
-                  <img class="shot__img shot__img--dark" src="/en/shots/interview-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate interview prep (dark) — likely questions, STAR, and a 1-minute intro" />
+                  <img class="shot__img shot__img--light" src="/en/shots/interview-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate interview prep: likely questions, STAR, and a 1-minute intro" />
+                  <img class="shot__img shot__img--dark" src="/en/shots/interview-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate interview prep (dark theme): likely questions, STAR, and a 1-minute intro" />
                 </div>
               </div>
-              <figcaption><strong>Interview prep</strong> — likely questions, STAR, and a 1-minute intro</figcaption>
+              <figcaption><strong>Interview prep</strong>: likely questions, STAR answers, a 1-minute intro</figcaption>
             </figure>
 
             <figure class="slide">
               <div class="browser">
                 <div class="browser__bar">
-                  <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
                   <span class="browser__url">127.0.0.1:4319/#/settings</span>
                 </div>
                 <div class="browser__body">
-                  <img class="shot__img shot__img--light" src="/en/shots/settings-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate settings — data location, connection status, and theme" />
-                  <img class="shot__img shot__img--dark" src="/en/shots/settings-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate settings (dark) — data location, connection status, and theme" />
+                  <img class="shot__img shot__img--light" src="/en/shots/settings-light.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate settings: data location, connection status, and theme" />
+                  <img class="shot__img shot__img--dark" src="/en/shots/settings-dark.png" width="1360" height="940" loading="lazy" decoding="async" alt="CareerMate settings (dark theme): data location, connection status, and theme" />
                 </div>
               </div>
-              <figcaption><strong>Settings</strong> — data location, export, and theme</figcaption>
+              <figcaption><strong>Settings</strong>: data location, export, theme</figcaption>
             </figure>
           </div>
         </div>
@@ -343,26 +322,26 @@
     <!-- ======================================================= install -->
     <section id="install" class="section">
       <div class="section__head section__head--center">
-        <h2>Three steps and you're set</h2>
-        <p>Open your app, paste the line below, and confirm it connected.</p>
+        <h2>Install</h2>
+        <p>Paste the line below into your AI app and it handles the install and connection.</p>
       </div>
 
       <div class="quick-start" aria-label="Quick install steps">
         <article class="quick-start__step">
           <span>1</span>
           <h3>Pick your AI app</h3>
-          <p>Choose an AI that can work on your computer — Claude Desktop/Claude Code or Codex. It connects to the paid AI you already use (Claude, ChatGPT, etc.); CareerMate itself is free.</p>
+          <p>You need an AI app that can work on your computer: Claude Desktop, Claude Code, or Codex. If you pay for Claude or ChatGPT, sign in to the Claude app or Codex with that account. CareerMate itself is free.</p>
           <a href="/en/start">Find the path that fits me</a>
         </article>
         <article class="quick-start__step">
           <span>2</span>
           <h3>Paste the prompt</h3>
-          <p>Drop the line below into your AI's chat and it reads the install guide and connects.</p>
+          <p>Paste the line below into the chat. The AI reads the install guide and connects CareerMate.</p>
         </article>
         <article class="quick-start__step">
           <span>3</span>
           <h3>Confirm the connection</h3>
-          <p>Reopen the app and say “check whether CareerMate is connected.”</p>
+          <p>Reopen the app and type "check whether CareerMate is connected."</p>
         </article>
       </div>
 
@@ -384,12 +363,9 @@
     <!-- ======================================================= privacy -->
     <section id="privacy" class="section">
       <div class="privacy-card">
-        <div class="privacy-card__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-        </div>
         <div class="privacy-card__text">
-          <h2>Your data never leaves your computer</h2>
-          <p>The dashboard server binds only to <code>127.0.0.1</code> (this computer), so it can't be reached from outside.<br />The only thing the MCP server sends out is an <strong>optional update check</strong> (you can turn it off) — <strong>your career data is never transmitted.</strong> The analysis and writing are done by the AI you chose yourself.</p>
+          <h2>Your data is stored on your PC</h2>
+          <p>The dashboard server binds only to <code>127.0.0.1</code> (this computer), so it can't be reached from outside.<br />CareerMate itself sends out only an update check (you can turn it off) and, when you search for jobs, the search keywords and role filters. It never sends your resume, cover letters, or applications. The analysis and writing are done by the AI app you chose, and whatever goes to that AI service falls under its own policy.</p>
           <ul class="privacy-card__list">
             <li><strong>Storage</strong> <code>~/.careermate/careermate.sqlite</code></li>
             <li><strong>Export</strong> cover letters and more to <code>~/.careermate/exports</code></li>
@@ -403,7 +379,7 @@
 
   <footer class="foot">
     <div class="foot__brand"><span class="nav__logo" aria-hidden="true">C</span> CareerMate</div>
-    <p>A local, MCP-based career workspace. All data stays on this computer.</p>
+    <p>A career log you use with your AI app. Your data stays on your PC.</p>
     <div class="foot__links">
       <a href="#top">Back to top</a>
       <a href="#features">Features</a>
@@ -449,19 +425,6 @@
             if (idx !== null) { e.preventDefault(); tabs[idx].focus(); selectTab(tabs[idx]); }
           });
         });
-      }
-
-      // --- scroll reveal (fade-up on enter) ----------------------------
-      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!reduceMotion && 'IntersectionObserver' in window) {
-        var revealEls = document.querySelectorAll('.section__head, .feature, .check, .track__head, .step, .acc, .privacy-card');
-        revealEls.forEach(function (el) { el.classList.add('reveal'); });
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (e) {
-            if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); }
-          });
-        }, { threshold: 0.1, rootMargin: '0px 0px -48px 0px' });
-        revealEls.forEach(function (el) { io.observe(el); });
       }
 
       // --- dashboard carousel (prev/next + dots + keyboard + swipe) -----
