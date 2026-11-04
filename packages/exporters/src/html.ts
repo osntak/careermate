@@ -27,9 +27,18 @@ export function escapeHtml(input: string | null | undefined): string {
  * accepting it would let user content (e.g. a cover-letter body containing
  * `<img onerror=...>`) execute when the exported file is opened in a browser.
  */
-export function toPrintableHtml(title: string, bodyMarkdown: string): string {
+export function toPrintableHtml(title: string, bodyMarkdown: string, footer?: string): string {
   const body = markdownToHtml(bodyMarkdown);
   const safeTitle = escapeHtml(title);
+  // Printed on every page with "n / N" (CSS page-margin boxes, Chromium 131+). A quote,
+  // backslash or any control char (CSS treats \f as a newline) ends the string early,
+  // and `<` could close <style>, so all of them become CSS hex escapes.
+  const footerCss = footer === undefined ? '' : `
+    @bottom-center {
+      content: "${footer.replace(/[\\"<\x00-\x1f\x7f]/g, (c) => `\\${c.charCodeAt(0).toString(16)} `)}${footer ? '   ' : ''}" counter(page) " / " counter(pages);
+      font-size: 8pt;
+      color: #888;
+    }`;
 
   return `<!doctype html>
 <html lang="ko">
@@ -84,10 +93,10 @@ export function toPrintableHtml(title: string, bodyMarkdown: string): string {
   hr { border: none; border-top: 1px solid var(--line); margin: 1.5em 0; }
   @page {
     size: A4;
-    margin: 18mm 16mm;
+    margin: 18mm 16mm;${footerCss}
   }
   @media print {
-    html, body { background: #fff; font-size: 12px; }
+    html, body { background: #fff; font-size: 10pt; }
     .page {
       max-width: none;
       margin: 0;

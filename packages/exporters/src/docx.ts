@@ -11,10 +11,13 @@
  * Binary output is a `Uint8Array` (the OOXML zip). Callers stream/write it as-is.
  */
 import {
+  AlignmentType,
   Document,
   ExternalHyperlink,
+  Footer,
   HeadingLevel,
   Packer,
+  PageNumber,
   Paragraph,
   TextRun,
 } from 'docx';
@@ -121,11 +124,12 @@ function markdownToParagraphs(markdown: string): Paragraph[] {
       continue;
     }
 
-    // Bullet (-, *, + — match the markdown dialect html.ts accepts).
-    const b = /^[-*+]\s+(.*)$/.exec(line);
+    // Bullet (-, *, + as html.ts accepts). An indented
+    // bullet becomes level 1 instead of a paragraph that starts with a literal "- ".
+    const b = /^(\s*)[-*+]\s+(.*)$/.exec(line);
     if (b) {
       paras.push(
-        new Paragraph({ bullet: { level: 0 }, spacing: { after: 40 }, children: inlineRuns(b[1]) }),
+        new Paragraph({ bullet: { level: b[1].replace(/\t/g, '  ').length >= 2 ? 1 : 0 }, spacing: { after: 40 }, children: inlineRuns(b[2]) }),
       );
       continue;
     }
@@ -141,9 +145,10 @@ const DOCX_FONT = '맑은 고딕'; // Malgun Gothic — ships with Windows, rend
 /**
  * Render a title + our Markdown body to a .docx byte array (single-column,
  * ATS-friendly). The leading `# title` in the body is rendered as Heading 1, so
- * we don't duplicate the title here.
+ * we don't duplicate the title here. `footer` (e.g. "이름 · 경력기술서") is
+ * printed with "n / N" on every page so loose printed pages stay identifiable.
  */
-export async function markdownToDocx(_title: string, markdown: string): Promise<Uint8Array> {
+export async function markdownToDocx(_title: string, markdown: string, footer?: string): Promise<Uint8Array> {
   const doc = new Document({
     styles: {
       default: {
@@ -153,7 +158,26 @@ export async function markdownToDocx(_title: string, markdown: string): Promise<
     sections: [
       {
         properties: {
-          page: { margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } }, // 2cm
+          page: {
+            size: { width: 11906, height: 16838 }, // A4
+            margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 }, // 2cm
+          },
+        },
+        footers: footer === undefined ? undefined : {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({
+                    children: [xmlSafe(footer ? `${footer}   ` : ''), PageNumber.CURRENT, ' / ', PageNumber.TOTAL_PAGES],
+                    size: 16,
+                    color: '888888',
+                  }),
+                ],
+              }),
+            ],
+          }),
         },
         children: markdownToParagraphs(markdown),
       },

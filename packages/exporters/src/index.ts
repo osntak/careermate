@@ -169,8 +169,18 @@ export function resumeToHtml(
   return {
     filename: exportName([doc.title, profile?.name], 'html', doc.kind),
     mimeType: HTML_MIME,
-    content: toPrintableHtml(doc.title, md.content),
+    content: toPrintableHtml(doc.title, md.content, resumeFooter(doc, profile)),
   };
+}
+
+/**
+ * "이름 · 경력기술서", printed with the page number on every page. The kind labels
+ * are Korean, so a body without Hangul (an English résumé) gets the name only, and
+ * "기타 문서" is never printed.
+ */
+function resumeFooter(doc: DocumentRecord, profile?: ProfileRecord | null): string {
+  const label = doc.kind !== 'other' && /[가-힣]/.test(doc.content ?? '') ? DOCUMENT_KIND_LABELS[doc.kind] : undefined;
+  return [profile?.name, label].filter(Boolean).join(' · ');
 }
 
 /** A stored resume/career document → Word (.docx). */
@@ -180,7 +190,7 @@ export async function resumeToDocx(
 ): Promise<ExportResult> {
   const md = resumeToMarkdown(doc, profile);
   const filename = exportName([doc.title, profile?.name], 'docx', doc.kind);
-  const bytes = await markdownToDocx(doc.title, md.content);
+  const bytes = await markdownToDocx(doc.title, md.content, resumeFooter(doc, profile));
   return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
 }
 
