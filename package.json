@@ -1,6 +1,6 @@
 {
   "name": "careermate",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "type": "module",
   "description": "CareerMate — an MCP-first, local-first career workspace. Your career database and documents stay on your machine; optional discovery and update features may use the internet without sending stored career data.",
   "license": "MIT",
