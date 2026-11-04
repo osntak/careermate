@@ -8,6 +8,8 @@ import { t, onLangChange } from '/demo/i18n.js';
 
 const ROUTES = [
   { id: 'home', icon: 'home', module: '/demo/pages/home.js' },
+  // 내 자료: the profile plus the career description and resume/portfolio views of
+  // #/documents (see the documents entry below).
   { id: 'profile', icon: 'user', module: '/demo/pages/profile.js' },
   { id: 'search', icon: 'search', module: '/demo/pages/search.js' },
   // 지원 관리: one nav item, two views of the same postings, #/jobs (list) and
@@ -15,7 +17,10 @@ const ROUTES = [
   // navAs lends it the list item's highlight and title.
   { id: 'jobs', icon: 'briefcase', module: '/demo/pages/jobs.js', countKey: 'active_applications' },
   { id: 'applications', module: '/demo/pages/applications.js', navAs: 'jobs' },
-  { id: 'documents', icon: 'file', module: '/demo/pages/documents.js', countKey: 'cover_letters' },
+  // 자기소개서 keeps its own nav item. A function navAs picks the item per URL:
+  // #/documents/career and #/documents/docs belong to 내 자료.
+  { id: 'documents', icon: 'file', module: '/demo/pages/documents.js', countKey: 'cover_letters',
+    navAs: (params) => (['career', 'docs'].includes(params[0]) ? 'profile' : null) },
   { id: 'interview', icon: 'mic', module: '/demo/pages/interview.js', countKey: 'interview_pending' },
   { id: 'settings', icon: 'settings', module: '/demo/pages/settings.js' },
 ];
@@ -33,14 +38,20 @@ function parseHash() {
   return { page: segments[0] || 'home', params: segments.slice(1) };
 }
 
+// The nav item a route highlights and titles: navAs is a route id, or a function of the params.
+function navIdOf(def, params) {
+  const as = typeof def.navAs === 'function' ? def.navAs(params) : def.navAs;
+  return as || def.id;
+}
+
 function renderNav(counts = {}) {
   clear(navEl);
   navEl.append(el('div', { class: 'nav__label' }, t('nav.section.workspace')));
-  const { page } = parseHash();
+  const { page, params } = parseHash();
   const current = ROUTES.find((r) => r.id === page);
-  const activeId = current ? current.navAs || current.id : page;
+  const activeId = current ? navIdOf(current, params) : page;
   for (const r of ROUTES) {
-    if (r.navAs) continue;
+    if (typeof r.navAs === 'string') continue; // a fixed navAs means no nav item of its own
     if (r.id === 'settings') navEl.append(el('div', { class: 'nav__label' }, t('nav.section.system')));
     const count = r.countKey ? counts[r.countKey] : null;
     navEl.append(el('a', {
@@ -75,7 +86,7 @@ async function route() {
   if (page === 'insights') { location.replace('#/settings'); return; }
   const def = ROUTES.find((r) => r.id === page) || ROUTES[0];
 
-  const navId = def.navAs || def.id;
+  const navId = navIdOf(def, params);
   navEl.querySelectorAll('.nav__item').forEach((n) => n.classList.toggle('is-active', n.getAttribute('href') === `#/${navId}`));
   const pageTitle = t('nav.' + navId);
   titleEl.textContent = pageTitle;

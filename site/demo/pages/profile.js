@@ -1,8 +1,10 @@
-// Profile — the user's career identity, fully editable. Feeds AI writing/analysis.
+// Profile, first view of 내 자료 (#/profile; the career description and resume/portfolio
+// views are #/documents/career and #/documents/docs). The user's career identity, fully
+// editable. Feeds AI writing/analysis.
 import {
   el, get, post, put, del, icon, Card, Badge, Btn, IconBtn, SubmitBtn, EmptyState, Chips,
   Field, Input, Textarea, openModal, closeModal, confirmDialog,
-  toastOk, toastError, fmtDate, mount, linesToArray, csvToArray, ExportMenu,
+  toastOk, toastError, fmtDate, mount, linesToArray, csvToArray, ExportMenu, ViewSwitch,
 } from '/demo/lib.js';
 import { t } from '/demo/i18n.js';
 
@@ -31,8 +33,16 @@ function kv(rows) {
 
 /* ------------------------------------------------------------------ render */
 
+// 내 자료 is material about the user; each of its views starts with this switch.
+export function materialsViewSwitch(activeHref) {
+  return ViewSwitch([
+    { href: '#/profile', label: t('profile.title') },
+    { href: '#/documents/career', label: t('documents.tab.career') },
+    { href: '#/documents/docs', label: t('documents.tab.docs') },
+  ], activeHref);
+}
+
 export async function render(ctx) {
-  ctx.setTitle?.(t('profile.title'));
   const [{ profile }, { experiences }, { projects }, { skills }, onboarding] = await Promise.all([
     get('/api/profile'),
     get('/api/experiences'),
@@ -45,7 +55,7 @@ export async function render(ctx) {
   // Re-run the whole render (refetch) after any mutation, then refresh nav.
   const reload = async () => { await render(ctx); await ctx.refreshNav(); };
 
-  const wrap = el('div', { class: 'stack-4' });
+  const wrap = el('div', { class: 'stack-4' }, materialsViewSwitch('#/profile'));
 
   wrap.append(CompletenessCard(onboarding));
   wrap.append(BasicInfoCard(p, reload));

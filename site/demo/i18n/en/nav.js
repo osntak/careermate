@@ -1,10 +1,10 @@
 // Sidebar navigation + routing/shell.
 export default {
   'nav.home': 'Home',
-  'nav.profile': 'Profile',
+  'nav.profile': 'My materials',
   'nav.jobs': 'Applications',
   'nav.search': 'Find jobs',
-  'nav.documents': 'Documents',
+  'nav.documents': 'Cover letters',
   'nav.interview': 'Interview prep',
   'nav.settings': 'Settings',
   'nav.section.workspace': 'Workspace',

@@ -1,9 +1,8 @@
-// Documents page — cover letters / career descriptions / resumes & portfolios.
+// Cover letters menu, plus the career description and resume/portfolio views of My materials.
 export default {
-  // tabs
-  'documents.tab.cover': 'Cover letters',
-  'documents.tab.career': 'Career descriptions',
-  'documents.tab.docs': 'Resumes & portfolios',
+  // My materials switch (the Profile label is profile.title)
+  'documents.tab.career': 'Career description',
+  'documents.tab.docs': 'Resume & portfolio',
 
   // search / loading / empty
   'documents.search.cover': 'Search cover letters',

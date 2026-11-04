@@ -1,4 +1,6 @@
-// Documents — cover letters (with version history), career descriptions, and résumés/other documents.
+// One module, two menus. #/documents and #/documents/cover(/:id) are 자기소개서: cover
+// letters with version history. #/documents/career and #/documents/docs are views of
+// 내 자료 (career descriptions, resumes and other documents) and start with its switch.
 // XSS-safe: all DB/user text rendered via el() textContent / .doc-preview (never innerHTML).
 import {
   el, get, post, put, del, Card, Badge, Btn, SubmitBtn, EmptyState,
@@ -6,47 +8,26 @@ import {
   toastOk, toastError, copyText, fmtRelative, mount, meta, ExportMenu, Menu, Markdown,
 } from '/lib.js';
 import { t } from '/i18n.js';
+import { materialsViewSwitch } from '/pages/profile.js';
 
-// Module-scoped on purpose: remember the last-viewed tab ('cover' | 'career' | 'docs') across
-// navigations so returning to Documents reopens where the user left off. The search
-// query is intentionally NOT persisted (it resets per visit).
-let tab = 'cover';
+// Each view has its own URL, so the tab comes from the URL alone and #/documents is always
+// cover letters. The search query is not persisted either (it resets per visit).
 let openedDeepLink = '';
 
 export async function render(ctx) {
   const requestedTab = ['cover', 'career', 'docs'].includes(ctx.params?.[0]) ? ctx.params[0] : null;
   const requestedId = ctx.params?.[1] || '';
-  if (requestedTab) tab = requestedTab;
+  const tab = requestedTab || 'cover';
 
   const root = el('div', { class: 'stack-4' });
 
   const panel = el('div', {});
   let activeHasItems = true;
-  // Tabs are keyboard-operable (activate = role/tabindex/Enter·Space), with tab
-  // semantics for AT — role은 attrs가 먼저 tab으로 지정하므로 activate의 button 기본값을 덮지 않는다.
-  const makeTab = (key, label) =>
-    el('div', {
-      class: `tab${tab === key ? ' is-active' : ''}`,
-      attrs: { role: 'tab', 'aria-selected': String(tab === key) },
-      activate: () => selectTab(key),
-    }, label);
-  const tabCover = makeTab('cover', t('documents.tab.cover'));
-  const tabCareer = makeTab('career', t('documents.tab.career'));
-  const tabDocs = makeTab('docs', t('documents.tab.docs'));
-  root.append(el('div', { class: 'tabs', attrs: { role: 'tablist' } }, tabCover, tabCareer, tabDocs), panel);
+  if (tab !== 'cover') root.append(materialsViewSwitch(`#/documents/${tab}`));
+  root.append(panel);
 
   let query = '';
   let searchInput = null;
-  function selectTab(next) {
-    tab = next;
-    query = '';
-    for (const [node, key] of [[tabCover, 'cover'], [tabCareer, 'career'], [tabDocs, 'docs']]) {
-      node.classList.toggle('is-active', tab === key);
-      node.setAttribute('aria-selected', String(tab === key));
-    }
-    ctx.setActions([]);
-    renderPanel();
-  }
 
   // Client-side filter over the rendered cards; survives panel re-renders.
   function applyFilter() {
