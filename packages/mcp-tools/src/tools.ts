@@ -1102,7 +1102,7 @@ export const TOOLS: ToolDef[] = [
     inputSchema: {
       keyword: z.string().optional().describe('검색어(직무·기술·키워드). 예: "영업", "React 신입". 직무 조건만 쓰거나 저장된 조건을 쓸 땐 생략'),
       sources: z.array(z.enum([...JOB_SEARCH_SOURCES] as [string, ...string[]])).optional().describe(`대상 사이트(생략 시 전체: ${JOB_SEARCH_SOURCES.join('·')})`),
-      limit: z.number().optional().describe('사이트별 최대 건수(기본 10, 최대 50)'),
+      limit: z.number().optional().describe('사이트별 최대 건수(기본 10, posted_since가 있으면 50, 최대 100). 오늘 공고가 limit만큼 꽉 차서 돌아오면 더 있을 수 있으니 늘려서 다시 검색'),
       remember_categories: z.array(z.string()).max(20).optional().describe('리멤버 직무(find_job_categories 결과): "상위>하위" 또는 상위만. 예: ["재무·회계·세무>회계결산"]'),
       saramin_categories: z.array(z.string().regex(/^\d+$/)).max(20).optional().describe('사람인 직무 코드(find_job_categories 결과). 예: ["322"]'),
       posted_since: z

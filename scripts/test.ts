@@ -814,6 +814,29 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
       'posted_since: "today"·실제 날짜만 통과(2026-99-99, 2026-02-30 거부)',
       schema.posted_since.safeParse('today').success && schema.posted_since.safeParse('2026-11-04').success && !schema.posted_since.safeParse('2026-99-99').success && !schema.posted_since.safeParse('2026-02-30').success,
     );
+
+    // 페이지 넘김: 리멤버는 per 50이 상한, 점핏은 16건 고정. 둘 다 limit만큼 이어 받는다.
+    const asked: string[] = [];
+    (globalThis as { fetch: unknown }).fetch = async (url: string, init?: { body?: string }) => {
+      if (url.includes('rememberapp')) {
+        const { page, per } = JSON.parse(init!.body!);
+        asked.push(`r${page}:${per}`);
+        return json({ data: Array.from({ length: per }, (_, i) => ({ id: page * 1000 + i, title: `t${page}-${i}`, organization: { name: `c${page}-${i}` } })) });
+      }
+      const page = Number(new URL(url).searchParams.get('page'));
+      asked.push(`j${page}`);
+      const n = page < 3 ? 16 : 5;
+      return json({ result: { positions: Array.from({ length: n }, (_, i) => ({ id: `${page}-${i}`, companyName: `j${page}-${i}`, title: `p${page}-${i}` })) } });
+    };
+    const paged = await searchJobs('회계', { sources: ['remember', 'jumpit'], limit: 70, trackSeen: false });
+    const count = (s: string) => paged.results.filter((x) => x.source === s).length;
+    ok(
+      'limit 70: 리멤버 50+50 두 페이지에서 70건, 점핏은 짧은 페이지(5건)에서 멈춰 37건',
+      count('remember') === 70 && count('jumpit') === 37 && asked.filter((a) => a.startsWith('r')).sort().join() === 'r1:50,r2:50' && !asked.includes('j4'),
+      JSON.stringify({ asked, r: count('remember'), j: count('jumpit') }),
+    );
+    const today50 = await searchJobs('회계', { sources: ['remember'], postedSince: '2026-01-01', trackSeen: false });
+    ok('posted_since가 있으면 limit 기본값 50', today50.providers[0]?.count === 50, JSON.stringify(today50.providers));
   } finally {
     globalThis.fetch = origFetch;
   }
