@@ -50,7 +50,7 @@ export interface JobSearchResponse {
   query: string;
   results: JobSearchResult[];
   providers: ProviderOutcome[];
-  /** Results dropped by `postedSince`. */
+  /** Results dropped by `postedSince` and `years`. */
   filtered_out?: number;
 }
 
@@ -64,6 +64,8 @@ export interface JobSearchOptions {
   saraminCategories?: string[];
   /** Keep only postings dated on/after this day (YYYY-MM-DD): posted_at, else first_seen_at. */
   postedSince?: string;
+  /** User's years of experience: keep postings whose range covers it (unknown ranges stay). */
+  years?: number;
   /** Record first-seen dates in the local DB (default true; tests turn it off). */
   trackSeen?: boolean;
   /** "Today" for first-seen/postedSince, injectable for tests. */
@@ -450,8 +452,13 @@ export async function searchJobs(query: string, opts: JobSearchOptions = {}): Pr
   }
   results = dedupeAcrossBoards(results);
   let filtered_out: number | undefined;
-  if (opts.postedSince) {
-    const kept = results.filter((r) => (r.posted_at ?? r.first_seen_at ?? today) >= opts.postedSince!);
+  const years = opts.years;
+  if (opts.postedSince || years != null) {
+    const kept = results.filter((r) => {
+      if (opts.postedSince && (r.posted_at ?? r.first_seen_at ?? today) < opts.postedSince) return false;
+      const range = years != null ? experienceRange(r.experience) : null;
+      return !range || (range[0] <= years! && years! <= range[1]);
+    });
     filtered_out = results.length - kept.length;
     results = kept;
   }
@@ -462,6 +469,22 @@ export async function searchJobs(query: string, opts: JobSearchOptions = {}): Pr
     providers: settled.map((s) => s.outcome),
     ...(filtered_out !== undefined ? { filtered_out } : {}),
   };
+}
+
+/**
+ * Years a posting accepts, from each board's wording: "3~10년", "경력 3~10년", "5년 이상",
+ * "경력5년↑", "~3년", "신입", "신입·경력", "경력무관". Unreadable text gives null.
+ */
+export function experienceRange(text: string | undefined): [number, number] | null {
+  const t = (text ?? '').replace(/\s/g, '');
+  if (!t) return null;
+  if (/무관/.test(t)) return [0, Infinity];
+  const m = t.match(/(\d+)?~(\d+)년/);
+  if (m) return [m[1] ? +m[1] : 0, +m[2]];
+  const min = t.match(/(\d+)년(이상|↑)/);
+  if (min) return [/신입/.test(t) ? 0 : +min[1], Infinity];
+  if (/신입/.test(t)) return /경력/.test(t) ? [0, Infinity] : [0, 0];
+  return null;
 }
 
 // Any "(...)" goes: "(주)" and brand notes like "힐링페이퍼(강남언니)" vs "(주)힐링페이퍼".
