@@ -758,7 +758,7 @@ const ROUTES = [
     const hit = (s) => !needle || s.includes(needle) || needle.includes(s.split('>').pop().split('/')[0]);
     return {
       query: needle,
-      remember: ['SW개발>백엔드', 'SW개발>프론트엔드', '재무·회계·세무>회계결산'].filter(hit),
+      remember: ['SW개발>백엔드', 'SW개발>프론트엔드', '재무·회계·세무>회계결산', '재무·회계·세무'].filter(hit),
       saramin: [
         { code: '84', name: '백엔드/서버개발', group: 'IT개발·데이터', kind: '직무·직업' },
         { code: '92', name: '프론트엔드', group: 'IT개발·데이터', kind: '직무·직업' },
@@ -775,16 +775,22 @@ const ROUTES = [
     const today = nowIso().slice(0, 10);
     const all = DEMO_POSTINGS.map((r) => ({ ...r, posted_at: r.posted_at === 'today' ? today : r.posted_at }));
     const years = body.years;
-    // Like the real search: Wanted and Jumpit need a keyword; the samples are all backend roles.
+    // Like the real search: Wanted and Jumpit need a keyword. The samples cover three roles;
+    // a keyword picks the roles, and categories narrow Remember/Saramin (AND, as on the boards).
     const boards = body.keyword ? null : ['remember', 'saramin'];
-    const backend = (body.saramin_categories || []).includes('84')
-      || /백엔드|서버|back|java|node|kotlin/i.test([body.keyword, ...(body.remember_categories || [])].join(' '));
+    const rolesOf = (text) => Object.keys(DEMO_ROLES).filter((role) => DEMO_ROLES[role].test(text));
+    const catRoles = [
+      ...rolesOf((body.remember_categories || []).join(' ')),
+      ...(body.saramin_categories || []).map((c) => ({ 84: 'backend', 92: 'frontend', 2197: 'finance' })[c]).filter(Boolean),
+    ];
+    const kwRoles = body.keyword ? rolesOf(body.keyword) : catRoles;
     const results = all
-      .filter(() => backend)
+      .filter((r) => kwRoles.includes(r.role))
+      .filter((r) => !catRoles.length || !['remember', 'saramin'].includes(r.source) || catRoles.includes(r.role))
       .filter((r) => !boards || boards.includes(r.source))
       .filter((r) => years == null || (r.min <= years && years <= r.max))
       .filter((r) => body.posted_since !== 'today' || (r.posted_at ?? today) === today)
-      .map(({ min, max, ...r }) => ({ ...r, saved_job_id: db.jobs.find((j) => j.url === r.url)?.id ?? null }));
+      .map(({ min, max, role, ...r }) => ({ ...r, saved_job_id: db.jobs.find((j) => j.url === r.url)?.id ?? null }));
     return {
       query: body.keyword || '',
       results,
@@ -797,14 +803,27 @@ const ROUTES = [
 
 const searchPrefs = () => (db.jobSearchPrefs ??= { keyword: '백엔드', remember_categories: ['SW개발>백엔드'], saramin_categories: ['84'], updated_at: null });
 
+// Which sample role a search term or Remember category points at.
+const DEMO_ROLES = {
+  backend: /백엔드|서버|back|java|node|kotlin|spring/i,
+  frontend: /프론트|front|react|vue|웹 ?퍼블/i,
+  finance: /재무|회계|세무|경리|finance|account/i,
+};
+
 // Sample postings for the demo's "Find jobs" screen (made-up companies; links go to each board's home).
 const DEMO_POSTINGS = [
-  { source: 'remember', company: '한빛페이', position: '백엔드 엔지니어 (Kotlin/Spring)', url: 'https://career.rememberapp.co.kr/', experience: '3~8년', location: '서울 강남구', posted_at: 'today', deadline: null, external_id: 'd1', min: 3, max: 8 },
-  { source: 'saramin', company: '(주)누리로지스', position: '물류 플랫폼 서버 개발자', url: 'https://www.saramin.co.kr/', experience: '경력 2~7년', location: '서울 송파구', posted_at: 'today', deadline: null, external_id: 'd2', min: 2, max: 7, also_on: [{ source: 'jumpit', url: 'https://www.jumpit.co.kr/' }] },
-  { source: 'remember', company: '오름헬스케어', position: 'Backend Developer (Node.js)', url: 'https://career.rememberapp.co.kr/?d3', experience: '5년 이상', location: '경기 성남시', posted_at: '2026-11-01', deadline: null, external_id: 'd3', min: 5, max: 99 },
-  { source: 'saramin', company: '(주)바른데이터', position: '데이터 API 백엔드 개발 (신입·경력)', url: 'https://www.saramin.co.kr/?d4', experience: '신입·경력', location: '대전 유성구', posted_at: '2026-10-30', deadline: null, external_id: 'd4', min: 0, max: 99 },
-  { source: 'wanted', company: '스텔라커머스', position: '커머스 백엔드 엔지니어', url: 'https://www.wanted.co.kr/', experience: '3~10년', location: '서울', external_id: 'd5', min: 3, max: 10 },
-  { source: 'jumpit', company: '코드밸리', position: 'Java 백엔드 개발자', url: 'https://www.jumpit.co.kr/?d6', experience: '1~4년', location: '서울 마포구', external_id: 'd6', min: 1, max: 4 },
+  { role: 'backend', source: 'remember', company: '한빛페이', position: '백엔드 엔지니어 (Kotlin/Spring)', url: 'https://career.rememberapp.co.kr/', experience: '3~8년', location: '서울 강남구', posted_at: 'today', deadline: null, external_id: 'd1', min: 3, max: 8 },
+  { role: 'backend', source: 'saramin', company: '(주)누리로지스', position: '물류 플랫폼 서버 개발자', url: 'https://www.saramin.co.kr/', experience: '경력 2~7년', location: '서울 송파구', posted_at: 'today', deadline: null, external_id: 'd2', min: 2, max: 7, also_on: [{ source: 'jumpit', url: 'https://www.jumpit.co.kr/' }] },
+  { role: 'backend', source: 'remember', company: '오름헬스케어', position: 'Backend Developer (Node.js)', url: 'https://career.rememberapp.co.kr/?d3', experience: '5년 이상', location: '경기 성남시', posted_at: '2026-11-01', deadline: null, external_id: 'd3', min: 5, max: 99 },
+  { role: 'backend', source: 'saramin', company: '(주)바른데이터', position: '데이터 API 백엔드 개발 (신입·경력)', url: 'https://www.saramin.co.kr/?d4', experience: '신입·경력', location: '대전 유성구', posted_at: '2026-10-30', deadline: null, external_id: 'd4', min: 0, max: 99 },
+  { role: 'backend', source: 'wanted', company: '스텔라커머스', position: '커머스 백엔드 엔지니어', url: 'https://www.wanted.co.kr/', experience: '3~10년', location: '서울', external_id: 'd5', min: 3, max: 10 },
+  { role: 'backend', source: 'jumpit', company: '코드밸리', position: 'Java 백엔드 개발자', url: 'https://www.jumpit.co.kr/?d6', experience: '1~4년', location: '서울 마포구', external_id: 'd6', min: 1, max: 4 },
+  { role: 'frontend', source: 'wanted', company: '모아스튜디오', position: '프론트엔드 엔지니어 (React)', url: 'https://www.wanted.co.kr/?d7', experience: '3~7년', location: '서울', external_id: 'd7', min: 3, max: 7 },
+  { role: 'frontend', source: 'remember', company: '파란에듀', position: '웹 프론트엔드 개발자 (TypeScript)', url: 'https://career.rememberapp.co.kr/?d8', experience: '2~6년', location: '서울 성동구', posted_at: 'today', deadline: null, external_id: 'd8', min: 2, max: 6 },
+  { role: 'frontend', source: 'saramin', company: '(주)한결소프트', position: '프론트엔드 개발 (Vue, 신입 가능)', url: 'https://www.saramin.co.kr/?d9', experience: '신입·경력', location: '경기 판교', posted_at: '2026-11-02', deadline: null, external_id: 'd9', min: 0, max: 99 },
+  { role: 'finance', source: 'remember', company: '새봄유통', position: '재무회계 담당자 (결산·세무)', url: 'https://career.rememberapp.co.kr/?d10', experience: '3~8년', location: '서울 중구', posted_at: 'today', deadline: null, external_id: 'd10', min: 3, max: 8 },
+  { role: 'finance', source: 'saramin', company: '(주)다온제약', position: '경리·회계 사무원 (신입)', url: 'https://www.saramin.co.kr/?d11', experience: '신입', location: '충북 청주시', posted_at: '2026-11-03', deadline: null, external_id: 'd11', min: 0, max: 1 },
+  { role: 'finance', source: 'wanted', company: '하늘핀테크', position: '재무 FP&A 매니저', url: 'https://www.wanted.co.kr/?d12', experience: '5년 이상', location: '서울', external_id: 'd12', min: 5, max: 99 },
 ];
 
 /* -------------------------------------------------- CRUD route factory */
