@@ -21,6 +21,8 @@ export interface JobSearchResult {
   keywords?: string[];
   deadline?: string;
   external_id: string;
+  /** Saramin only: category codes of this posting, reusable as `saraminCategory`. */
+  category_codes?: string[];
 }
 
 export type ProviderStatus = 'healthy' | 'degraded' | 'unavailable';
@@ -45,6 +47,10 @@ export interface JobSearchOptions {
   sources?: string[];
   limit?: number;
   timeoutMs?: number;
+  /** Remember job category: "SW개발>프론트엔드" or just the group "SW개발" (a bare sub-category is ignored by Remember). */
+  rememberCategory?: string;
+  /** Saramin job category code(s) (cat_kewd), e.g. "92" or "92,84"; codes show up in Saramin results' `category_codes`. */
+  saraminCategory?: string;
 }
 
 const UA = `careermate/${APP_VERSION} (+https://careermate.life)`;
@@ -55,18 +61,34 @@ function toYmd(v: unknown): string | undefined {
   return m ? m[1] : undefined;
 }
 
-async function getJson(url: string, timeoutMs: number): Promise<unknown> {
+interface GetJsonInit {
+  /** When set, POST it as a JSON body. */
+  body?: unknown;
+  headers?: Record<string, string>;
+  /** Skip the content-type check (Saramin serves its JSON as text/html). */
+  anyType?: boolean;
+}
+
+async function getJson(url: string, timeoutMs: number, init: GetJsonInit = {}): Promise<unknown> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, {
-      headers: { accept: 'application/json', 'user-agent': UA, 'accept-language': 'ko,en;q=0.8' },
+      method: init.body === undefined ? 'GET' : 'POST',
+      headers: {
+        accept: 'application/json',
+        'user-agent': UA,
+        'accept-language': 'ko,en;q=0.8',
+        ...(init.body === undefined ? {} : { 'content-type': 'application/json' }),
+        ...init.headers,
+      },
+      body: init.body === undefined ? undefined : JSON.stringify(init.body),
       signal: ctrl.signal,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const type = res.headers.get('content-type') ?? '';
-    if (!type.includes('json')) throw new Error(`unexpected content-type: ${type || 'unknown'}`);
-    return await res.json();
+    if (!init.anyType && !type.includes('json')) throw new Error(`unexpected content-type: ${type || 'unknown'}`);
+    return JSON.parse(await res.text());
   } finally {
     clearTimeout(timer);
   }
@@ -75,7 +97,9 @@ async function getJson(url: string, timeoutMs: number): Promise<unknown> {
 interface Provider {
   id: string;
   label: string;
-  search(query: string, limit: number, timeoutMs: number): Promise<JobSearchResult[]>;
+  /** Option that lets this provider search by category alone, without a keyword. */
+  categoryOption?: 'rememberCategory' | 'saraminCategory';
+  search(query: string, limit: number, timeoutMs: number, opts: JobSearchOptions): Promise<JobSearchResult[]>;
 }
 
 const wantedSchema = z.object({
@@ -145,7 +169,7 @@ const jumpit: Provider = {
   label: '점핏',
   async search(query, limit, timeoutMs) {
     const url =
-      `https://api.jumpit.co.kr/api/positions?sort=rsp_rate&page=1&keyword=${encodeURIComponent(query)}`;
+      `https://jumpit-api.saramin.co.kr/api/positions?sort=rsp_rate&page=1&keyword=${encodeURIComponent(query)}`;
     const j = jumpitSchema.parse(await getJson(url, timeoutMs));
     return j.result.positions.slice(0, limit).map((p) => ({
       source: 'jumpit',
@@ -165,7 +189,145 @@ const jumpit: Provider = {
   },
 };
 
-const PROVIDERS: Provider[] = [wanted, jumpit];
+const rememberSchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.union([z.string(), z.number()]),
+      title: z.string().min(1),
+      organization: z.object({ name: z.string().min(1) }).passthrough(),
+      min_experience: z.number().nullable().optional(),
+      max_experience: z.number().nullable().optional(),
+      ends_at: z.string().nullable().optional(),
+      addresses: z
+        .array(z.object({ address_level1: z.string().nullable().optional(), address_level2: z.string().nullable().optional() }).passthrough())
+        .nullable()
+        .optional(),
+      job_categories: z.array(z.object({ level2: z.string().nullable().optional() }).passthrough()).nullable().optional(),
+    }).passthrough(),
+  ),
+}).passthrough();
+
+const remember: Provider = {
+  id: 'remember',
+  label: '리멤버',
+  categoryOption: 'rememberCategory',
+  async search(query, limit, timeoutMs, opts) {
+    const [level1, level2] = (opts.rememberCategory ?? '').split('>').map((s) => s.trim());
+    const search: Record<string, unknown> = {
+      keywords: query ? [query] : [],
+      organization_type: 'all',
+      application_type: 'all',
+    };
+    if (level1) search.job_category_names = [level2 ? { level1, level2 } : { level1 }];
+    const j = rememberSchema.parse(
+      await getJson('https://career-api.rememberapp.co.kr/job_postings/search', timeoutMs, {
+        body: { search, sort: 'starts_at_desc', page: 1, per: limit },
+      }),
+    );
+    return j.data.map((d) => {
+      const addr = d.addresses?.[0];
+      const min = d.min_experience;
+      const max = d.max_experience;
+      return {
+        source: 'remember',
+        company: d.organization.name,
+        position: d.title,
+        url: `https://career.rememberapp.co.kr/job/posting/${d.id}`,
+        location: addr ? [addr.address_level1, addr.address_level2].filter(Boolean).join(' ') || undefined : undefined,
+        experience:
+          min != null && max != null ? `${min}~${max}년` : min != null ? `${min}년 이상` : max != null ? `~${max}년` : undefined,
+        keywords: d.job_categories?.map((c) => c.level2).filter((s): s is string => !!s),
+        deadline: toYmd(d.ends_at),
+        external_id: String(d.id),
+      };
+    });
+  },
+};
+
+const saraminListSchema = z.object({ innerHTML: z.string() }).passthrough();
+
+function decodeHtml(s: string): string {
+  return s
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** "~ 12/04(금)" → YYYY-MM-DD; a month earlier than today's rolls into next year. Other labels (상시채용 etc.) → undefined. */
+function saraminDeadline(text: string, now = new Date()): string | undefined {
+  const m = text.match(/(\d{1,2})\/(\d{1,2})/);
+  if (!m) return undefined;
+  const month = Number(m[1]);
+  const year = now.getFullYear() + (month < now.getMonth() + 1 ? 1 : 0);
+  return `${year}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+}
+
+/**
+ * Parse the HTML fragment of Saramin's search list (`get-recruit-list` → innerHTML).
+ * Items missing an id, title or company are dropped; an empty result from a
+ * non-empty page means the markup changed, which the caller reports as degraded.
+ */
+export function parseSaraminList(html: string, now = new Date()): JobSearchResult[] {
+  const out: JobSearchResult[] = [];
+  for (const chunk of html.split('<div class="item_recruit"').slice(1)) {
+    const id = chunk.match(/^\s*value="(\d+)"/)?.[1];
+    const title = chunk.match(/class="job_tit">\s*<a[^>]*\btitle="([^"]*)"/)?.[1];
+    const company = chunk.match(/class="corp_name">\s*<a[^>]*>([\s\S]*?)<\/a>/)?.[1];
+    if (!id || !title || !company) continue;
+    const cond = chunk.match(/class="job_condition">([\s\S]*?)<\/div>/)?.[1] ?? '';
+    const spans = [...cond.matchAll(/<span>([\s\S]*?)<\/span>/g)].map((m) => decodeHtml(m[1]));
+    const sector = chunk.match(/class="job_sector">([\s\S]*?)(?:<span class="job_day"|<\/div>)/)?.[1] ?? '';
+    const links = [...sector.matchAll(/cat_kewd=(\d+)"\s*>([^<]*)<\/a>/g)];
+    out.push({
+      source: 'saramin',
+      company: decodeHtml(company),
+      position: decodeHtml(title),
+      url: `https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=${id}`,
+      location: spans[0] || undefined,
+      experience: spans[1] || undefined,
+      keywords: links.length ? links.map((m) => decodeHtml(m[2])) : undefined,
+      deadline: saraminDeadline(chunk.match(/class="date">([^<]*)</)?.[1] ?? '', now),
+      external_id: id,
+      category_codes: links.length ? links.map((m) => m[1]) : undefined,
+    });
+  }
+  return out;
+}
+
+const saramin: Provider = {
+  id: 'saramin',
+  label: '사람인',
+  categoryOption: 'saraminCategory',
+  async search(query, limit, timeoutMs, opts) {
+    const params = new URLSearchParams({
+      searchword: query,
+      recruitPage: '1',
+      recruitSort: query ? 'relation' : 'reg_dt',
+      recruitPageCount: String(limit),
+      mainSearch: 'n',
+    });
+    if (opts.saraminCategory) params.set('cat_kewd', opts.saraminCategory);
+    const j = saraminListSchema.parse(
+      await getJson(`https://www.saramin.co.kr/zf_user/search/get-recruit-list?${params}`, timeoutMs, {
+        headers: { 'x-requested-with': 'XMLHttpRequest' },
+        anyType: true,
+      }),
+    );
+    const rows = parseSaraminList(j.innerHTML);
+    if (!rows.length && j.innerHTML.includes('item_recruit')) {
+      throw new z.ZodError([{ code: 'custom', path: ['innerHTML'], message: 'item markup changed' }]);
+    }
+    return rows.slice(0, limit);
+  },
+};
+
+const PROVIDERS: Provider[] = [wanted, jumpit, remember, saramin];
 export const JOB_SEARCH_SOURCES = PROVIDERS.map((p) => p.id);
 
 function providerError(e: unknown): { status: ProviderStatus; error: string } {
@@ -182,18 +344,19 @@ function providerError(e: unknown): { status: ProviderStatus; error: string } {
 
 export async function searchJobs(query: string, opts: JobSearchOptions = {}): Promise<JobSearchResponse> {
   const q = (query ?? '').trim();
-  if (!q) return { query: '', results: [], providers: [] };
   const limit = Math.min(50, Math.max(1, opts.limit ?? 10));
   const timeoutMs = Math.min(30_000, Math.max(1_000, opts.timeoutMs ?? 10_000));
-  const chosen = opts.sources?.length
-    ? PROVIDERS.filter((p) => opts.sources!.includes(p.id))
-    : PROVIDERS;
+  // Without a keyword, only providers given their own category filter can search.
+  const chosen = (opts.sources?.length ? PROVIDERS.filter((p) => opts.sources!.includes(p.id)) : PROVIDERS).filter(
+    (p) => q || (p.categoryOption && opts[p.categoryOption]?.trim()),
+  );
+  if (!chosen.length) return { query: q, results: [], providers: [] };
 
   const settled = await Promise.all(
     chosen.map(async (p): Promise<{ outcome: ProviderOutcome; results: JobSearchResult[] }> => {
       const checked_at = new Date().toISOString();
       try {
-        const results = await p.search(q, limit, timeoutMs);
+        const results = await p.search(q, limit, timeoutMs, opts);
         return {
           outcome: {
             source: p.id,

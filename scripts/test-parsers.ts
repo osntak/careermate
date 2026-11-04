@@ -217,6 +217,42 @@ async function main() {
     }
     ok('빈 입력에도 throw 없이 결과 객체 반환', !threw && !!r && typeof r.unsupported === 'boolean', JSON.stringify({ threw }));
   }
+
+  console.log('\n8) 사람인 검색 목록 HTML 파싱(parseSaraminList)');
+  {
+    // 실제 get-recruit-list innerHTML에서 줄인 픽스처. 두 번째 항목은 회사명이 없어 버려져야 한다.
+    const html = `<div class="content">
+      <div class="item_recruit" value="55478983" data-data_layer="x">
+        <h2 class="job_tit"><a target="_blank" title="B2C 백엔드 개발자(Java&amp;Spring, 3~7년)" href="/zf_user/jobs/relay/view?rec_idx=55478983"><span>B2C</span></a></h2>
+        <div class="job_date"><span class="date">~ 01/04(일)</span></div>
+        <div class="job_condition">
+          <span><a href="/a">경기</a>  <a href="/b">용인시 수지구</a></span> <span>경력 3~7년</span> <span>대졸↑</span> <span>정규직</span>
+        </div>
+        <div class="job_sector"><b><a target="_blank" href="/zf_user/jobs/list/job-category?cat_kewd=84">백엔드/서버개발</a></b>, <a target="_blank" href="/zf_user/jobs/list/job-category?cat_kewd=214">Docker</a> 외 <span class="job_day">등록일 26/11/04</span></div>
+        <div class="area_corp"><strong class="corp_name"><a href="/c" class="x">
+          (주)인투씨엔에스 </a></strong></div>
+      </div>
+      <div class="item_recruit" value="1"><h2 class="job_tit"><a title="회사 없음">x</a></h2></div>
+    </div>`;
+    const { parseSaraminList } = await import('../packages/core/src/jobsearch.ts');
+    const rows = parseSaraminList(html, new Date(2026, 10, 4));
+    const r = rows[0];
+    ok('회사명 없는 항목은 버림', rows.length === 1, JSON.stringify(rows.length));
+    ok(
+      '제목·회사·링크·지역·경력 추출(엔티티 디코딩)',
+      r?.position === 'B2C 백엔드 개발자(Java&Spring, 3~7년)' &&
+        r.company === '(주)인투씨엔에스' &&
+        r.url === 'https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=55478983' &&
+        r.location === '경기 용인시 수지구' &&
+        r.experience === '경력 3~7년',
+      JSON.stringify(r),
+    );
+    ok(
+      '직무 이름과 코드를 같은 순서로',
+      JSON.stringify(r?.keywords) === '["백엔드/서버개발","Docker"]' && JSON.stringify(r?.category_codes) === '["84","214"]',
+    );
+    ok('지난 달 마감일은 다음 해로', r?.deadline === '2027-01-04', String(r?.deadline));
+  }
 }
 
 main()
