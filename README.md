@@ -35,9 +35,9 @@
 - **AI와 대화로 모든 작업** — MCP 도구로 온보딩·프로필·이력서·자소서·공고·핏 분석·지원 상태·면접 준비·전문가 플레이북·AI 티 안 나는 글쓰기까지 처리.
 - **지원 상태 8단계 관리** — `draft`(작성 중) · `planned`(지원 예정) · `applied`(지원 완료) · `document_passed`(서류 합격) · `interview`(면접 진행) · `final_passed`(최종 합격) · `rejected`(불합격) · `on_hold`(보류). `document_passed` 이상에서는 면접 준비를 다음 행동으로 제안합니다.
 - **자기소개서 버전 관리** — 공고별로 자소서 버전을 쌓고 타임라인으로 비교, 파일로 내보내기.
-- **공고 검색·가져오기** — 키워드(직무·기술)나 직무 분류로 원티드·점핏·리멤버·사람인 같은 공개 채용 사이트에서 공고를 바로 가져와, 마음에 드는 것만 저장. 영업·회계·간호·생산직 등 모든 직군의 분류표가 내장돼 있어, 내 직무를 검색 조건으로 저장해 두면 "오늘 올라온 공고 보여줘" 한마디로 새 공고만 볼 수 있습니다(여러 사이트에 함께 올라온 공고는 한 줄로 합침). 키 발급·설치 없이 동작하며, 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음, 보내는 건 검색어·직무 조건뿐).
+- **공고 검색·가져오기** - 키워드(직무·기술)나 직무 분류로 원티드·점핏·리멤버·사람인 같은 공개 채용 사이트에서 공고를 바로 가져와, 마음에 드는 것만 저장. 영업·회계·간호·생산직 등 모든 직군의 분류표가 내장돼 있어, 내 직무를 검색 조건으로 저장해 두면 "오늘 올라온 공고 보여줘" 한마디로 새 공고만 볼 수 있습니다(여러 사이트에 함께 올라온 공고는 한 줄로 합침). 키 발급·설치 없이 동작하며, 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음, 보내는 건 검색어·직무 조건뿐). 경력 연차를 말하면 그 연차가 경력 범위에 들어가는 공고만 남깁니다(5년이면 "3~10년"은 남기고 "8~20년"은 뺌). 잡코리아는 robots.txt 제약 때문에 넣지 않았습니다. 대시보드의 **공고 찾기** 화면에서도 같은 검색을 하고 클릭 한 번으로 저장할 수 있습니다.
 - **채용공고 파싱** — 붙여넣거나 가져온 공고 텍스트를 구조화해 저장.
-- **로컬 대시보드** — 프레임워크·CDN 없는 바닐라 JS로 만든 7페이지 웹 화면(다크모드 지원).
+- **로컬 대시보드** - 프레임워크·CDN 없는 바닐라 JS로 만든 8페이지 웹 화면(다크모드 지원).
 - **데이터 내보내기/삭제** — Settings 페이지에서 직접.
 
 > **예: 공고 검색** — "백엔드 공고 찾아줘"라고 하면 AI가 공개 사이트에서 공고를 모아 이렇게 보여주고, 고른 것만 저장합니다(직무를 저장해 뒀다면 "오늘 올라온 공고 보여줘"만으로도 됩니다):
@@ -134,12 +134,13 @@ AI 클라이언트에 연결된 상태라면 "대시보드 열어줘"만으로�
 
 ---
 
-## 대시보드 7페이지
+## 대시보드 8페이지
 
 | 페이지 | 설명 |
 | --- | --- |
 | **Home** | 현재 상태·다음 할 일 한눈에. |
 | **Profile** | 프로필, 경력(experiences), 프로젝트, 스킬 관리. |
+| **공고 찾기** | 원티드·점핏·리멤버·사람인을 검색어·직무·경력 연차·오늘 게시로 찾고, 클릭 한 번으로 저장. |
 | **Jobs** | 저장한 채용공고 목록과 상세(공고 내용·핏 분석). |
 | **Applications** | 지원 현황을 8단계 상태로 보는 칸반 보드. |
 | **Documents** | 자기소개서 버전 타임라인과 이력서. |
@@ -317,9 +318,9 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 - **Everything through conversation with AI** — MCP tools cover onboarding, profile, resumes, cover letters, job postings, fit analysis, application status, interview prep, expert playbooks, and human-sounding writing.
 - **8-stage application status** — `draft` · `planned` · `applied` · `document_passed` · `interview` · `final_passed` · `rejected` · `on_hold`. Interview prep is suggested at `document_passed` or later.
 - **Cover-letter versioning** — Stack versions per posting, compare on a timeline, export to a file.
-- **Job search & import** — Pull postings by keyword (role/skill) or job category straight from public job boards (Wanted, Jumpit, Remember, Saramin) and save only the ones you like. Category tables for every occupation (sales, accounting, nursing, manufacturing...) are built in: save your role as a search condition and "show me today's new postings" returns only new ones, with the same posting from several boards folded into one row. No API key or setup; it only *fetches* public postings (no bot-protection bypass, no bulk harvesting; only the search keyword and job category are sent).
+- **Job search & import** - Pull postings by keyword (role/skill) or job category straight from public job boards (Wanted, Jumpit, Remember, Saramin) and save only the ones you like. Category tables for every occupation (sales, accounting, nursing, manufacturing...) are built in: save your role as a search condition and "show me today's new postings" returns only new ones, with the same posting from several boards folded into one row. No API key or setup; it only *fetches* public postings (no bot-protection bypass, no bulk harvesting; only the search keyword and job category are sent). Give your years of experience and it keeps only postings whose experience range covers them (5 years keeps "3-10 yrs" and drops "8-20 yrs"). JobKorea is left out because of its robots.txt. The dashboard's **Find jobs** screen runs the same search and saves a posting in one click.
 - **Job-posting parsing** — Turn pasted or imported posting text into structured records.
-- **Local dashboard** — A 7-page web UI built with framework-free, CDN-free vanilla JS (dark mode supported).
+- **Local dashboard** - An 8-page web UI built with framework-free, CDN-free vanilla JS (dark mode supported).
 - **Export / delete your data** — Directly from the Settings page.
 
 > **Example: job search** — Ask "find backend jobs" and the AI gathers postings from public boards, presents them like this, and saves only the ones you pick (with a saved role, "show me today's new postings" is enough):
@@ -416,12 +417,13 @@ More in [`docs/FAQ.md`](docs/FAQ.md). For **security issues**, use the private p
 
 ---
 
-## The 7 dashboard pages
+## The 8 dashboard pages
 
 | Page | Description |
 | --- | --- |
 | **Home** | Current status and next steps at a glance. |
 | **Profile** | Manage profile, experiences, projects, and skills. |
+| **Find jobs** | Search Wanted, Jumpit, Remember and Saramin by keyword, job category, years of experience or "posted today", and save a posting in one click. |
 | **Jobs** | List and detail of saved postings (posting content + fit analysis). |
 | **Applications** | A kanban board showing your pipeline across the 8 statuses. |
 | **Documents** | Cover-letter version timeline and resumes. |

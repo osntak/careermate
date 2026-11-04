@@ -3,6 +3,7 @@ export default {
   'nav.home': 'Home',
   'nav.profile': 'Profile',
   'nav.jobs': 'Postings',
+  'nav.search': 'Find jobs',
   'nav.applications': 'Applications',
   'nav.documents': 'Documents',
   'nav.interview': 'Interview prep',

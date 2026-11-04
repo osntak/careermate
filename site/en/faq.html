@@ -70,6 +70,14 @@
           "@type": "Answer",
           "text": "Scanned or image-only PDFs may not have extractable text. Show the PDF to an image-capable AI client or paste the text directly."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "Can it find job postings for me?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Ask the AI to find jobs and it gathers public postings from Wanted, Jumpit, Remember, and Saramin. No login or API key is needed, and only the search keyword and job conditions leave your PC. It works for every occupation, and only the postings you pick are saved and carried into fit analysis and cover letters."
+        }
       }
     ]
   }
@@ -118,7 +126,7 @@
       <div class="hero__main">
         <span class="pill-badge"><span class="pill-badge__dot" aria-hidden="true"></span> Help</span>
         <h1 class="hero__title">Frequently asked questions</h1>
-        <p class="hero__lede">Common snags around install, connection, the dashboard, document reading, and privacy. New to installing? Start with <a href="/en/start">New here?</a></p>
+        <p class="hero__lede">Common snags around install, connection, the dashboard, document reading, finding jobs, and privacy. New to installing? Start with <a href="/en/start">New here?</a></p>
       </div>
     </header>
 
@@ -202,6 +210,30 @@
             <summary>Korean text looks garbled</summary>
             <div class="acc__body">
               <p>CareerMate auto-detects UTF-8 and Korean encodings (CP949/EUC-KR). If it's still garbled, re-save the file as UTF-8 or paste the content.</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="faq__group">
+          <h2>Finding jobs</h2>
+          <details class="acc">
+            <summary>Can it find job postings for me?</summary>
+            <div class="acc__body">
+              <p>Yes. Ask the AI something like <strong>"find backend jobs"</strong> or <strong>"find bookkeeping jobs"</strong> and it gathers public postings from <strong>Wanted, Jumpit, Remember, and Saramin</strong>. No login or API key is needed, and only the search keyword and job conditions leave your PC (your profile and resumes are not sent). JobKorea is left out because of its robots.txt.</p>
+              <p>It works for every occupation, not just developers. A built-in table maps a job name to each board's categories (Remember: 26 groups, 315 subcategories; Saramin: 21 fields, 2,178 codes). The same posting on several boards shows up as one row, and only the postings you pick are saved and carried into fit analysis and cover letters. The dashboard's <strong>Find jobs</strong> screen runs the same search and saves a posting in one click.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>Can I see only today's new postings?</summary>
+            <div class="acc__body">
+              <p>Save your usual role as a search condition once, then <strong>"show me today's postings for my role"</strong> is enough. Remember and Saramin are filtered by their posting dates. Wanted and Jumpit don't give dates, so CareerMate filters them by the day it first saw each posting, which means <strong>everything looks new on your first search.</strong></p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>Can it filter by years of experience?</summary>
+            <div class="acc__body">
+              <p>Yes. Say something like "I have 5 years, find frontend jobs" and it keeps only postings whose experience range covers 5 years: "3-10 yrs" stays, "8-20 yrs" is dropped. Postings with an unreadable experience range are kept.</p>
+              <p>A frontend search with 5 years on 2026-11-04 returned 173 postings after merging; 123 were kept and 50 were dropped by the experience filter.</p>
             </div>
           </details>
         </div>

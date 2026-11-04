@@ -9,6 +9,7 @@ import { t, onLangChange } from '/i18n.js';
 const ROUTES = [
   { id: 'home', icon: 'home', module: '/pages/home.js' },
   { id: 'profile', icon: 'user', module: '/pages/profile.js' },
+  { id: 'search', icon: 'search', module: '/pages/search.js' },
   { id: 'jobs', icon: 'briefcase', module: '/pages/jobs.js', countKey: 'jobs' },
   { id: 'applications', icon: 'layers', module: '/pages/applications.js', countKey: 'active_applications' },
   { id: 'documents', icon: 'file', module: '/pages/documents.js', countKey: 'cover_letters' },

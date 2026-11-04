@@ -95,12 +95,23 @@ export function isRememberCategory(value: string): boolean {
   return !!subs && (sub === undefined || subs.includes(sub));
 }
 
-let saraminCodes: Set<string> | undefined;
+let saraminCodes: Map<string, string> | undefined;
+// First name wins if a code repeats, so the 직무·직업 name (listed first) is kept.
+const saraminIndex = () => {
+  if (!saraminCodes) {
+    saraminCodes = new Map();
+    for (const kinds of Object.values(SARAMIN_CATEGORIES))
+      for (const list of Object.values(kinds)) for (const [c, n] of list) if (!saraminCodes.has(c)) saraminCodes.set(c, n);
+  }
+  return saraminCodes;
+};
 
 /** A cat_kewd code from the snapshot. Unknown codes are rejected rather than risk an unfiltered list. */
 export function isSaraminCategory(code: string): boolean {
-  saraminCodes ??= new Set(
-    Object.values(SARAMIN_CATEGORIES).flatMap((kinds) => Object.values(kinds).flatMap((list) => list.map(([c]) => c))),
-  );
-  return saraminCodes.has(code);
+  return saraminIndex().has(code);
+}
+
+/** Display name of a Saramin code ("322" -> "경리"), or undefined if unknown. */
+export function saraminCategoryName(code: string): string | undefined {
+  return saraminIndex().get(code);
 }

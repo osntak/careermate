@@ -849,6 +849,36 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
       });
     const five = await searchJobs('프론트엔드', { sources: ['remember'], years: 5, trackSeen: false });
     ok('years 5: 3~10년만 남고 8~20년·1~4년은 제외, 경력 표기 없는 공고는 남김', five.results.map((r) => r.position).join() === 'a,d' && five.filtered_out === 2, JSON.stringify(five.results));
+
+    // 대시보드 공고 찾기 API: 외부로 요청이 나가므로 검색은 CSRF 토큰이 있는 POST만 받는다.
+    const call = async (m: string, p: string, b?: unknown) => JSON.parse((await authed(m, p, b)).text);
+    const cats = await call('GET', `/api/job-search/categories?q=${encodeURIComponent('경리')}`);
+    ok('GET /api/job-search/categories: 직무 이름을 사람인 코드로', cats.saramin?.[0]?.code === '322', JSON.stringify(cats.saramin?.slice(0, 2)));
+    const noToken = await reqRaw('POST', '/api/job-search', { keyword: '프론트엔드', sources: ['remember'] });
+    ok('POST /api/job-search: 토큰 없으면 403(다른 사이트가 검색을 시키지 못함)', noToken.status === 403);
+    const badPrefs = await authed('PUT', '/api/job-search/preferences', { saramin_categories: ['999999'] });
+    ok('PUT /api/job-search/preferences: 분류표에 없는 코드는 400', badPrefs.status === 400, badPrefs.text);
+    await call('POST', '/api/jobs', { company: 'a', position: 'a', url: 'https://career.rememberapp.co.kr/job/posting/1' });
+    const web = await call('POST', '/api/job-search', { keyword: '프론트엔드', sources: ['remember'], years: 5 });
+    ok(
+      'POST /api/job-search: years 적용, 이미 저장한 공고는 saved_job_id로 표시',
+      web.results?.length === 2 && !!web.results[0].saved_job_id && web.results[1].saved_job_id === null && web.filtered_out === 2,
+      JSON.stringify(web.results?.map((r: { position: string; saved_job_id: string | null }) => [r.position, r.saved_job_id])),
+    );
+    const putPrefs = await authed('PUT', '/api/job-search/preferences', { keyword: '경리', saramin_categories: ['323'], remember_categories: [] });
+    const prefsView = await call('GET', '/api/job-search/preferences');
+    ok(
+      'PUT 후 GET /api/job-search/preferences: 저장한 값과 사람인 코드 이름이 돌아옴',
+      putPrefs.status === 200 && prefsView.preferences?.keyword === '경리' && prefsView.saramin_names?.['323'] === '경리사무원' && prefsView.preferences.remember_categories.length === 0,
+      JSON.stringify(prefsView),
+    );
+    const fallback = await call('POST', '/api/job-search', { sources: ['remember'] });
+    ok('POST /api/job-search 조건 없이: 저장된 조건으로 검색', fallback.used_saved_preferences === true && fallback.conditions?.keyword === '경리', JSON.stringify(fallback.conditions));
+    await authed('PUT', '/api/job-search/preferences', { keyword: '', saramin_categories: [], remember_categories: [] });
+    const nothing = await authed('POST', '/api/job-search', {});
+    ok('POST /api/job-search: 저장된 조건도 없으면 400', nothing.status === 400, nothing.text);
+    const badSearch = await authed('POST', '/api/job-search', { saramin_categories: ['999999'] });
+    ok('POST /api/job-search: 분류표에 없는 코드는 요청 전에 400', badSearch.status === 400, badSearch.text);
   } finally {
     globalThis.fetch = origFetch;
   }

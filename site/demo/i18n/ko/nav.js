@@ -3,6 +3,7 @@ export default {
   'nav.home': '홈',
   'nav.profile': '프로필',
   'nav.jobs': '채용공고',
+  'nav.search': '공고 찾기',
   'nav.applications': '지원 현황',
   'nav.documents': '문서',
   'nav.interview': '면접 준비',

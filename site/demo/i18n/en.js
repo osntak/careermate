@@ -10,8 +10,9 @@ import documents from './en/documents.js';
 import profile from './en/profile.js';
 import interview from './en/interview.js';
 import applications from './en/applications.js';
+import search from './en/search.js';
 
 export default {
   ...common, ...nav, ...status, ...settings,
-  ...home, ...jobs, ...documents, ...profile, ...interview, ...applications,
+  ...home, ...jobs, ...documents, ...profile, ...interview, ...applications, ...search,
 };

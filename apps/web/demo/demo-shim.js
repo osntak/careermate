@@ -751,6 +751,60 @@ const ROUTES = [
 
   /* parse helper (deterministic, no AI) */
   ['POST', /^\/api\/parse\/job$/, (_p, body) => cleanPosting(body.raw || '')],
+
+  /* find jobs: the demo never calls the boards; it answers with fixed sample postings */
+  ['GET', /^\/api\/job-search\/categories$/, (_p, _b, q) => {
+    const needle = (q?.get('q') || '').trim();
+    const hit = (s) => !needle || s.includes(needle) || needle.includes(s.split('>').pop().split('/')[0]);
+    return {
+      query: needle,
+      remember: ['SW개발>백엔드', 'SW개발>프론트엔드', '재무·회계·세무>회계결산'].filter(hit),
+      saramin: [
+        { code: '84', name: '백엔드/서버개발', group: 'IT개발·데이터', kind: '직무·직업' },
+        { code: '92', name: '프론트엔드', group: 'IT개발·데이터', kind: '직무·직업' },
+        { code: '2197', name: '회계', group: '회계·세무·재무', kind: '직무·직업' },
+      ].filter((s) => hit(s.name)),
+    };
+  }],
+  ['GET', /^\/api\/job-search\/preferences$/, () => ({ preferences: searchPrefs(), saramin_names: { 84: '백엔드/서버개발', 92: '프론트엔드', 2197: '회계' } })],
+  ['PUT', /^\/api\/job-search\/preferences$/, (_p, body) => {
+    Object.assign(searchPrefs(), pick(body, ['keyword', 'remember_categories', 'saramin_categories']), { updated_at: nowIso() });
+    return { preferences: searchPrefs() };
+  }],
+  ['POST', /^\/api\/job-search$/, (_p, body) => {
+    const today = nowIso().slice(0, 10);
+    const all = DEMO_POSTINGS.map((r) => ({ ...r, posted_at: r.posted_at === 'today' ? today : r.posted_at }));
+    const years = body.years;
+    // Like the real search: Wanted and Jumpit need a keyword; the samples are all backend roles.
+    const boards = body.keyword ? null : ['remember', 'saramin'];
+    const backend = (body.saramin_categories || []).includes('84')
+      || /백엔드|서버|back|java|node|kotlin/i.test([body.keyword, ...(body.remember_categories || [])].join(' '));
+    const results = all
+      .filter(() => backend)
+      .filter((r) => !boards || boards.includes(r.source))
+      .filter((r) => years == null || (r.min <= years && years <= r.max))
+      .filter((r) => body.posted_since !== 'today' || (r.posted_at ?? today) === today)
+      .map(({ min, max, ...r }) => ({ ...r, saved_job_id: db.jobs.find((j) => j.url === r.url)?.id ?? null }));
+    return {
+      query: body.keyword || '',
+      results,
+      providers: (boards || ['wanted', 'jumpit', 'remember', 'saramin']).map((source) => ({ source, ok: true, status: 'healthy', count: results.filter((r) => r.source === source).length })),
+      filtered_out: all.length - results.length,
+      used_saved_preferences: false,
+    };
+  }],
+];
+
+const searchPrefs = () => (db.jobSearchPrefs ??= { keyword: '백엔드', remember_categories: ['SW개발>백엔드'], saramin_categories: ['84'], updated_at: null });
+
+// Sample postings for the demo's "Find jobs" screen (made-up companies; links go to each board's home).
+const DEMO_POSTINGS = [
+  { source: 'remember', company: '한빛페이', position: '백엔드 엔지니어 (Kotlin/Spring)', url: 'https://career.rememberapp.co.kr/', experience: '3~8년', location: '서울 강남구', posted_at: 'today', deadline: null, external_id: 'd1', min: 3, max: 8 },
+  { source: 'saramin', company: '(주)누리로지스', position: '물류 플랫폼 서버 개발자', url: 'https://www.saramin.co.kr/', experience: '경력 2~7년', location: '서울 송파구', posted_at: 'today', deadline: null, external_id: 'd2', min: 2, max: 7, also_on: [{ source: 'jumpit', url: 'https://www.jumpit.co.kr/' }] },
+  { source: 'remember', company: '오름헬스케어', position: 'Backend Developer (Node.js)', url: 'https://career.rememberapp.co.kr/?d3', experience: '5년 이상', location: '경기 성남시', posted_at: '2026-11-01', deadline: null, external_id: 'd3', min: 5, max: 99 },
+  { source: 'saramin', company: '(주)바른데이터', position: '데이터 API 백엔드 개발 (신입·경력)', url: 'https://www.saramin.co.kr/?d4', experience: '신입·경력', location: '대전 유성구', posted_at: '2026-10-30', deadline: null, external_id: 'd4', min: 0, max: 99 },
+  { source: 'wanted', company: '스텔라커머스', position: '커머스 백엔드 엔지니어', url: 'https://www.wanted.co.kr/', experience: '3~10년', location: '서울', external_id: 'd5', min: 3, max: 10 },
+  { source: 'jumpit', company: '코드밸리', position: 'Java 백엔드 개발자', url: 'https://www.jumpit.co.kr/?d6', experience: '1~4년', location: '서울 마포구', external_id: 'd6', min: 1, max: 4 },
 ];
 
 /* -------------------------------------------------- CRUD route factory */
