@@ -308,6 +308,11 @@ async function main() {
       { ...base, source: 'remember', company: '가나', position: '[경력] 회계 담당', url: 'b', external_id: '2' },
     ]);
     ok('[신입]·[경력] 같은 꼬리표가 다르면 다른 공고로 둠(회사명 꼬리표만 무시)', tags.length === 2, JSON.stringify(tags));
+    const brand = dedupeAcrossBoards([
+      { ...base, source: 'wanted', company: '힐링페이퍼(강남언니)', position: '[강남언니] 웹 프론트엔드 개발자 (글로벌)', url: 'w', external_id: '1' },
+      { ...base, source: 'remember', company: '(주)힐링페이퍼', position: '[강남언니] 웹 프론트엔드 개발자 (글로벌)', url: 'r', external_id: '2' },
+    ]);
+    ok('회사명 괄호 속 서비스명("힐링페이퍼(강남언니)")은 무시하고 같은 회사로 합침', brand.length === 1 && brand[0].also_on?.[0]?.url === 'r', JSON.stringify(brand));
   }
 }
 

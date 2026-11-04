@@ -170,9 +170,12 @@ const wanted: Provider = {
       `&job_sort=job.latest_order&limit=${limit}&offset=0&query=${encodeURIComponent(query)}`;
     const j = wantedSchema.parse(await getJson(url, timeoutMs));
     return j.data.map((r) => {
+      // Wanted uses 100 for "no upper bound".
       const annual =
         r.annual_from || r.annual_to
-          ? `${r.annual_from ?? 0}~${r.annual_to ?? '?'}년`
+          ? r.annual_to == null || r.annual_to >= 100
+            ? `${r.annual_from ?? 0}년 이상`
+            : `${r.annual_from ?? 0}~${r.annual_to}년`
           : undefined;
       return {
         source: 'wanted',
@@ -196,7 +199,7 @@ const jumpit: Provider = {
     const positions: z.infer<typeof jumpitSchema>['result']['positions'] = [];
     for (let page = 1; positions.length < limit && page <= Math.ceil(limit / 16); page++) {
       const url =
-        `https://jumpit-api.saramin.co.kr/api/positions?sort=rsp_rate&page=${page}&keyword=${encodeURIComponent(query)}`;
+        `https://jumpit-api.saramin.co.kr/api/positions?sort=relation&page=${page}&keyword=${encodeURIComponent(query)}`;
       const got = jumpitSchema.parse(await getJson(url, timeoutMs)).result.positions;
       positions.push(...got);
       if (got.length < 16) break;
@@ -461,8 +464,9 @@ export async function searchJobs(query: string, opts: JobSearchOptions = {}): Pr
   };
 }
 
+// Any "(...)" goes: "(주)" and brand notes like "힐링페이퍼(강남언니)" vs "(주)힐링페이퍼".
 const normCompany = (s: string) =>
-  s.replace(/\(주\)|㈜|주식회사|\(유\)|\(재\)/g, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  s.replace(/\([^)]*\)|㈜|주식회사/g, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 /** Drop only a "[company]" tag (Remember prefixes titles with it); "[신입]", "[서울]" and the like stay. */
 const normTitle = (title: string, company: string) => {
   const c = normCompany(company);
