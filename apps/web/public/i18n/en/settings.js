@@ -31,6 +31,23 @@ export default {
   'settings.connection.mcpBody': 'Your AI client (Claude, ChatGPT, Cursor) runs the MCP server itself, and it shares the same database as this dashboard.',
   'settings.connection.openInstall': 'Open setup guide',
 
+  // data check
+  'settings.check.title': 'Data check',
+  'settings.check.sub': 'Whether the app is working and whether anything in your saved data needs fixing',
+  'settings.check.allOk': 'Everything the app needs is working.',
+  'settings.check.failed': 'Needs attention: {{label}}',
+  'settings.check.item.database': 'Local database',
+  'settings.check.item.data_dir': 'Reading and writing the data folder',
+  'settings.check.item.backups_dir': 'Reading and writing the backups folder',
+  'settings.check.item.node': 'Node.js version (22 or later required)',
+  'settings.check.localNote': 'Your data lives only on this computer. The internet is used only to check for updates and to find jobs.',
+  'settings.check.issuesTitle': 'Found in your saved data',
+  'settings.check.noIssues': 'Nothing to fix in your saved data.',
+  'settings.check.severity.error': 'Fix',
+  'settings.check.severity.warning': 'Check',
+  'settings.check.severity.info': 'Note',
+  'settings.check.loadError': "Couldn't load the check results.",
+
   // theme
   'settings.theme.title': 'Theme',
   'settings.theme.sub': 'Follow your system setting or pick one yourself',

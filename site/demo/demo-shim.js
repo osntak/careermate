@@ -74,6 +74,8 @@ const DEMO_STR = {
     backup_warning: '데모에서는 브라우저 메모리의 샘플 데이터만 바뀌며 실제 파일은 변경되지 않습니다.',
     shortcut_dir: '데모 모드 — 실제 폴더를 만들지 않습니다',
     shortcut_launcher: '실제 앱에서는 CareerMate 대시보드 바로가기가 생성됩니다',
+    // settings > data check
+    diag_jobs_without_fit: '적합도 분석이 없는 공고가 1개 있습니다.',
     // submission channel suffix
     submitted_via: '{{channel}}로 제출',
     // hint after document pass
@@ -146,6 +148,8 @@ const DEMO_STR = {
     backup_warning: 'In demo mode only the in-memory sample data changes — no real files are modified.',
     shortcut_dir: 'Demo mode — no real folder is created',
     shortcut_launcher: 'In the real app a CareerMate dashboard shortcut would be created here.',
+    // settings > data check
+    diag_jobs_without_fit: '1 saved posting has no fit analysis yet.',
     // submission channel suffix
     submitted_via: 'Submitted via {{channel}}',
     // hint after document pass
@@ -748,6 +752,22 @@ const ROUTES = [
     db = getLang() === 'en' ? buildSeedEn() : buildSeed(); // demo "reset" = back to the seed
     return { ok: true };
   }],
+
+  // Settings > Data check. Healthy runtime, one sample note; record ids are never shown.
+  ['GET', /^\/api\/diagnostics$/, () => ({
+    ok: true,
+    version: 'demo',
+    checks: ['database', 'data_dir', 'backups_dir', 'node'].map((id) => ({ id, ok: true, label: id, detail: d('demo_label') })),
+    data_health: {
+      score: 98,
+      checked_at: nowIso(),
+      counts: {},
+      issues: [{ code: 'jobs_without_fit_analysis', severity: 'info', entity_type: 'job', message: d('diag_jobs_without_fit') }],
+    },
+    unverified_entities: [],
+    reuse_map: [],
+    interview_retrospectives: [],
+  })],
 
   /* parse helper (deterministic, no AI) */
   ['POST', /^\/api\/parse\/job$/, (_p, body) => cleanPosting(body.raw || '')],
