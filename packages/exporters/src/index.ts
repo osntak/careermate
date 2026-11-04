@@ -137,20 +137,22 @@ export function resumeToMarkdown(
 ): ExportResult {
   const kindLabel = DOCUMENT_KIND_LABELS[doc.kind] ?? doc.kind;
 
-  const header: string[] = [];
-  if (profile?.name) header.push(kv('이름', profile.name));
-  if (profile?.email) header.push(kv('이메일', profile.email));
-  if (profile?.phone) header.push(kv('연락처', profile.phone));
-
-  // A body that opens with its own `# title` already carries the name/contact
-  // block the agent wrote; wrapping it again printed the header twice.
+  // This is the file the user submits, so it adds only what the body lacks. The saved
+  // title ("이력서 v10 (공고명, 한 장 구성)") is an internal label and is never printed,
+  // a body that opens with `# ...` or with the name already has its heading, and
+  // contact details already written in the body are not repeated.
   const content = (doc.content ?? '').trim();
-  const body = /^#\s/.test(content) ? content : joinBlocks([
-    `# ${doc.title}`,
-    `_${kindLabel}_`,
-    header.length ? header.filter(Boolean).join('\n\n') : '',
-    header.length ? '---' : '',
-    content || '_(내용 없음)_',
+  const digits = (s: string) => s.replace(/\D/g, '');
+  const firstLine = content.split('\n')[0] ?? '';
+  const hasHeading = /^#\s/.test(content) || (!!profile?.name && firstLine.includes(profile.name));
+  const contact = [
+    profile?.email && !content.includes(profile.email) ? profile.email : '',
+    profile?.phone && !digits(content).includes(digits(profile.phone)) ? profile.phone : '',
+  ].filter(Boolean);
+  const body = hasHeading && !contact.length ? content : joinBlocks([
+    hasHeading ? firstLine : `# ${profile?.name || kindLabel}`,
+    contact.join(' · '),
+    hasHeading ? content.slice(firstLine.length).trim() : content || '_(내용 없음)_',
   ]);
 
   return {

@@ -151,29 +151,42 @@ export function markdownToHtml(md: string): string {
       continue;
     }
 
-    // Unordered list block.
-    if (/^[-*+]\s+/.test(trimmed)) {
+    // List block (- * + or 1.). Lines indented deeper than the item marker belong to
+    // that item: an indented bullet becomes a nested list, other indented text continues
+    // the item. Before this they fell out of the list as stray paragraphs.
+    const marker = /^[-*+]\s+/.test(trimmed) ? /^[-*+]\s+/ : /^\d+\.\s+/.test(trimmed) ? /^\d+\.\s+/ : null;
+    if (marker) {
       flushParagraph();
+      const tag = marker.source.startsWith('^\\d') ? 'ol' : 'ul';
+      const indent = (s: string) => s.length - s.trimStart().length;
+      const base = indent(line);
       const items: string[] = [];
-      while (i < lines.length && /^[-*+]\s+/.test(lines[i].trim())) {
-        const item = lines[i].trim().replace(/^[-*+]\s+/, '');
-        items.push(`<li>${renderInline(escapeHtml(item))}</li>`);
+      while (i < lines.length) {
+        const l = lines[i];
+        if (indent(l) > base || !marker.test(l.trim())) break;
+        const main = renderInline(escapeHtml(l.trim().replace(marker, '')));
+        const extra: string[] = [];
+        const sub: string[] = [];
         i++;
+        // ponytail: one nesting level; deeper bullets flatten into this sub-list.
+        while (i < lines.length) {
+          const next = lines[i];
+          if (next.trim() === '') {
+            // A blank line ends the item unless more indented lines follow it.
+            const after = lines.slice(i + 1).find((x) => x.trim() !== '');
+            if (after !== undefined && indent(after) > base) { i++; continue; }
+            break;
+          }
+          if (indent(next) <= base) break;
+          const t = next.trim();
+          if (/^([-*+]|\d+\.)\s+/.test(t)) sub.push(`<li>${renderInline(escapeHtml(t.replace(/^([-*+]|\d+\.)\s+/, '')))}</li>`);
+          else extra.push(renderInline(escapeHtml(t)));
+          i++;
+        }
+        const subList = sub.length ? `\n<ul>\n${sub.join('\n')}\n</ul>` : '';
+        items.push(`<li>${[main, ...extra].join('<br>\n')}${subList}</li>`);
       }
-      html.push(`<ul>\n${items.join('\n')}\n</ul>`);
-      continue;
-    }
-
-    // Ordered list block.
-    if (/^\d+\.\s+/.test(trimmed)) {
-      flushParagraph();
-      const items: string[] = [];
-      while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
-        const item = lines[i].trim().replace(/^\d+\.\s+/, '');
-        items.push(`<li>${renderInline(escapeHtml(item))}</li>`);
-        i++;
-      }
-      html.push(`<ol>\n${items.join('\n')}\n</ol>`);
+      html.push(`<${tag}>\n${items.join('\n')}\n</${tag}>`);
       continue;
     }
 

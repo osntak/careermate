@@ -567,6 +567,32 @@ ok('링크 속성 탈출 차단', !breakout.includes('onmouseover="alert') && br
 const titleInj = toPrintableHtml('</title><script>alert(1)</script>', '본문');
 ok('내보내기 제목 인젝션 차단', !titleInj.includes('<script>') && !titleInj.includes('</title><script>'));
 
+// AGENTS.md shipped in 0.0.15 with its Korean support lines turned into "?? ???" (written
+// in a non-UTF-8 codepage). Agents relay that text to users, so shipped markdown must stay clean.
+{
+  const fsMod = await import('node:fs');
+  const pathMod = await import('node:path');
+  const files = ['AGENTS.md', 'INSTALL.md', 'README.md', 'SECURITY.md'];
+  const walk = (d: string): void => {
+    for (const e of fsMod.readdirSync(d, { withFileTypes: true })) {
+      const p = pathMod.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (p.endsWith('.md')) files.push(p);
+    }
+  };
+  walk('docs/career-os');
+  const garbled = files.filter((f) => /�|\?{2,} \?{2,}/.test(fsMod.readFileSync(f, 'utf8')));
+  ok(`배포 문서 글자 깨짐 없음 (${files.length}개 검사)`, garbled.length === 0, garbled.join(', '));
+}
+
+// Clients that read structuredContent first must still get the body (get_verifier
+// used to arrive as just {"id":"truthfulness"}).
+{
+  const { toCallToolResult } = await import('../packages/mcp-tools/src/result.ts');
+  const r = toCallToolResult({ text: '# 루브릭 본문', data: { id: 'truthfulness' } }) as { structuredContent?: Record<string, unknown> };
+  ok('structuredContent에 본문 text 포함', r.structuredContent?.text === '# 루브릭 본문' && r.structuredContent?.id === 'truthfulness');
+}
+
 // The footer name lands inside a CSS string in <style>: no raw quote/control char may end it.
 const footerInj = toPrintableHtml('t', '본문', 'X"\f}} body{background:url(https://evil)} </style><script>alert(1)</script>');
 ok('내보내기 바닥글 CSS 인젝션 차단', !footerInj.includes('\f') && !footerInj.includes('X"') && !footerInj.includes('</style><script>'));
