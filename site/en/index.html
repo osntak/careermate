@@ -6,11 +6,10 @@
   <!-- Resolve the saved theme before first paint (default: dark) to avoid a flash. -->
   <script>
     (function () {
-      try {
-        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
-        if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {}
+      var t;
+      try { t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
   <title>CareerMate: job analysis and cover letters, stored on your PC</title>
@@ -38,7 +37,7 @@
   <meta property="og:image" content="https://careermate.life/og-en.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="CareerMate preview image" />
+  <meta property="og:image:alt" content="CareerMate dashboard next to an AI chat example" />
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -127,7 +126,7 @@
       <div class="hero__main">
         <h1 class="hero__title">Job analysis and cover letters, kept on your PC</h1>
         <p class="hero__lede">
-          Tell Claude or Codex "analyze this posting" or "draft a cover letter" and the result is saved in CareerMate. The file stays on your computer.
+          Tell Claude or Codex "analyze this posting" or "draft a cover letter" and the result is saved in CareerMate. Everything is saved on your own computer.
         </p>
         <p class="hero__note">
           Works with desktop AI apps that can use local files and commands, such as Claude Desktop, Claude Code, or Codex. Free (MIT license), no API key needed. <a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">npm package</a>
@@ -208,7 +207,7 @@
       <div class="checks">
         <div class="check"><div><strong>Register resumes, career docs & cover letters</strong><span>Reads the file and saves it as experience, projects, and skills.</span></div></div>
         <div class="check"><div><strong>Find postings on public job boards</strong><span>Searches Wanted, Jumpit, Remember, and Saramin together. Works for accounting or nursing roles too, not only software.</span></div></div>
-        <div class="check"><div><strong>Today's postings for your role</strong><span>Save your role and see only postings that went up today. You can also filter by years of experience.</span></div></div>
+        <div class="check"><div><strong>Today's postings for your role</strong><span>Save your role and see only postings that are new since you last checked. You can also filter by years of experience.</span></div></div>
         <div class="check"><div><strong>Save job postings</strong><span>Pull the company, role, and requirements from a link or text.</span></div></div>
         <div class="check"><div><strong>Match your background to a posting</strong><span>Strengths, gaps, and keywords for your cover letter.</span></div></div>
         <div class="check"><div><strong>Per-posting cover letters</strong><span>Drafts and revisions are kept as versions you can compare.</span></div></div>
@@ -331,7 +330,7 @@
         <article class="quick-start__step">
           <span>1</span>
           <h3>Pick your AI app</h3>
-          <p>You need an AI app that can work on your computer: Claude Desktop, Claude Code, or Codex. If you already pay for Claude or ChatGPT, that app works. CareerMate itself is free.</p>
+          <p>You need an AI app that can work on your computer: Claude Desktop, Claude Code, or Codex. If you pay for Claude or ChatGPT, sign in to the Claude app or Codex with that account. CareerMate itself is free.</p>
           <a href="/en/start">Find the path that fits me</a>
         </article>
         <article class="quick-start__step">

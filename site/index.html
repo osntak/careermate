@@ -6,11 +6,10 @@
   <!-- Resolve the saved theme (or the OS setting) before first paint to avoid a flash. -->
   <script>
     (function () {
-      try {
-        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
-        if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {}
+      var t;
+      try { t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
   <title>CareerMate: 공고 분석과 자소서, 내 PC에 보관</title>
@@ -40,7 +39,7 @@
   <meta property="og:image" content="https://careermate.life/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="CareerMate 소개 이미지" />
+  <meta property="og:image:alt" content="CareerMate 대시보드와 AI 대화 예시" />
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -129,7 +128,7 @@
       <div class="hero__main">
         <h1 class="hero__title">
           공고 분석과 자소서를<br />
-          내 PC 한곳에
+          내 PC에 모아 둡니다
         </h1>
         <p class="hero__lede">
           Claude나 Codex에게 "이 공고 분석해줘", "자소서 써줘"라고 하면 결과가 CareerMate에 저장됩니다. 저장 파일은 내 컴퓨터에만 있습니다.
@@ -213,7 +212,7 @@
       <div class="checks">
         <div class="check"><div><strong>이력서·경력기술서·자기소개서 등록</strong><span>파일을 읽어 경력, 프로젝트, 스킬로 나눠 저장.</span></div></div>
         <div class="check"><div><strong>공개 채용 사이트에서 공고 찾기</strong><span>원티드, 점핏, 리멤버, 사람인을 한 번에 검색. 개발뿐 아니라 경리, 간호 같은 직군도.</span></div></div>
-        <div class="check"><div><strong>오늘 올라온 내 직무 공고</strong><span>직무를 저장해 두면 그날 새로 올라온 공고만 보여 줍니다. 연차로 거를 수도 있습니다.</span></div></div>
+        <div class="check"><div><strong>오늘 올라온 내 직무 공고</strong><span>직무를 저장해 두면 새로 올라온 공고만 모아 봅니다. 연차로 거를 수도 있습니다.</span></div></div>
         <div class="check"><div><strong>채용공고 저장</strong><span>링크나 본문에서 회사, 직무, 자격 요건을 뽑아 저장.</span></div></div>
         <div class="check"><div><strong>내 경력과 공고 비교</strong><span>강점, 부족한 점, 자소서에 넣을 키워드.</span></div></div>
         <div class="check"><div><strong>공고별 자기소개서</strong><span>초안과 수정본을 버전별로 남겨 비교.</span></div></div>
@@ -336,7 +335,7 @@
         <article class="quick-start__step">
           <span>1</span>
           <h3>AI 앱 선택</h3>
-          <p>PC에서 직접 작업할 수 있는 AI 앱이 필요합니다. Claude 데스크톱, Claude Code, Codex 등. Claude나 ChatGPT 유료 플랜을 쓰고 있다면 그 앱으로 됩니다.</p>
+          <p>PC에서 직접 작업할 수 있는 AI 앱이 필요합니다. Claude 데스크톱, Claude Code, Codex 등. Claude나 ChatGPT 유료 플랜이 있으면 그 계정으로 Claude 앱이나 Codex를 쓰면 됩니다.</p>
           <a href="start.html">내게 맞는 길 보기</a>
         </article>
         <article class="quick-start__step">

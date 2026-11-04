@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script>
     (function () {
-      try {
-        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
-        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : 'dark');
-      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+      var t;
+      try { t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
   <title>FAQ - CareerMate</title>
@@ -90,7 +90,7 @@
   <script src="/analytics.js" defer></script>
   <style>
     .faq { max-width: 760px; margin: 0 auto; }
-    .faq__hero { max-width: 760px; padding-top: 44px; padding-bottom: 8px; }
+    .faq__hero { max-width: 760px; padding-top: 44px; padding-bottom: 24px; }
     html[lang] .faq__hero .hero__title { font-size: 2rem; }
     .faq__hero .hero__lede { font-size: 1.02rem; }
     .faq__group { margin: 0 0 30px; }
@@ -110,7 +110,7 @@
     <div class="nav__links">
       <a href="/en#how">How it works</a>
       <a href="/en#install">Quick install</a>
-      <a href="/en/start">New here?</a>
+      <a href="/en/start">Install guide</a>
     </div>
     <div class="nav__actions">
       <a class="nav__lang" href="/faq" hreflang="ko" lang="ko" aria-label="한국어로 보기" title="한국어"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14.5 14.5 0 0 1 0 18 14.5 14.5 0 0 1 0-18"/></svg><span>한국어</span></a>
@@ -125,7 +125,7 @@
     <header class="hero hero--solo faq__hero">
       <div class="hero__main">
         <h1 class="hero__title">Frequently asked questions</h1>
-        <p class="hero__lede">Answers to common problems with install, connection, the dashboard, reading documents, finding jobs, and privacy. If this is your first install, start with <a href="/en/start">New here?</a></p>
+        <p class="hero__lede">Answers to common problems with install, connection, the dashboard, reading documents, finding jobs, and privacy. If this is your first install, start with the <a href="/en/start">install guide</a>.</p>
       </div>
     </header>
 
@@ -154,7 +154,7 @@
             <div class="acc__body">
               <p><strong>Fully quit and restart</strong> your AI client (changing settings without a restart won't apply).</p>
               <p>Claude Code asks for a <strong>one-time approval</strong> of the project server on first run. Approve it. Check the connection with the client's <code>/mcp</code> command, or ask the AI to "check my onboarding status" and see if it responds.</p>
-              <p>Still stuck? See per-client setup in <a href="/en/start">New here?</a> or the <a href="https://careermate.life/en/start">install guide</a>.</p>
+              <p>If it still fails, see the per-client setup in the <a href="/en/start">install guide</a>.</p>
             </div>
           </details>
           <details class="acc">

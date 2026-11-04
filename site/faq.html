@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="ko" data-theme="dark">
+<html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script>
     (function () {
-      try {
-        var t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme');
-        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : 'dark');
-      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+      var t;
+      try { t = window.localStorage.getItem('careermate-theme') || window.localStorage.getItem('cf-theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
   <title>자주 묻는 질문 - CareerMate</title>
@@ -90,7 +90,7 @@
   <script src="/analytics.js" defer></script>
   <style>
     .faq { max-width: 760px; margin: 0 auto; }
-    .faq__hero { max-width: 760px; padding-top: 44px; padding-bottom: 8px; }
+    .faq__hero { max-width: 760px; padding-top: 44px; padding-bottom: 24px; }
     html[lang] .faq__hero .hero__title { font-size: 2rem; }
     .faq__hero .hero__lede { font-size: 1.02rem; }
     .faq__group { margin: 0 0 30px; }
@@ -110,7 +110,7 @@
     <div class="nav__links">
       <a href="index.html#how">사용 예시</a>
       <a href="index.html#install">빠른 설치</a>
-      <a href="start.html">처음이세요?</a>
+      <a href="start.html">설치 안내</a>
     </div>
     <div class="nav__actions">
       <a class="nav__lang" href="/en/faq" hreflang="en" lang="en" aria-label="View in English" title="English"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14.5 14.5 0 0 1 0 18 14.5 14.5 0 0 1 0-18"/></svg><span>English</span></a>
@@ -125,7 +125,7 @@
     <header class="hero hero--solo faq__hero">
       <div class="hero__main">
         <h1 class="hero__title">자주 묻는 질문</h1>
-        <p class="hero__lede">설치, 연결, 대시보드, 문서 읽기, 공고 찾기, 개인정보에서 자주 막히는 부분을 모았습니다. 설치가 처음이면 <a href="start.html">처음이세요?</a>부터 보세요.</p>
+        <p class="hero__lede">설치, 연결, 대시보드, 문서 읽기, 공고 찾기, 개인정보에서 자주 막히는 부분을 모았습니다. 설치가 처음이면 <a href="start.html">설치 안내</a>부터 보세요.</p>
       </div>
     </header>
 
@@ -154,7 +154,7 @@
             <div class="acc__body">
               <p>AI 클라이언트를 <strong>완전히 종료한 뒤 다시 시작</strong>했는지 확인하세요(설정만 바꾸고 재시작을 안 하면 적용되지 않습니다).</p>
               <p>Claude Code는 첫 실행 시 프로젝트 서버에 대한 <strong>1회 승인</strong>을 묻습니다. 허용하세요. 클라이언트의 <code>/mcp</code> 명령으로 <code>careermate</code> 연결을 확인하거나, AI에게 "온보딩 상태 확인해줘"라고 해 응답이 오는지 보세요.</p>
-              <p>그래도 안 되면 클라이언트별 등록 방법을 <a href="start.html">처음이세요?</a> 또는 <a href="https://careermate.life/start">설치 안내</a>에서 확인하세요.</p>
+              <p>그래도 안 되면 클라이언트별 등록 방법을 <a href="start.html">설치 안내</a>에서 확인하세요.</p>
             </div>
           </details>
           <details class="acc">
