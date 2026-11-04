@@ -192,10 +192,16 @@ const jumpit: Provider = {
   id: 'jumpit',
   label: '점핏',
   async search(query, limit, timeoutMs) {
-    const url =
-      `https://jumpit-api.saramin.co.kr/api/positions?sort=rsp_rate&page=1&keyword=${encodeURIComponent(query)}`;
-    const j = jumpitSchema.parse(await getJson(url, timeoutMs));
-    return j.result.positions.slice(0, limit).map((p) => ({
+    // Fixed page size of 16; keep paging until limit or a short page.
+    const positions: z.infer<typeof jumpitSchema>['result']['positions'] = [];
+    for (let page = 1; positions.length < limit && page <= Math.ceil(limit / 16); page++) {
+      const url =
+        `https://jumpit-api.saramin.co.kr/api/positions?sort=rsp_rate&page=${page}&keyword=${encodeURIComponent(query)}`;
+      const got = jumpitSchema.parse(await getJson(url, timeoutMs)).result.positions;
+      positions.push(...got);
+      if (got.length < 16) break;
+    }
+    return positions.slice(0, limit).map((p) => ({
       source: 'jumpit',
       company: p.companyName,
       // Keyword searches come back with highlight markup, e.g. "<span>백엔드</span> 개발자".
@@ -253,12 +259,16 @@ const remember: Provider = {
         return level2 ? { level1, level2 } : { level1 };
       });
     }
-    const j = rememberSchema.parse(
-      await getJson('https://career-api.rememberapp.co.kr/job_postings/search', timeoutMs, {
-        body: { search, sort: 'starts_at_desc', page: 1, per: limit },
-      }),
+    // Remember rejects per > 50 ("최대 요청 수를 초과"), so larger limits take a second page.
+    const per = Math.min(limit, 50);
+    const pages = await Promise.all(
+      Array.from({ length: Math.ceil(limit / per) }, (_, i) =>
+        getJson('https://career-api.rememberapp.co.kr/job_postings/search', timeoutMs, {
+          body: { search, sort: 'starts_at_desc', page: i + 1, per },
+        }).then((r) => rememberSchema.parse(r).data),
+      ),
     );
-    return j.data.map((d) => {
+    return pages.flat().slice(0, limit).map((d) => {
       const addr = d.addresses?.[0];
       const min = d.min_experience;
       const max = d.max_experience;
@@ -386,7 +396,8 @@ function providerError(e: unknown): { status: ProviderStatus; error: string } {
 
 export async function searchJobs(query: string, opts: JobSearchOptions = {}): Promise<JobSearchResponse> {
   const q = (query ?? '').trim();
-  const limit = Math.min(50, Math.max(1, opts.limit ?? 10));
+  // A date filter drops most of a page, so fetch more by default when one is set.
+  const limit = Math.min(100, Math.max(1, opts.limit ?? (opts.postedSince ? 50 : 10)));
   const timeoutMs = Math.min(30_000, Math.max(1_000, opts.timeoutMs ?? 10_000));
   // Without a keyword, only providers given their own category filter can search.
   const chosen = (opts.sources?.length ? PROVIDERS.filter((p) => opts.sources!.includes(p.id)) : PROVIDERS).filter(
