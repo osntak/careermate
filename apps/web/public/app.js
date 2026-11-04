@@ -44,7 +44,7 @@ function renderNav(counts = {}) {
     if (r.id === 'settings') navEl.append(el('div', { class: 'nav__label' }, t('nav.section.system')));
     const count = r.countKey ? counts[r.countKey] : null;
     navEl.append(el('a', {
-      class: `nav__item${activeId === r.id ?' is-active' : ''}`,
+      class: `nav__item${activeId === r.id ? ' is-active' : ''}`,
       href: `#/${r.id}`,
     }, icon(r.icon), el('span', {}, t('nav.' + r.id)),
       count ? el('span', { class: 'nav__badge tnum' }, String(count)) : null));
