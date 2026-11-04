@@ -563,7 +563,7 @@ function InterviewCard(job) {
     const count = (interview.questions || []).length;
     return Card({
       title: t('jobs.interview.title'),
-      actions: Btn(t('jobs.interview.viewPrep'), { sm: true, variant: 'ghost', onClick: () => navigate('/interview') }),
+      actions: Btn(t('jobs.interview.viewPrep'), { sm: true, variant: 'ghost', onClick: () => navigate(`/interview/${job.id}`) }),
       body: el('div', { class: 'stack-2' },
         el('div', { class: 'flex gap-2 center' },
           icon('mic', 'muted'),
