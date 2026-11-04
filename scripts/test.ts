@@ -603,6 +603,7 @@ ok('내보내기 제목 인젝션 차단', !titleInj.includes('<script>') && !ti
 // The footer name lands inside a CSS string in <style>: no raw quote/control char may end it.
 const footerInj = toPrintableHtml('t', '본문', 'X"\f}} body{background:url(https://evil)} </style><script>alert(1)</script>');
 ok('내보내기 바닥글 CSS 인젝션 차단', !footerInj.includes('\f') && !footerInj.includes('X"') && !footerInj.includes('</style><script>'));
+ok('내보낸 HTML에 code 고정폭 스타일', /\bcode \{[^}]*monospace/.test(footerInj));
 
 /* -------------------------- 6. 결정론 검증 엔진 (verify) — 숫자 출처 게이트 */
 section('6) 검증 엔진(verify) — 숫자 출처 게이트');

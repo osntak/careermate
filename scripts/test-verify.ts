@@ -85,6 +85,9 @@ console.log('\n4) 문체 신호 (advisory)');
   ok('번역투(통해) 감지', ids.includes('translationese'), ids.join(','));
   ok('클리셰(귀사) 감지', ids.includes('cliche'), ids.join(','));
   ok('문체 신호는 차단 아님', lintArtifact('cover_letter', '저는 항상 데이터의 힘을 믿어왔습니다. 귀사에 기여하고 싶습니다.', corpus).blocking.length === 0);
+  const proc = styleSignals('단순히 화면에 그리는 데서 끝내지 않고 저장 모델까지 맞추는 방식으로 접근했습니다.').map((s) => s.id);
+  ok('결과 대신 방식만 말하는 문장 감지', proc.includes('process_not_result'), proc.join(','));
+  ok('결과 문장은 방식 신호 없음', !styleSignals('동시 편집 되돌리기 결함을 OT 규칙 보완으로 해결함.').some((s) => s.id === 'process_not_result'));
 }
 
 console.log('\n6) 글자수 카운터 (공백포함/제외/byte) + 한도');

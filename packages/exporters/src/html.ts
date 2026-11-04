@@ -90,6 +90,7 @@ export function toPrintableHtml(title: string, bodyMarkdown: string, footer?: st
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
   strong { font-weight: 700; }
+  code { font-family: Consolas, "D2Coding", monospace; font-size: 0.9em; background: #f3f4f6; padding: 0.1em 0.3em; border-radius: 3px; }
   hr { border: none; border-top: 1px solid var(--line); margin: 1.5em 0; }
   @page {
     size: A4;

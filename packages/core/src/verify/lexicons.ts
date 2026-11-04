@@ -120,6 +120,23 @@ export const HYPE: Lexicon = {
   regex: G(['매우', '정말로', '탁월(한|하게)', '성공적으로', '완벽(한|하게)', '엄청난', '획기적'].join('|')),
 };
 
+/** Résumé-style AI tells: attitude or method in place of a result (resume.md Don't). */
+export const PROCESS_NOT_RESULT: Lexicon = {
+  id: 'process_not_result',
+  label: '결과 대신 태도·방식만 말하는 문장',
+  regex: G(
+    [
+      '단순히 .{0,20}끝내지 않',
+      '덮지 않고',
+      '증상에서 끝내지 않',
+      '방식으로 (접근|작업)',
+      '에 집중했',
+      '가장 익숙한 문제',
+      '바로 체감합니다',
+    ].join('|'),
+  ),
+};
+
 /** R11 — blind-hiring guardrail: job-irrelevant personal info (NCS 공정채용). */
 export const BLIND_PII: Lexicon = {
   id: 'blind_pii',
@@ -134,6 +151,7 @@ export const STYLE_LEXICONS: Lexicon[] = [
   CLICHES,
   TRANSLATIONESE,
   HYPE,
+  PROCESS_NOT_RESULT,
   BLIND_PII,
 ];
 
