@@ -3,7 +3,7 @@
 import {
   el, get, post, put, del, Card, Badge, Btn, SubmitBtn, EmptyState,
   Field, Input, Textarea, Select, openModal, confirmDialog,
-  toastOk, toastError, copyText, fmtRelative, mount, meta, ExportMenu, Menu,
+  toastOk, toastError, copyText, fmtRelative, mount, meta, ExportMenu, Menu, Markdown,
 } from '/demo/lib.js';
 import { t } from '/demo/i18n.js';
 
@@ -285,13 +285,15 @@ function CoverDetailBody(cl, { refresh }) {
   // preview — defaults to current content; can be swapped per-version
   const previewLabel = el('div', { class: 'flex between center' },
     el('h3', { style: { fontSize: '14px', margin: 0 } }, t('documents.coverDetail.currentVersion')),
-    Btn(t('documents.coverDetail.copy'), { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(preview.textContent || '') }),
+    Btn(t('documents.coverDetail.copy'), { sm: true, variant: 'ghost', icon: 'copy', onClick: () => copyText(previewText) }),
   );
-  const preview = el('div', { class: 'doc-preview' }, cl.current_content || t('documents.coverDetail.noContent'));
+  let previewText = cl.current_content || '';
+  const preview = el('div', { class: 'doc-preview doc-preview--md' }, previewText ? Markdown(previewText) : t('documents.coverDetail.noContent'));
 
   const setPreview = (label, text) => {
     previewLabel.firstChild.textContent = label;
-    mount(preview, text || t('documents.coverDetail.noContent'));
+    previewText = text || '';
+    mount(preview, text ? Markdown(text) : t('documents.coverDetail.noContent'));
   };
 
   wrap.append(el('div', { class: 'stack-2' }, previewLabel, preview));
@@ -466,7 +468,7 @@ async function openDocDetail(id, kindLabels, m, reload) {
         el('span', { class: 'chip' }, t('source.' + doc.source)),
         el('span', { class: 'muted text-sm' }, t('documents.docDetail.updated', { when: fmtRelative(doc.updated_at) })),
       ),
-      el('div', { class: 'doc-preview' }, doc.content || t('documents.docDetail.noContent')),
+      el('div', { class: 'doc-preview doc-preview--md' }, doc.content ? Markdown(doc.content) : t('documents.docDetail.noContent')),
     ),
     footer: (close) => [
       Btn(t('documents.docDetail.copy'), { variant: 'ghost', icon: 'copy', onClick: () => copyText(doc.content || '') }),
@@ -529,7 +531,7 @@ function docForm(doc, m, reload, defaultKind = 'resume') {
 
 function firstLine(text) {
   if (!text) return '';
-  const line = String(text).split('\n').find((l) => l.trim()) || '';
+  const line = (String(text).split('\n').find((l) => l.trim()) || '').trim().replace(/^(#{1,6}|[-*+]|\d+\.)\s+/, '').replace(/\*\*/g, '');
   return line.length > 140 ? line.slice(0, 140) + '…' : line;
 }
 

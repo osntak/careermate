@@ -1,6 +1,8 @@
-// Find jobs (#/search): the same board search as the search_jobs MCP tool:
-// keyword + Remember/Saramin categories, optional years and "today only",
-// saved conditions, and one-click save into the jobs list.
+// Find jobs (#/search): the same board search as the search_jobs MCP tool. One
+// input is the keyword for all four boards; Remember/Saramin categories are an
+// optional narrowing step (AND with the keyword) offered from that keyword and
+// dropped when the keyword changes. Optional years and "today only", saved
+// conditions, and one-click save into the jobs list.
 import { el, get, post, put, Card, Btn, Field, Input, EmptyState, Spinner, icon, mount, clear, toastOk, toastError } from '/lib.js';
 import { t } from '/i18n.js';
 
@@ -19,13 +21,15 @@ export async function render(ctx) {
     state.keyword = p.keyword;
     for (const [c, n] of Object.entries(saramin_names || {})) state.names.set(c, n);
   } catch { /* first run: nothing saved */ }
+  // Chips belong to the keyword they were picked for (saved ones to the saved keyword).
+  state.chipKeyword = state.keyword || '';
 
   const keyword = Input({ id: 'search-keyword', placeholder: t('search.keyword.ph'), value: state.keyword || '' });
   const years = Input({ id: 'search-years', type: 'number', min: '0', max: '40', inputMode: 'numeric', placeholder: t('search.years.ph') });
   const today = el('input', { id: 'search-today', type: 'checkbox' });
-  const catQuery = Input({ id: 'search-cat', placeholder: t('search.cat.ph') });
   const suggestBox = el('div', { class: 'stack-2' });
   const selectedBox = el('div', { class: 'chips' });
+  const catField = Field(t('search.cat'), el('div', { class: 'stack-2' }, suggestBox, selectedBox), t('search.cat.hint'));
   const results = el('div', {}, el('p', { class: 'muted', style: { margin: 0 } }, t('search.results.idle')));
 
   const label = (kind, v) => (kind === 'saramin' ? state.names.get(v) || v : v.replace('>', ' > '));
@@ -57,18 +61,25 @@ export async function render(ctx) {
       el('button', { type: 'button', class: 'chip chip--accent', title: t('common.delete'), onClick: () => toggle(kind, v) },
         `${site(kind)} · ${label(kind, v)} ×`)));
     selectedBox.hidden = !items.length;
+    catField.hidden = !items.length && !suggestBox.childElementCount;
   }
 
-  async function findCategories() {
-    const q = catQuery.value.trim();
-    if (!q) return;
+  // Leftover chips from another keyword were silently ANDed into the next search
+  // (백엔드 chips + "재무" left Remember with 1 posting), so a new keyword drops them.
+  function dropStaleChips(kw) {
+    if (!kw || kw === state.chipKeyword) return;
+    state.remember = [];
+    state.saramin = [];
+    state.chipKeyword = kw;
+    clear(suggestBox);
+    paintSelected();
+  }
+
+  // Offer categories for the keyword just searched; picking one is optional narrowing.
+  async function offerCategories(kw) {
     try {
-      const r = await get(`/api/job-search/categories?q=${encodeURIComponent(q)}`);
+      const r = await get(`/api/job-search/categories?q=${encodeURIComponent(kw)}`);
       for (const s of r.saramin) state.names.set(s.code, s.name);
-      if (!r.remember.length && !r.saramin.length) {
-        mount(suggestBox, el('p', { class: 'muted text-sm', style: { margin: 0 } }, t('search.cat.none')));
-        return;
-      }
       mount(suggestBox,
         r.remember.length ? el('div', { class: 'flex wrap gap-2' },
           el('span', { class: 'muted text-sm' }, t('search.cat.remember')),
@@ -76,11 +87,12 @@ export async function render(ctx) {
         r.saramin.length ? el('div', { class: 'flex wrap gap-2' },
           el('span', { class: 'muted text-sm' }, t('search.cat.saramin')),
           ...r.saramin.slice(0, 8).map((s) => catButton('saramin', s.code, s.name))) : null);
-    } catch (e) { toastError(e); }
+    } catch { clear(suggestBox); } // suggestions are optional; the search itself still ran
+    paintSelected();
   }
-  catQuery.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); findCategories(); } });
 
   async function savePrefs() {
+    dropStaleChips(keyword.value.trim());
     try {
       await put('/api/job-search/preferences', {
         keyword: keyword.value.trim(),
@@ -142,12 +154,14 @@ export async function render(ctx) {
   async function run() {
     if (busy) return;
     const kw = keyword.value.trim();
+    dropStaleChips(kw);
     if (!kw && !state.remember.length && !state.saramin.length) { toastError(new Error(t('search.need'))); return; }
     const y = years.value.trim();
     if (y !== '' && !(Number.isInteger(Number(y)) && Number(y) >= 0 && Number(y) <= 40)) { toastError(new Error(t('search.years.hint'))); years.focus(); return; }
     busy = true;
     runBtn.disabled = true;
     mount(results, Spinner());
+    if (kw) offerCategories(kw); // runs alongside the search; renders when it returns
     try {
       const res = await post('/api/job-search', {
         keyword: kw,
@@ -161,11 +175,13 @@ export async function render(ctx) {
       // Dated postings newest first; boards without a date keep their order after them.
       const list = res.results.map((r, i) => ({ ...r, i }))
         .sort((a, b) => (b.posted_at ?? '').localeCompare(a.posted_at ?? '') || a.i - b.i);
-      const failed = res.providers.filter((p) => !p.ok);
+      // A count per board makes a category that shrank one board to 1 posting visible.
       const head = el('div', { class: 'flex wrap gap-2 mb-3' },
         el('span', { class: 'badge badge--accent tnum' }, t('search.results.count', { n: list.length })),
-        res.filtered_out ? el('span', { class: 'badge tnum' }, t('search.results.filtered', { n: res.filtered_out })) : null,
-        ...failed.map((p) => el('span', { class: 'badge badge--rejected', title: p.error || '' }, t('search.provider.fail', { site: site(p.source) }))));
+        ...res.providers.map((p) => p.ok
+          ? el('span', { class: 'badge tnum' }, t('search.results.site', { site: site(p.source), n: list.filter((r) => r.source === p.source).length }))
+          : el('span', { class: 'badge badge--rejected', title: p.error || '' }, t('search.provider.fail', { site: site(p.source) }))),
+        res.filtered_out ? el('span', { class: 'badge tnum' }, t('search.results.filtered', { n: res.filtered_out })) : null);
       mount(results,
         head,
         list.length
@@ -182,8 +198,10 @@ export async function render(ctx) {
   }
 
   const runBtn = Btn(t('search.run'), { icon: 'search', variant: 'primary', onClick: run });
-  keyword.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); run(); } });
-  years.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); run(); } });
+  // The Enter that commits a Korean IME syllable must not also run the search.
+  const onEnter = (e) => { if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return; e.preventDefault(); run(); };
+  keyword.addEventListener('keydown', onEnter);
+  years.addEventListener('keydown', onEnter);
 
   paintSelected();
 
@@ -191,10 +209,7 @@ export async function render(ctx) {
     title: t('search.cond.title'),
     body: el('div', {},
       Field(t('search.keyword'), keyword, t('search.keyword.hint')),
-      Field(t('search.cat'), el('div', { class: 'stack-2' },
-        el('div', { class: 'flex gap-2' }, catQuery, Btn(t('search.cat.find'), { onClick: findCategories })),
-        suggestBox,
-        selectedBox), t('search.cat.hint')),
+      catField,
       el('div', { class: 'grid grid--2' },
         Field(t('search.years'), years, t('search.years.hint')),
         Field(t('search.date'), el('label', { class: 'flex gap-2', for: 'search-today', style: { cursor: 'pointer', minHeight: '36px' } }, today, t('search.today')), t('search.today.hint'))),

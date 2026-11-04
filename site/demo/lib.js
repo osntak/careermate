@@ -66,6 +66,50 @@ function appendChildren(node, children) {
     node.append(c instanceof Node ? c : document.createTextNode(String(c)));
   }
 }
+/**
+ * Render the markdown subset the exporters use (packages/exporters markdown.ts:
+ * headings, bullet and numbered lists, ---, paragraphs, **bold**, [label](url)) as DOM
+ * nodes. Built with el(), so user text never goes through innerHTML.
+ */
+export function Markdown(src) {
+  const inline = (s) => {
+    const out = [];
+    const re = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)\s]+)\)|`([^`]+)`/g;
+    let last = 0; let m;
+    while ((m = re.exec(s))) {
+      out.push(s.slice(last, m.index));
+      out.push(m[1] != null ? el('strong', {}, m[1]) : m[4] != null ? el('code', {}, m[4]) : el('a', { href: m[3], target: '_blank', rel: 'noopener noreferrer' }, m[2]));
+      last = re.lastIndex;
+    }
+    out.push(s.slice(last));
+    return out;
+  };
+  const lines = String(src ?? '').replace(/\r\n?/g, '\n').split('\n');
+  const nodes = [];
+  let para = [];
+  const flush = () => {
+    if (para.length) nodes.push(el('p', {}, para.flatMap((l, i) => (i ? [el('br'), ...inline(l)] : inline(l)))));
+    para = [];
+  };
+  for (let i = 0; i < lines.length;) {
+    const s = lines[i].trim();
+    let h;
+    if (!s) { flush(); i++; }
+    else if (/^(-{3,}|\*{3,}|_{3,})$/.test(s)) { flush(); nodes.push(el('hr')); i++; }
+    else if ((h = /^(#{1,6})\s+(.*)$/.exec(s))) { flush(); nodes.push(el('h' + h[1].length, {}, inline(h[2].trim()))); i++; }
+    else {
+      const list = /^[-*+]\s+/.test(s) ? ['ul', /^[-*+]\s+/] : /^\d+\.\s+/.test(s) ? ['ol', /^\d+\.\s+/] : null;
+      if (!list) { para.push(s); i++; continue; }
+      flush();
+      const items = [];
+      while (i < lines.length && list[1].test(lines[i].trim())) items.push(el('li', {}, inline(lines[i++].trim().replace(list[1], ''))));
+      nodes.push(el(list[0], {}, items));
+    }
+  }
+  flush();
+  return el('div', { class: 'md' }, nodes);
+}
+
 export function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); return node; }
 export function mount(node, ...children) { clear(node); appendChildren(node, children); return node; }
 
