@@ -32,12 +32,22 @@ export async function render(ctx) {
     return;
   }
 
-  const list = el('div', { class: 'stack-4' },
-    ...eligible.map((e) => JobCard(e, prepByJob[e.job.id])));
+  const cards = new Map(eligible.map((e) => [e.job.id, JobCard(e, prepByJob[e.job.id])]));
+  const list = el('div', { class: 'stack-4' }, ...cards.values());
   wrap.append(list);
 
   mount(ctx.view, wrap);
   ctx.setActions([]);
+
+  // #/interview/:jobId (from a posting's interview card) opens that posting's prep
+  // directly; before, the link landed on this list and the user had to find it again.
+  const target = eligible.find((e) => e.job.id === ctx.params?.[0]);
+  if (target) {
+    cards.get(target.job.id).scrollIntoView({ block: 'center' });
+    const prep = prepByJob[target.job.id];
+    if (target.has_prep && prep) openPrepModal(target, prep);
+    else openEditModal(target, null);
+  }
 
   function JobCard(entry, prep) {
     const job = entry.job || {};
