@@ -193,4 +193,10 @@ export default {
   'profile.skill.validation.name': 'Please enter a skill name.',
   'profile.skill.added': 'Skill added.',
   'profile.skill.updated': 'Skill updated.',
+
+  // row signals (experiences, projects)
+  'profile.reuse.count': { one: 'Used in {{count}} cover letter', other: 'Used in {{count}} cover letters' },
+  'profile.verify.badge': 'Needs check',
+  'profile.verify.confirm': 'Looks right',
+  'profile.verify.confirmTitle': 'The AI saved this for you. Click if it is correct.',
 };

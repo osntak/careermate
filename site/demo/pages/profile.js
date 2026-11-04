@@ -43,17 +43,26 @@ export function materialsViewSwitch(activeHref) {
 }
 
 export async function render(ctx) {
-  const [{ profile }, { experiences }, { projects }, { skills }, onboarding] = await Promise.all([
+  const none = () => ({ items: [] });
+  const [{ profile }, { experiences }, { projects }, { skills }, onboarding, reuseMap, unverified] = await Promise.all([
     get('/api/profile'),
     get('/api/experiences'),
     get('/api/projects'),
     get('/api/skills'),
     get('/api/onboarding'),
+    // Both signals are optional: if either call fails the rows render without them.
+    get('/api/reuse-map').catch(none),
+    get('/api/provenance/unverified').catch(none),
   ]);
   const p = profile || {};
 
   // Re-run the whole render (refetch) after any mutation, then refresh nav.
   const reload = async () => { await render(ctx); await ctx.refreshNav(); };
+
+  const sig = {
+    reuse: new Map(reuseMap.items.map((r) => [`${r.kind}:${r.entity_id}`, r])),
+    unverified: new Set(unverified.items.map((u) => `${u.entity_type}:${u.entity_id}`)),
+  };
 
   const wrap = el('div', { class: 'stack-4' }, materialsViewSwitch('#/profile'));
 
@@ -61,11 +70,45 @@ export async function render(ctx) {
   wrap.append(BasicInfoCard(p, reload));
   wrap.append(DesiredCard(p, reload));
   wrap.append(WritingCard(p, reload));
-  wrap.append(ExperiencesCard(experiences || [], reload));
-  wrap.append(ProjectsCard(projects || [], reload));
+  wrap.append(ExperiencesCard(experiences || [], reload, sig));
+  wrap.append(ProjectsCard(projects || [], reload, sig));
   wrap.append(SkillsCard(skills || [], reload));
 
   mount(ctx.view, wrap);
+}
+
+/* ------------------------------------------------------- row signals */
+
+// Quiet notes under an experience or project row: how many cover letters already use it
+// (matched by name in the letter text), and a check prompt when the AI saved it and the
+// user has not confirmed it yet. Returns null when there is nothing to say.
+function rowSignals(kind, id, sig) {
+  const key = `${kind}:${id}`;
+  const ref = sig.reuse.get(key);
+  const used = ref?.reuse_count
+    ? el('span', {
+        class: 'muted text-sm',
+        title: ref.cover_letters.map((c) => [c.company, c.position].filter(Boolean).join(' ') || c.title).join('\n'),
+      }, t('profile.reuse.count', { count: ref.reuse_count }))
+    : null;
+  let check = null;
+  if (sig.unverified.has(key)) {
+    check = el('span', { class: 'flex gap-2', style: { alignItems: 'center' } },
+      Badge('interview', t('profile.verify.badge')),
+      Btn(t('profile.verify.confirm'), {
+        sm: true, variant: 'ghost', title: t('profile.verify.confirmTitle'),
+        onClick: async () => {
+          try {
+            await post('/api/provenance/verify', { entity_type: kind, entity_id: id, verified: true });
+            sig.unverified.delete(key);
+            // Drop the whole line when the badge was the only thing on it.
+            (used ? check : check.parentNode).remove();
+          } catch (e) { toastError(e); }
+        },
+      }));
+  }
+  if (!used && !check) return null;
+  return el('div', { class: 'flex gap-2 wrap mt-2', style: { alignItems: 'center' } }, used, check);
 }
 
 /* ----------------------------------------------------- completeness header */
@@ -277,7 +320,7 @@ function editWriting(p, reload) {
 
 /* ---------------------------------------------------- 4. 경력 (Experiences) */
 
-function ExperiencesCard(items, reload) {
+function ExperiencesCard(items, reload, sig) {
   const add = Btn(t('profile.exp.add'), { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editExperience(null, reload) });
 
   if (!items.length) {
@@ -302,7 +345,8 @@ function ExperiencesCard(items, reload) {
             el('span', { class: 'strong' }, x.company),
             x.role ? el('span', { class: 'text-secondary' }, x.role) : null,
             x.employment_type ? el('span', { class: 'muted text-sm' }, x.employment_type) : null),
-          periodLabel(x) ? el('div', { class: 'muted text-sm' }, periodLabel(x)) : null),
+          periodLabel(x) ? el('div', { class: 'muted text-sm' }, periodLabel(x)) : null,
+          rowSignals('experience', x.id, sig)),
         el('div', { class: 'flex gap-2' },
           IconBtn('edit', { title: t('profile.exp.editTitle'), onClick: () => editExperience(x, reload) }),
           IconBtn('trash', { title: t('profile.exp.deleteTitle'), variant: 'danger', onClick: () => removeExperience(x, reload) }))),
@@ -381,7 +425,7 @@ function editExperience(x, reload) {
 
 /* ----------------------------------------------------- 5. 프로젝트 (Projects) */
 
-function ProjectsCard(items, reload) {
+function ProjectsCard(items, reload, sig) {
   const add = Btn(t('profile.proj.add'), { icon: 'plus', sm: true, variant: 'ghost', onClick: () => editProject(null, reload) });
 
   if (!items.length) {
@@ -403,7 +447,8 @@ function ProjectsCard(items, reload) {
         el('div', { class: 'flex gap-2 wrap', style: { alignItems: 'baseline' } },
           el('span', { class: 'strong' }, x.name),
           x.role ? el('span', { class: 'text-secondary text-sm' }, x.role) : null),
-        periodProject(x) ? el('div', { class: 'muted text-sm' }, periodProject(x)) : null),
+        periodProject(x) ? el('div', { class: 'muted text-sm' }, periodProject(x)) : null,
+        rowSignals('project', x.id, sig)),
       el('div', { class: 'flex gap-2' },
         x.url ? el('a', { class: 'btn btn--ghost icon-btn', href: x.url, title: t('profile.proj.openLink'), attrs: { target: '_blank', rel: 'noopener', 'aria-label': t('profile.proj.openLink') } }, icon('external')) : null,
         IconBtn('edit', { title: t('profile.proj.editTitle'), onClick: () => editProject(x, reload) }),

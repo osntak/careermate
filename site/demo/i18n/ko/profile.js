@@ -193,4 +193,10 @@ export default {
   'profile.skill.validation.name': '기술명을 입력해 주세요.',
   'profile.skill.added': '기술을 추가했어요.',
   'profile.skill.updated': '기술을 수정했어요.',
+
+  // row signals (experiences, projects)
+  'profile.reuse.count': '자기소개서 {{count}}건에 사용',
+  'profile.verify.badge': '확인 필요',
+  'profile.verify.confirm': '맞아요',
+  'profile.verify.confirmTitle': 'AI가 정리해서 저장한 내용이에요. 맞으면 눌러 주세요.',
 };
