@@ -449,9 +449,14 @@
           dotsWrap.appendChild(b);
           return b;
         });
+        var viewport = track.parentElement;
         function go(n) {
-          idx = Math.max(0, Math.min(slides.length - 1, n));
-          track.style.transform = 'translateX(' + (-idx * 100) + '%)';
+          n = Math.max(0, Math.min(slides.length - 1, n));
+          viewport.scrollTo({ left: n * viewport.clientWidth });
+          mark(n);
+        }
+        function mark(n) {
+          idx = n;
           dots.forEach(function (d, n2) {
             var on = n2 === idx;
             d.classList.toggle('is-active', on);
@@ -467,15 +472,12 @@
           if (e.key === 'ArrowLeft') { e.preventDefault(); go(idx - 1); }
           else if (e.key === 'ArrowRight') { e.preventDefault(); go(idx + 1); }
         });
-        var x0 = null;
-        track.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
-        track.addEventListener('touchend', function (e) {
-          if (x0 === null) return;
-          var dx = e.changedTouches[0].clientX - x0;
-          if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
-          x0 = null;
-        });
-        go(0);
+        // swipe is native scrolling; keep dots and arrows in step with it
+        viewport.addEventListener('scroll', function () {
+          var n = Math.round(viewport.scrollLeft / viewport.clientWidth);
+          if (n !== idx) mark(n);
+        }, { passive: true });
+        mark(0);
       }
     })();
   </script>
