@@ -2,14 +2,17 @@
  * Job search import — pull postings from key-free public job-board endpoints by
  * keyword, so the AI can offer real listings the user can save into CareerMate.
  *
- * CareerMate is local-first: only the search keyword leaves the machine. Stored
- * profile, résumé, application, and document data are never sent to providers.
+ * CareerMate is local-first: only the search keyword and category filters leave the
+ * machine. Stored profile, résumé, application, and document data are never sent to
+ * providers. Locally it remembers which postings it has already seen (board id + date).
  * Provider endpoints are unofficial and therefore validated at runtime; a shape
  * change degrades only that provider instead of silently returning corrupt rows.
  */
 
 import { z } from 'zod';
 import { APP_VERSION } from '@careermate/shared';
+import { markJobsSeen } from '@careermate/db';
+import { isRememberCategory, isSaraminCategory } from './job-categories.ts';
 
 export interface JobSearchResult {
   source: string;
@@ -21,8 +24,14 @@ export interface JobSearchResult {
   keywords?: string[];
   deadline?: string;
   external_id: string;
-  /** Saramin only: category codes of this posting, reusable as `saraminCategory`. */
+  /** Saramin only: category codes of this posting, reusable in `saraminCategories`. */
   category_codes?: string[];
+  /** Board's own posting date (Remember, Saramin "등록일"); Wanted/Jumpit lists don't carry one. */
+  posted_at?: string;
+  /** Day CareerMate first returned this posting (YYYY-MM-DD). */
+  first_seen_at?: string;
+  /** The same posting found on other boards (same company + title). */
+  also_on?: { source: string; url: string }[];
 }
 
 export type ProviderStatus = 'healthy' | 'degraded' | 'unavailable';
@@ -41,16 +50,24 @@ export interface JobSearchResponse {
   query: string;
   results: JobSearchResult[];
   providers: ProviderOutcome[];
+  /** Results dropped by `postedSince`. */
+  filtered_out?: number;
 }
 
 export interface JobSearchOptions {
   sources?: string[];
   limit?: number;
   timeoutMs?: number;
-  /** Remember job category: "SW개발>프론트엔드" or just the group "SW개발" (a bare sub-category is ignored by Remember). */
-  rememberCategory?: string;
-  /** Saramin job category code(s) (cat_kewd), e.g. "92" or "92,84"; codes show up in Saramin results' `category_codes`. */
-  saraminCategory?: string;
+  /** Remember categories: "SW개발>프론트엔드" or a whole group "SW개발" (see findJobCategories). */
+  rememberCategories?: string[];
+  /** Saramin category codes (cat_kewd), e.g. ["92", "84"]. */
+  saraminCategories?: string[];
+  /** Keep only postings dated on/after this day (YYYY-MM-DD): posted_at, else first_seen_at. */
+  postedSince?: string;
+  /** Record first-seen dates in the local DB (default true; tests turn it off). */
+  trackSeen?: boolean;
+  /** "Today" for first-seen/postedSince, injectable for tests. */
+  today?: string;
 }
 
 const UA = `careermate/${APP_VERSION} (+https://careermate.life)`;
@@ -59,6 +76,13 @@ function toYmd(v: unknown): string | undefined {
   if (typeof v !== 'string' || v.length < 10) return undefined;
   const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
   return m ? m[1] : undefined;
+}
+
+/** Calendar day in Korea for a timestamp with an offset ("...+09:00" or "...Z"), so "today" matches the board's day. */
+function kstYmd(v: unknown): string | undefined {
+  if (typeof v !== 'string' || !/T.*(Z|[+-]\d{2}:?\d{2})$/.test(v)) return toYmd(v);
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? undefined : d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
 }
 
 interface GetJsonInit {
@@ -98,7 +122,7 @@ interface Provider {
   id: string;
   label: string;
   /** Option that lets this provider search by category alone, without a keyword. */
-  categoryOption?: 'rememberCategory' | 'saraminCategory';
+  categoryOption?: 'rememberCategories' | 'saraminCategories';
   search(query: string, limit: number, timeoutMs: number, opts: JobSearchOptions): Promise<JobSearchResult[]>;
 }
 
@@ -199,6 +223,7 @@ const rememberSchema = z.object({
       min_experience: z.number().nullable().optional(),
       max_experience: z.number().nullable().optional(),
       ends_at: z.string().nullable().optional(),
+      starts_at: z.string().nullable().optional(),
       addresses: z
         .array(z.object({ address_level1: z.string().nullable().optional(), address_level2: z.string().nullable().optional() }).passthrough())
         .nullable()
@@ -211,15 +236,23 @@ const rememberSchema = z.object({
 const remember: Provider = {
   id: 'remember',
   label: '리멤버',
-  categoryOption: 'rememberCategory',
+  categoryOption: 'rememberCategories',
   async search(query, limit, timeoutMs, opts) {
-    const [level1, level2] = (opts.rememberCategory ?? '').split('>').map((s) => s.trim());
+    const cats = opts.rememberCategories ?? [];
+    // Remember ignores names it doesn't know and returns everything, so reject them up front.
+    const unknown = cats.filter((c) => !isRememberCategory(c));
+    if (unknown.length) throw new Error(`unknown Remember category: ${unknown.join(', ')} (use find_job_categories)`);
     const search: Record<string, unknown> = {
       keywords: query ? [query] : [],
       organization_type: 'all',
       application_type: 'all',
     };
-    if (level1) search.job_category_names = [level2 ? { level1, level2 } : { level1 }];
+    if (cats.length) {
+      search.job_category_names = cats.map((c) => {
+        const [level1, level2] = c.split('>').map((s) => s.trim());
+        return level2 ? { level1, level2 } : { level1 };
+      });
+    }
     const j = rememberSchema.parse(
       await getJson('https://career-api.rememberapp.co.kr/job_postings/search', timeoutMs, {
         body: { search, sort: 'starts_at_desc', page: 1, per: limit },
@@ -240,6 +273,7 @@ const remember: Provider = {
         keywords: d.job_categories?.map((c) => c.level2).filter((s): s is string => !!s),
         deadline: toYmd(d.ends_at),
         external_id: String(d.id),
+        posted_at: kstYmd(d.starts_at),
       };
     });
   },
@@ -285,6 +319,8 @@ export function parseSaraminList(html: string, now = new Date()): JobSearchResul
     const spans = [...cond.matchAll(/<span>([\s\S]*?)<\/span>/g)].map((m) => decodeHtml(m[1]));
     const sector = chunk.match(/class="job_sector">([\s\S]*?)(?:<span class="job_day"|<\/div>)/)?.[1] ?? '';
     const links = [...sector.matchAll(/cat_kewd=(\d+)"\s*>([^<]*)<\/a>/g)];
+    // "등록일 26/11/04" is the posting date; "수정일 ..." is only an edit, so it doesn't count.
+    const reg = chunk.match(/class="job_day">\s*등록일\s*(\d{2})\/(\d{2})\/(\d{2})/);
     out.push({
       source: 'saramin',
       company: decodeHtml(company),
@@ -296,6 +332,7 @@ export function parseSaraminList(html: string, now = new Date()): JobSearchResul
       deadline: saraminDeadline(chunk.match(/class="date">([^<]*)</)?.[1] ?? '', now),
       external_id: id,
       category_codes: links.length ? links.map((m) => m[1]) : undefined,
+      posted_at: reg ? `20${reg[1]}-${reg[2]}-${reg[3]}` : undefined,
     });
   }
   return out;
@@ -304,16 +341,20 @@ export function parseSaraminList(html: string, now = new Date()): JobSearchResul
 const saramin: Provider = {
   id: 'saramin',
   label: '사람인',
-  categoryOption: 'saraminCategory',
+  categoryOption: 'saraminCategories',
   async search(query, limit, timeoutMs, opts) {
     const params = new URLSearchParams({
       searchword: query,
       recruitPage: '1',
-      recruitSort: query ? 'relation' : 'reg_dt',
+      // Relevance reads better for a keyword, but "new since" needs newest first.
+      recruitSort: query && !opts.postedSince ? 'relation' : 'reg_dt',
       recruitPageCount: String(limit),
       mainSearch: 'n',
     });
-    if (opts.saraminCategory) params.set('cat_kewd', opts.saraminCategory);
+    const cats = opts.saraminCategories ?? [];
+    const unknown = cats.filter((c) => !isSaraminCategory(c));
+    if (unknown.length) throw new Error(`unknown Saramin category code: ${unknown.join(', ')} (use find_job_categories)`);
+    if (cats.length) params.set('cat_kewd', cats.join(','));
     const j = saraminListSchema.parse(
       await getJson(`https://www.saramin.co.kr/zf_user/search/get-recruit-list?${params}`, timeoutMs, {
         headers: { 'x-requested-with': 'XMLHttpRequest' },
@@ -349,7 +390,7 @@ export async function searchJobs(query: string, opts: JobSearchOptions = {}): Pr
   const timeoutMs = Math.min(30_000, Math.max(1_000, opts.timeoutMs ?? 10_000));
   // Without a keyword, only providers given their own category filter can search.
   const chosen = (opts.sources?.length ? PROVIDERS.filter((p) => opts.sources!.includes(p.id)) : PROVIDERS).filter(
-    (p) => q || (p.categoryOption && opts[p.categoryOption]?.trim()),
+    (p) => q || (p.categoryOption && opts[p.categoryOption]?.length),
   );
   if (!chosen.length) return { query: q, results: [], providers: [] };
 
@@ -387,9 +428,60 @@ export async function searchJobs(query: string, opts: JobSearchOptions = {}): Pr
     }),
   );
 
+  const today = opts.today ?? new Date().toLocaleDateString('sv-SE'); // local YYYY-MM-DD
+  let results = settled.flatMap((s) => s.results);
+  if (opts.trackSeen !== false) {
+    const seen = markJobsSeen(results, today);
+    for (const r of results) r.first_seen_at = seen.get(`${r.source}:${r.external_id}`);
+  }
+  results = dedupeAcrossBoards(results);
+  let filtered_out: number | undefined;
+  if (opts.postedSince) {
+    const kept = results.filter((r) => (r.posted_at ?? r.first_seen_at ?? today) >= opts.postedSince!);
+    filtered_out = results.length - kept.length;
+    results = kept;
+  }
+
   return {
     query: q,
-    results: settled.flatMap((s) => s.results),
+    results,
     providers: settled.map((s) => s.outcome),
+    ...(filtered_out !== undefined ? { filtered_out } : {}),
   };
+}
+
+const normCompany = (s: string) =>
+  s.replace(/\(주\)|㈜|주식회사|\(유\)|\(재\)/g, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+/** Drop only a "[company]" tag (Remember prefixes titles with it); "[신입]", "[서울]" and the like stay. */
+const normTitle = (title: string, company: string) => {
+  const c = normCompany(company);
+  return title
+    .replace(/\[([^\]]*)\]/g, (tag, inner: string) => {
+      const n = normCompany(inner);
+      return n && c && (c.includes(n) || n.includes(c)) ? '' : tag;
+    })
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, '');
+};
+
+/**
+ * Fold the same posting listed on several boards into one row (first board wins, the rest go
+ * to `also_on`). Same company and title after normalization; differently worded titles stay
+ * separate, which errs on showing a duplicate rather than hiding a real posting.
+ */
+export function dedupeAcrossBoards(results: JobSearchResult[]): JobSearchResult[] {
+  const byKey = new Map<string, JobSearchResult>();
+  const out: JobSearchResult[] = [];
+  for (const r of results) {
+    const key = `${normCompany(r.company)}|${normTitle(r.position, r.company)}`;
+    const first = byKey.get(key);
+    if (first && first.source !== r.source) {
+      (first.also_on ??= []).push({ source: r.source, url: r.url });
+      if (!first.posted_at && r.posted_at) first.posted_at = r.posted_at;
+      continue;
+    }
+    byKey.set(key, r);
+    out.push(r);
+  }
+  return out;
 }

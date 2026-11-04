@@ -7,6 +7,7 @@ export * from './context.ts';
 export * from './services.ts';
 export * from './summary.ts';
 export * from './jobsearch.ts';
+export * from './job-categories.ts';
 export * from './offers.ts';
 export * from './data-health.ts';
 export * from './fit-explain.ts';

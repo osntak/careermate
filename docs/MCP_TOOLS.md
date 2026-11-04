@@ -12,11 +12,11 @@ CareerMate는 **MCP-우선** 로컬 커리어 관리 도구입니다. 사용자�
 
 ## 읽기 전용(read-only) 표기 안내
 
-각 도구 항목의 **읽기전용** 열은 `tools.ts`의 `readOnly: true` 플래그를 그대로 반영합니다. 읽기전용 도구는 DB를 변경하지 않고 조회만 하며, 그 외 도구는 데이터를 생성·갱신하거나(쓰기) 브라우저를 여는 등의 부수효과를 가집니다.
+각 도구 항목의 **읽기전용** 열은 `tools.ts`의 `readOnly: true` 플래그를 그대로 반영합니다. 읽기전용 도구는 DB를 변경하지 않고 조회만 하며(예외: `search_jobs`는 공고를 처음 본 날짜를, `check_for_update`는 확인 결과를 로컬 캐시로 남긴다. 사용자 데이터는 바꾸지 않는다), 그 외 도구는 데이터를 생성·갱신하거나(쓰기) 브라우저를 여는 등의 부수효과를 가집니다.
 
 | 읽기전용(✅) 도구 | 쓰기/부수효과(✏️) 도구 |
 | --- | --- |
-| `read_document`, `read_inbox`, `get_onboarding_status`, `get_profile`, `get_resumes`, `get_experiences`, `get_projects`, `get_skills`, `get_cover_letters`, `get_job_posting`, `list_jobs`, `prescreen_job`, `search_jobs`, `compare_offers`, `get_offer`, `get_application_context`, `list_recent_activity`, `get_followups`, `get_pipeline_stats`, `get_workflow_guide`, `get_playbook`, `get_verifier`, `validate_cover_letter`, `get_writing_style_guide`, `check_for_update` | `open_inbox`, `save_profile`, `add_resume`, `delete_resume`, `add_experience`, `delete_experience`, `add_project`, `delete_project`, `add_skill`, `delete_skill`, `save_cover_letter_version`, `delete_cover_letter`, `set_verify_mode`, `save_job_posting`, `delete_job_posting`, `save_fit_analysis`, `update_application_status`, `save_interview_prep`, `save_offer`, `export_cover_letter`, `export_resume`, `export_profile`, `open_dashboard`, `open_application`, `update_careermate` |
+| `read_document`, `read_inbox`, `get_onboarding_status`, `get_profile`, `get_resumes`, `get_experiences`, `get_projects`, `get_skills`, `get_cover_letters`, `get_job_posting`, `list_jobs`, `prescreen_job`, `search_jobs`, `find_job_categories`, `get_job_search_preferences`, `compare_offers`, `get_offer`, `get_application_context`, `list_recent_activity`, `get_followups`, `get_pipeline_stats`, `get_workflow_guide`, `get_playbook`, `get_verifier`, `validate_cover_letter`, `get_writing_style_guide`, `check_for_update` | `open_inbox`, `save_profile`, `add_resume`, `delete_resume`, `add_experience`, `delete_experience`, `add_project`, `delete_project`, `add_skill`, `delete_skill`, `save_cover_letter_version`, `delete_cover_letter`, `set_verify_mode`, `set_job_search_preferences`, `save_job_posting`, `delete_job_posting`, `save_fit_analysis`, `update_application_status`, `save_interview_prep`, `save_offer`, `export_cover_letter`, `export_resume`, `export_profile`, `open_dashboard`, `open_application`, `update_careermate` |
 
 ---
 
@@ -141,7 +141,10 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
-| `search_jobs` | 키워드나 직무 조건으로 무인증 공개 잡보드(원티드·점핏·리멤버·사람인)에서 공고를 *가져옴*(저장은 안 함) | `keyword`(필수, 직무 조건만 쓸 땐 빈 문자열), `sources?`, `limit?`(기본 10), `remember_category?`("SW개발>프론트엔드"), `saramin_category?`(직무 코드 "92") | `{ query, results[](회사·직무·url·지역·경력·기술·마감, 사람인은 category_codes), providers[] }` | 사용자가 "○○ 공고 찾아줘"라고 할 때. 결과를 보여주고 **고른 것만** save_job_posting | ✅ |
+| `search_jobs` | 키워드나 직무 조건으로 무인증 공개 잡보드(원티드·점핏·리멤버·사람인)에서 공고를 *가져옴*(저장은 안 함). 여러 사이트의 같은 공고는 한 줄로 합침 | `keyword?`, `sources?`, `limit?`(기본 10), `remember_categories?`(["재무·회계·세무>회계결산"]), `saramin_categories?`(["322"]), `posted_since?`("today"·YYYY-MM-DD). keyword와 직무 조건을 모두 비우면 저장된 검색 조건 사용 | `{ query, results[](회사·직무·url·지역·경력·기술·마감·posted_at·first_seen_at·also_on, 사람인은 category_codes), providers[], filtered_out?, conditions, used_saved_preferences }` | "○○ 공고 찾아줘", "오늘 올라온 공고 보여줘". 결과를 보여주고 **고른 것만** save_job_posting. 원티드·점핏은 게시일이 없어 처음 본 날로 거름 | ✅ |
+| `find_job_categories` | 직무 이름을 리멤버 분류("상위>하위")와 사람인 직무 코드로 변환(내장 분류표, 외부 통신 없음). 모든 직군 | `query`(쉼표로 여러 개), `limit?`(기본 20) | `{ query, remember[], saramin[](code·name·group·kind) }` 관련도순 | search_jobs·set_job_search_preferences에 직무 조건을 넣기 전 | ✅ |
+| `get_job_search_preferences` | 저장된 공고 검색 조건 조회 | 없음 | `{ keyword, remember_categories, saramin_categories, updated_at }` | "내 검색 조건 뭐야?" | ✅ |
+| `set_job_search_preferences` | 자주 볼 공고 검색 조건 저장(준 필드만 갱신). 리멤버 분류는 내장 분류표로 검증 | `keyword?`, `remember_categories?`, `saramin_categories?` | 저장된 조건 | 사용자 직무를 find_job_categories로 찾고 확인받은 뒤 | ✏️ |
 | `save_job_posting` | 채용공고 저장(있으면 갱신). 저장 시 지원(application) 항목 자동 생성 | `company`, `position`(필수), `url?`, `location?`, `employment_type?`, `description?`, `requirements?`, `keywords?`, `deadline?`, `source?`, `questions?`(회사 지정 자소서 문항·글자수: `question`·`min_chars`·`max_chars`·`count_mode`), `schedule?`(전형 일정: `label`·`date`(YYYY-MM-DD) 필수·`time`(HH:MM)·`note`) | 저장된 `JobRecord`(`job_id` 포함) | 공고를 DB에 등록/갱신할 때 | ✏️ |
 | `get_job_posting` | 공고 1건 상세 조회 | `job_id` | `{ job, fit, application, cover_letters, interview }` | 한 공고의 분석·상태·자소서·면접 자료를 한 번에 볼 때 | ✅ |
 | `list_jobs` | 저장된 모든 공고를 지원 상태·적합도 점수와 함께 목록화 | 없음 | 공고 메타 포함 배열 | 전체 공고를 훑어볼 때 | ✅ |

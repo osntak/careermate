@@ -752,6 +752,73 @@ section('9) 업데이트 확인: "지금 확인"은 캐시 무시');
   }
 }
 
+section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중복(네트워크 스텁)');
+{
+  const { searchJobs } = await import('../packages/core/src/index.ts');
+  const { setJobSearchPreferences, getJobSearchPreferences } = await import('../packages/db/src/index.ts');
+  const origFetch = globalThis.fetch;
+  const json = (body: unknown) => ({ ok: true, headers: { get: () => 'application/json' }, text: async () => JSON.stringify(body) });
+  try {
+    (globalThis as { fetch: unknown }).fetch = async (url: string) =>
+      url.includes('wanted')
+        ? json({ data: [{ id: 11, position: '회계 담당자', company: { name: '(주)가나' } }] })
+        : json({
+            data: [
+              { id: 21, title: '회계 담당자', organization: { name: '가나(주)' }, starts_at: '2026-11-04T09:00:00.000+09:00' },
+              { id: 22, title: '재무 팀장', organization: { name: '다라' }, starts_at: '2026-10-01T09:00:00.000+09:00' },
+            ],
+          });
+    const opts = { sources: ['wanted', 'remember'], today: '2026-11-04' };
+    const day1 = await searchJobs('회계', opts);
+    ok('같은 회사·제목은 원티드 한 줄로 합침(리멤버는 also_on)', day1.results.length === 2 && day1.results[0].also_on?.[0]?.source === 'remember', JSON.stringify(day1.results));
+    ok('합친 줄에 리멤버 게시일 보충 + 처음 본 날 기록', day1.results[0].posted_at === '2026-11-04' && day1.results[0].first_seen_at === '2026-11-04');
+
+    const day2 = await searchJobs('회계', { ...opts, today: '2026-11-05' });
+    ok('다음 날 다시 봐도 first_seen_at은 첫날 유지', day2.results.every((r) => r.first_seen_at === '2026-11-04'), JSON.stringify(day2.results.map((r) => r.first_seen_at)));
+
+    const fresh = await searchJobs('회계', { ...opts, today: '2026-11-05', postedSince: '2026-11-04' });
+    ok('postedSince: 게시일(없으면 처음 본 날) 기준으로 지난 공고 제외', fresh.results.length === 1 && fresh.filtered_out === 1, JSON.stringify(fresh));
+
+    const none = await searchJobs('', { sources: ['wanted'] });
+    ok('키워드·직무 조건 둘 다 없으면 아무 사이트도 부르지 않음', none.providers.length === 0);
+
+    const bad = await searchJobs('', { sources: ['remember'], rememberCategories: ['프론트엔드'] });
+    ok('리멤버에 없는 분류는 요청 전에 거부(전체 공고가 오는 사고 방지)', bad.providers[0]?.ok === false && /unknown Remember category/.test(bad.providers[0]?.error ?? ''));
+
+    const badSaramin = await searchJobs('', { sources: ['saramin'], saraminCategories: ['999999'] });
+    ok('사람인 분류표에 없는 코드도 요청 전에 거부', badSaramin.providers[0]?.ok === false && /unknown Saramin/.test(badSaramin.providers[0]?.error ?? ''));
+
+    // 매일 보이는 상시채용은 last_seen_at이 갱신돼 지워지지 않고, 안 보인 지 120일 지난 것만 지운다.
+    const { markJobsSeen, getDb } = await import('../packages/db/src/index.ts');
+    markJobsSeen([{ source: 't', external_id: 'daily' }, { source: 't', external_id: 'gone' }], '2026-01-01');
+    markJobsSeen([{ source: 't', external_id: 'daily' }], '2026-04-30');
+    const left = markJobsSeen([{ source: 't', external_id: 'daily' }], '2026-05-10');
+    const gone = getDb().prepare(`SELECT 1 FROM job_search_seen WHERE source='t' AND external_id='gone'`).get();
+    ok('정리는 마지막으로 본 날 기준: 계속 보이는 공고는 첫날 유지, 120일 안 보인 것만 삭제', left.get('t:daily') === '2026-01-01' && !gone, JSON.stringify({ daily: left.get('t:daily'), gone }));
+
+    setJobSearchPreferences({ remember_categories: ['재무·회계·세무>회계결산'], saramin_categories: ['322'] });
+    setJobSearchPreferences({ keyword: '회계' });
+    const p = getJobSearchPreferences();
+    ok('검색 조건 저장: 준 필드만 바뀌고 나머지 유지', p.keyword === '회계' && p.saramin_categories[0] === '322' && p.remember_categories.length === 1 && !!p.updated_at, JSON.stringify(p));
+    const tables = (getDb().prepare(`SELECT name FROM sqlite_master WHERE type='table'`).all() as { name: string }[]).map((t) => t.name);
+    ok('검색 조건·처음 본 날은 실제 테이블(백업·초기화 대상, _meta 아님)', tables.includes('job_search_preferences') && tables.includes('job_search_seen'));
+
+    // 도구 경계: 인자 없이 부르면 저장된 조건으로, "today"는 오늘 날짜로 바뀐다.
+    const { TOOLS } = await import('../packages/mcp-tools/src/tools.ts');
+    const tool = TOOLS.find((t) => t.name === 'search_jobs')!;
+    const r = (await tool.handler({ posted_since: 'today' })) as { data: unknown };
+    const data = r.data as { used_saved_preferences: boolean; conditions: { keyword: string; saramin_categories: string[] } };
+    ok('search_jobs 인자 없음 → 저장된 조건 사용', data.used_saved_preferences === true && data.conditions.keyword === '회계' && data.conditions.saramin_categories[0] === '322', JSON.stringify(data.conditions));
+    const schema = tool.inputSchema as unknown as Record<string, { safeParse: (v: unknown) => { success: boolean } }>;
+    ok(
+      'posted_since: "today"·실제 날짜만 통과(2026-99-99, 2026-02-30 거부)',
+      schema.posted_since.safeParse('today').success && schema.posted_since.safeParse('2026-11-04').success && !schema.posted_since.safeParse('2026-99-99').success && !schema.posted_since.safeParse('2026-02-30').success,
+    );
+  } finally {
+    globalThis.fetch = origFetch;
+  }
+}
+
 await new Promise<void>((r) => server.close(() => r()));
 
 // Emit the summary as ONE write and wait for its OS-pipe flush callback before

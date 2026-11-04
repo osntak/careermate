@@ -19,7 +19,7 @@ Some features may use the network without changing the local-first model:
 
 - checking the npm registry for a newer CareerMate version
 - opening current installation documentation
-- searching supported public job-board endpoints using only the user's search keyword
+- searching supported public job-board endpoints using only the user's search keyword and job category (locally, CareerMate only records which postings it has already seen: board, posting id, date)
 - loading the public product website or demo
 - public-site analytics on `careermate.life`
 
