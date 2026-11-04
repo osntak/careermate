@@ -567,6 +567,10 @@ ok('링크 속성 탈출 차단', !breakout.includes('onmouseover="alert') && br
 const titleInj = toPrintableHtml('</title><script>alert(1)</script>', '본문');
 ok('내보내기 제목 인젝션 차단', !titleInj.includes('<script>') && !titleInj.includes('</title><script>'));
 
+// The footer name lands inside a CSS string in <style>: no raw quote/control char may end it.
+const footerInj = toPrintableHtml('t', '본문', 'X"\f}} body{background:url(https://evil)} </style><script>alert(1)</script>');
+ok('내보내기 바닥글 CSS 인젝션 차단', !footerInj.includes('\f') && !footerInj.includes('X"') && !footerInj.includes('</style><script>'));
+
 /* -------------------------- 6. 결정론 검증 엔진 (verify) — 숫자 출처 게이트 */
 section('6) 검증 엔진(verify) — 숫자 출처 게이트');
 {
