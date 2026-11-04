@@ -12,7 +12,7 @@
     ko: { copied: '복사됨', copiedStatus: '클립보드에 복사되었습니다.' },
     en: { copied: 'Copied', copiedStatus: 'Copied to clipboard.' }
   };
-  // 히어로 명령 데모 씬 — 로케일별. en은 직역이 아니라 한국어 의도를 살린 자연스러운 영어.
+  // 히어로 명령 데모 씬 (로케일별). en은 직역이 아니라 한국어 의도를 살린 자연스러운 영어.
   var SCENES = {
     ko: [
       { status: '공고 분석', file: 'recruit.example.com/product-designer', fileState: '링크', command: '이 공고 분석해서 내 경력에 맞춰줘.', result: '요구 역량과 내 경험을 비교했어요. 강조하면 좋은 키워드는 협업, 실험, 정량 개선입니다.' },
@@ -26,10 +26,10 @@
     en: [
       { status: 'Job analysis', file: 'recruit.example.com/product-designer', fileState: 'Link', command: 'Analyze this posting against my background.', result: 'Compared the requirements with your experience. Keywords worth emphasizing: collaboration, experimentation, measurable impact.' },
       { status: 'Career doc', file: 'resume.pdf', fileState: 'Source', command: 'Draft a career description from my resume.', result: 'Organized your experience and projects into a results-focused career doc. Flagged the numbers that need a source.' },
-      { status: 'Dashboard', file: '127.0.0.1:4319', fileState: 'Open', command: 'Open the dashboard — I want to see my applications.', result: 'Opened it. You have 2 drafts, 3 submitted, and 1 in interview prep.' },
+      { status: 'Dashboard', file: '127.0.0.1:4319', fileState: 'Open', command: 'Open the dashboard. I want to see my applications.', result: 'Opened it. You have 2 drafts, 3 submitted, and 1 in interview prep.' },
       { status: 'Job search', file: '"accounting"', fileState: 'Saved role', command: 'Show me new postings for my role today.', result: 'Gathered only today\'s new postings from Wanted, Jumpit, Remember and Saramin, with duplicates across boards folded into one. Pick the ones you like and I\'ll save them and move straight to fit analysis and a cover letter.' },
       { status: 'Add document', file: 'cover-letter.pdf', fileState: 'Uploaded', command: 'Read this cover letter and save it to CareerMate.', result: 'Saved it as a cover-letter version and pulled out 4 key experiences.' },
-      { status: 'Cover draft', file: 'Product Designer · Acme', fileState: 'Posting', command: 'Draft a cover letter for this role — keep it warm, not stiff.', result: 'Wrote a tailored draft and saved it as v1. The opener leads with why you want the role.' },
+      { status: 'Cover draft', file: 'Product Designer · Acme', fileState: 'Posting', command: 'Draft a cover letter for this role. Not too stiff.', result: 'Wrote a tailored draft and saved it as v1. The opener leads with why you want the role.' },
       { status: 'Interview prep', file: 'Acme · Passed screening', fileState: 'Status change', command: 'I passed the screening. Prep me for this interview.', result: 'Prepared 12 likely questions, STAR answer outlines, and a 1-minute intro draft.' }
     ]
   };

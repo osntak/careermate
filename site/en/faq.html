@@ -11,7 +11,7 @@
       } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
     })();
   </script>
-  <title>FAQ — CareerMate</title>
+  <title>FAQ - CareerMate</title>
   <meta name="description" content="Common install, connection, dashboard, document-reading, and privacy questions about CareerMate, with fixes." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://careermate.life/en/faq" />
@@ -23,14 +23,14 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:locale:alternate" content="ko_KR" />
   <meta property="og:url" content="https://careermate.life/en/faq" />
-  <meta property="og:title" content="FAQ — CareerMate" />
+  <meta property="og:title" content="FAQ - CareerMate" />
   <meta property="og:description" content="Common fixes for CareerMate install, connection, dashboard, document-reading, and privacy questions." />
   <meta property="og:image" content="https://careermate.life/og-en.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="CareerMate frequently asked questions" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="FAQ — CareerMate" />
+  <meta name="twitter:title" content="FAQ - CareerMate" />
   <meta name="twitter:description" content="Quick answers for common CareerMate setup and usage issues." />
   <meta name="twitter:image" content="https://careermate.life/og-en.png" />
   <meta name="twitter:image:alt" content="CareerMate frequently asked questions" />
@@ -91,7 +91,7 @@
   <style>
     .faq { max-width: 760px; margin: 0 auto; }
     .faq__hero { max-width: 760px; padding-top: 44px; padding-bottom: 8px; }
-    html[lang] .faq__hero .hero__title { font-size: 2rem; margin-top: 14px; }
+    html[lang] .faq__hero .hero__title { font-size: 2rem; }
     .faq__hero .hero__lede { font-size: 1.02rem; }
     .faq__group { margin: 0 0 30px; }
     .faq__group > h2 { font-size: 1.1rem; font-weight: 650; margin: 0 0 12px; }
@@ -124,9 +124,8 @@
   <main id="top">
     <header class="hero hero--solo faq__hero">
       <div class="hero__main">
-        <span class="pill-badge"><span class="pill-badge__dot" aria-hidden="true"></span> Help</span>
         <h1 class="hero__title">Frequently asked questions</h1>
-        <p class="hero__lede">Common snags around install, connection, the dashboard, document reading, finding jobs, and privacy. New to installing? Start with <a href="/en/start">New here?</a></p>
+        <p class="hero__lede">Answers to common problems with install, connection, the dashboard, reading documents, finding jobs, and privacy. If this is your first install, start with <a href="/en/start">New here?</a></p>
       </div>
     </header>
 
@@ -137,13 +136,13 @@
           <details class="acc">
             <summary>Does it cost anything? Do I need an API key?</summary>
             <div class="acc__body">
-              <p>CareerMate is a <strong>free MIT-licensed npm package</strong>, and since it has no built-in LLM, it needs <strong>no API key.</strong> Your existing AI subscription (Claude, etc.) does the analysis and writing; CareerMate is just the local “drawer” that stores and serves your career data. Inspect the public distribution on <a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">npm</a>.</p>
+              <p>CareerMate is a <strong>free MIT-licensed npm package</strong>. It has no built-in LLM, so it needs <strong>no API key.</strong> The AI subscription you already have (Claude, for example) does the analysis and writing. CareerMate is the local "drawer" that stores your career data and hands it to the AI. The published package is on <a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">npm</a>.</p>
             </div>
           </details>
           <details class="acc">
             <summary>How do I update it?</summary>
             <div class="acc__body">
-              <p>Ask the AI to <strong>“update CareerMate”</strong> to move to the latest version (or “is it up to date?” to just check). After updating, <strong>restart</strong> your AI app or the MCP connection.</p>
+              <p>Ask the AI to <strong>"update CareerMate"</strong> to move to the latest version (or ask "is it up to date?" if you only want to check). After updating, <strong>restart</strong> your AI app or the MCP connection.</p>
             </div>
           </details>
         </div>
@@ -151,10 +150,10 @@
         <div class="faq__group">
           <h2>Install &amp; connection</h2>
           <details class="acc">
-            <summary>“I don't see the MCP tools” / the AI doesn't know CareerMate</summary>
+            <summary>I don't see the MCP tools (the AI doesn't know CareerMate)</summary>
             <div class="acc__body">
               <p><strong>Fully quit and restart</strong> your AI client (changing settings without a restart won't apply).</p>
-              <p>Claude Code asks for a <strong>one-time approval</strong> of the project server on first run — approve it. Check the connection with the client's <code>/mcp</code> command, or ask the AI to “check my onboarding status” and see if it responds.</p>
+              <p>Claude Code asks for a <strong>one-time approval</strong> of the project server on first run. Approve it. Check the connection with the client's <code>/mcp</code> command, or ask the AI to "check my onboarding status" and see if it responds.</p>
               <p>Still stuck? See per-client setup in <a href="/en/start">New here?</a> or the <a href="https://careermate.life/en/start">install guide</a>.</p>
             </div>
           </details>
@@ -162,7 +161,7 @@
             <summary>It doesn't work in ChatGPT web/mobile or Gemini web</summary>
             <div class="acc__body">
               <p>That's expected. Those run in the cloud and can only use <strong>remote-URL MCP</strong>, while CareerMate is a <strong>local stdio server</strong> on your computer, so they can't reach it.</p>
-              <p>Use a locally-run client: <strong>Claude Desktop · Claude Code · Codex CLI</strong>.</p>
+              <p>Use a client that runs on your computer: <strong>Claude Desktop, Claude Code, or Codex CLI</strong>.</p>
             </div>
           </details>
           <details class="acc">
@@ -176,17 +175,17 @@
         <div class="faq__group">
           <h2>Dashboard</h2>
           <details class="acc">
-            <summary>“The dashboard won't open” (<code>http://127.0.0.1:4319</code>)</summary>
+            <summary>The dashboard won't open (<code>http://127.0.0.1:4319</code>)</summary>
             <div class="acc__body">
-              <p>That address only opens <strong>while CareerMate is running</strong>. Ask the AI to <strong>“open the dashboard”</strong> and it auto-starts the server in the background, then opens your browser.</p>
+              <p>That address only opens <strong>while CareerMate is running</strong>. Ask the AI to <strong>"open the dashboard"</strong> and it auto-starts the server in the background, then opens your browser.</p>
               <p>If the <strong>port is already in use</strong>, it falls back to another port automatically (pin it with <code>CAREERMATE_PORT</code>). If auto-start fails, check <code>~/.careermate/server.log</code>.</p>
-              <p>For security the dashboard binds to <strong><code>127.0.0.1</code> (this computer)</strong> only — it's not reachable from other devices (by design).</p>
+              <p>For security the dashboard binds to <strong><code>127.0.0.1</code> (this computer)</strong> only, so other devices can't reach it. This is intentional.</p>
             </div>
           </details>
           <details class="acc">
             <summary>It doesn't open the browser automatically</summary>
             <div class="acc__body">
-              <p>It auto-opens only once, during first onboarding. After that it just shows the link — open it yourself or ask the AI to “open the dashboard”. To disable auto-open, set <code>CAREERMATE_NO_OPEN=1</code>.</p>
+              <p>It auto-opens only once, during first onboarding. After that it only shows the link. Open it yourself or ask the AI to "open the dashboard". To disable auto-open, set <code>CAREERMATE_NO_OPEN=1</code>.</p>
             </div>
           </details>
         </div>
@@ -194,10 +193,10 @@
         <div class="faq__group">
           <h2>Reading documents (resume / job posting)</h2>
           <details class="acc">
-            <summary>“My PDF won't read”</summary>
+            <summary>My PDF won't read</summary>
             <div class="acc__body">
               <p><strong>Scanned/image PDFs</strong> (no text layer) can't be extracted. If your AI can view images, show it the PDF directly; otherwise <strong>paste the text</strong>.</p>
-              <p><strong>Password-protected PDFs</strong> can't be read — remove the password in a viewer and re-save, or paste the text. Corrupted PDFs and files over 25MB are rejected, with the reason in the message.</p>
+              <p><strong>Password-protected PDFs</strong> can't be read. Remove the password in a viewer and re-save, or paste the text. Corrupted PDFs and files over 25MB are rejected, with the reason in the message.</p>
             </div>
           </details>
           <details class="acc">
@@ -247,22 +246,22 @@
             </div>
           </details>
           <details class="acc">
-            <summary>“Analysis doesn't work” / the result is empty</summary>
+            <summary>Analysis doesn't work, or the result is empty</summary>
             <div class="acc__body">
               <p>The <strong>AI</strong> does the analysis; CareerMate stores the inputs (profile, posting) and the result. You need a <strong>saved profile and posting</strong> first.</p>
-              <p>Ask the AI to “pull the application context before analyzing” to gather profile, resume, and posting in one go.</p>
+              <p>Ask the AI to "pull the application context before analyzing" to gather profile, resume, and posting in one go.</p>
             </div>
           </details>
           <details class="acc">
             <summary>When can I prepare for interviews?</summary>
             <div class="acc__body">
-              <p>Once a posting is saved, ask the AI to prepare and save interview material. When the application status reaches <strong>“screening passed” or later</strong>, the dashboard proactively suggests interview prep as the next step.</p>
+              <p>Once a posting is saved, ask the AI to prepare and save interview material. When the application status reaches <strong>"screening passed" or later</strong>, the dashboard suggests interview prep as the next step.</p>
             </div>
           </details>
           <details class="acc">
             <summary>Can I export my resume or cover letter as a file?</summary>
             <div class="acc__body">
-              <p>Yes. Ask the AI to <strong>“export my resume”</strong> (or cover letter / profile) and it saves to <code>~/.careermate/exports</code> as <strong>Markdown</strong> or <strong>print-ready HTML</strong> (use your browser's “Print → Save as PDF”).</p>
+              <p>Yes. Ask the AI to <strong>"export my resume"</strong> (or cover letter / profile) and it saves to <code>~/.careermate/exports</code> as <strong>Markdown</strong> or <strong>print-ready HTML</strong> (use your browser's "Print → Save as PDF").</p>
               <p>You can also download them directly from the <strong>Documents and Profile pages</strong> in the dashboard.</p>
             </div>
           </details>
@@ -284,7 +283,7 @@
           </details>
         </div>
 
-        <p class="faq__more">Didn't find it here? Email <a href="mailto:osntak@gmail.com">osntak@gmail.com</a>. For <strong>security issues</strong>, email us without posting sensitive personal data.</p>
+        <p class="faq__more">If your question isn't answered here, email <a href="mailto:osntak@gmail.com">osntak@gmail.com</a>. For <strong>security issues</strong>, email us without posting sensitive personal data.</p>
       </div>
     </section>
   </main>
