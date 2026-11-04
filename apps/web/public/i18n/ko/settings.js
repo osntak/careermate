@@ -31,6 +31,23 @@ export default {
   'settings.connection.mcpBody': 'MCP 서버는 사용하시는 AI 클라이언트(Claude·ChatGPT·Cursor)가 직접 실행하며, 이 대시보드와 같은 데이터베이스를 공유합니다.',
   'settings.connection.openInstall': '설치·연결 안내 열기',
 
+  // 데이터 점검
+  'settings.check.title': '데이터 점검',
+  'settings.check.sub': '앱이 제대로 돌아가는지, 저장된 내용에 고칠 점이 있는지 확인합니다',
+  'settings.check.allOk': '실행 환경에 문제가 없습니다.',
+  'settings.check.failed': '확인이 필요합니다: {{label}}',
+  'settings.check.item.database': '로컬 데이터베이스',
+  'settings.check.item.data_dir': '데이터 폴더 읽기·쓰기',
+  'settings.check.item.backups_dir': '백업 폴더 읽기·쓰기',
+  'settings.check.item.node': 'Node.js 버전 (22 이상 필요)',
+  'settings.check.localNote': '데이터는 이 컴퓨터에만 있습니다. 인터넷은 업데이트 확인과 공고 찾기에만 씁니다.',
+  'settings.check.issuesTitle': '저장된 내용에서 찾은 점',
+  'settings.check.noIssues': '저장된 내용에서 고칠 점을 찾지 못했어요.',
+  'settings.check.severity.error': '수정 필요',
+  'settings.check.severity.warning': '확인 필요',
+  'settings.check.severity.info': '참고',
+  'settings.check.loadError': '점검 결과를 불러오지 못했어요.',
+
   // 테마
   'settings.theme.title': '테마',
   'settings.theme.sub': '시스템 설정을 따르거나 직접 고를 수 있어요',

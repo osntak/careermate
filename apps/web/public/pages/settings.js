@@ -16,6 +16,7 @@ export async function render(ctx) {
 
   const wrap = el('div', { class: 'stack-4' },
     DataLocation(info),
+    DataCheck(),
     Connection(info),
     Theme(),
     LanguageSwitcher(),
@@ -65,6 +66,52 @@ function DataLocation(info) {
     title: t('settings.dataLocation.title'),
     body: el('div', { class: 'stack-3' }, kv, privacy),
   });
+}
+
+/* ---------------------------------------------------------- 데이터 점검 */
+// Health issues name a data kind, never a record id; map it onto the existing count labels.
+const ISSUE_ENTITY_KEYS = { experience: 'experiences', project: 'projects', document: 'documents', job: 'jobs', application: 'applications', cover_letter: 'cover_letters' };
+const ISSUE_BADGE = { error: 'rejected', warning: 'planned', info: 'draft' };
+
+function checkLabel(check) {
+  const key = 'settings.check.item.' + check.id;
+  const label = t(key);
+  return label === key ? check.label : label;
+}
+
+function DataCheck() {
+  const body = el('div', { class: 'stack-3' }, el('div', { class: 'skeleton', style: { height: '60px' } }));
+
+  // Loaded on its own so a failing check never blocks the rest of Settings.
+  get('/api/diagnostics').then((diag) => {
+    const failed = (diag.checks || []).filter((c) => !c.ok);
+    const runtime = failed.length
+      ? el('div', { class: 'stack-2' }, ...failed.map((c) => el('div', {},
+          el('div', { class: 'strong' }, t('settings.check.failed', { label: checkLabel(c) })),
+          c.detail ? el('div', { class: 'muted text-sm tnum' }, c.detail) : null)))
+      : el('div', {}, el('span', { class: 'badge badge--final_passed' }, el('span', { class: 'dot' }), t('settings.check.allOk')));
+
+    const issues = diag.data_health?.issues || [];
+    const issueList = issues.length
+      ? el('div', { class: 'stack-2' }, ...issues.map((issue) => {
+          const entity = ISSUE_ENTITY_KEYS[issue.entity_type];
+          return el('div', { class: 'flex gap-3', style: { alignItems: 'flex-start' } },
+            el('span', { class: `badge badge--${ISSUE_BADGE[issue.severity] || 'draft'}` }, t('settings.check.severity.' + (ISSUE_BADGE[issue.severity] ? issue.severity : 'info'))),
+            el('div', {},
+              el('div', {}, issue.message),
+              entity ? el('div', { class: 'muted text-sm' }, countLabel(entity)) : null));
+        }))
+      : el('p', { class: 'muted', style: { margin: 0 } }, t('settings.check.noIssues'));
+
+    mount(body,
+      runtime,
+      el('div', { class: 'muted text-sm' }, t('settings.check.localNote')),
+      el('div', { class: 'divider' }),
+      el('div', { class: 'strong' }, t('settings.check.issuesTitle')),
+      issueList);
+  }).catch(() => mount(body, el('p', { class: 'muted', style: { margin: 0 } }, t('settings.check.loadError'))));
+
+  return Card({ title: t('settings.check.title'), sub: t('settings.check.sub'), body });
 }
 
 /* ---------------------------------------------------------- 연결 상태 */

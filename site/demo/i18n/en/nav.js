@@ -7,7 +7,6 @@ export default {
   'nav.applications': 'Applications',
   'nav.documents': 'Documents',
   'nav.interview': 'Interview prep',
-  'nav.insights': 'Diagnostics & insights',
   'nav.settings': 'Settings',
   'nav.section.workspace': 'Workspace',
   'nav.section.system': 'System',

@@ -14,7 +14,6 @@ const ROUTES = [
   { id: 'applications', icon: 'layers', module: '/pages/applications.js', countKey: 'active_applications' },
   { id: 'documents', icon: 'file', module: '/pages/documents.js', countKey: 'cover_letters' },
   { id: 'interview', icon: 'mic', module: '/pages/interview.js', countKey: 'interview_pending' },
-  { id: 'insights', icon: 'target', module: '/pages/insights.js' },
   { id: 'settings', icon: 'settings', module: '/pages/settings.js' },
 ];
 
@@ -36,7 +35,7 @@ function renderNav(counts = {}) {
   navEl.append(el('div', { class: 'nav__label' }, t('nav.section.workspace')));
   const { page } = parseHash();
   for (const r of ROUTES) {
-    if (r.id === 'insights') navEl.append(el('div', { class: 'nav__label' }, t('nav.section.system')));
+    if (r.id === 'settings') navEl.append(el('div', { class: 'nav__label' }, t('nav.section.system')));
     const count = r.countKey ? counts[r.countKey] : null;
     navEl.append(el('a', {
       class: `nav__item${page === r.id ? ' is-active' : ''}`,
@@ -66,6 +65,8 @@ let renderToken = 0;
 async function route() {
   const token = ++renderToken;
   const { page, params } = parseHash();
+  // The old diagnostics page now lives in Settings as the "Data check" card; keep old links working.
+  if (page === 'insights') { location.replace('#/settings'); return; }
   const def = ROUTES.find((r) => r.id === page) || ROUTES[0];
 
   navEl.querySelectorAll('.nav__item').forEach((n) => n.classList.toggle('is-active', n.getAttribute('href') === `#/${def.id}`));
