@@ -1110,6 +1110,13 @@ export const TOOLS: ToolDef[] = [
         .refine((s) => s === 'today' || isYmd(s), '"today" 또는 실제 날짜(YYYY-MM-DD)')
         .optional()
         .describe('"today" 또는 YYYY-MM-DD. 그날 이후 공고만'),
+      years: z
+        .number()
+        .int()
+        .min(0)
+        .max(40)
+        .optional()
+        .describe('사용자 경력 연차(신입 0). 공고의 경력 범위에 이 연차가 들어가는 것만 남김. "5년차"면 5. 사용자가 말하지 않았으면 프로필 경력으로 계산해 넣되 확인. 경력 표기를 읽을 수 없는 공고는 남김'),
     },
     // 공고를 가져오기만 한다. 처음 본 날짜 기록은 사용자 데이터가 아닌 로컬 캐시라 readOnly로 둔다.
     readOnly: true,
@@ -1135,18 +1142,19 @@ export const TOOLS: ToolDef[] = [
         rememberCategories,
         saraminCategories,
         postedSince: args.posted_since === 'today' ? today : args.posted_since,
+        years: args.years,
         today,
       });
       const failed = res.providers.filter((p) => !p.ok);
       const okCount = res.results.length;
       const parts = [`'${res.query || '직무 조건'}' 검색 결과 ${okCount}건${usedSaved ? '(저장된 검색 조건 사용)' : ''}`];
-      if (res.filtered_out) parts.push(`(게시일 기준 ${res.filtered_out}건 제외)`);
+      if (res.filtered_out) parts.push(`(게시일·경력 조건으로 ${res.filtered_out}건 제외)`);
       if (failed.length) parts.push(`(일부 사이트 응답 실패: ${failed.map((f) => `${f.source}: ${f.error ?? f.status}`).join('; ')})`);
       if (okCount === 0) parts.push('- 키워드나 직무 조건을 바꾸거나, 공고 URL/본문을 주시면 직접 저장해 드릴게요.');
       return ok(parts.join(' '), {
         ...res,
         used_saved_preferences: usedSaved,
-        conditions: { keyword, remember_categories: rememberCategories, saramin_categories: saraminCategories },
+        conditions: { keyword, remember_categories: rememberCategories, saramin_categories: saraminCategories, years: args.years },
       });
     },
   },

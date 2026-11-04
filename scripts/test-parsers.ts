@@ -259,7 +259,7 @@ async function main() {
 
   console.log('\n9) 직무 분류 찾기(findJobCategories) · 사이트 간 중복 합치기');
   {
-    const { findJobCategories, isRememberCategory, dedupeAcrossBoards } = await import('../packages/core/src/index.ts');
+    const { findJobCategories, isRememberCategory, dedupeAcrossBoards, experienceRange } = await import('../packages/core/src/index.ts');
     const acc = findJobCategories('경리');
     ok('비개발 직군: "경리" → 사람인 직무 코드 322', acc.saramin.some((c) => c.code === '322' && c.name === '경리'), JSON.stringify(acc.saramin.slice(0, 3)));
     const nurse = findJobCategories('간호사');
@@ -313,6 +313,15 @@ async function main() {
       { ...base, source: 'remember', company: '(주)힐링페이퍼', position: '[강남언니] 웹 프론트엔드 개발자 (글로벌)', url: 'r', external_id: '2' },
     ]);
     ok('회사명 괄호 속 서비스명("힐링페이퍼(강남언니)")은 무시하고 같은 회사로 합침', brand.length === 1 && brand[0].also_on?.[0]?.url === 'r', JSON.stringify(brand));
+
+    // 실제 네 사이트에서 나온 경력 표기 그대로.
+    const cases: [string | undefined, [number, number] | null][] = [
+      ['3~10년', [3, 10]], ['경력 5~20년', [5, 20]], ['5년 이상', [5, Infinity]], ['경력5년↑', [5, Infinity]],
+      ['~3년', [0, 3]], ['신입', [0, 0]], ['신입·경력', [0, Infinity]], ['경력무관', [0, Infinity]],
+      ['신입·경력 3년↑', [0, Infinity]], [undefined, null], ['협의', null],
+    ];
+    const wrong = cases.filter(([t, want]) => JSON.stringify(experienceRange(t)) !== JSON.stringify(want));
+    ok('경력 표기 해석(원티드·점핏·리멤버·사람인 표기 모두)', wrong.length === 0, JSON.stringify(wrong.map(([t]) => [t, experienceRange(t)])));
   }
 }
 

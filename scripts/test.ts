@@ -837,6 +837,18 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
     );
     const today50 = await searchJobs('회계', { sources: ['remember'], postedSince: '2026-01-01', trackSeen: false });
     ok('posted_since가 있으면 limit 기본값 50', today50.providers[0]?.count === 50, JSON.stringify(today50.providers));
+
+    (globalThis as { fetch: unknown }).fetch = async () =>
+      json({
+        data: [
+          { id: 1, title: 'a', organization: { name: 'a' }, min_experience: 3, max_experience: 10 },
+          { id: 2, title: 'b', organization: { name: 'b' }, min_experience: 8, max_experience: 20 },
+          { id: 3, title: 'c', organization: { name: 'c' }, min_experience: 1, max_experience: 4 },
+          { id: 4, title: 'd', organization: { name: 'd' } },
+        ],
+      });
+    const five = await searchJobs('프론트엔드', { sources: ['remember'], years: 5, trackSeen: false });
+    ok('years 5: 3~10년만 남고 8~20년·1~4년은 제외, 경력 표기 없는 공고는 남김', five.results.map((r) => r.position).join() === 'a,d' && five.filtered_out === 2, JSON.stringify(five.results));
   } finally {
     globalThis.fetch = origFetch;
   }
