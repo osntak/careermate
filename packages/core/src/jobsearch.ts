@@ -174,7 +174,8 @@ const jumpit: Provider = {
     return j.result.positions.slice(0, limit).map((p) => ({
       source: 'jumpit',
       company: p.companyName,
-      position: p.title,
+      // Keyword searches come back with highlight markup, e.g. "<span>백엔드</span> 개발자".
+      position: p.title.replace(/<[^>]*>/g, ''),
       url: `https://www.jumpit.co.kr/position/${p.id}`,
       location: p.locations?.[0],
       experience: p.newcomer
