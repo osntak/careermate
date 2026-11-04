@@ -1,7 +1,7 @@
 // Home page
 export default {
   // topbar primary action
-  'home.action.addJob': 'Add posting',
+  'home.action.findJobs': 'Find jobs',
 
   // greeting band
   'home.greeting.title': 'Hi {{name}}',

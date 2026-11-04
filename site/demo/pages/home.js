@@ -29,8 +29,9 @@ export async function render(ctx) {
   const [s, profileRes] = await Promise.all([get('/api/summary'), get('/api/profile')]);
   const name = profileRes.profile?.name;
 
-  // exactly one primary action per screen, pinned to the topbar
-  ctx.setActions([Btn(t('home.action.addJob'), { icon: 'plus', variant: 'primary', onClick: () => navigate('/jobs') })]);
+  // exactly one primary action per screen, pinned to the topbar. Finding postings is where
+  // the flow starts; adding one by hand stays on the postings page.
+  ctx.setActions([Btn(t('home.action.findJobs'), { icon: 'search', variant: 'primary', onClick: () => navigate('/search') })]);
 
   // day one: nothing saved yet → just greeting + the single getting-started card
   // (skip the pipeline + a wall of empty cards).
