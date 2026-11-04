@@ -1,7 +1,7 @@
 // 홈 페이지
 export default {
   // topbar primary action
-  'home.action.addJob': '공고 추가',
+  'home.action.findJobs': '공고 찾기',
 
   // greeting band
   'home.greeting.title': '{{name}}님, 안녕하세요',
