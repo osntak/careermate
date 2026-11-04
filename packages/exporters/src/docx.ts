@@ -40,8 +40,8 @@ const ALNUM_RE = /[\p{L}\p{N}]/u;
  *  emit javascript:/file:// hyperlinks that the HTML path neutralizes. */
 const SAFE_LINK_RE = /^(https?:|mailto:|#|\/)/i;
 
-/** Inline tokens: **bold**, _italic_, [text](url). Order-preserving, non-nesting. */
-const INLINE_RE = /(\*\*([^*]+)\*\*|_([^_]+)_|\[([^\]]+)\]\(([^)]+)\))/g;
+/** Inline tokens: **bold**, _italic_, [text](url), `code`. Order-preserving, non-nesting. */
+const INLINE_RE = /(\*\*([^*]+)\*\*|_([^_]+)_|\[([^\]]+)\]\(([^)]+)\)|`([^`]+)`)/g;
 
 function inlineRuns(text: string): (TextRun | ExternalHyperlink)[] {
   const src = xmlSafe(text);
@@ -77,6 +77,8 @@ function inlineRuns(text: string): (TextRun | ExternalHyperlink)[] {
         // Disallowed scheme (javascript:/file:/data:) → plain text, mirroring html.ts.
         out.push(new TextRun(m[4]));
       }
+    } else if (m[6] !== undefined) {
+      out.push(new TextRun({ text: m[6], font: 'Consolas' }));
     }
     last = idx + m[0].length;
   }

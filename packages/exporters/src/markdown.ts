@@ -78,8 +78,12 @@ export function dateRange(
  */
 function renderInline(escaped: string): string {
   let out = escaped;
+  // `code`
+  out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
   // **bold**
   out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // _italic_, only when not inside a word (snake_case stays literal, as in docx.ts)
+  out = out.replace(/(^|[^\p{L}\p{N}_])_([^_]+)_(?![\p{L}\p{N}_])/gu, '$1<em>$2</em>');
   // [label](url) — url is already escaped; guard against javascript: schemes.
   out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label: string, url: string) => {
     const safe = /^(https?:|mailto:|#|\/)/i.test(url.trim()) ? url.trim() : '#';

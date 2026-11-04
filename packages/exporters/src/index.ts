@@ -142,12 +142,15 @@ export function resumeToMarkdown(
   if (profile?.email) header.push(kv('이메일', profile.email));
   if (profile?.phone) header.push(kv('연락처', profile.phone));
 
-  const body = joinBlocks([
+  // A body that opens with its own `# title` already carries the name/contact
+  // block the agent wrote; wrapping it again printed the header twice.
+  const content = (doc.content ?? '').trim();
+  const body = /^#\s/.test(content) ? content : joinBlocks([
     `# ${doc.title}`,
     `_${kindLabel}_`,
     header.length ? header.filter(Boolean).join('\n\n') : '',
     header.length ? '---' : '',
-    (doc.content ?? '').trim() || '_(내용 없음)_',
+    content || '_(내용 없음)_',
   ]);
 
   return {
