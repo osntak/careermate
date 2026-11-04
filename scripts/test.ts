@@ -593,6 +593,13 @@ ok('내보내기 제목 인젝션 차단', !titleInj.includes('<script>') && !ti
   ok('structuredContent에 본문 text 포함', r.structuredContent?.text === '# 루브릭 본문' && r.structuredContent?.id === 'truthfulness');
 }
 
+// The saved title is an internal label; <title> becomes the PDF title and the viewer tab.
+{
+  const { resumeToHtml } = await import('../packages/exporters/src/index.ts');
+  const html = resumeToHtml({ kind: 'resume', title: '이력서 v10 (내부용)', content: '# 홍길동\n본문' } as never, { name: '홍길동' } as never).content;
+  ok('이력서 HTML 제목에 내부 문서명 없음', html.includes('<title>홍길동 · 이력서</title>') && !html.includes('v10'));
+}
+
 // The footer name lands inside a CSS string in <style>: no raw quote/control char may end it.
 const footerInj = toPrintableHtml('t', '본문', 'X"\f}} body{background:url(https://evil)} </style><script>alert(1)</script>');
 ok('내보내기 바닥글 CSS 인젝션 차단', !footerInj.includes('\f') && !footerInj.includes('X"') && !footerInj.includes('</style><script>'));
