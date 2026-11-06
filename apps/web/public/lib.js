@@ -335,6 +335,11 @@ export function Menu(label, items, { icon: ic = 'download', variant = 'ghost', s
     left = Math.max(8, Math.min(left, window.innerWidth - lw - 8));
     list.style.top = `${Math.round(top)}px`;
     list.style.left = `${Math.round(left)}px`;
+    // Inside a transformed ancestor (the centered .modal), fixed is relative to that
+    // ancestor, not the viewport. Shift by however far the list actually landed off.
+    const got = list.getBoundingClientRect();
+    list.style.top = `${Math.round(2 * top - got.top)}px`;
+    list.style.left = `${Math.round(2 * left - got.left)}px`;
   }
   function open() {
     if (!list.hidden) return;
