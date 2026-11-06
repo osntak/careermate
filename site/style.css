@@ -161,13 +161,14 @@ code { font-family: var(--mono); }
 }
 .theme-toggle:hover { background: var(--surface-hover); color: var(--text); }
 .theme-toggle svg { width: 16px; height: 16px; }
-.theme-toggle .i-moon { display: none; }
-.theme-toggle .i-sun { display: block; }
-:root[data-theme='dark'] .theme-toggle .i-moon { display: block; }
-:root[data-theme='dark'] .theme-toggle .i-sun { display: none; }
+/* the icon shows the mode a click switches to, like the language button and the dashboard */
+.theme-toggle .i-moon { display: block; }
+.theme-toggle .i-sun { display: none; }
+:root[data-theme='dark'] .theme-toggle .i-moon { display: none; }
+:root[data-theme='dark'] .theme-toggle .i-sun { display: block; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .theme-toggle .i-moon { display: block; }
-  :root:not([data-theme='light']) .theme-toggle .i-sun { display: none; }
+  :root:not([data-theme='light']) .theme-toggle .i-moon { display: none; }
+  :root:not([data-theme='light']) .theme-toggle .i-sun { display: block; }
 }
 
 /* github icon link: mirrors .theme-toggle so the two read as siblings */

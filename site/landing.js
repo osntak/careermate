@@ -9,8 +9,8 @@
   // 절대 document.documentElement.lang을 바꾸지 않는다(렌더 lang ↔ hreflang 불일치 방지).
   var LANG = document.documentElement.lang === 'en' ? 'en' : 'ko';
   var STR = {
-    ko: { copied: '복사됨', copiedStatus: '클립보드에 복사되었습니다.' },
-    en: { copied: 'Copied', copiedStatus: 'Copied to clipboard.' }
+    ko: { copied: '복사됨', copiedStatus: '클립보드에 복사되었습니다.', toLight: '라이트 모드로 전환', toDark: '다크 모드로 전환' },
+    en: { copied: 'Copied', copiedStatus: 'Copied to clipboard.', toLight: 'Switch to light mode', toDark: 'Switch to dark mode' }
   };
   // 히어로 명령 데모 씬 (로케일별). en은 직역이 아니라 한국어 의도를 살린 자연스러운 영어.
   var SCENES = {
@@ -74,11 +74,19 @@
     if (t === 'light') return false;
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
+  // The label names the mode a click switches to, matching the icon.
+  function labelToggle() {
+    var label = isDark() ? STR[LANG].toLight : STR[LANG].toDark;
+    toggle.setAttribute('aria-label', label);
+    toggle.setAttribute('title', label);
+  }
   if (toggle) {
+    labelToggle();
     toggle.addEventListener('click', function () {
       var next = isDark() ? 'light' : 'dark';
       root.setAttribute('data-theme', next);
       try { window.localStorage.setItem('careermate-theme', next); window.localStorage.removeItem('cf-theme'); } catch (e) {}
+      labelToggle();
     });
   }
 
