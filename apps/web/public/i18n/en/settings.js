@@ -15,7 +15,6 @@ export default {
   'settings.dataLocation.privacyBody': 'All your data stays on this computer and is never sent anywhere. The AI only sees what you type in or what it looks up through MCP.',
 
   // connection
-  'settings.connection.title': 'Connection',
   'settings.connection.shortcutDemoTitle': 'Shortcut preview',
   'settings.connection.shortcutTitle': 'Shortcut created',
   'settings.connection.shortcutDemoCalloutTitle': "The demo doesn't create files",
@@ -24,12 +23,8 @@ export default {
   'settings.connection.shortcutCalloutBody': "If the dashboard is running it just opens your browser; if it's stopped, it starts the server first and then opens the browser.",
   'settings.connection.shortcutFolder': 'Folder',
   'settings.connection.shortcutLauncher': 'Shortcut',
-  'settings.connection.running': 'Running',
-  'settings.connection.dashboard': 'Dashboard',
   'settings.connection.createShortcut': 'Create shortcut',
-  'settings.connection.mcpServer': 'MCP server',
-  'settings.connection.mcpBody': 'Your AI client (Claude, ChatGPT, Cursor) runs the MCP server itself, and it shares the same database as this dashboard.',
-  'settings.connection.openInstall': 'Open setup guide',
+  'settings.connection.openInstall': 'Connect your AI',
 
   // data check
   'settings.check.title': 'Data check',

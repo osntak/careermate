@@ -3,12 +3,13 @@
 // cover letters, interview prep, and related history, all driven by the AI's
 // saved data with manual fallbacks throughout.
 import {
-  el, get, post, put, del, icon, navigate, Card, Badge, Btn, SubmitBtn,
+  el, get, post, put, del, icon, navigate, Card, Badge, Btn, IconBtn, SubmitBtn,
   EmptyState, Chips, Field, Input, Textarea, Select, ViewSwitch,
   openModal, closeModal, confirmDialog, toastOk, toastError,
   fmtDate, scoreClass, mount, meta, linesToArray, csvToArray, daysUntil, scheduleDdayBadge,
 } from '/demo/lib.js';
 import { t } from '/demo/i18n.js';
+import { openDocument, createDocument } from '/demo/pages/documents.js';
 
 export async function render(ctx) {
   if (ctx.params[0]) return renderDetail(ctx, ctx.params[0]);
@@ -345,9 +346,8 @@ async function renderDetail(ctx, jobId) {
   const wrap = el('div', { class: 'stack-4' },
     head,
     el('div', { class: 'grid grid--2' },
-      CoverLettersCard(job.cover_letters),
+      DocumentsCard(job, remount),
       InterviewCard(job)),
-    SubmittedCard(job.timeline),
     PostingCard(job),
     CompanyResearchCard(job),
     FitCard(job.fit),
@@ -534,50 +534,178 @@ function FitCard(fit) {
   return Card({ title: t('jobs.fit.title'), body: el('div', { class: 'stack-3' }, ...body) });
 }
 
-function CoverLettersCard(coverLetters) {
-  const list = coverLetters || [];
-  if (!list.length) {
-    return Card({
-      title: t('jobs.cover.title'),
-      body: el('p', { class: 'muted', style: { margin: 0, lineHeight: '1.6' } },
-        t('jobs.cover.empty')),
+// Everything this posting would go out with, in one list: its cover letters, documents linked
+// to it, then the general main resume/career description/portfolio for kinds with nothing
+// linked. What was recorded as sent at 지원 완료 is tagged (and added if not in the list yet).
+// A row opens the same detail dialog 서류함 uses, in place.
+function DocumentsCard(job, remount) {
+  const s = [...(job.timeline || [])].reverse().find((e) => e.payload?.submission)?.payload.submission;
+  const sentIds = new Set([s?.cover_letter?.id, ...(s?.documents || []).map((d) => d.id)].filter(Boolean));
+  const opener = (kind, id) => () => openDocument(kind, id, remount);
+  const rows = [
+    ...(job.cover_letters || []).map((cl) => ({
+      id: cl.id, kind: t('jobs.timeline.coverLetter'), title: cl.title, open: opener('cover', cl.id),
+      meta: [t('jobs.cover.versions', { count: cl.version_count ?? 1 }), cl.updated_at && fmtDate(cl.updated_at)],
+      unlink: async () => {
+        try { await del(`/api/cover-letters/${cl.id}/job`); remount(); } catch (err) { toastError(err); }
+      },
+    })),
+    ...(job.documents || []).map((d) => ({
+      id: d.id, kind: t('kind.' + d.kind), title: d.title, open: opener(d.kind, d.id), meta: [d.updated_at && fmtDate(d.updated_at)],
+      unlink: async () => {
+        try { await del(`/api/jobs/${job.id}/documents/${d.id}`); remount(); } catch (err) { toastError(err); }
+      },
+    })),
+    ...(job.general_documents || []).map((d) => ({
+      id: d.id, kind: t('kind.' + d.kind), title: d.title, open: opener(d.kind, d.id), meta: [d.updated_at && fmtDate(d.updated_at)], general: true,
+    })),
+  ];
+  const seen = new Set(rows.map((r) => r.id));
+  for (const ref of [s?.cover_letter, ...(s?.documents || [])].filter((r) => r && !seen.has(r.id))) {
+    const isCover = ref === s.cover_letter;
+    rows.push({
+      id: ref.id, kind: isCover ? t('jobs.timeline.coverLetter') : t('kind.' + (ref.document_kind || 'other')),
+      title: ref.title, open: ref.exists ? opener(isCover ? 'cover' : ref.document_kind, ref.id) : null,
+      meta: [ref.exists ? null : t('jobs.timeline.deleted')],
     });
   }
+  const when = s ? [s.submitted_at ? fmtDate(s.submitted_at) : null, s.channel].filter(Boolean).join(' · ') : '';
   return Card({
-    title: t('jobs.cover.title'),
-    sub: t('jobs.cover.cardSub', { count: list.length }),
-    body: el('div', { class: 'stack-2' },
-      ...list.map((cl) => el('div', {
-        class: 'flex between center is-clickable',
-        style: { padding: '8px 0', cursor: 'pointer' },
-        activate: () => navigate(`/documents/cover/${cl.id}`),
-      },
-        el('div', { class: 'flex gap-2 center' },
-          icon('file', 'muted'),
-          el('div', {},
-            el('div', { class: 'strong' }, cl.title),
-            // Preview line: version count + last-updated date so the row isn't a bare
-            // title. (The latest version's note isn't in this response — listByJob maps
-            // without versions — so we fall back to the date per the design.)
-            el('div', { class: 'muted text-sm' },
-              t('jobs.cover.versions', { count: cl.version_count ?? 1 }),
-              cl.updated_at ? ` · ${fmtDate(cl.updated_at)}` : ''))),
-        icon('chevronRight', 'muted')))),
+    title: t('jobs.docs.title'),
+    sub: sentIds.size ? [t('jobs.docs.sent'), when].filter(Boolean).join(' · ') : null,
+    actions: Btn(t('jobs.docs.add'), { sm: true, variant: 'ghost', icon: 'plus', onClick: () => openAddDocument(job, remount) }),
+    body: rows.length
+      ? el('div', { class: 'job-docs' }, ...rows.map((r) => DocRow(r, sentIds.has(r.id))))
+      : el('p', { class: 'muted', style: { margin: 0, lineHeight: '1.6' } }, t('jobs.docs.empty')),
   });
 }
 
-// What was actually sent for this posting: the latest 지원 완료 record's cover letter and
-// documents, lifted out of the timeline so it isn't one line among many.
-function SubmittedCard(timeline) {
-  const s = [...(timeline || [])].reverse().find((e) => e.payload?.submission)?.payload.submission;
-  if (!s || (!s.cover_letter && !(s.documents || []).length)) return null;
-  const when = [s.submitted_at ? fmtDate(s.submitted_at) : null, s.channel].filter(Boolean).join(' · ');
-  return Card({
-    title: t('jobs.submitted.title'),
-    sub: when || null,
+function DocRow(r, sent) {
+  return el('div', { class: `job-doc${r.open ? ' is-clickable' : ''}`, activate: r.open || null },
+    el('div', { class: 'job-doc__main' },
+      el('div', { class: 'strong truncate' }, r.title),
+      el('div', { class: 'muted text-sm truncate' }, [r.kind, ...r.meta].filter(Boolean).join(' · '))),
+    sent ? el('span', { class: 'chip chip--accent' }, t('jobs.docs.sentTag')) : null,
+    r.general ? el('span', { class: 'chip', title: t('jobs.docs.generalHint') }, t('jobs.docs.generalTag')) : null,
+    r.unlink ? el('button', {
+      class: 'job-doc__remove', type: 'button', title: t('jobs.docs.unlink'), attrs: { 'aria-label': t('jobs.docs.unlink') },
+      onClick: (e) => { e.stopPropagation(); r.unlink(); },
+      onKeydown: (e) => e.stopPropagation(),
+    }, icon('x')) : null);
+}
+
+// Add documents from 서류함: the same tabs plus 전체, search behind the magnifier, several at
+// once. Already-added ones stay visible but locked. A cover letter written for another posting
+// is shown locked too: attaching it here would take it away from that posting.
+const ADD_TABS = ['all', 'cover', 'resume', 'career_description', 'portfolio', 'other'];
+
+async function openAddDocument(job, remount, startTab = 'all') {
+  let docs, covers, jobs;
+  try {
+    [{ documents: docs }, { cover_letters: covers }, { jobs }] = await Promise.all([
+      get('/api/documents'), get('/api/cover-letters'), get('/api/jobs'),
+    ]);
+  } catch (err) { toastError(err); return; }
+  const jobName = new Map(jobs.map((j) => [j.id, `${j.company} · ${j.position}`]));
+  const linkedDocs = new Set((job.documents || []).map((d) => d.id));
+  const items = [
+    ...covers.map((cl) => ({
+      id: cl.id, kind: 'cover', title: cl.title, updated_at: cl.updated_at, primary: cl.is_primary,
+      added: cl.job_id === job.id,
+      locked: cl.job_id && cl.job_id !== job.id ? t('jobs.docs.otherJob', { job: jobName.get(cl.job_id) || '' }) : null,
+    })),
+    ...docs.map((d) => ({
+      id: d.id, kind: d.kind, title: d.title, updated_at: d.updated_at, primary: d.is_primary,
+      added: linkedDocs.has(d.id),
+      note: d.jobs?.length ? t('jobs.docs.usedIn', { count: d.jobs.length }) : null,
+    })),
+  ];
+  const kindLabel = (k) => (k === 'cover' ? t('jobs.timeline.coverLetter') : t('kind.' + k));
+  const picked = new Set();
+  let tab = startTab;
+  let query = '';
+
+  const list = el('div', { class: 'add-doc__list' });
+  const tabs = el('div', { class: 'tabs add-doc__tabs' });
+  const search = el('input', {
+    class: 'input add-doc__search', type: 'search', placeholder: t('jobs.docs.searchPlaceholder'), hidden: true,
+    onInput: (e) => { query = e.target.value.trim().toLowerCase(); draw(); },
+  });
+  const searchBtn = IconBtn('search', {
+    title: t('jobs.docs.search'),
+    onClick: () => { search.hidden = !search.hidden; if (search.hidden) { search.value = ''; query = ''; draw(); } else search.focus(); },
+  });
+  const addBtn = el('button', { class: 'btn btn--primary', type: 'button', disabled: true, onClick: submit });
+
+  function draw() {
+    tabs.replaceChildren(...ADD_TABS.map((k) => el('button', {
+      type: 'button', class: `tab${k === tab ? ' is-active' : ''}`, onClick: () => { tab = k; draw(); },
+    }, k === 'all' ? t('jobs.docs.tabAll') : kindLabel(k))));
+    // Pickable first; already added or locked ones sink to the bottom.
+    const shown = items
+      .filter((it) => (tab === 'all' || it.kind === tab) && (!query || it.title.toLowerCase().includes(query)))
+      .sort((a, b) => Number(a.added || !!a.locked) - Number(b.added || !!b.locked));
+    if (!shown.length) {
+      const kind = tab === 'all' ? 'resume' : tab;
+      list.replaceChildren(query
+        ? el('p', { class: 'muted', style: { margin: '16px 0', textAlign: 'center' } }, t('jobs.docs.noMatch'))
+        : EmptyState({
+          iconName: 'file',
+          title: tab === 'all' ? t('jobs.docs.emptyAll') : t('jobs.docs.emptyKind', { kind: kindLabel(tab) }),
+          action: Btn(t('jobs.docs.createKind', { kind: kindLabel(kind) }), {
+            icon: 'plus', variant: 'primary', onClick: () => createDocument(kind, () => openAddDocument(job, remount, tab)),
+          }),
+        }));
+    } else {
+      list.replaceChildren(...shown.map((it) => {
+        const disabled = it.added || !!it.locked;
+        const on = picked.has(it.id);
+        return el('button', {
+          type: 'button', disabled,
+          class: `add-doc__row${on ? ' is-selected' : ''}`, attrs: { 'aria-pressed': String(on) },
+          onClick: (e) => {
+            const now = !picked.has(it.id);
+            now ? picked.add(it.id) : picked.delete(it.id);
+            e.currentTarget.classList.toggle('is-selected', now);
+            e.currentTarget.setAttribute('aria-pressed', String(now));
+            syncAdd();
+          },
+        },
+          el('div', { style: { minWidth: 0, flex: 1 } },
+            el('div', { class: 'strong truncate' }, it.title),
+            el('div', { class: 'muted text-sm truncate' },
+              [kindLabel(it.kind), it.primary ? t('documents.cover.primary') : null, it.locked || it.note, fmtDate(it.updated_at)]
+                .filter(Boolean).join(' · '))),
+          it.added ? el('span', { class: 'chip' }, t('jobs.docs.added'))
+            : el('span', { class: 'add-doc__mark' }, icon('check')));
+      }));
+    }
+  }
+  function syncAdd() {
+    addBtn.disabled = !picked.size;
+    addBtn.textContent = picked.size ? t('jobs.docs.addCount', { count: picked.size }) : t('jobs.docs.add');
+  }
+  async function submit() {
+    addBtn.disabled = true;
+    try {
+      for (const it of items.filter((x) => picked.has(x.id))) {
+        if (it.kind === 'cover') await put(`/api/cover-letters/${it.id}/job`, { job_id: job.id });
+        else await post(`/api/jobs/${job.id}/documents`, { document_id: it.id });
+      }
+      closeModal();
+      remount();
+    } catch (err) { toastError(err); syncAdd(); }
+  }
+
+  draw();
+  syncAdd();
+  openModal({
+    title: t('jobs.docs.addTitle'),
     body: el('div', { class: 'stack-2' },
-      s.cover_letter ? TimelineRef(t('jobs.timeline.coverLetter'), s.cover_letter) : null,
-      ...(s.documents || []).map((doc) => TimelineRef(t('kind.' + (doc.document_kind || 'other')), doc))),
+      el('div', { class: 'add-doc__bar' }, tabs, searchBtn),
+      search,
+      list),
+    footer: (close) => [Btn(t('common.cancel'), { variant: 'ghost', onClick: close }), addBtn],
   });
 }
 

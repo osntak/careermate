@@ -95,6 +95,25 @@ ok('자소서 버전 관리', (await json('GET', `/api/cover-letters/${cl.id}`))
 // undefined→null 강제로 job_id를 지워 공고 상세에서 자소서가 사라졌음.)
 ok('자소서 새 버전 저장이 공고 연결을 유지(회귀)',
   (await json('GET', `/api/jobs/${apiJob.id}`)).job.cover_letters.some((c: any) => c.id === cl.id));
+{
+  const linked = (await json('POST', '/api/documents', { kind: 'career_description', title: '라인용 경력기술서', content: 'x' }, { 'x-careermate-token': SESSION_TOKEN })).document;
+  const general = (await json('POST', '/api/documents', { kind: 'resume', title: '범용 이력서', content: 'x', is_primary: true }, { 'x-careermate-token': SESSION_TOKEN })).document;
+  await authed('POST', `/api/jobs/${apiJob.id}/documents`, { document_id: linked.id });
+  const d = (await json('GET', `/api/jobs/${apiJob.id}`)).job;
+  const listed = (await json('GET', '/api/documents?kind=career_description')).documents.find((x: any) => x.id === linked.id);
+  ok('공고 서류 연결: 연결 문서 + 범용 대표 문서, 서류함에 연결 공고 표시',
+    d.documents.some((x: any) => x.id === linked.id) && d.general_documents.some((x: any) => x.id === general.id)
+    && !d.general_documents.some((x: any) => x.kind === 'career_description') && listed?.jobs[0]?.id === apiJob.id);
+  await authed('DELETE', `/api/jobs/${apiJob.id}/documents/${linked.id}`);
+  ok('공고 서류 연결 해제', !(await json('GET', `/api/jobs/${apiJob.id}`)).job.documents.length);
+  // A cover letter written for this posting cannot be pulled onto another one.
+  const other = (await json('POST', '/api/jobs', { company: '다른회사', position: 'x', description: 'x' }, { 'x-careermate-token': SESSION_TOKEN })).job;
+  ok('다른 공고 자소서는 연결 거부(409)', (await reqRaw('PUT', `/api/cover-letters/${cl.id}/job`, { job_id: other.id }, { 'x-careermate-token': SESSION_TOKEN })).status === 409);
+  await authed('DELETE', `/api/jobs/${other.id}`);
+  // Later prescreen checks expect no resume yet.
+  await authed('DELETE', `/api/documents/${linked.id}`);
+  await authed('DELETE', `/api/documents/${general.id}`);
+}
 const timelineBeforeApply = (await json('GET', `/api/jobs/${apiJob.id}`)).job.timeline;
 ok(
   '공고 상세 타임라인: 공고 등록/분석/자소서 이벤트',

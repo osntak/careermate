@@ -17,6 +17,20 @@ const TABS = ['cover', 'resume', 'career', 'portfolio', 'other'];
 // cover letters. The search query is not persisted either (it resets per visit).
 let openedDeepLink = '';
 
+// Open one document's detail dialog from another page (job detail), the same one 서류함 shows.
+// kind: 'cover' or a document kind. reload runs after an edit or delete inside the dialog.
+export async function openDocument(kind, id, reload) {
+  if (kind === 'cover') return openCoverDetail(id, reload);
+  const m = await meta();
+  const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, t('kind.' + k.value)]));
+  return openDocDetail(id, kindLabels, m, reload);
+}
+
+// The create dialog for a kind, for callers outside 서류함.
+export function createDocument(kind, reload) {
+  return kind === 'cover' ? openCoverCreate(reload) : openDocCreate(reload, kind);
+}
+
 export async function render(ctx) {
   const raw = ctx.params?.[0] === 'docs' ? 'resume' : ctx.params?.[0];
   const requestedTab = TABS.includes(raw) ? raw : null;
@@ -422,6 +436,12 @@ function DocRow(doc, kindLabels, m, reload) {
     body: [
       head,
       el('p', { class: 'text-secondary text-sm truncate', style: { margin: '8px 0 0', maxWidth: '100%' } }, firstLine(doc.content)),
+      // Latest posting only: a general resume used for many postings would otherwise list them all.
+      doc.jobs?.length
+        ? el('div', { class: 'flex gap-2 wrap', style: { marginTop: '8px' } },
+          JobLink(doc.jobs[0]),
+          doc.jobs.length > 1 ? el('span', { class: 'chip' }, t('documents.doc.moreJobs', { count: doc.jobs.length - 1 })) : null)
+        : null,
       (doc.tags && doc.tags.length)
         ? el('div', { class: 'chips', style: { marginTop: '8px' } }, ...doc.tags.map((t) => el('span', { class: 'chip chip--accent' }, t)))
         : null,
@@ -448,6 +468,8 @@ async function openDocDetail(id, kindLabels, m, reload) {
         el('span', { class: 'chip' }, t('source.' + doc.source)),
         el('span', { class: 'muted text-sm' }, t('documents.docDetail.updated', { when: fmtRelative(doc.updated_at) })),
       ),
+      doc.jobs?.length ? el('div', { class: 'flex gap-2 wrap center' },
+        el('span', { class: 'muted text-sm' }, t('documents.doc.linkedJobs')), ...doc.jobs.map(JobLink)) : null,
       el('div', { class: 'doc-preview doc-preview--md' }, doc.content ? Markdown(doc.content) : t('documents.docDetail.noContent')),
     ),
     footer: (close) => [

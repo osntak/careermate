@@ -105,8 +105,14 @@ export function buildSeedEn() {
       {
         id: 'd2', created_at: '2026-05-20T13:00:00.000Z', updated_at: '2026-05-20T13:00:00.000Z',
         kind: 'career_description', title: 'Career Description — PayCore', source: 'manual', is_primary: false,
-        tags: ['payments'],
+        tags: ['payments'], job_ids: ['j1'],
         content: '## PayCore (Mar 2022 – Present)\nPayment gateway & settlement backend. See individual project entries for detailed achievements.\n',
+      },
+      {
+        id: 'd3', created_at: '2026-05-25T11:00:00.000Z', updated_at: '2026-06-08T16:20:00.000Z',
+        kind: 'portfolio', title: 'Portfolio: payments and settlement projects', source: 'manual', is_primary: true,
+        tags: ['projects'],
+        content: '## Real-time settlement pipeline\nKafka event streaming cut settlement delay from 6 hours to real time.\n\n## Automatic PG failover\nAuto-rerouting on payment gateway outages cut mean recovery from 15 to 2 minutes.\n',
       },
     ],
 

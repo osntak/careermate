@@ -15,7 +15,6 @@ export default {
   'settings.dataLocation.privacyBody': '모든 데이터는 이 컴퓨터에만 저장됩니다. 외부로 전송되지 않습니다. AI에는 사용자가 직접 입력하거나 AI가 MCP로 조회한 정보만 전달됩니다.',
 
   // 연결 상태
-  'settings.connection.title': '연결 상태',
   'settings.connection.shortcutDemoTitle': '바로가기 미리보기',
   'settings.connection.shortcutTitle': '바로가기 생성',
   'settings.connection.shortcutDemoCalloutTitle': '데모에서는 파일을 만들지 않습니다',
@@ -24,12 +23,8 @@ export default {
   'settings.connection.shortcutCalloutBody': '대시보드가 실행 중이면 브라우저만 열고, 꺼져 있으면 서버를 시작한 뒤 브라우저를 엽니다.',
   'settings.connection.shortcutFolder': '폴더',
   'settings.connection.shortcutLauncher': '바로가기',
-  'settings.connection.running': '실행 중',
-  'settings.connection.dashboard': '대시보드',
   'settings.connection.createShortcut': '바로가기 만들기',
-  'settings.connection.mcpServer': 'MCP 서버',
-  'settings.connection.mcpBody': 'MCP 서버는 사용하시는 AI 클라이언트(Claude·ChatGPT·Cursor)가 직접 실행하며, 이 대시보드와 같은 데이터베이스를 공유합니다.',
-  'settings.connection.openInstall': '설치·연결 안내 열기',
+  'settings.connection.openInstall': 'AI 연결 안내',
 
   // 데이터 점검
   'settings.check.title': '데이터 점검',

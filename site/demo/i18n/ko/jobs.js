@@ -120,9 +120,6 @@ export default {
   'jobs.fit.recommendations': '추천 전략',
 
   // ---- cover letters card ----
-  'jobs.cover.title': '자기소개서',
-  'jobs.cover.empty': 'AI에게 작성을 요청하면 여기에 저장돼요.',
-  'jobs.cover.cardSub': '{{count}}개',
   'jobs.cover.versions': '버전 {{count}}개',
 
   // ---- interview card ----
@@ -157,7 +154,26 @@ export default {
 
   // ---- timeline card ----
   'jobs.timeline.title': '타임라인',
-  'jobs.submitted.title': '제출한 서류',
+  'jobs.docs.title': '서류',
+  'jobs.docs.empty': '아직 서류가 없어요. AI에게 이 공고에 맞춘 자기소개서나 경력기술서를 부탁하면 여기에 모여요.',
+  'jobs.docs.sent': '지원 때 제출',
+  'jobs.docs.sentTag': '지원 때 제출',
+  'jobs.docs.generalTag': '범용',
+  'jobs.docs.generalHint': '어느 공고에도 연결하지 않은 기본 문서예요. 따로 연결한 문서가 있으면 그게 대신 보여요.',
+  'jobs.docs.add': '서류 추가',
+  'jobs.docs.addTitle': '이 공고에 서류 추가',
+  'jobs.docs.addCount': '{{count}}개 추가',
+  'jobs.docs.tabAll': '전체',
+  'jobs.docs.search': '검색',
+  'jobs.docs.searchPlaceholder': '제목으로 찾기',
+  'jobs.docs.noMatch': '찾는 서류가 없어요.',
+  'jobs.docs.emptyAll': '서류함이 비어 있어요',
+  'jobs.docs.emptyKind': '{{kind}}가 아직 없어요',
+  'jobs.docs.createKind': '{{kind}} 만들기',
+  'jobs.docs.added': '추가됨',
+  'jobs.docs.otherJob': '{{job}} 공고용',
+  'jobs.docs.usedIn': '공고 {{count}}곳에 연결',
+  'jobs.docs.unlink': '이 공고에서 빼기',
   'jobs.timeline.cardSub': '{{count}}개',
   'jobs.timeline.coverLetter': '자기소개서',
   'jobs.timeline.deletedDoc': '삭제된 문서',

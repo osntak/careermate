@@ -18,6 +18,7 @@ export {
   projectRepo,
   skillRepo,
   documentRepo,
+  jobDocumentRepo,
   coverLetterRepo,
   jobRepo,
   fitRepo,

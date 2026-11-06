@@ -102,8 +102,14 @@ export function buildSeed() {
       {
         id: 'd2', created_at: '2026-05-20T13:00:00.000Z', updated_at: '2026-05-20T13:00:00.000Z',
         kind: 'career_description', title: '경력기술서 — 페이코어', source: 'manual', is_primary: false,
-        tags: ['결제'],
+        tags: ['결제'], job_ids: ['j1'],
         content: '## 페이코어 (2022.03~)\n결제 게이트웨이/정산 백엔드. 상세 프로젝트와 성과는 본문 참조.\n',
+      },
+      {
+        id: 'd3', created_at: '2026-05-25T11:00:00.000Z', updated_at: '2026-06-08T16:20:00.000Z',
+        kind: 'portfolio', title: '포트폴리오: 결제·정산 프로젝트', source: 'manual', is_primary: true,
+        tags: ['프로젝트'],
+        content: '## 실시간 정산 파이프라인\nKafka 기반 이벤트 스트리밍으로 정산 지연을 6시간에서 실시간으로 줄였습니다.\n\n## 결제 장애 자동 우회\nPG사 장애 시 자동 우회 라우팅으로 평균 복구 시간 15분에서 2분.\n',
       },
     ],
 

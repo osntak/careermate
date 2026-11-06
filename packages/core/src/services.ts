@@ -37,6 +37,7 @@ import {
 } from '@careermate/shared';
 import {
   jobRepo,
+  jobDocumentRepo,
   fitRepo,
   coverLetterRepo,
   applicationRepo,
@@ -120,8 +121,13 @@ export function saveProfile(input: ProfileInput): ProfileRecord {
 
 /* ---------------------------------------------------------------- Resumes */
 
-export function addResume(input: Omit<DocumentInput, 'kind'> & { kind?: DocumentInput['kind'] }): DocumentRecord {
-  const doc = documentRepo.add({ ...input, kind: input.kind ?? 'resume' });
+export function addResume(
+  input: Omit<DocumentInput, 'kind'> & { kind?: DocumentInput['kind']; job_id?: string },
+): DocumentRecord {
+  const { job_id, ...docInput } = input;
+  if (job_id && !jobRepo.get(job_id)) throw notFound('공고를 찾을 수 없습니다. 먼저 공고를 저장한 뒤 다시 시도하세요.');
+  const doc = documentRepo.add({ ...docInput, kind: docInput.kind ?? 'resume' });
+  if (job_id) jobDocumentRepo.link(job_id, doc.id);
   activityRepo.log('resume_added', `${doc.title} 문서를 추가했습니다.`, 'document', doc.id);
   return doc;
 }

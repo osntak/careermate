@@ -135,6 +135,7 @@ const ICONS = {
   mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 9 2.6h.1A2 2 0 1 1 13 2.6V3a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.4Z"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
   edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   trash: '<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M6 6v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6"/>',
   copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
@@ -509,6 +510,11 @@ export function toastOk(msg) { toast(msg, { type: 'success' }); }
 /* ------------------------------------------------------------------ modal */
 let modalRoot;
 let modalReturnFocus = null;
+// How the user last interacted. Focus goes back to the opener only for keyboard users:
+// handing it back after a mouse click leaves that row lit (focus ring) once the dialog closes.
+let lastInput = 'pointer';
+document.addEventListener('pointerdown', () => { lastInput = 'pointer'; }, true);
+document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') lastInput = 'key'; }, true);
 const MODAL_FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 function ensureModalRoot() {
   if (!modalRoot) {
@@ -535,7 +541,7 @@ export function openModal({ title, body, footer, size, intent = 'dialog' }) {
   if (intent === 'contextual' || intent === 'alert') clearToasts();
   root.dataset.intent = intent;
   document.body.dataset.modalIntent = intent;
-  modalReturnFocus = document.activeElement; // restored by closeModal
+  modalReturnFocus = lastInput === 'key' ? document.activeElement : null; // restored by closeModal
   const closeBtn = IconBtn('plus', { title: t('common.close'), onClick: close }); // rotated to look like ×
   closeBtn.style.transform = 'rotate(45deg)';
   const modal = el('div', {

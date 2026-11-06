@@ -52,19 +52,22 @@ export async function render(ctx) {
   mount(ctx.view, wrap);
 
   function StatusGroup(code, apps) {
-    return el('div', {},
-      el('div', { class: 'app-group__head' },
-        el('span', { class: 'app-group__dot', style: { background: statusColor(code) } }),
-        el('span', { class: 'app-group__title' }, t('status.' + code)),
-        el('span', { class: 'app-group__count tnum' }, t('applications.group.count', { count: apps.length }))),
-      el('div', {}, ...apps.map(AppRow)));
+    // One card per stage, like the 목록 tab, so rows get the card's side padding.
+    return el('div', { class: 'card' },
+      el('div', { class: 'card__head' },
+        el('h3', { class: 'flex gap-2 center' },
+          el('span', { class: 'app-group__dot', style: { background: statusColor(code) } }),
+          t('status.' + code)),
+        el('span', { class: 'sub tnum' }, t('applications.group.count', { count: apps.length }))),
+      el('div', { class: 'card__body', style: { paddingTop: '6px', paddingBottom: '6px' } }, ...apps.map(AppRow)));
   }
 
   function AppRow(app) {
     const job = app.job || {};
     const subBits = [job.position, job.location].filter(Boolean);
     const dday = ddayLabel(job.deadline);
-    if (dday) subBits.push(dday);
+    // The deadline only matters before applying; after that "마감 지남" is just noise.
+    if (dday && (app.status === 'draft' || app.status === 'planned')) subBits.push(dday);
     // 탈락 회고: 불합격이고 단계가 기록돼 있으면 어느 단계에서 떨어졌는지 sub에 가볍게 병기.
     if (app.status === 'rejected' && app.rejected_stage) {
       subBits.push(`${t('applications.rejectedStage.label')} ${t('applications.rejectedStage.' + app.rejected_stage)}`);

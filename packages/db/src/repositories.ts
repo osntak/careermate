@@ -524,7 +524,42 @@ export const documentRepo = {
     });
   },
   remove(id: string): boolean {
-    return getDb().prepare(`DELETE FROM documents WHERE id=?`).run(id).changes > 0;
+    const db = getDb();
+    return tx(() => {
+      db.prepare(`DELETE FROM job_documents WHERE document_id=?`).run(id);
+      return db.prepare(`DELETE FROM documents WHERE id=?`).run(id).changes > 0;
+    });
+  },
+};
+
+/** Documents a posting goes out with (many-to-many; cover letters use their own job_id). */
+export const jobDocumentRepo = {
+  link(jobId: string, documentId: string): void {
+    getDb()
+      .prepare(`INSERT OR IGNORE INTO job_documents (job_id,document_id,created_at) VALUES (?,?,?)`)
+      .run(jobId, documentId, now());
+  },
+  unlink(jobId: string, documentId: string): boolean {
+    return getDb().prepare(`DELETE FROM job_documents WHERE job_id=? AND document_id=?`).run(jobId, documentId).changes > 0;
+  },
+  listByJob(jobId: string): DocumentRecord[] {
+    return (
+      getDb()
+        .prepare(`SELECT d.* FROM job_documents l JOIN documents d ON d.id=l.document_id WHERE l.job_id=? ORDER BY l.created_at DESC`)
+        .all(jobId) as any[]
+    ).map(mapDocument);
+  },
+  /** document_id -> linked postings, newest link first. */
+  jobsByDocument(): Map<string, Array<{ id: string; company: string; position: string }>> {
+    const rows = getDb()
+      .prepare(`SELECT l.document_id, j.id, j.company, j.position FROM job_documents l JOIN jobs j ON j.id=l.job_id ORDER BY l.created_at DESC`)
+      .all() as any[];
+    const out = new Map<string, Array<{ id: string; company: string; position: string }>>();
+    for (const r of rows) {
+      if (!out.has(r.document_id)) out.set(r.document_id, []);
+      out.get(r.document_id)!.push({ id: r.id, company: r.company, position: r.position });
+    }
+    return out;
   },
 };
 
@@ -578,6 +613,9 @@ export const coverLetterRepo = {
     return (
       getDb().prepare(`SELECT * FROM cover_letters WHERE job_id=? ORDER BY updated_at DESC`).all(jobId) as any[]
     ).map((r) => mapCoverLetter(r, false));
+  },
+  setJob(id: string, jobId: string | null): boolean {
+    return getDb().prepare(`UPDATE cover_letters SET job_id=?, updated_at=? WHERE id=?`).run(jobId, now(), id).changes > 0;
   },
   create(opts: { title: string; job_id?: string | null; is_primary?: boolean }): CoverLetterRecord {
     const ts = now();
@@ -768,6 +806,7 @@ export const jobRepo = {
     // Delete the job and all its dependent rows atomically (no orphans on failure).
     return tx(() => {
       db.prepare(`UPDATE cover_letters SET job_id=NULL, updated_at=? WHERE job_id=?`).run(now(), id);
+      db.prepare(`DELETE FROM job_documents WHERE job_id=?`).run(id);
       db.prepare(`DELETE FROM fit_analyses WHERE job_id=?`).run(id);
       db.prepare(`DELETE FROM applications WHERE job_id=?`).run(id);
       db.prepare(`DELETE FROM interview_preps WHERE job_id=?`).run(id);
