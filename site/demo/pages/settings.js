@@ -17,13 +17,12 @@ export async function render(ctx) {
   const wrap = el('div', { class: 'stack-4' },
     DataLocation(info),
     DataCheck(),
-    Connection(info),
     Theme(),
     LanguageSwitcher(),
     VerifyMode(info),
     MyData(info.counts),
     Backup(backups, async () => { await ctx.refreshNav(); await render(ctx); }),
-    Support(),
+    Support(info),
     DangerZone(ctx),
   );
 
@@ -96,7 +95,7 @@ function DataCheck() {
       ? el('div', { class: 'stack-2' }, ...issues.map((issue) => {
           const entity = ISSUE_ENTITY_KEYS[issue.entity_type];
           return el('div', { class: 'flex gap-3', style: { alignItems: 'flex-start' } },
-            el('span', { class: `badge badge--${ISSUE_BADGE[issue.severity] || 'draft'}` }, t('settings.check.severity.' + (ISSUE_BADGE[issue.severity] ? issue.severity : 'info'))),
+            el('span', { class: `badge badge--${ISSUE_BADGE[issue.severity] || 'draft'}` }, el('span', { class: 'dot' }), t('settings.check.severity.' + (ISSUE_BADGE[issue.severity] ? issue.severity : 'info'))),
             el('div', {},
               el('div', {}, issue.message),
               entity ? el('div', { class: 'muted text-sm' }, countLabel(entity)) : null));
@@ -114,59 +113,33 @@ function DataCheck() {
   return Card({ title: t('settings.check.title'), sub: t('settings.check.sub'), body });
 }
 
-/* ---------------------------------------------------------- 연결 상태 */
-function Connection(info) {
-  const isDemo = !!info.demo;
-
-  async function createShortcut() {
-    try {
-      const { shortcut } = await post('/api/settings/dashboard-shortcut', { open: true });
-      openModal({
-        title: isDemo ? t('settings.connection.shortcutDemoTitle') : t('settings.connection.shortcutTitle'),
-        intent: 'contextual',
-        body: el('div', { class: 'stack-3' },
-          el('div', { class: 'callout' },
-            icon('info'),
-            el('div', {},
-              el('div', { class: 'callout__title' }, isDemo ? t('settings.connection.shortcutDemoCalloutTitle') : t('settings.connection.shortcutCalloutTitle')),
-              el('div', { class: 'callout__body' },
-                isDemo
-                  ? t('settings.connection.shortcutDemoCalloutBody')
-                  : t('settings.connection.shortcutCalloutBody')))),
-          el('dl', { class: 'kv' },
-            ...kvRow(t('settings.connection.shortcutFolder'), shortcut.shortcut_dir, true, { wrapValue: true }),
-            ...kvRow(t('settings.connection.shortcutLauncher'), shortcut.launcher_path, true, { wrapValue: true }))),
-        footer: (close) => [
-          Btn(t('settings.copyPath'), { icon: 'copy', variant: 'primary', onClick: () => copyText(shortcut.launcher_path) }),
-          Btn(t('common.close'), { variant: 'ghost', onClick: close }),
-        ],
-      });
-    } catch (e) {
-      toastError(e);
-    }
+/* ------------------------------------------------- 바탕화면 바로가기 */
+async function createShortcut(isDemo) {
+  try {
+    const { shortcut } = await post('/api/settings/dashboard-shortcut', { open: true });
+    openModal({
+      title: isDemo ? t('settings.connection.shortcutDemoTitle') : t('settings.connection.shortcutTitle'),
+      intent: 'contextual',
+      body: el('div', { class: 'stack-3' },
+        el('div', { class: 'callout' },
+          icon('info'),
+          el('div', {},
+            el('div', { class: 'callout__title' }, isDemo ? t('settings.connection.shortcutDemoCalloutTitle') : t('settings.connection.shortcutCalloutTitle')),
+            el('div', { class: 'callout__body' },
+              isDemo
+                ? t('settings.connection.shortcutDemoCalloutBody')
+                : t('settings.connection.shortcutCalloutBody')))),
+        el('dl', { class: 'kv' },
+          ...kvRow(t('settings.connection.shortcutFolder'), shortcut.shortcut_dir, true, { wrapValue: true }),
+          ...kvRow(t('settings.connection.shortcutLauncher'), shortcut.launcher_path, true, { wrapValue: true }))),
+      footer: (close) => [
+        Btn(t('settings.copyPath'), { icon: 'copy', variant: 'primary', onClick: () => copyText(shortcut.launcher_path) }),
+        Btn(t('common.close'), { variant: 'ghost', onClick: close }),
+      ],
+    });
+  } catch (e) {
+    toastError(e);
   }
-
-  const dashRow = el('div', { class: 'settings-action-row flex between gap-3', style: { padding: '4px 0' } },
-    el('div', { class: 'settings-action-row__main flex gap-3', style: { alignItems: 'center' } },
-      el('span', { class: 'badge badge--final_passed' }, el('span', { class: 'dot' }), t('settings.connection.running')),
-      el('div', {},
-        el('div', { class: 'strong' }, t('settings.connection.dashboard')),
-        el('div', { class: 'muted text-sm tnum' }, info.url || '—'))),
-    Btn(t('settings.connection.createShortcut'), { icon: 'copy', sm: true, variant: 'ghost', onClick: createShortcut }));
-
-  const mcpRow = el('div', { class: 'settings-action-row flex between gap-3', style: { padding: '4px 0', alignItems: 'flex-start' } },
-    el('div', { class: 'settings-action-row__main flex gap-3', style: { alignItems: 'flex-start' } },
-      el('div', { class: 'empty__icon', style: { width: '30px', height: '30px', margin: 0, borderRadius: '8px' } }, icon('link')),
-      el('div', {},
-        el('div', { class: 'strong' }, t('settings.connection.mcpServer')),
-        el('div', { class: 'muted text-sm', style: { maxWidth: '440px', lineHeight: '1.6' } },
-          t('settings.connection.mcpBody')))),
-    Btn(t('settings.connection.openInstall'), { icon: 'external', sm: true, variant: 'ghost', onClick: () => window.open(isDemo ? '/start.html' : '/install', '_blank') }));
-
-  return Card({
-    title: t('settings.connection.title'),
-    body: el('div', { class: 'stack-2' }, dashRow, el('div', { class: 'divider' }), mcpRow),
-  });
 }
 
 /* ------------------------------------------------------------- 테마 */
@@ -460,11 +433,14 @@ function openImportModal({ fileName, backup, preview, rerender }) {
 
 /* -------------------------------------------------- 위험 구역 (Danger zone) */
 /* ----------------------------------------------------- 도움말 · 문제 신고 */
-function Support() {
+function Support(info) {
+  const isDemo = !!info.demo;
   return Card({
     title: t('settings.support.title'),
     sub: t('settings.support.sub'),
     body: el('div', { class: 'flex gap-2 wrap' },
+      Btn(t('settings.connection.openInstall'), { icon: 'external', sm: true, variant: 'ghost', onClick: () => window.open(isDemo ? '/start.html' : '/install', '_blank') }),
+      Btn(t('settings.connection.createShortcut'), { icon: 'copy', sm: true, variant: 'ghost', onClick: () => createShortcut(isDemo) }),
       el('a', { class: 'btn btn--ghost btn--sm', href: 'mailto:osntak@gmail.com' }, icon('mail'), el('span', {}, t('settings.support.email'))),
     ),
   });

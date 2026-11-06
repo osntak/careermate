@@ -408,6 +408,18 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE profile ADD COLUMN photo TEXT;
   ALTER TABLE profile ADD COLUMN photo_in_exports INTEGER NOT NULL DEFAULT 1;
   `,
+
+  // v13 - which resumes/career descriptions/portfolios a posting goes out with. Many-to-many:
+  // one general resume can be used for several postings. Cover letters keep their own job_id.
+  `
+  CREATE TABLE IF NOT EXISTS job_documents (
+    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (job_id, document_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_job_documents_doc ON job_documents(document_id);
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

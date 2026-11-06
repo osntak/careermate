@@ -118,6 +118,7 @@ function job(spec: {
   if (spec.cover) {
     const { coverLetter } = saveCoverLetterVersion({
       job_id: j.id, title: spec.cover.title, content: spec.cover.content, note: '초안', source: 'ai',
+      force: true, // sample copy, not checked against the sample career
     });
     coverLetterId = coverLetter.id;
   }
@@ -127,7 +128,7 @@ function job(spec: {
 
 // 최종 합격
 job({
-  company: '쿠팡', position: '백엔드 엔지니어 (정산플랫폼)', location: '서울 송파', deadline: '2026-05-30',
+  company: '쿠팡', position: '백엔드 엔지니어 (정산플랫폼)', location: '서울 송파', deadline: daysFromNow(-30),
   description: '대규모 정산 플랫폼의 안정성과 확장성을 책임질 백엔드 엔지니어를 찾습니다.',
   requirements: ['Java/Kotlin 백엔드', '대규모 트래픽', '정산 도메인'], keywords: ['Java', 'Spring', 'Kafka', '정산', 'MSA'],
   status: 'final_passed', score: 91,
@@ -137,7 +138,7 @@ job({
 
 // 면접
 const naver = job({
-  company: '네이버', position: '서버 개발자 (페이)', location: '경기 성남', deadline: '2026-07-10',
+  company: '네이버', position: '서버 개발자 (페이)', location: '경기 성남', deadline: daysFromNow(-10),
   description: '네이버페이 결제/정산 백엔드를 함께 만들 서버 개발자를 찾습니다.',
   requirements: ['Java 백엔드', '결제 시스템 경험', '대용량 처리'], keywords: ['Java', 'Spring', '결제', '대용량'],
   status: 'interview', score: 84,
@@ -159,7 +160,7 @@ saveInterviewPrep({
 
 // 서류 합격
 const toss = job({
-  company: '토스', position: '백엔드 엔지니어 (결제)', location: '서울 강남', deadline: '2026-07-15',
+  company: '토스', position: '백엔드 엔지니어 (결제)', location: '서울 강남', deadline: daysFromNow(-5),
   description: '토스 결제 시스템의 안정성과 확장성을 책임질 백엔드 엔지니어를 찾습니다.',
   requirements: ['Java/Kotlin 백엔드', '대규모 트래픽', '결제/정산 도메인 이해'], keywords: ['Java', 'Kotlin', 'Spring', 'Kafka', '결제', 'MSA'],
   status: 'document_passed', score: 88,
@@ -181,7 +182,16 @@ const toss = job({
 saveCoverLetterVersion({
   cover_letter_id: toss.coverLetterId,
   content: '저는 결제 시스템의 "한 푼도 틀리면 안 된다"는 긴장감 속에서 성장했습니다. 페이테크에서 결제 승인 API의 p99 응답시간을 320ms에서 110ms로 줄이며...(데모 v2)',
-  note: '지원동기와 정량 성과 보강', source: 'edit',
+  note: '지원동기와 정량 성과 보강', source: 'edit', force: true,
+});
+// 서류함 + job detail "서류" card: one career description written for 네이버, one general portfolio.
+addResume({
+  kind: 'career_description', title: '경력기술서 (네이버페이 맞춤)', source: 'ai', job_id: naver.jobId,
+  content: '## 페이테크 (2021.03~)\n결제 게이트웨이·정산 백엔드\n\n- 결제 승인 API p99 320ms→110ms\n- 정산 배치 6시간→40분\n- Kafka 기반 실시간 정산 파이프라인 설계',
+});
+addResume({
+  kind: 'portfolio', title: '포트폴리오: 결제·정산 프로젝트', source: 'manual', is_primary: true,
+  content: '## 실시간 정산 파이프라인\n정산 지연 6시간→실시간\n\n## 결제 장애 자동 복구\n평균 복구 시간 15분→2분',
 });
 saveOffer({
   job_id: toss.jobId, offer_status: 'open',
@@ -194,7 +204,7 @@ saveOffer({
 
 // 지원 완료
 job({
-  company: '카카오페이', position: '백엔드 엔지니어 (정산)', location: '경기 판교', deadline: '2026-07-20',
+  company: '카카오페이', position: '백엔드 엔지니어 (정산)', location: '경기 판교', deadline: daysFromNow(-2),
   description: '카카오페이 정산 시스템 백엔드 개발자를 찾습니다.',
   requirements: ['Java/Kotlin', 'MSA', '정산/회계 이해'], keywords: ['Java', 'Kotlin', 'MSA', '정산'],
   status: 'applied', score: 79,
@@ -204,7 +214,7 @@ job({
 
 // 지원 예정
 job({
-  company: '당근', position: '서버 개발자 (커머스)', location: '서울 강남', deadline: '2026-08-01',
+  company: '당근', position: '서버 개발자 (커머스)', location: '서울 강남', deadline: daysFromNow(6),
   description: '당근 중고거래/커머스 백엔드 서버 개발자를 찾습니다.',
   requirements: ['Java/Kotlin 또는 Go', '대용량 트래픽', '커머스 도메인'], keywords: ['Java', 'Go', '대용량', '커머스'],
   status: 'planned', score: 73,
@@ -213,7 +223,7 @@ job({
 
 // 보류
 job({
-  company: '라인', position: '백엔드 엔지니어 (Fintech)', location: '서울 영등포', deadline: '2026-08-10',
+  company: '라인', position: '백엔드 엔지니어 (Fintech)', location: '서울 영등포', deadline: daysFromNow(20),
   description: 'LINE Fintech 백엔드 엔지니어를 찾습니다.',
   requirements: ['Java/Kotlin', '글로벌 서비스 경험', '금융 도메인'], keywords: ['Java', 'Kotlin', '금융', '글로벌'],
   status: 'on_hold', score: 70,

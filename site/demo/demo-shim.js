@@ -394,6 +394,24 @@ function homeSummary() {
   };
 }
 
+// Documents linked to postings live on the document as job_ids (the real app uses a link table).
+// Same rule as the server: linked ones, then the main unlinked document for each kind left.
+function jobDocuments(jobId) {
+  const documents = db.documents.filter((x) => (x.job_ids || []).includes(jobId));
+  const general_documents = ['resume', 'career_description', 'portfolio']
+    .filter((kind) => !documents.some((x) => x.kind === kind))
+    .map((kind) => db.documents
+      .filter((x) => x.kind === kind && !(x.job_ids || []).length)
+      .sort((a, b) => Number(b.is_primary) - Number(a.is_primary))[0])
+    .filter(Boolean);
+  return { documents, general_documents };
+}
+function withJobs(doc) {
+  const jobs = (doc.job_ids || []).map((id) => db.jobs.find((j) => j.id === id)).filter(Boolean)
+    .map((j) => ({ id: j.id, company: j.company, position: j.position })).reverse();
+  return { ...doc, jobs };
+}
+
 function jobDetail(jobId) {
   const job = db.jobs.find((j) => j.id === jobId);
   if (!job) return { __status: 404, error: d('err_job_not_found') };
@@ -406,6 +424,7 @@ function jobDetail(jobId) {
       application: appByJob(jobId),
       fit: fitByJob(jobId),
       cover_letters: clByJob(jobId),
+      ...jobDocuments(jobId),
       interview: ivByJob(jobId),
       related,
       timeline: buildTimeline(job),
@@ -554,7 +573,30 @@ const ROUTES = [
   /* documents */
   ['GET', /^\/api\/documents$/, (_p, _b, q) => {
     const kind = q.get('kind');
-    return { documents: kind ? db.documents.filter((doc) => doc.kind === kind) : db.documents };
+    return { documents: (kind ? db.documents.filter((doc) => doc.kind === kind) : db.documents).map(withJobs) };
+  }],
+  ['POST', /^\/api\/jobs\/([^/]+)\/documents$/, (p, body) => {
+    const doc = db.documents.find((x) => x.id === body.document_id);
+    if (!doc) return { __status: 404, error: d('err_doc_not_found') };
+    doc.job_ids = [...new Set([...(doc.job_ids || []), p[0]])];
+    return { ok: true };
+  }],
+  ['DELETE', /^\/api\/jobs\/([^/]+)\/documents\/([^/]+)$/, (p) => {
+    const doc = db.documents.find((x) => x.id === p[1]);
+    if (doc) doc.job_ids = (doc.job_ids || []).filter((id) => id !== p[0]);
+    return { ok: !!doc };
+  }],
+  ['PUT', /^\/api\/cover-letters\/([^/]+)\/job$/, (p, body) => {
+    const cl = db.coverLetters.find((c) => c.id === p[0]);
+    if (!cl) return { __status: 404, error: d('err_doc_not_found') };
+    if (cl.job_id && cl.job_id !== body.job_id) return { __status: 409, error: d('err_doc_not_found') };
+    cl.job_id = body.job_id;
+    return { ok: true };
+  }],
+  ['DELETE', /^\/api\/cover-letters\/([^/]+)\/job$/, (p) => {
+    const cl = db.coverLetters.find((c) => c.id === p[0]);
+    if (cl) cl.job_id = null;
+    return { ok: !!cl };
   }],
   ['POST', /^\/api\/documents$/, (_p, body) => {
     const doc = {
@@ -569,7 +611,7 @@ const ROUTES = [
   }],
   ['GET', /^\/api\/documents\/([^/]+)$/, (p) => {
     const doc = db.documents.find((x) => x.id === p[0]);
-    return doc ? { document: doc } : { __status: 404, error: d('err_doc_not_found') };
+    return doc ? { document: withJobs(doc) } : { __status: 404, error: d('err_doc_not_found') };
   }],
   ['PUT', /^\/api\/documents\/([^/]+)$/, (p, body) => {
     const doc = db.documents.find((x) => x.id === p[0]);

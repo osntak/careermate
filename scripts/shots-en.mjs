@@ -45,11 +45,13 @@ await new Promise((r) => server.listen(PORT, r));
 const base = `http://127.0.0.1:${PORT}`;
 console.log('serving site/ at', base);
 
-const SCREENS = ['home', 'applications', 'jobs', 'documents', 'interview', 'settings'];
+// 'jobs/j1' is the first seed posting's detail; saved as jobs-*.png like the Korean set.
+const SCREENS = ['home', 'applications', 'jobs/j1', 'documents', 'interview', 'profile'];
 const THEMES = ['light', 'dark'];
 const VIEWPORT = { width: 1360, height: 940 };
 
-const browser = await chromium.launch();
+// PW_CHANNEL=chrome uses the installed Chrome when Playwright's own browser isn't downloaded.
+const browser = await chromium.launch({ channel: process.env.PW_CHANNEL || undefined });
 try {
   for (const theme of THEMES) {
     const ctx = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 2 });
@@ -76,7 +78,7 @@ try {
         const fp = document.getElementById('foot-path'); if (fp) fp.textContent = '~/.careermate/careermate.sqlite';
       });
       await page.waitForTimeout(350);
-      const file = path.join(OUT, `${s}-${theme}.png`);
+      const file = path.join(OUT, `${s.split('/')[0]}-${theme}.png`);
       await page.screenshot({ path: file });
       console.log('  ✓', path.relative(ROOT, file));
     }

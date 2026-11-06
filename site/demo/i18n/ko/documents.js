@@ -21,6 +21,8 @@ export default {
   // cover row
   'documents.cover.versionCount': '버전 {{count}}개',
   'documents.cover.noJob': '공고 미연결',
+  'documents.doc.moreJobs': '외 {{count}}곳',
+  'documents.doc.linkedJobs': '연결된 공고',
   'documents.cover.primary': '대표',
   'documents.cover.open': '열기',
   'documents.cover.copy': '복사',

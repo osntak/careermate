@@ -83,7 +83,7 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
-| `add_resume` | 이력서·경력기술서·포트폴리오 등 문서 저장 | `title`, `content`(필수), `kind?`, `source?`, `is_primary?`, `tags?` | 저장된 `DocumentRecord` | 사용자가 업로드/붙여넣은 텍스트(또는 정리한 Markdown)를 보관할 때 | ✏️ |
+| `add_resume` | 이력서·경력기술서·포트폴리오 등 문서 저장 | `title`, `content`(필수), `kind?`, `source?`, `is_primary?`, `tags?`, `job_id?`(이 공고에 맞춰 쓴 문서면 그 공고에 연결) | 저장된 `DocumentRecord` | 사용자가 업로드/붙여넣은 텍스트(또는 정리한 Markdown)를 보관할 때 | ✏️ |
 | `get_resumes` | 저장된 문서 조회(종류 필터 가능) | `kind?` | `DocumentRecord[]` | 저장된 이력서/문서를 확인할 때 | ✅ |
 | `delete_resume` | 저장된 문서(이력서·경력기술서·포트폴리오) 삭제 | `document_id`, `confirm`(=`DELETE`) | `{ deleted, id }` | 사용자가 특정 문서 삭제를 명확히 요청했을 때(먼저 get_resumes로 확인) | ✏️ |
 

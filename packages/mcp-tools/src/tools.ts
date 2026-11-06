@@ -393,13 +393,14 @@ export const TOOLS: ToolDef[] = [
     name: 'add_resume',
     title: '이력서/경력기술서 추가',
     description:
-      '이력서, 경력기술서, 포트폴리오 등 문서를 저장합니다. content에는 사용자가 업로드/붙여넣은 텍스트 또는 AI가 전문가 절차로 정리한 Markdown을 넣으세요. 경력기술서를 작성해 저장할 때는 kind=career_description, source=ai를 사용합니다. ⚠️ content에는 이 문서 한 종류의 본문만 넣고, 자기소개서 등 다른 종류 문서를 같은 content에 이어붙이지 마세요 — 자기소개서는 save_cover_letter_version으로 따로 저장합니다(한 번에 둘 다 요청받았어도 한 저장 호출에 두 문서를 합치지 않습니다). kind 기본값은 resume입니다. is_primary=true로 대표 문서를 지정하면 get_application_context의 primary_resume로 노출됩니다.',
+      '이력서, 경력기술서, 포트폴리오 등 문서를 저장합니다. content에는 사용자가 업로드/붙여넣은 텍스트 또는 AI가 전문가 절차로 정리한 Markdown을 넣으세요. 경력기술서를 작성해 저장할 때는 kind=career_description, source=ai를 사용합니다. ⚠️ content에는 이 문서 한 종류의 본문만 넣고, 자기소개서 등 다른 종류 문서를 같은 content에 이어붙이지 마세요 — 자기소개서는 save_cover_letter_version으로 따로 저장합니다(한 번에 둘 다 요청받았어도 한 저장 호출에 두 문서를 합치지 않습니다). kind 기본값은 resume입니다. 특정 공고에 맞춰 고쳐 쓴 문서면 job_id에 그 공고 ID를 넣으세요(공고 화면의 서류 목록에 연결됩니다). 범용 문서면 job_id를 비웁니다. is_primary=true로 대표 문서를 지정하면 get_application_context의 primary_resume로 노출됩니다.',
     // Reuse the shared (length-bounded, whitespace-rejecting) Document schema so
     // the MCP ingestion path — the primary route for résumé text — inherits the
     // same caps as the web API. kind stays optional here (defaults to resume).
     inputSchema: {
       ...DocumentInputSchema.omit({ kind: true }).shape,
       kind: z.enum(DOCUMENT_KINDS).optional().describe('resume(이력서)/career_description(경력기술서)/portfolio/other'),
+      job_id: z.string().optional().describe('이 공고에 맞춰 쓴 문서면 그 공고 ID. 생략하면 범용 문서'),
     },
     handler: (args) => {
       const doc = addResume(args);

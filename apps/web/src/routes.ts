@@ -32,6 +32,7 @@ import {
   projectRepo,
   skillRepo,
   documentRepo,
+  jobDocumentRepo,
   coverLetterRepo,
   jobRepo,
   fitRepo,
@@ -255,6 +256,14 @@ function jobDetail(jobId: string) {
   const application = applicationRepo.getByJob(jobId);
   const fit = fitRepo.getByJob(jobId);
   const cover_letters = coverLetterRepo.listByJob(jobId);
+  // Documents linked to this posting. For a kind with none linked, the main general document
+  // (one not linked to any posting) is shown as what it would go out with by default.
+  const documents = jobDocumentRepo.listByJob(jobId);
+  const linkedAnywhere = jobDocumentRepo.jobsByDocument();
+  const general_documents = (['resume', 'career_description', 'portfolio'] as const)
+    .filter((kind) => !documents.some((d) => d.kind === kind))
+    .map((kind) => documentRepo.list(kind).find((d) => !linkedAnywhere.has(d.id)))
+    .filter(Boolean);
   const interview = interviewRepo.getByJob(jobId);
   const related = jobRepo.relatedTo(job.company, job.position, job.id).map(jobWithMeta);
   const timeline = buildTimeline(job);
@@ -263,6 +272,8 @@ function jobDetail(jobId: string) {
     application,
     fit,
     cover_letters,
+    documents,
+    general_documents,
     interview,
     related,
     timeline,
@@ -373,8 +384,17 @@ export function registerApiRoutes(router: Router): void {
   /* ----------------------------------------------------------- documents */
   router.get('/api/documents', (ctx) => {
     const kind = ctx.query.get('kind') as DocumentKind | null;
-    return { documents: documentRepo.list(kind ?? undefined) };
+    const jobs = jobDocumentRepo.jobsByDocument();
+    return { documents: documentRepo.list(kind ?? undefined).map((d) => ({ ...d, jobs: jobs.get(d.id) ?? [] })) };
   });
+  router.post('/api/jobs/:id/documents', async (ctx) => {
+    const { document_id } = await readJsonBody(ctx.req, z.object({ document_id: z.string().min(1).max(200) }));
+    if (!jobRepo.get(id(ctx))) throw new HttpError(404, '공고를 찾을 수 없습니다.');
+    if (!documentRepo.get(document_id)) throw new HttpError(404, '문서를 찾을 수 없습니다.');
+    jobDocumentRepo.link(id(ctx), document_id);
+    return { ok: true };
+  });
+  router.delete('/api/jobs/:id/documents/:docId', (ctx) => ({ ok: jobDocumentRepo.unlink(id(ctx), ctx.params.docId!) }));
   router.post('/api/documents', async (ctx) => {
     const input = await readJsonBody(ctx.req, DocumentInputSchema);
     return { document: addResume(input) };
@@ -382,7 +402,7 @@ export function registerApiRoutes(router: Router): void {
   router.get('/api/documents/:id', (ctx) => {
     const doc = documentRepo.get(id(ctx));
     if (!doc) throw new HttpError(404, '문서를 찾을 수 없습니다.');
-    return { document: doc };
+    return { document: { ...doc, jobs: jobDocumentRepo.jobsByDocument().get(doc.id) ?? [] } };
   });
   router.put('/api/documents/:id', async (ctx) => {
     const input = await readJsonBody(ctx.req, DocumentInputSchema.partial());
@@ -435,6 +455,18 @@ export function registerApiRoutes(router: Router): void {
     if (!cl) throw new HttpError(404, '자기소개서를 찾을 수 없습니다.');
     return { cover_letter: cl };
   });
+  // Attach a cover letter that has no posting yet. One already written for another posting is
+  // refused: moving it would silently take it away from that posting.
+  router.put('/api/cover-letters/:id/job', async (ctx) => {
+    const { job_id } = await readJsonBody(ctx.req, z.object({ job_id: z.string().min(1).max(200) }));
+    const cl = coverLetterRepo.get(id(ctx), false);
+    if (!cl) throw new HttpError(404, '자기소개서를 찾을 수 없습니다.');
+    if (!jobRepo.get(job_id)) throw new HttpError(404, '공고를 찾을 수 없습니다.');
+    if (cl.job_id && cl.job_id !== job_id) throw new HttpError(409, '다른 공고에 연결된 자기소개서입니다.');
+    coverLetterRepo.setJob(cl.id, job_id);
+    return { ok: true };
+  });
+  router.delete('/api/cover-letters/:id/job', (ctx) => ({ ok: coverLetterRepo.setJob(id(ctx), null) }));
   router.put('/api/cover-letters/:id/primary', (ctx) => {
     const cl = coverLetterRepo.setPrimary(id(ctx));
     if (!cl) throw new HttpError(404, '자기소개서를 찾을 수 없습니다.');

@@ -120,9 +120,6 @@ export default {
   'jobs.fit.recommendations': 'Suggested approach',
 
   // ---- cover letters card ----
-  'jobs.cover.title': 'Cover letters',
-  'jobs.cover.empty': 'Ask your AI to write one and it will be saved here.',
-  'jobs.cover.cardSub': { one: '{{count}} letter', other: '{{count}} letters' },
   'jobs.cover.versions': { one: '{{count}} version', other: '{{count}} versions' },
 
   // ---- interview card ----
@@ -157,7 +154,26 @@ export default {
 
   // ---- timeline card ----
   'jobs.timeline.title': 'Timeline',
-  'jobs.submitted.title': 'Submitted documents',
+  'jobs.docs.title': 'Documents',
+  'jobs.docs.empty': 'No documents yet. Ask your AI for a cover letter or career description for this posting and they gather here.',
+  'jobs.docs.sent': 'Sent with the application',
+  'jobs.docs.sentTag': 'Sent',
+  'jobs.docs.generalTag': 'General',
+  'jobs.docs.generalHint': 'Your default document, not linked to any posting. A document you link here replaces it.',
+  'jobs.docs.add': 'Add document',
+  'jobs.docs.addTitle': 'Add documents to this posting',
+  'jobs.docs.addCount': 'Add {{count}}',
+  'jobs.docs.tabAll': 'All',
+  'jobs.docs.search': 'Search',
+  'jobs.docs.searchPlaceholder': 'Find by title',
+  'jobs.docs.noMatch': 'No matching documents.',
+  'jobs.docs.emptyAll': 'Your Documents are empty',
+  'jobs.docs.emptyKind': 'No {{kind}} yet',
+  'jobs.docs.createKind': 'New {{kind}}',
+  'jobs.docs.added': 'Added',
+  'jobs.docs.otherJob': 'For {{job}}',
+  'jobs.docs.usedIn': { one: 'linked to {{count}} posting', other: 'linked to {{count}} postings' },
+  'jobs.docs.unlink': 'Remove from this posting',
   'jobs.timeline.cardSub': { one: '{{count}} event', other: '{{count}} events' },
   'jobs.timeline.coverLetter': 'Cover letter',
   'jobs.timeline.deletedDoc': 'Deleted document',

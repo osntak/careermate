@@ -21,6 +21,8 @@ export default {
   // cover row
   'documents.cover.versionCount': { one: '{{count}} version', other: '{{count}} versions' },
   'documents.cover.noJob': 'No posting linked',
+  'documents.doc.moreJobs': '+{{count}} more',
+  'documents.doc.linkedJobs': 'Linked postings',
   'documents.cover.primary': 'Primary',
   'documents.cover.open': 'Open',
   'documents.cover.copy': 'Copy',

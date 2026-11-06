@@ -30,7 +30,8 @@ saveInterviewPrep({ job_id: job.id, questions: [{ question: '질문?' }], self_i
 let browser: any;
 try {
   const { chromium } = await import('playwright');
-  browser = await chromium.launch();
+  // PW_CHANNEL=chrome runs it locally on the installed Chrome when Playwright's browser isn't downloaded.
+  browser = await chromium.launch({ channel: process.env.PW_CHANNEL || undefined });
 } catch {
   console.log('⚠️  Playwright(또는 Chromium 브라우저)가 없어 UI 스모크를 건너뜁니다.');
   console.log('    설치: npm i -D playwright && npx playwright install chromium');
