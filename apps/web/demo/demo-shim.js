@@ -43,8 +43,8 @@ const DEMO_STR = {
     step_all_done: '준비가 잘 되어 있어요. 새 공고를 분석하거나 자기소개서를 작성해 보세요.',
     // settings/info
     url_label: '데모 모드',
-    data_dir: '데모 모드 — 브라우저 메모리에만 존재',
-    db_path: '저장되지 않습니다 (새로고침 시 초기화)',
+    data_dir: '데모라서 브라우저 메모리에만 있어요',
+    db_path: '새로고침하면 처음으로',
     demo_label: '데모',
     // activity log
     activity_backup_restored: '데모 백업 JSON을 가져왔습니다.',
@@ -73,7 +73,7 @@ const DEMO_STR = {
     // backup/shortcuts
     backup_path: '데모 브라우저 메모리',
     backup_warning: '데모에서는 브라우저 메모리의 샘플 데이터만 바뀌며 실제 파일은 변경되지 않습니다.',
-    shortcut_dir: '데모 모드 — 실제 폴더를 만들지 않습니다',
+    shortcut_dir: '데모라서 실제 폴더를 만들지 않아요',
     shortcut_launcher: '실제 앱에서는 CareerMate 대시보드 바로가기가 생성됩니다',
     // settings > data check
     diag_jobs_without_fit: '적합도 분석이 없는 공고가 1개 있습니다.',
@@ -113,13 +113,13 @@ const DEMO_STR = {
     step_resume: 'Add a resume or career description. You can paste the text directly.',
     step_experience: 'Adding at least one work experience improves fit analysis quality.',
     step_skills: 'List your skills so job matching is more accurate.',
-    step_cover_letter: 'If you have an existing cover letter, add it — the AI learns your style.',
+    step_cover_letter: 'If you have an existing cover letter, add it. The AI learns your style.',
     step_job: 'Share a job posting URL or text with the AI to get a fit analysis.',
     step_all_done: "You're all set. Try analyzing a new posting or writing a cover letter.",
     // settings/info
     url_label: 'Demo mode',
-    data_dir: 'Demo mode — browser memory only',
-    db_path: 'Not saved (resets on refresh)',
+    data_dir: 'Demo: browser memory only',
+    db_path: 'Resets on refresh',
     demo_label: 'Demo',
     // activity log
     activity_backup_restored: 'Demo backup JSON imported.',
@@ -147,8 +147,8 @@ const DEMO_STR = {
     err_reset_confirm: 'The confirm value is incorrect.',
     // backup/shortcuts
     backup_path: 'Demo browser memory',
-    backup_warning: 'In demo mode only the in-memory sample data changes — no real files are modified.',
-    shortcut_dir: 'Demo mode — no real folder is created',
+    backup_warning: 'In demo mode only the in-memory sample data changes. No real files are modified.',
+    shortcut_dir: 'Demo: no real folder is created',
     shortcut_launcher: 'In the real app a CareerMate dashboard shortcut would be created here.',
     // settings > data check
     diag_jobs_without_fit: '1 saved posting has no fit analysis yet.',
@@ -196,6 +196,8 @@ const ACTIVE = ['draft', 'planned', 'applied', 'document_passed', 'interview'];
 
 /* --------------------------------------------------------------- the DB */
 let db = getLang() === 'en' ? buildSeedEn() : buildSeed();
+// The real server lists activity newest first; the seed is written by hand, so sort it the same way.
+db.activities.sort((a, b) => b.created_at.localeCompare(a.created_at));
 const demoVerified = new Set();
 let seq = 1000;
 const nid = (p) => `${p}${++seq}`;
@@ -800,6 +802,7 @@ const ROUTES = [
   ['POST', /^\/api\/settings\/reset$/, (_p, body) => {
     if (body.confirm !== 'DELETE') return { __status: 400, error: d('err_reset_confirm') };
     db = getLang() === 'en' ? buildSeedEn() : buildSeed(); // demo "reset" = back to the seed
+    db.activities.sort((a, b) => b.created_at.localeCompare(a.created_at));
     return { ok: true };
   }],
 
@@ -1044,7 +1047,7 @@ function buildExport(pathname, query) {
     const iv = ivByJob(m[1]); const job = db.jobs.find((j) => j.id === m[1]);
     if (!iv) return null;
     const exportTitle = d('interview_export_title');
-    const lines = [`# ${exportTitle} — ${job ? job.company : ''}`, '', iv.self_introduction || '', '', ...(iv.questions || []).map((q) => `- ${q.question}`)];
+    const lines = [`# ${exportTitle}: ${job ? job.company : ''}`, '', iv.self_introduction || '', '', ...(iv.questions || []).map((q) => `- ${q.question}`)];
     return { name: d('interview_export_filename'), content: wrap(fmt, exportTitle, lines.join('\n')) };
   }
   if (pathname === '/api/settings/export-all') {

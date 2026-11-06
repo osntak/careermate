@@ -10,8 +10,9 @@
  *   CAREERMATE_DATA_DIR=./.shots-data npm run shots:seed
  */
 import {
-  profileRepo, experienceRepo, projectRepo, skillRepo, getDataDir,
+  profileRepo, experienceRepo, projectRepo, skillRepo, getDataDir, saveProfilePhoto,
 } from '@careermate/db';
+import { readFileSync } from 'node:fs';
 import {
   saveProfile, saveJobPosting, saveFitAnalysis, saveCoverLetterVersion,
   updateApplicationStatus, saveInterviewPrep, addResume, saveOffer,
@@ -46,6 +47,7 @@ saveProfile({
     { label: '기술 블로그', url: 'https://blog.example.com' },
   ],
 });
+saveProfilePhoto(readFileSync(new URL('../apps/web/demo/douyu.jpg', import.meta.url)));
 
 experienceRepo.add({
   company: '페이테크', role: '백엔드 엔지니어', employment_type: '정규직',

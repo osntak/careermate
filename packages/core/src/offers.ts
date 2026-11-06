@@ -14,7 +14,7 @@ export interface OfferWithJob extends OfferRecord {
 }
 
 function withJob(offer: OfferRecord, job: JobRecord | null): OfferWithJob {
-  return { ...offer, company: job?.company ?? '—', position: job?.position ?? '—' };
+  return { ...offer, company: job?.company ?? '-', position: job?.position ?? '-' };
 }
 
 /** Save/update the offer for a job (one per job). The job must exist first. */

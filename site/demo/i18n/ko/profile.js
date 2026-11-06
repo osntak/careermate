@@ -209,7 +209,7 @@ export default {
 
   // row signals (experiences, projects)
   'profile.reuse.count': '자기소개서 {{count}}건에 사용',
-  'profile.verify.badge': '확인 필요',
-  'profile.verify.confirm': '맞아요',
-  'profile.verify.confirmTitle': 'AI가 정리해서 저장한 내용이에요. 맞으면 눌러 주세요.',
+  'profile.verify.badge': 'AI가 저장, 확인 전',
+  'profile.verify.confirm': '확인 완료',
+  'profile.verify.confirmTitle': 'AI가 정리해서 저장한 내용이에요. 읽어 보고 맞으면 눌러 주세요.',
 };

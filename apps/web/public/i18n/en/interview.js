@@ -48,7 +48,7 @@ export default {
   'interview.star.empty': 'No S/T/A/R content yet.',
 
   // edit modal
-  'interview.edit.introPlaceholder': 'Write a 1-minute intro (roughly 150–200 words).',
+  'interview.edit.introPlaceholder': 'Write a 1-minute intro (roughly 150-200 words).',
   'interview.edit.notesPlaceholder': 'Jot down any interview prep notes here.',
   'interview.edit.questionPlaceholder': 'Likely question',
   'interview.edit.answerPlaceholder': 'Answer guide (optional)',

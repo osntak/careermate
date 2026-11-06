@@ -81,7 +81,7 @@ export async function render(ctx) {
     }
 
     return Card({
-      title: `${job.company || '—'} · ${job.position || ''}`,
+      title: `${job.company || '-'} · ${job.position || ''}`,
       sub: undefined,
       actions: [Badge(entry.status, t('status.' + entry.status)), ...actions],
       body,

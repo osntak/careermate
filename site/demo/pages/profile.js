@@ -86,7 +86,7 @@ function rowSignals(kind, id, sig) {
     check = el('span', { class: 'flex gap-2', style: { alignItems: 'center' } },
       Badge('interview', t('profile.verify.badge')),
       Btn(t('profile.verify.confirm'), {
-        sm: true, variant: 'ghost', title: t('profile.verify.confirmTitle'),
+        sm: true, variant: 'ghost', icon: 'check', title: t('profile.verify.confirmTitle'),
         onClick: async () => {
           try {
             await post('/api/provenance/verify', { entity_type: kind, entity_id: id, verified: true });
@@ -130,14 +130,19 @@ function CompletenessCard(o) {
 function BasicInfoCard(p, reload) {
   const hasAny = p.name || p.email || p.phone || p.location || p.headline || p.summary || (p.links || []).length;
 
+  // Laid out like a resume header: the personal details with the photo on their right,
+  // then the summary across the full width, so a long summary never leaves a gap by the photo.
   const body = hasAny ? [
-    kv([
-      [t('profile.basic.kv.name'), p.name],
-      [t('profile.basic.kv.email'), p.email],
-      [t('profile.basic.kv.phone'), p.phone],
-      [t('profile.basic.kv.location'), p.location],
-      [t('profile.basic.kv.headline'), p.headline],
-    ]),
+    // Photo first in the markup: on a phone it floats right, which needs it ahead of the text.
+    el('div', { class: 'basic-grid' },
+      PhotoFrame(p, reload),
+      el('div', { style: { minWidth: 0 } }, kv([
+        [t('profile.basic.kv.name'), p.name],
+        [t('profile.basic.kv.email'), p.email],
+        [t('profile.basic.kv.phone'), p.phone],
+        [t('profile.basic.kv.location'), p.location],
+        [t('profile.basic.kv.headline'), p.headline],
+      ]))),
     p.summary ? el('div', { class: 'mt-3' },
       el('div', { class: 'muted text-sm mb-2' }, t('profile.basic.summaryLabel')),
       el('div', { class: 'doc-preview' }, p.summary)) : null,
@@ -152,11 +157,10 @@ function BasicInfoCard(p, reload) {
     action: Btn(t('profile.basic.empty.action'), { icon: 'edit', variant: 'primary', onClick: () => editBasic(p, reload) }),
   });
 
-  // Once filled, laid out like a resume header: the photo beside the personal details.
   return Card({
     title: t('profile.basic.title'),
     actions: hasAny ? Btn(t('profile.basic.edit'), { icon: 'edit', sm: true, variant: 'ghost', onClick: () => editBasic(p, reload) }) : null,
-    body: hasAny ? el('div', { class: 'basic-grid' }, PhotoFrame(p, reload), el('div', { style: { minWidth: 0 } }, ...body)) : body,
+    body: hasAny ? el('div', {}, ...body) : body,
   });
 }
 
@@ -201,7 +205,7 @@ function PhotoFrame(p, reload) {
     attrs: { 'aria-label': photo ? t('profile.photo.replace') : t('profile.photo.upload'), title: t('profile.photo.hint') },
     onClick: () => input.click(),
   }, photo
-    ? el('img', { attrs: { src: `/api/profile/photo?v=${encodeURIComponent(photo.updated_at)}`, alt: t('profile.photo.alt') } })
+    ? el('img', { attrs: { src: photo.src || `/api/profile/photo?v=${encodeURIComponent(photo.updated_at)}`, alt: t('profile.photo.alt') } })
     : null,
   el('span', { class: 'photo-frame__overlay' }, photo ? t('profile.photo.replaceShort') : t('profile.photo.upload')));
   const remove = async () => {

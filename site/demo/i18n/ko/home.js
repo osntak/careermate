@@ -6,7 +6,7 @@ export default {
   // greeting band
   'home.greeting.title': '{{name}}님, 안녕하세요',
   'home.greeting.welcome': '환영합니다',
-  'home.greeting.firstRun': '시작해 볼까요 — 먼저 기본 정보를 채워 주세요.',
+  'home.greeting.firstRun': '시작해 볼까요? 먼저 기본 정보를 채워 주세요.',
   'home.greeting.interviewTodo': '면접 준비가 필요한 지원 {{count}}건이 있어요.',
   'home.greeting.inProgress': '진행 중인 지원 {{count}}건이 있어요.',
   'home.greeting.jobsSaved': '저장된 공고 {{count}}건 · 새 적합도 분석을 받아보세요.',
@@ -40,7 +40,7 @@ export default {
   'home.pipeline.empty': '아직 지원 단계가 없어요. 공고에 지원 상태를 표시하면 여기에 파이프라인이 채워져요.',
   // small-sample fallback (< 3 applications): show the current stage as one line
   'home.pipeline.small.item': '{{status}} {{count}}건',
-  'home.pipeline.small': '{{detail}} — 지원이 쌓이면 단계별 흐름이 여기 보여요',
+  'home.pipeline.small': '{{detail}}. 지원이 쌓이면 단계별 흐름이 여기 보여요',
   'home.pipeline.stage.applied': '지원',
   'home.pipeline.stage.documentPassed': '서류 합격',
   'home.pipeline.stage.interview': '면접',
@@ -57,9 +57,9 @@ export default {
   // per-type reason / next-action line
   'home.actionLane.reason.interview': '면접 준비를 시작할 차례',
   'home.actionLane.reason.deadline': '지원 마감',
-  'home.actionLane.reason.followup': '지원 {{n}}일 — 팔로업 적기',
+  'home.actionLane.reason.followup': '지원 {{n}}일째, 팔로업할 때',
   'home.actionLane.empty': '지금 처리할 일이 없어요. 새 공고를 분석해 보세요.',
-  'home.placeholder.dash': '—',
+  'home.placeholder.dash': '-',
 
   // recent jobs
   'home.recentJobs.title': '최근 공고',
