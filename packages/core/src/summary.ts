@@ -331,8 +331,8 @@ export function getActionDigest(now: Date = new Date()): ActionDigest {
           business_days_since: biz,
           followup_timing: overdue ? 'overdue' : 'due',
           reason: overdue
-            ? `지원 후 ${biz}영업일 경과 — 후속 문의 적기가 지났습니다(무리한 독촉은 역효과이니 아직 안 했다면 정중히 1회만)`
-            : `지원 후 ${biz}영업일 — 팔로업 적기(문의는 정중히 1회)`,
+            ? `지원 후 ${biz}영업일 경과. 후속 문의 적기가 지났습니다(무리한 독촉은 역효과이니 아직 안 했다면 정중히 1회만)`
+            : `지원 후 ${biz}영업일, 팔로업 적기(문의는 정중히 1회)`,
         };
         if (cal != null && cal >= FOLLOWUP_ONHOLD_CAL_DAYS) item.suggest_on_hold = true;
         followups.push(item);
@@ -579,6 +579,6 @@ export function getPipelineStats(): PipelineStats {
     rejected_unrecorded,
     note:
       '단계별 도달 깔때기는 상태 변경 이력(타임라인)으로 복원한 실측치입니다(현재 rejected여도 거쳐간 최고 단계까지 집계). ' +
-      '비율은 설명용이며 표본이 작으면 예측력이 낮습니다 — 추세 참고로만 쓰세요.',
+      '비율은 설명용이며 표본이 작으면 예측력이 낮습니다. 추세 참고로만 쓰세요.',
   };
 }

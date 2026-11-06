@@ -128,10 +128,11 @@ console.log('· copying dashboard', path.relative(ROOT, SRC), '->', path.relativ
 copyTree(SRC, OUT);
 
 console.log('· copying demo overlay');
-for (const f of ['demo-shim.js', 'seed.js', 'seed.en.js', 'demo.css']) {
+for (const f of ['demo-shim.js', 'seed.js', 'seed.en.js', 'demo.css', 'douyu.jpg']) {
   // Run overlay text files through rewritePaths too, so demo-shim.js's
   // `import … from '/i18n.js'` (and any /fonts, /pages refs) resolve under /demo/.
   const ext = path.extname(f).toLowerCase();
+  if (!TEXT_EXT.has(ext)) { fs.copyFileSync(path.join(OVERLAY, f), path.join(OUT, f)); continue; }
   const src = fs.readFileSync(path.join(OVERLAY, f), 'utf8');
   fs.writeFileSync(path.join(OUT, f), TEXT_EXT.has(ext) ? rewritePaths(src) : src);
 }

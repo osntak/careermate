@@ -60,7 +60,7 @@ async function renderList(ctx) {
       el('td', { style: { textAlign: 'right' } },
         j.fit_score != null
           ? el('span', { class: `strong tnum ${scoreClass(j.fit_score)}` }, t('jobs.list.score', { score: j.fit_score }))
-          : el('span', { class: 'muted' }, '—')),
+          : el('span', { class: 'muted' }, '-')),
       el('td', {}, Badge(j.status, t('status.' + j.status)))),
     text: `${j.company} ${j.position} ${j.location || ''} ${(j.keywords || []).join(' ')}`.toLowerCase(),
   }));
@@ -489,7 +489,7 @@ function FitCard(fit) {
   body.push(el('div', { class: 'flex gap-4 center' },
     fit.score != null
       ? el('div', { class: `tnum ${scoreClass(fit.score)}`, style: { fontSize: '40px', fontWeight: '700', lineHeight: '1' } }, String(fit.score))
-      : el('div', { class: 'muted', style: { fontSize: '28px' } }, '—'),
+      : el('div', { class: 'muted', style: { fontSize: '28px' } }, '-'),
     el('div', { class: 'muted text-sm' }, fit.score != null ? t('jobs.fit.overall') : t('jobs.fit.notScored')),
   ));
 

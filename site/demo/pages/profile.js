@@ -86,7 +86,7 @@ function rowSignals(kind, id, sig) {
     check = el('span', { class: 'flex gap-2', style: { alignItems: 'center' } },
       Badge('interview', t('profile.verify.badge')),
       Btn(t('profile.verify.confirm'), {
-        sm: true, variant: 'ghost', title: t('profile.verify.confirmTitle'),
+        sm: true, variant: 'ghost', icon: 'check', title: t('profile.verify.confirmTitle'),
         onClick: async () => {
           try {
             await post('/api/provenance/verify', { entity_type: kind, entity_id: id, verified: true });
@@ -201,7 +201,7 @@ function PhotoFrame(p, reload) {
     attrs: { 'aria-label': photo ? t('profile.photo.replace') : t('profile.photo.upload'), title: t('profile.photo.hint') },
     onClick: () => input.click(),
   }, photo
-    ? el('img', { attrs: { src: `/api/profile/photo?v=${encodeURIComponent(photo.updated_at)}`, alt: t('profile.photo.alt') } })
+    ? el('img', { attrs: { src: photo.src || `/api/profile/photo?v=${encodeURIComponent(photo.updated_at)}`, alt: t('profile.photo.alt') } })
     : null,
   el('span', { class: 'photo-frame__overlay' }, photo ? t('profile.photo.replaceShort') : t('profile.photo.upload')));
   const remove = async () => {

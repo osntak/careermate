@@ -254,7 +254,7 @@ export function profileToMarkdown(
         '## 경력',
         ...experiences.map((e) => {
           const range = dateRange(e.start_date, e.end_date, e.is_current);
-          const titleParts = [e.company, e.role].filter(Boolean).join(' — ');
+          const titleParts = [e.company, e.role].filter(Boolean).join(' · ');
           const subParts = [e.employment_type, range].filter(Boolean).join(' · ');
           return joinBlocks([
             `### ${titleParts}`,

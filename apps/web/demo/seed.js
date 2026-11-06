@@ -14,6 +14,8 @@ export function buildSeed() {
       id: 'p1',
       created_at: '2026-05-02T09:00:00.000Z',
       updated_at: '2026-06-14T11:20:00.000Z',
+      // The demo has no photo store, so the image is a static file next to the page.
+      photo: { updated_at: '2026-06-14T11:20:00.000Z', src: '/demo/douyu.jpg' },
       name: '김하늘',
       email: 'haneul.kim@example.com',
       phone: '010-1234-5678',
@@ -96,12 +98,12 @@ export function buildSeed() {
         kind: 'resume', title: '김하늘 이력서 (2026)', source: 'upload', is_primary: true,
         tags: ['백엔드', '결제'],
         content:
-          '# 김하늘 — 백엔드 엔지니어\n\n## 경력 요약\n결제·정산 도메인 5년. 대용량 트래픽 안정화와 팀 생산성 개선에 강점.\n\n' +
+          '# 김하늘, 백엔드 엔지니어\n\n## 경력 요약\n결제·정산 도메인 5년. 대용량 트래픽 안정화와 팀 생산성 개선에 강점.\n\n' +
           '## 핵심 성과\n- 정산 배치 4h → 38m\n- 결제 API p99 320ms → 110ms\n- 무중단 마이그레이션으로 정기 다운타임 제거\n',
       },
       {
         id: 'd2', created_at: '2026-05-20T13:00:00.000Z', updated_at: '2026-05-20T13:00:00.000Z',
-        kind: 'career_description', title: '경력기술서 — 페이코어', source: 'manual', is_primary: false,
+        kind: 'career_description', title: '경력기술서 (페이코어)', source: 'manual', is_primary: false,
         tags: ['결제'], job_ids: ['j1'],
         content: '## 페이코어 (2022.03~)\n결제 게이트웨이/정산 백엔드. 상세 프로젝트와 성과는 본문 참조.\n',
       },
@@ -175,7 +177,7 @@ export function buildSeed() {
       { id: 'a1', created_at: '2026-06-01T10:00:00.000Z', updated_at: '2026-06-13T10:00:00.000Z', job_id: 'j1', status: 'interview', resume_id: 'd1', cover_letter_id: 'c1', applied_at: '2026-06-06', notes: '1차 기술면접 통과, 2차 임원면접 예정' },
       { id: 'a2', created_at: '2026-06-03T10:00:00.000Z', updated_at: '2026-06-09T10:00:00.000Z', job_id: 'j2', status: 'applied', resume_id: 'd1', cover_letter_id: null, applied_at: '2026-06-09', notes: null },
       { id: 'a3', created_at: '2026-06-05T10:00:00.000Z', updated_at: '2026-06-05T10:00:00.000Z', job_id: 'j3', status: 'planned', resume_id: null, cover_letter_id: null, applied_at: null, notes: '지원서 작성 중' },
-      { id: 'a4', created_at: '2026-05-25T10:00:00.000Z', updated_at: '2026-06-12T10:00:00.000Z', job_id: 'j4', status: 'document_passed', resume_id: 'd1', cover_letter_id: 'c2', applied_at: '2026-05-28', notes: '서류 합격 — 면접 일정 조율 중' },
+      { id: 'a4', created_at: '2026-05-25T10:00:00.000Z', updated_at: '2026-06-12T10:00:00.000Z', job_id: 'j4', status: 'document_passed', resume_id: 'd1', cover_letter_id: 'c2', applied_at: '2026-05-28', notes: '서류 합격, 면접 일정 조율 중' },
       { id: 'a5', created_at: '2026-05-15T10:00:00.000Z', updated_at: '2026-06-02T10:00:00.000Z', job_id: 'j5', status: 'rejected', resume_id: 'd1', cover_letter_id: null, applied_at: '2026-05-18', notes: '서류 탈락' },
       { id: 'a6', created_at: '2026-06-10T10:00:00.000Z', updated_at: '2026-06-10T10:00:00.000Z', job_id: 'j6', status: 'draft', resume_id: null, cover_letter_id: null, applied_at: null, notes: null },
     ],
@@ -244,7 +246,7 @@ export function buildSeed() {
           '정산 배치를 4시간에서 38분으로 단축하면서도 검증 자동화로 정합성을 지켰습니다. ' +
           '토스페이먼츠의 결제 코어에서 이 경험을 한 단계 더 키우고 싶습니다.',
         notes:
-          '2차 임원면접 — 컬처핏 + 시스템 설계 위주 예상.\n' +
+          '2차 임원면접: 컬처핏 + 시스템 설계 위주 예상.\n' +
           '· 결제 도메인에서의 "정확성 vs 속도" 트레이드오프 관점 강조하기\n' +
           '· 페이코어 → 토스페이먼츠 지원 동기(규모/임팩트) 솔직하게\n' +
           '· 역질문: 결제 코어 팀의 온콜/장애 대응 문화, 차세대 정산 로드맵',
@@ -252,8 +254,8 @@ export function buildSeed() {
           { question: '결제 승인 API의 p99 지연을 어떻게 320ms에서 110ms로 줄였나요?', category: 'technical', intent: '성능 최적화의 사고 과정과 측정 기반 접근 확인', followups: ['병목을 어떻게 측정했나요?', '개선의 트레이드오프는 무엇이었나요?', '캐시 정합성은 어떻게 보장했나요?'], answer_outline: 'APM으로 구간별 측정 → 가설(N+1 쿼리·직렬화·커넥션 대기) → 인덱스 재설계·커넥션풀 튜닝·읽기 캐시 순차 적용 → 각 단계 A/B로 효과 검증. 캐시는 TTL+이벤트 무효화로 정합성 유지.' },
           { question: '무중단으로 결제 DB를 마이그레이션한 경험을 설명해 주세요.', category: 'technical', intent: '운영 안정성과 단계적 전환 설계 역량', followups: ['롤백 전략은?', '데이터 정합성 검증은?'], answer_outline: '듀얼 라이트 → 과거 데이터 백필 → 신구 비교 검증 → 점진 트래픽 컷오버. 각 단계가 가역적이라 언제든 롤백 가능하게 설계.' },
           { question: '대용량 트래픽에서 동시성 문제를 해결한 사례가 있나요?', category: 'technical', intent: '분산 환경 동시성 이해도', followups: ['분산 락의 한계는?', '멱등성은 어떻게 보장했나요?'], answer_outline: '주문 폭주 시 재고 오버셀 → 분산 락(Redis) + 멱등 키로 중복 처리 차단. 락 경합이 큰 구간은 큐 기반 직렬화로 전환해 오버셀 0건 달성.' },
-          { question: '결제처럼 정확성이 중요한 도메인에서 장애가 났을 때 어떻게 대응하나요?', category: 'technical', intent: '장애 대응 원칙과 우선순위 판단', followups: ['사후 분석은 어떻게 하나요?'], answer_outline: '1) 영향 범위 격리·차단(서킷브레이커) 2) 정합성 우선 — 의심 거래는 보류 처리 3) 복구 후 정산 재대사 4) 블레임리스 포스트모템으로 재발 방지 액션화.' },
-          { question: '함께 일하기 좋은 동료/팀 문화는 무엇이라고 생각하나요?', category: 'behavioral', intent: '컬처핏 — 협업 가치관', followups: ['코드 리뷰 문화에 대한 생각은?'], answer_outline: '문제를 숨기지 않고 일찍 공유하는 문화, 그리고 결정의 "왜"를 문서로 남기는 팀. 리뷰는 사람이 아니라 코드/설계를 향하게.' },
+          { question: '결제처럼 정확성이 중요한 도메인에서 장애가 났을 때 어떻게 대응하나요?', category: 'technical', intent: '장애 대응 원칙과 우선순위 판단', followups: ['사후 분석은 어떻게 하나요?'], answer_outline: '1) 영향 범위 격리·차단(서킷브레이커) 2) 정합성 우선, 의심 거래는 보류 처리 3) 복구 후 정산 재대사 4) 블레임리스 포스트모템으로 재발 방지 액션화.' },
+          { question: '함께 일하기 좋은 동료/팀 문화는 무엇이라고 생각하나요?', category: 'behavioral', intent: '컬처핏: 협업 가치관', followups: ['코드 리뷰 문화에 대한 생각은?'], answer_outline: '문제를 숨기지 않고 일찍 공유하는 문화, 그리고 결정의 "왜"를 문서로 남기는 팀. 리뷰는 사람이 아니라 코드/설계를 향하게.' },
           { question: '페이코어에서 안정적으로 일하고 계셨는데, 토스페이먼츠에 지원한 이유는 무엇인가요?', category: 'behavioral', intent: '지원 동기·장기 기여 의지', followups: ['입사 후 첫 6개월에 무엇을 하고 싶나요?'], answer_outline: '결제 코어의 규모와 임팩트에서 한 단계 더 성장하고 싶다는 점을 솔직하게. 페이코어에서 쌓은 정확성·성능 경험을 토스페이먼츠 결제 코어에 바로 기여하고, 차세대 정산 로드맵에 함께하고 싶다는 방향으로 연결.' },
         ],
         star_guides: [
@@ -264,9 +266,9 @@ export function buildSeed() {
     ],
 
     activities: [
-      { id: 'ac1', type: 'application_status_changed', entity_type: 'application', entity_id: 'a1', summary: '토스페이먼츠 — 면접 진행으로 상태를 변경했습니다.', created_at: '2026-06-13T10:00:00.000Z' },
+      { id: 'ac1', type: 'application_status_changed', entity_type: 'application', entity_id: 'a1', summary: '토스페이먼츠를 면접 진행으로 상태를 변경했습니다.', created_at: '2026-06-13T10:00:00.000Z' },
       { id: 'ac2', type: 'interview_prep_saved', entity_type: 'interview_prep', entity_id: 'iv1', summary: '토스페이먼츠 면접 준비 자료를 저장했습니다.', created_at: '2026-06-12T14:00:00.000Z' },
-      { id: 'ac3', type: 'application_status_changed', entity_type: 'application', entity_id: 'a4', summary: '네이버페이 — 서류 합격으로 상태를 변경했습니다.', created_at: '2026-06-12T10:00:00.000Z' },
+      { id: 'ac3', type: 'application_status_changed', entity_type: 'application', entity_id: 'a4', summary: '네이버페이를 서류 합격으로 상태를 변경했습니다.', created_at: '2026-06-12T10:00:00.000Z' },
       { id: 'ac4', type: 'cover_letter_version_saved', entity_type: 'cover_letter', entity_id: 'c1', summary: '토스페이먼츠 지원동기 v2를 저장했습니다.', created_at: '2026-06-08T11:00:00.000Z' },
       { id: 'ac5', type: 'fit_analysis_saved', entity_type: 'fit_analysis', entity_id: 'f1', summary: '토스페이먼츠 적합도 분석(88점)을 저장했습니다.', created_at: '2026-06-02T09:30:00.000Z' },
       { id: 'ac6', type: 'job_saved', entity_type: 'job', entity_id: 'j6', summary: '카카오뱅크 공고를 저장했습니다.', created_at: '2026-06-10T09:00:00.000Z' },

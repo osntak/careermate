@@ -378,6 +378,8 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .list-row__title { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list-row__sub { font-size: 13px; color: var(--text-tertiary); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list-row__trail { flex: none; display: flex; align-items: center; gap: 8px; margin-left: auto; white-space: nowrap; }
+/* a status at the row end gets a fixed-width slot, left-aligned, so the dots line up down the list */
+.list-row__trail > .badge:last-child { min-width: 6.5em; }
 
 /* applications: status-group section header (reads clearly as a section title) */
 .app-group__head { display: flex; align-items: center; gap: 9px; padding-bottom: 8px; margin-bottom: 2px; border-bottom: 1px solid var(--border); }
@@ -555,7 +557,8 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .add-doc__row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; text-align: left; font: inherit; color: inherit;
   background: none; border: 1px solid transparent; border-radius: 10px; cursor: pointer;
   transition: background-color .15s ease, border-color .15s ease, transform .15s ease; }
-.add-doc__row:hover:not(:disabled) { background: var(--accent-soft); transform: translateX(2px); }
+/* hover stays neutral so it never reads as "selected"; touch screens skip it (a tap leaves it stuck) */
+@media (hover: hover) { .add-doc__row:hover:not(:disabled):not(.is-selected) { background: var(--surface-hover); transform: translateX(2px); } }
 .add-doc__row.is-selected { background: var(--accent-soft); border-color: var(--accent); }
 .add-doc__row:disabled { cursor: default; opacity: .55; }
 .add-doc__mark { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; flex-shrink: 0;
@@ -568,7 +571,8 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .job-doc + .job-doc::before { content: ''; position: absolute; top: 0; left: 12px; right: 12px; border-top: 1px solid var(--border); transition: opacity .15s ease; }
 .job-doc.is-clickable { cursor: pointer; }
 /* hover, or keyboard focus only: focus handed back to the row when a dialog closes must not keep it lit */
-.job-doc.is-clickable:hover, .job-doc:focus-visible { background: var(--accent-soft); }
+.job-doc:focus-visible { background: var(--accent-soft); }
+@media (hover: hover) { .job-doc.is-clickable:hover { background: var(--accent-soft); } }
 /* hide the dividers touching the highlighted row so it reads as one block */
 .job-doc:hover::before, .job-doc:hover + .job-doc::before { opacity: 0; }
 .job-doc__main { flex: 1; min-width: 0; }
@@ -643,6 +647,12 @@ body[data-modal-intent] .toasts { top: 20px; bottom: auto; }
   .topbar__title{ flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar__spacer{ display: none; }
   .input--inline{ width: 110px; max-width: 32vw; }
+  /* with a search box in the bar, the add button shrinks to its icon so the box can show
+     its placeholder (the label stays for screen readers) */
+  .topbar:has(.input--inline) .input--inline{ width: auto; flex: 1 1 0; min-width: 0; max-width: none; }
+  .topbar:has(.input--inline) .topbar__title{ flex: 0 1 auto; }
+  .topbar:has(.input--inline) .btn:has(svg) > span{ position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .topbar:has(.input--inline) .btn:has(svg){ padding-inline: 10px; }
   .view{ padding: 16px; }
   /* jobs table: drop the secondary 위치·마감일 column so 회사·직무·적합도·상태 all fit */
   .table--jobs th:nth-child(2), .table--jobs td:nth-child(2){ display: none; }
@@ -657,12 +667,18 @@ body[data-modal-intent] .toasts { top: 20px; bottom: auto; }
   .kv dd{ margin: 0 0 2px; }
   .settings-action-row{ align-items: stretch; flex-direction: column; }
   .settings-action-row > .btn{ width: 100%; justify-content: center; }
-  .card__head{ align-items: flex-start; flex-wrap: wrap; }
-  .card__head .right{ margin-left: 0; width: 100%; justify-content: flex-start; }
-  .home-action-card .card__head{ align-items: center; flex-wrap: nowrap; padding: 12px 14px; }
-  .home-action-card .card__head .right{ margin-left: auto; width: auto; justify-content: flex-end; }
+  /* actions stay on the title line and drop below only when they don't fit */
+  .card__head{ flex-wrap: wrap; }
+  /* the item before the actions grows instead of the actions using margin-left:auto, so a
+     wrapped action row starts at the left edge rather than hanging off the right */
+  .card__head > :has(+ .right){ flex-grow: 1; }
+  .card__head .right{ margin-left: 0; justify-content: flex-start; }
+  /* nested boxes (card > preview) each add padding; trim it so text keeps its width */
+  .card__head{ padding: 12px 14px; }
+  .card__body{ padding: 14px; }
+  .doc-preview{ padding: 14px 16px; }
   .home-action-card .card__body{ padding: 8px 14px; }
-  .home-action-card .list-row{ gap: 10px; padding: 8px 0; }
+  .home-action-card .list-row{ gap: 10px; padding: 8px 10px; margin: 0 -10px; }
   .home-action-card .list-row__trail{ gap: 6px; }
   .page-head{ flex-wrap: wrap; }
   .modal-root[data-intent="contextual"] .modal{
@@ -676,7 +692,8 @@ body[data-modal-intent] .toasts { top: 20px; bottom: auto; }
     justify-content: stretch; flex-wrap: wrap;
     padding-bottom: max(14px, env(safe-area-inset-bottom));
   }
-  .modal__foot .btn{ flex: 1 1 0; min-width: 0; min-height: 44px; justify-content: center; }
+  /* grow to share the row, but wrap to a new line before a label gets cut */
+  .modal__foot .btn{ flex: 1 1 auto; min-height: 44px; justify-content: center; }
   .toasts{ left: 16px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); }
   body[data-modal-intent] .toasts{ top: calc(var(--topbar-h) + 16px); bottom: auto; }
   .toast{ width: 100%; min-width: 0; max-width: none; }

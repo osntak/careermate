@@ -6,7 +6,7 @@ export default {
   // greeting band
   'home.greeting.title': 'Hi {{name}}',
   'home.greeting.welcome': 'Welcome',
-  'home.greeting.firstRun': "Let's get started — fill in your basics first.",
+  'home.greeting.firstRun': "Let's get started. Fill in your basics first.",
   'home.greeting.interviewTodo': {
     one: '{{count}} application needs interview prep.',
     other: '{{count}} applications need interview prep.',
@@ -25,7 +25,7 @@ export default {
   'home.start.title': 'Getting started',
   'home.start.completeness': 'Profile {{pct}}% complete',
   'home.start.calloutTitle': 'Your AI does the thinking, CareerMate keeps it',
-  'home.start.calloutBody': 'Just ask your usual AI to analyze postings, write cover letters and career descriptions, or prep for interviews — the results land here on your dashboard.',
+  'home.start.calloutBody': 'Just ask your usual AI to analyze postings, write cover letters and career descriptions, or prep for interviews, and the results land here on your dashboard.',
   'home.start.note': 'The more you complete, the better your AI fit analyses and cover letters get.',
   'home.start.step.profile': 'Fill in your basic profile',
   'home.start.step.resume': 'Add a career description or resume',
@@ -49,7 +49,7 @@ export default {
   'home.pipeline.empty': 'No application stages yet. Set an application status on a posting and your pipeline fills in here.',
   // small-sample fallback (< 3 applications): show the current stage as one line
   'home.pipeline.small.item': '{{status}} · {{count}}',
-  'home.pipeline.small': '{{detail}} — your stage flow shows here as applications add up',
+  'home.pipeline.small': '{{detail}}. Your stage flow shows here as applications add up',
   'home.pipeline.stage.applied': 'Applied',
   'home.pipeline.stage.documentPassed': 'Screening passed',
   'home.pipeline.stage.interview': 'Interview',
@@ -71,7 +71,7 @@ export default {
   'home.actionLane.reason.deadline': 'Application deadline',
   'home.actionLane.reason.followup': 'Applied {{n}}d ago · time to follow up',
   'home.actionLane.empty': 'Nothing to handle right now. Try analyzing a new posting.',
-  'home.placeholder.dash': '—',
+  'home.placeholder.dash': '-',
 
   // recent jobs
   'home.recentJobs.title': 'Recent postings',

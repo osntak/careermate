@@ -54,7 +54,7 @@
 .demo-bar__link--primary:hover { background: var(--accent-soft); color: var(--accent); }
 
 /* Reserve space for the bar by pushing the app + its sticky anchors down. */
-body.has-demo-bar .app { margin-top: var(--demo-bar-h); }
+body.has-demo-bar .app { margin-top: var(--demo-bar-h); min-height: calc(100vh - var(--demo-bar-h)); }
 body.has-demo-bar .sidebar { top: var(--demo-bar-h); height: calc(100vh - var(--demo-bar-h)); }
 body.has-demo-bar .topbar { top: var(--demo-bar-h); }
 

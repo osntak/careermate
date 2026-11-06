@@ -209,7 +209,7 @@ export default {
 
   // row signals (experiences, projects)
   'profile.reuse.count': { one: 'Used in {{count}} cover letter', other: 'Used in {{count}} cover letters' },
-  'profile.verify.badge': 'Needs check',
-  'profile.verify.confirm': 'Looks right',
-  'profile.verify.confirmTitle': 'The AI saved this for you. Click if it is correct.',
+  'profile.verify.badge': 'Saved by AI, not checked',
+  'profile.verify.confirm': 'Mark as checked',
+  'profile.verify.confirmTitle': 'The AI saved this for you. Read it and click if it is correct.',
 };

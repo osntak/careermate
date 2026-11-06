@@ -86,9 +86,9 @@ export async function render(ctx) {
     // clearly), then the status — a calm badge that swaps to the change-select on hover.
     const score = app.fit_score != null
       ? el('span', { class: `app-score strong tnum ${scoreClass(app.fit_score)}` }, t('applications.row.score', { score: app.fit_score }))
-      : el('span', { class: 'app-score muted tnum' }, '—');
+      : el('span', { class: 'app-score muted tnum' }, '-');
     return ListRow({
-      title: job.company || '—',
+      title: job.company || '-',
       sub: subBits.join(' · '),
       trailing: [
         score,

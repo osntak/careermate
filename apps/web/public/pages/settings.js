@@ -39,7 +39,7 @@ function kvRow(label, value, copyable, { wrapValue = false } = {}) {
           class: `${wrapValue ? 'kv__value-wrap' : 'truncate'} tnum`,
           style: { fontFamily: 'var(--mono, ui-monospace, monospace)' },
           title: value,
-        }, value || '—'),
+        }, value || '-'),
         copyable && value
           ? IconBtn('copy', { title: t('settings.copy'), onClick: () => copyText(value) })
           : null)),
@@ -250,8 +250,8 @@ function VerifyMode(info) {
   paint();
 
   const note = el('div', { class: 'muted text-sm', style: { lineHeight: '1.7', marginTop: '10px' } },
-    el('div', {}, el('span', { class: 'strong' }, t('settings.verify.basic')), ' — ', t('settings.verify.basicDesc')),
-    el('div', {}, el('span', { class: 'strong' }, t('settings.verify.strict')), ' — ', t('settings.verify.strictDesc')),
+    el('div', {}, el('span', { class: 'strong' }, t('settings.verify.basic')), ': ', t('settings.verify.basicDesc')),
+    el('div', {}, el('span', { class: 'strong' }, t('settings.verify.strict')), ': ', t('settings.verify.strictDesc')),
     el('div', { style: { marginTop: '6px' } },
       t('settings.verify.note')));
 

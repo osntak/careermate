@@ -16,6 +16,8 @@ export function buildSeedEn() {
       id: 'p1',
       created_at: '2026-05-02T09:00:00.000Z',
       updated_at: '2026-06-14T11:20:00.000Z',
+      // The demo has no photo store, so the image is a static file next to the page.
+      photo: { updated_at: '2026-06-14T11:20:00.000Z', src: '/demo/douyu.jpg' },
       name: 'Alex Morgan',
       email: 'alex.morgan@example.com',
       phone: '+1-206-555-0182',
@@ -96,17 +98,17 @@ export function buildSeedEn() {
     documents: [
       {
         id: 'd1', created_at: '2026-05-03T10:00:00.000Z', updated_at: '2026-06-10T08:30:00.000Z',
-        kind: 'resume', title: 'Alex Morgan — Resume (2026)', source: 'upload', is_primary: true,
+        kind: 'resume', title: 'Alex Morgan Resume (2026)', source: 'upload', is_primary: true,
         tags: ['backend', 'payments'],
         content:
-          '# Alex Morgan — Backend Engineer\n\n## Summary\n5 years in payments & settlement. Strong in high-throughput reliability and team productivity.\n\n' +
+          '# Alex Morgan, Backend Engineer\n\n## Summary\n5 years in payments & settlement. Strong in high-throughput reliability and team productivity.\n\n' +
           '## Key Achievements\n- Settlement batch: 4 h → 38 min\n- Payment API p99: 320 ms → 110 ms\n- Zero scheduled downtime via zero-downtime migration\n',
       },
       {
         id: 'd2', created_at: '2026-05-20T13:00:00.000Z', updated_at: '2026-05-20T13:00:00.000Z',
-        kind: 'career_description', title: 'Career Description — PayCore', source: 'manual', is_primary: false,
+        kind: 'career_description', title: 'Career Description (PayCore)', source: 'manual', is_primary: false,
         tags: ['payments'], job_ids: ['j1'],
-        content: '## PayCore (Mar 2022 – Present)\nPayment gateway & settlement backend. See individual project entries for detailed achievements.\n',
+        content: '## PayCore (Mar 2022 - Present)\nPayment gateway & settlement backend. See individual project entries for detailed achievements.\n',
       },
       {
         id: 'd3', created_at: '2026-05-25T11:00:00.000Z', updated_at: '2026-06-08T16:20:00.000Z',
@@ -175,10 +177,10 @@ export function buildSeedEn() {
 
     // job_id → application. status drives the pipeline + board.
     applications: [
-      { id: 'a1', created_at: '2026-06-01T10:00:00.000Z', updated_at: '2026-06-13T10:00:00.000Z', job_id: 'j1', status: 'interview', resume_id: 'd1', cover_letter_id: 'c1', applied_at: '2026-06-06', notes: 'Passed first technical round — final interview with VP Eng scheduled' },
+      { id: 'a1', created_at: '2026-06-01T10:00:00.000Z', updated_at: '2026-06-13T10:00:00.000Z', job_id: 'j1', status: 'interview', resume_id: 'd1', cover_letter_id: 'c1', applied_at: '2026-06-06', notes: 'Passed first technical round, final interview with VP Eng scheduled' },
       { id: 'a2', created_at: '2026-06-03T10:00:00.000Z', updated_at: '2026-06-09T10:00:00.000Z', job_id: 'j2', status: 'applied', resume_id: 'd1', cover_letter_id: null, applied_at: '2026-06-09', notes: null },
       { id: 'a3', created_at: '2026-06-05T10:00:00.000Z', updated_at: '2026-06-05T10:00:00.000Z', job_id: 'j3', status: 'planned', resume_id: null, cover_letter_id: null, applied_at: null, notes: 'Working on cover letter' },
-      { id: 'a4', created_at: '2026-05-25T10:00:00.000Z', updated_at: '2026-06-12T10:00:00.000Z', job_id: 'j4', status: 'document_passed', resume_id: 'd1', cover_letter_id: 'c2', applied_at: '2026-05-28', notes: 'Resume screened — coordinating interview schedule' },
+      { id: 'a4', created_at: '2026-05-25T10:00:00.000Z', updated_at: '2026-06-12T10:00:00.000Z', job_id: 'j4', status: 'document_passed', resume_id: 'd1', cover_letter_id: 'c2', applied_at: '2026-05-28', notes: 'Resume screened, coordinating interview schedule' },
       { id: 'a5', created_at: '2026-05-15T10:00:00.000Z', updated_at: '2026-06-02T10:00:00.000Z', job_id: 'j5', status: 'rejected', resume_id: 'd1', cover_letter_id: null, applied_at: '2026-05-18', notes: 'Rejected at resume screen' },
       { id: 'a6', created_at: '2026-06-10T10:00:00.000Z', updated_at: '2026-06-10T10:00:00.000Z', job_id: 'j6', status: 'draft', resume_id: null, cover_letter_id: null, applied_at: null, notes: null },
     ],
@@ -213,21 +215,21 @@ export function buildSeedEn() {
     coverLetters: [
       {
         id: 'c1', created_at: '2026-06-04T11:00:00.000Z', updated_at: '2026-06-08T11:00:00.000Z',
-        title: 'Stripe — Backend Engineer, Payments', job_id: 'j1', is_primary: true,
+        title: 'Stripe: Backend Engineer, Payments', job_id: 'j1', is_primary: true,
         current_version_id: 'c1v2', version_count: 2,
         current_content:
           'In payments, a single error is a breach of trust. At PayCore I brought the payment ' +
-          'authorization API\'s p99 latency from 320 ms down to 110 ms — learning first-hand what ' +
+          'authorization API\'s p99 latency from 320 ms down to 110 ms, learning first-hand what ' +
           'it means to build a system that is both fast and provably correct. I want to bring that ' +
           'experience to Stripe\'s payments core.',
         versions: [
           { id: 'c1v1', cover_letter_id: 'c1', version_no: 1, content: '(Draft) Cover letter focused on payments domain experience.', note: 'First draft', source: 'ai', created_at: '2026-06-04T11:00:00.000Z' },
-          { id: 'c1v2', cover_letter_id: 'c1', version_no: 2, content: 'In payments, a single error is a breach of trust. At PayCore I brought the payment authorization API\'s p99 latency from 320 ms down to 110 ms — learning first-hand what it means to build a system that is both fast and provably correct. I want to bring that experience to Stripe\'s payments core.', note: 'Added concrete numbers + tightened closing', source: 'edit', created_at: '2026-06-08T11:00:00.000Z' },
+          { id: 'c1v2', cover_letter_id: 'c1', version_no: 2, content: 'In payments, a single error is a breach of trust. At PayCore I brought the payment authorization API\'s p99 latency from 320 ms down to 110 ms, learning first-hand what it means to build a system that is both fast and provably correct. I want to bring that experience to Stripe\'s payments core.', note: 'Added concrete numbers + tightened closing', source: 'edit', created_at: '2026-06-08T11:00:00.000Z' },
         ],
       },
       {
         id: 'c2', created_at: '2026-05-27T11:00:00.000Z', updated_at: '2026-05-27T11:00:00.000Z',
-        title: 'Adyen — Backend Engineer, Settlement', job_id: 'j4', is_primary: false,
+        title: 'Adyen: Backend Engineer, Settlement', job_id: 'j4', is_primary: false,
         current_version_id: 'c2v1', version_count: 1,
         current_content:
           'In settlement, accuracy is everything. I cut a Spring Batch settlement job from 4 hours ' +
@@ -243,14 +245,14 @@ export function buildSeedEn() {
       {
         id: 'iv1', created_at: '2026-06-12T14:00:00.000Z', updated_at: '2026-06-13T09:30:00.000Z', job_id: 'j1',
         self_introduction:
-          'Hi, I\'m Alex Morgan — a senior backend engineer with five years in payments and settlement. ' +
+          'Hi, I\'m Alex Morgan, a senior backend engineer with five years in payments and settlement. ' +
           'At PayCore I handle millions of payment transactions every day, and my focus has always been ' +
           'on building systems that are both fast and absolutely correct. I\'ve pushed the payment ' +
           'authorization API\'s p99 latency from 320 ms to 110 ms, and cut the settlement batch from ' +
           '4 hours to 38 minutes while keeping validation automated and airtight. ' +
           'I\'m excited to take that work to the next level at Stripe\'s payments core.',
         notes:
-          'Final round — VP Eng interview. Expect culture fit + system design.\n' +
+          'Final round: VP Eng interview. Expect culture fit + system design.\n' +
           '· Emphasize the "correctness vs. speed" trade-off perspective from payments work\n' +
           '· Be direct about motivation for moving from PayCore to Stripe (scale & impact)\n' +
           '· Questions to ask: on-call / incident response culture, next-gen settlement roadmap',
@@ -258,9 +260,9 @@ export function buildSeedEn() {
           { question: 'How did you bring the payment authorization API p99 latency from 320 ms down to 110 ms?', category: 'technical', intent: 'Assess systematic, measurement-driven approach to performance optimization', followups: ['How did you identify the bottleneck?', 'What trade-offs did the improvement introduce?', 'How did you ensure cache consistency?'], answer_outline: 'APM profiling per segment → hypotheses (N+1 queries, serialization, connection wait) → sequential fixes: index redesign, connection-pool tuning, read cache → A/B validation at each step. Cache consistency via TTL + event-driven invalidation.' },
           { question: 'Walk me through the zero-downtime database migration you led.', category: 'technical', intent: 'Assess operational safety mindset and ability to design incremental, reversible changes', followups: ['What was your rollback strategy?', 'How did you verify data consistency?'], answer_outline: 'Dual-write → historical backfill → old/new comparison validation → gradual traffic cutover. Each phase kept fully reversible so a rollback at any point was safe.' },
           { question: 'Tell me about a concurrency problem you solved at high scale.', category: 'technical', intent: 'Evaluate understanding of distributed concurrency', followups: ['What are the limits of distributed locking?', 'How did you ensure idempotency?'], answer_outline: 'Flash-sale inventory oversell → Redis distributed lock + idempotency key to prevent duplicate processing. Hot-path lock contention rerouted to queue-based serialization → 0 oversell incidents.' },
-          { question: 'How do you handle an incident in a correctness-critical domain like payments?', category: 'technical', intent: 'Assess incident response principles and prioritization', followups: ['How do you run a post-mortem?'], answer_outline: '1) Isolate and circuit-break the blast radius. 2) Correctness first — suspend suspicious transactions. 3) Reconcile settlement after recovery. 4) Blameless post-mortem → actionable prevention items.' },
-          { question: 'What does a great engineering team culture look like to you?', category: 'behavioral', intent: 'Culture fit — collaboration values', followups: ['What is your philosophy on code review?'], answer_outline: 'Teams that surface problems early rather than hiding them, and that document the "why" behind decisions. Code review should critique the code and the design, not the person.' },
-          { question: 'You were doing well at PayCore — why apply to Toss Payments?', category: 'behavioral', intent: 'Motivation and long-term commitment', followups: ['What would you want to do in your first six months?'], answer_outline: 'Be honest about wanting to grow one level further in the scale and impact of a payments core. Connect the accuracy and performance experience from PayCore directly to contributing to Toss Payments’ payment core and its next-gen settlement roadmap.' },
+          { question: 'How do you handle an incident in a correctness-critical domain like payments?', category: 'technical', intent: 'Assess incident response principles and prioritization', followups: ['How do you run a post-mortem?'], answer_outline: '1) Isolate and circuit-break the blast radius. 2) Correctness first, suspend suspicious transactions. 3) Reconcile settlement after recovery. 4) Blameless post-mortem → actionable prevention items.' },
+          { question: 'What does a great engineering team culture look like to you?', category: 'behavioral', intent: 'Culture fit: collaboration values', followups: ['What is your philosophy on code review?'], answer_outline: 'Teams that surface problems early rather than hiding them, and that document the "why" behind decisions. Code review should critique the code and the design, not the person.' },
+          { question: 'You were doing well at PayCore. Why apply to Toss Payments?', category: 'behavioral', intent: 'Motivation and long-term commitment', followups: ['What would you want to do in your first six months?'], answer_outline: 'Be honest about wanting to grow one level further in the scale and impact of a payments core. Connect the accuracy and performance experience from PayCore directly to contributing to Toss Payments’ payment core and its next-gen settlement roadmap.' },
         ],
         star_guides: [
           { question: 'Tell me about the hardest incident you\'ve ever dealt with.', situation: 'Month-end settlement batch fell behind and was at risk of missing the deadline', task: 'Complete settlement accurately within 4 hours and prevent recurrence', action: 'Parallelized the bottleneck batch jobs, redesigned indexes, hot-patched with a zero-downtime deploy, then validated correctness via the automated pipeline', result: 'Processing time cut to 38 minutes; zero recurrence since; settlement SLA consistently met' },
@@ -270,13 +272,13 @@ export function buildSeedEn() {
     ],
 
     activities: [
-      { id: 'ac1', type: 'application_status_changed', entity_type: 'application', entity_id: 'a1', summary: 'Stripe — status updated to Interview.', created_at: '2026-06-13T10:00:00.000Z' },
+      { id: 'ac1', type: 'application_status_changed', entity_type: 'application', entity_id: 'a1', summary: 'Stripe: status updated to Interview.', created_at: '2026-06-13T10:00:00.000Z' },
       { id: 'ac2', type: 'interview_prep_saved', entity_type: 'interview_prep', entity_id: 'iv1', summary: 'Saved interview prep for Stripe.', created_at: '2026-06-12T14:00:00.000Z' },
-      { id: 'ac3', type: 'application_status_changed', entity_type: 'application', entity_id: 'a4', summary: 'Adyen — status updated to Document Passed.', created_at: '2026-06-12T10:00:00.000Z' },
+      { id: 'ac3', type: 'application_status_changed', entity_type: 'application', entity_id: 'a4', summary: 'Adyen: status updated to Document Passed.', created_at: '2026-06-12T10:00:00.000Z' },
       { id: 'ac4', type: 'cover_letter_version_saved', entity_type: 'cover_letter', entity_id: 'c1', summary: 'Saved Stripe cover letter v2.', created_at: '2026-06-08T11:00:00.000Z' },
       { id: 'ac5', type: 'fit_analysis_saved', entity_type: 'fit_analysis', entity_id: 'f1', summary: 'Saved Stripe fit analysis (score: 88).', created_at: '2026-06-02T09:30:00.000Z' },
       { id: 'ac6', type: 'job_saved', entity_type: 'job', entity_id: 'j6', summary: 'Saved Brex job posting.', created_at: '2026-06-10T09:00:00.000Z' },
-      { id: 'ac7', type: 'resume_added', entity_type: 'document', entity_id: 'd1', summary: 'Added Alex Morgan — Resume (2026).', created_at: '2026-05-03T10:00:00.000Z' },
+      { id: 'ac7', type: 'resume_added', entity_type: 'document', entity_id: 'd1', summary: 'Added Alex Morgan Resume (2026).', created_at: '2026-05-03T10:00:00.000Z' },
     ],
   };
 }

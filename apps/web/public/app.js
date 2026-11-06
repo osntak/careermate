@@ -3,7 +3,7 @@
 // Page modules live in /pages/*.js and export `render(ctx)`. They receive a ctx
 // with { view, params, setTitle, setActions, refreshNav } and fill the view.
 // =============================================================================
-import { el, icon, get, navigate, toastError, Spinner, clear } from '/lib.js';
+import { el, icon, get, navigate, toastError, Spinner, clear, closeModal } from '/lib.js';
 import { t, onLangChange } from '/i18n.js';
 
 const ROUTES = [
@@ -169,7 +169,8 @@ async function boot() {
   } catch { /* ignore */ }
   await refreshNav();
   onLangChange(() => { localizeShell(); refreshNav(); route(); });
-  window.addEventListener('hashchange', route);
+  // A dialog belongs to the page that opened it: leaving the page (a link, the back button) closes it.
+  window.addEventListener('hashchange', () => { closeModal(); route(); });
   await route();
 }
 

@@ -121,7 +121,7 @@ export default {
   'settings.reset.gateWord': 'RESET',
   'settings.reset.title': 'Reset all data',
   'settings.reset.calloutTitle': "This can't be undone",
-  'settings.reset.calloutBody': 'All data, including your profile, postings, applications, documents, and interview prep, will be permanently deleted. For safety, a backup is created automatically right before the reset — that backup file remains in the backups folder inside your data directory, so delete it too if you want no trace left.',
+  'settings.reset.calloutBody': 'All data, including your profile, postings, applications, documents, and interview prep, will be permanently deleted. For safety, a backup is created automatically right before the reset. That backup file remains in the backups folder inside your data directory, so delete it too if you want no trace left.',
   'settings.reset.instruction': 'To continue, type {{word}} in the field below.',
   'settings.reset.confirm': 'Reset all data',
   'settings.reset.doneToast': 'All data has been reset.',

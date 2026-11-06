@@ -121,7 +121,7 @@ export default {
   'settings.reset.gateWord': '초기화',
   'settings.reset.title': '모든 데이터 초기화',
   'settings.reset.calloutTitle': '되돌릴 수 없습니다',
-  'settings.reset.calloutBody': '프로필·공고·지원·문서·면접 준비를 포함한 모든 데이터가 영구적으로 삭제됩니다. 안전을 위해 초기화 직전에 자동으로 백업이 한 번 생성되며, 이 백업 파일은 데이터 폴더의 backups에 남습니다 — 흔적 없이 지우려면 초기화 후 그 파일도 직접 삭제하세요.',
+  'settings.reset.calloutBody': '프로필·공고·지원·문서·면접 준비를 포함한 모든 데이터가 영구적으로 삭제됩니다. 안전을 위해 초기화 직전에 자동으로 백업이 한 번 생성되며, 이 백업 파일은 데이터 폴더의 backups에 남습니다. 흔적 없이 지우려면 초기화 후 그 파일도 직접 삭제하세요.',
   'settings.reset.instruction': '계속하려면 아래 입력란에 {{word}} 를 입력하세요.',
   'settings.reset.confirm': '모든 데이터 초기화',
   'settings.reset.doneToast': '모든 데이터를 초기화했어요.',
