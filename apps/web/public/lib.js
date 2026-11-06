@@ -68,9 +68,11 @@ function appendChildren(node, children) {
 }
 /**
  * Render the markdown subset the exporters use (packages/exporters markdown.ts:
- * headings, bullet and numbered lists, ---, paragraphs, **bold**, [label](url)) as DOM
- * nodes. Built with el(), so user text never goes through innerHTML.
+ * headings, bullet and numbered lists, | tables |, ---, paragraphs, **bold**, [label](url))
+ * as DOM nodes. Built with el(), so user text never goes through innerHTML.
  */
+const TABLE_SEP = /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$/;
+const tableCells = (l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
 export function Markdown(src) {
   const inline = (s) => {
     const out = [];
@@ -97,6 +99,15 @@ export function Markdown(src) {
     if (!s) { flush(); i++; }
     else if (/^(-{3,}|\*{3,}|_{3,})$/.test(s)) { flush(); nodes.push(el('hr')); i++; }
     else if ((h = /^(#{1,6})\s+(.*)$/.exec(s))) { flush(); nodes.push(el('h' + h[1].length, {}, inline(h[2].trim()))); i++; }
+    else if (s.startsWith('|') && TABLE_SEP.test((lines[i + 1] ?? '').trim())) {
+      flush();
+      const head = tableCells(s); i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')) rows.push(tableCells(lines[i++]));
+      nodes.push(el('div', { class: 'md-table' }, el('table', {},
+        el('thead', {}, el('tr', {}, head.map((c) => el('th', {}, inline(c))))),
+        el('tbody', {}, rows.map((r) => el('tr', {}, r.map((c) => el('td', {}, inline(c)))))))));
+    }
     else {
       const list = /^[-*+]\s+/.test(s) ? ['ul', /^[-*+]\s+/] : /^\d+\.\s+/.test(s) ? ['ol', /^\d+\.\s+/] : null;
       if (!list) { para.push(s); i++; continue; }

@@ -92,9 +92,15 @@ function renderInline(escaped: string): string {
   return out;
 }
 
+/** `|---|:--:|` separator row under a table header. */
+export const TABLE_SEP = /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$/;
+/** Cells of a `| a | b |` row, outer pipes dropped. */
+export const tableCells = (l: string): string[] => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+
 /**
  * Minimal Markdown → HTML renderer. Supports:
  *  - ATX headings `#`..`######`
+ *  - pipe tables (`| a | b |` + `|---|---|`)
  *  - unordered lists (`-`, `*`, `+`)
  *  - ordered lists (`1.`)
  *  - horizontal rule `---`
@@ -148,6 +154,19 @@ export function markdownToHtml(md: string): string {
       const content = renderInline(escapeHtml(heading[2].trim()));
       html.push(`<h${level}>${content}</h${level}>`);
       i++;
+      continue;
+    }
+
+    // Table: a `| a | b |` row followed by a `|---|---|` separator.
+    if (trimmed.startsWith('|') && TABLE_SEP.test((lines[i + 1] ?? '').trim())) {
+      flushParagraph();
+      const row = (l: string, tag: string) =>
+        `<tr>${tableCells(l).map((c) => `<${tag}>${renderInline(escapeHtml(c))}</${tag}>`).join('')}</tr>`;
+      const head = row(trimmed, 'th');
+      i += 2;
+      const body: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')) body.push(row(lines[i++], 'td'));
+      html.push(`<table>\n<thead>${head}</thead>\n<tbody>\n${body.join('\n')}\n</tbody>\n</table>`);
       continue;
     }
 

@@ -19,8 +19,13 @@ import {
   Packer,
   PageNumber,
   Paragraph,
+  Table,
+  TableCell,
+  TableRow,
   TextRun,
+  WidthType,
 } from 'docx';
+import { TABLE_SEP, tableCells } from './markdown.ts';
 
 const HEADING_BY_LEVEL = [
   HeadingLevel.HEADING_1,
@@ -90,13 +95,34 @@ function inlineRuns(text: string): (TextRun | ExternalHyperlink)[] {
 }
 
 /** Parse our Markdown dialect (blocks split on blank lines) into docx paragraphs. */
-function markdownToParagraphs(markdown: string): Paragraph[] {
-  const paras: Paragraph[] = [];
+function markdownToParagraphs(markdown: string): (Paragraph | Table)[] {
+  const paras: (Paragraph | Table)[] = [];
   const lines = markdown.replace(/\r\n/g, '\n').split('\n');
 
-  for (const raw of lines) {
-    const line = raw.trimEnd();
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trimEnd();
     if (line.trim() === '') continue; // blank lines: spacing comes from paragraph config
+
+    // Pipe table → a Word table (header row bold).
+    if (line.trim().startsWith('|') && TABLE_SEP.test((lines[i + 1] ?? '').trim())) {
+      const rows = [tableCells(line)];
+      i += 2;
+      while (i < lines.length && lines[i].trim().startsWith('|')) rows.push(tableCells(lines[i++]));
+      i--;
+      paras.push(
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: rows.map((cells, r) => new TableRow({
+            tableHeader: r === 0,
+            children: cells.map((c) => new TableCell({
+              children: [new Paragraph({ children: r === 0 ? [new TextRun({ text: xmlSafe(c.replace(/\*\*/g, '')), bold: true })] : inlineRuns(c) })],
+            })),
+          })),
+        }),
+        new Paragraph({ spacing: { after: 120 }, children: [] }),
+      );
+      continue;
+    }
 
     // Horizontal rule → a thin bottom border on an empty paragraph.
     if (/^---+$/.test(line.trim())) {

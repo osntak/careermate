@@ -564,6 +564,11 @@ ok('javascript: 링크 차단(→ #)', jsLink.includes('href="#"') && !jsLink.to
 const breakout = markdownToHtml('[x](https://a.com" onmouseover="alert(1))');
 ok('링크 속성 탈출 차단', !breakout.includes('onmouseover="alert') && breakout.includes('&quot;'));
 
+// Career descriptions often carry a | 회사 | 기간 | table; it used to come out as raw pipes.
+const table = markdownToHtml('| 회사 | 기간 |\n|---|---|\n| 씽크프리 | 2023.10 ~ <b>재직</b> |');
+ok('표 렌더링(셀 이스케이프 포함)', table.includes('<th>회사</th>') && table.includes('<td>씽크프리</td>') && table.includes('&lt;b&gt;') && !table.includes('|'));
+ok('표 docx 생성', (await markdownToDocx('t', '| a | b |\n|---|---|\n| 1 | 2 |')).length > 0);
+
 const titleInj = toPrintableHtml('</title><script>alert(1)</script>', '본문');
 ok('내보내기 제목 인젝션 차단', !titleInj.includes('<script>') && !titleInj.includes('</title><script>'));
 
