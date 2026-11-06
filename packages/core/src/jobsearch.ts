@@ -12,7 +12,7 @@
 import { z } from 'zod';
 import { APP_VERSION } from '@careermate/shared';
 import { markJobsSeen } from '@careermate/db';
-import { isRememberCategory, isSaraminCategory } from './job-categories.ts';
+import { isJumpitCategory, isRememberCategory, isSaraminCategory, isWantedCategory } from './job-categories.ts';
 
 export interface JobSearchResult {
   source: string;
@@ -62,9 +62,13 @@ export interface JobSearchOptions {
   rememberCategories?: string[];
   /** Saramin category codes (cat_kewd), e.g. ["92", "84"]. */
   saraminCategories?: string[];
+  /** Wanted tag_type_ids, e.g. ["669"] (프론트엔드 개발자) or a group ["518"] (개발). */
+  wantedCategories?: string[];
+  /** Jumpit jobCategory ids, e.g. ["2"] (프론트엔드 개발자). */
+  jumpitCategories?: string[];
   /** Keep only postings dated on/after this day (YYYY-MM-DD): posted_at, else first_seen_at. */
   postedSince?: string;
-  /** User's years of experience: keep postings whose range covers it (unknown ranges stay). */
+  /** User's years of experience: keep postings whose range covers it (unknown ranges stay). Wanted also filters by it server-side. */
   years?: number;
   /** Record first-seen dates in the local DB (default true; tests turn it off). */
   trackSeen?: boolean;
@@ -120,15 +124,27 @@ async function getJson(url: string, timeoutMs: number, init: GetJsonInit = {}): 
   }
 }
 
+/**
+ * How many postings a board reads. A category list is read whole, so the years and date filters
+ * see every posting instead of only the first page; the caller's limit still wins when set.
+ * ponytail: 300 cap per board, raise if a single category outgrows it.
+ */
+const CATEGORY_MAX = 300;
+function listMax(categories: string[], limit: number, opts: JobSearchOptions): number {
+  return categories.length ? Math.min(CATEGORY_MAX, Math.max(1, opts.limit ?? CATEGORY_MAX)) : limit;
+}
+
 interface Provider {
   id: string;
   label: string;
   /** Option that lets this provider search by category alone, without a keyword. */
-  categoryOption?: 'rememberCategories' | 'saraminCategories';
+  categoryOption?: 'rememberCategories' | 'saraminCategories' | 'wantedCategories' | 'jumpitCategories';
   search(query: string, limit: number, timeoutMs: number, opts: JobSearchOptions): Promise<JobSearchResult[]>;
 }
 
 const wantedSchema = z.object({
+  links: z.object({ next: z.string().nullable().optional() }).passthrough().optional(),
+  // A page past the end comes back as data: null.
   data: z.array(
     z.object({
       id: z.union([z.string(), z.number()]),
@@ -142,8 +158,18 @@ const wantedSchema = z.object({
         .nullable()
         .optional(),
     }).passthrough(),
-  ),
+  ).nullable(),
 }).passthrough();
+
+/** Wanted list URL. Several categories repeat tag_type_ids (a comma list is a 422); years -1 means any. */
+export function wantedUrl(query: string, opts: { categories?: string[]; years?: number; limit: number; offset: number }): string {
+  const p = new URLSearchParams({ country: 'kr', locations: 'all', years: String(opts.years ?? -1), job_sort: 'job.latest_order' });
+  for (const c of opts.categories ?? []) p.append('tag_type_ids', c);
+  p.set('limit', String(opts.limit));
+  p.set('offset', String(opts.offset));
+  if (query) p.set('query', query);
+  return `https://www.wanted.co.kr/api/v4/jobs?${p}`;
+}
 
 const jumpitSchema = z.object({
   result: z.object({
@@ -166,12 +192,22 @@ const jumpitSchema = z.object({
 const wanted: Provider = {
   id: 'wanted',
   label: '원티드',
-  async search(query, limit, timeoutMs) {
-    const url =
-      `https://www.wanted.co.kr/api/v4/jobs?country=kr&locations=all&years=-1` +
-      `&job_sort=job.latest_order&limit=${limit}&offset=0&query=${encodeURIComponent(query)}`;
-    const j = wantedSchema.parse(await getJson(url, timeoutMs));
-    return j.data.map((r) => {
+  categoryOption: 'wantedCategories',
+  async search(query, limit, timeoutMs, opts) {
+    const categories = opts.wantedCategories ?? [];
+    const unknown = categories.filter((c) => !isWantedCategory(c));
+    if (unknown.length) throw new Error(`unknown Wanted category: ${unknown.join(', ')} (use find_job_categories)`);
+    const max = listMax(categories, limit, opts);
+    const rows: NonNullable<z.infer<typeof wantedSchema>['data']> = [];
+    for (let offset = 0; rows.length < max; offset += 100) {
+      const page = Math.min(100, max - rows.length);
+      const j = wantedSchema.parse(
+        await getJson(wantedUrl(query, { categories, years: opts.years, limit: page, offset }), timeoutMs),
+      );
+      rows.push(...(j.data ?? []));
+      if (!j.links?.next || (j.data?.length ?? 0) < page) break;
+    }
+    return rows.slice(0, max).map((r) => {
       // Wanted uses 100 for "no upper bound".
       const annual =
         r.annual_from || r.annual_to
@@ -196,17 +232,23 @@ const wanted: Provider = {
 const jumpit: Provider = {
   id: 'jumpit',
   label: '점핏',
-  async search(query, limit, timeoutMs) {
-    // Fixed page size of 16; keep paging until limit or a short page.
+  categoryOption: 'jumpitCategories',
+  async search(query, limit, timeoutMs, opts) {
+    const categories = opts.jumpitCategories ?? [];
+    const unknown = categories.filter((c) => !isJumpitCategory(c));
+    if (unknown.length) throw new Error(`unknown Jumpit category: ${unknown.join(', ')} (use find_job_categories)`);
+    const max = listMax(categories, limit, opts);
+    const size = Math.min(100, max);
     const positions: z.infer<typeof jumpitSchema>['result']['positions'] = [];
-    for (let page = 1; positions.length < limit && page <= Math.ceil(limit / 16); page++) {
-      const url =
-        `https://jumpit-api.saramin.co.kr/api/positions?sort=relation&page=${page}&keyword=${encodeURIComponent(query)}`;
-      const got = jumpitSchema.parse(await getJson(url, timeoutMs)).result.positions;
+    for (let page = 1; positions.length < max; page++) {
+      const p = new URLSearchParams({ sort: query ? 'relation' : 'reg_dt', page: String(page), size: String(size) });
+      for (const c of categories) p.append('jobCategory', c);
+      if (query) p.set('keyword', query);
+      const got = jumpitSchema.parse(await getJson(`https://jumpit-api.saramin.co.kr/api/positions?${p}`, timeoutMs)).result.positions;
       positions.push(...got);
-      if (got.length < 16) break;
+      if (got.length < size) break;
     }
-    return positions.slice(0, limit).map((p) => ({
+    return positions.slice(0, max).map((p) => ({
       source: 'jumpit',
       company: p.companyName,
       // Keyword searches come back with highlight markup, e.g. "<span>백엔드</span> 개발자".
@@ -226,6 +268,7 @@ const jumpit: Provider = {
 };
 
 const rememberSchema = z.object({
+  meta: z.object({ total_pages: z.number().optional() }).passthrough().optional(),
   data: z.array(
     z.object({
       id: z.union([z.string(), z.number()]),
@@ -264,16 +307,18 @@ const remember: Provider = {
         return level2 ? { level1, level2 } : { level1 };
       });
     }
-    // Remember rejects per > 50 ("최대 요청 수를 초과"), so larger limits take a second page.
-    const per = Math.min(limit, 50);
-    const pages = await Promise.all(
-      Array.from({ length: Math.ceil(limit / per) }, (_, i) =>
-        getJson('https://career-api.rememberapp.co.kr/job_postings/search', timeoutMs, {
-          body: { search, sort: 'starts_at_desc', page: i + 1, per },
-        }).then((r) => rememberSchema.parse(r).data),
-      ),
-    );
-    return pages.flat().slice(0, limit).map((d) => {
+    // Remember rejects per > 50 ("최대 요청 수를 초과"), so larger limits take more pages.
+    // The first page says how many pages exist; the rest are fetched together.
+    const max = listMax(cats, limit, opts);
+    const per = Math.min(max, 50);
+    const page = (n: number) =>
+      getJson('https://career-api.rememberapp.co.kr/job_postings/search', timeoutMs, {
+        body: { search, sort: 'starts_at_desc', page: n, per },
+      }).then((r) => rememberSchema.parse(r));
+    const first = await page(1);
+    const last = Math.min(Math.ceil(max / per), first.meta?.total_pages ?? Infinity);
+    const rest = await Promise.all(Array.from({ length: Math.max(0, last - 1) }, (_, i) => page(i + 2)));
+    return [first, ...rest].flatMap((p) => p.data).slice(0, max).map((d) => {
       const addr = d.addresses?.[0];
       const min = d.min_experience;
       const max = d.max_experience;
@@ -358,29 +403,37 @@ const saramin: Provider = {
   label: '사람인',
   categoryOption: 'saraminCategories',
   async search(query, limit, timeoutMs, opts) {
-    const params = new URLSearchParams({
-      searchword: query,
-      recruitPage: '1',
-      // Relevance reads better for a keyword, but "new since" needs newest first.
-      recruitSort: query && !opts.postedSince ? 'relation' : 'reg_dt',
-      recruitPageCount: String(limit),
-      mainSearch: 'n',
-    });
     const cats = opts.saraminCategories ?? [];
     const unknown = cats.filter((c) => !isSaraminCategory(c));
     if (unknown.length) throw new Error(`unknown Saramin category code: ${unknown.join(', ')} (use find_job_categories)`);
-    if (cats.length) params.set('cat_kewd', cats.join(','));
-    const j = saraminListSchema.parse(
-      await getJson(`https://www.saramin.co.kr/zf_user/search/get-recruit-list?${params}`, timeoutMs, {
-        headers: { 'x-requested-with': 'XMLHttpRequest' },
-        anyType: true,
-      }),
-    );
-    const rows = parseSaraminList(j.innerHTML);
-    if (!rows.length && j.innerHTML.includes('item_recruit')) {
-      throw new z.ZodError([{ code: 'custom', path: ['innerHTML'], message: 'item markup changed' }]);
+    const max = listMax(cats, limit, opts);
+    const size = Math.min(100, max);
+    const rows: JobSearchResult[] = [];
+    for (let page = 1; rows.length < max; page++) {
+      const params = new URLSearchParams({
+        searchword: query,
+        recruitPage: String(page),
+        // Relevance reads better for a keyword, but "new since" needs newest first.
+        recruitSort: query && !opts.postedSince ? 'relation' : 'reg_dt',
+        recruitPageCount: String(size),
+        mainSearch: 'n',
+      });
+      if (cats.length) params.set('cat_kewd', cats.join(','));
+      const j = saraminListSchema.parse(
+        await getJson(`https://www.saramin.co.kr/zf_user/search/get-recruit-list?${params}`, timeoutMs, {
+          headers: { 'x-requested-with': 'XMLHttpRequest' },
+          anyType: true,
+        }),
+      );
+      const got = parseSaraminList(j.innerHTML);
+      const items = j.innerHTML.split('<div class="item_recruit"').length - 1;
+      if (!got.length && items) {
+        throw new z.ZodError([{ code: 'custom', path: ['innerHTML'], message: 'item markup changed' }]);
+      }
+      rows.push(...got);
+      if (items < size) break;
     }
-    return rows.slice(0, limit);
+    return rows.slice(0, max);
   },
 };
 
@@ -414,7 +467,10 @@ export async function searchJobs(query: string, opts: JobSearchOptions = {}): Pr
     chosen.map(async (p): Promise<{ outcome: ProviderOutcome; results: JobSearchResult[] }> => {
       const checked_at = new Date().toISOString();
       try {
-        const results = await p.search(q, limit, timeoutMs, opts);
+        // A board given its own category gets no keyword: keyword AND category matched only titles
+        // (Wanted 290 -> 66, Remember 88 -> 37 for 프론트엔드), which is what lost postings.
+        const own = p.categoryOption && opts[p.categoryOption]?.length;
+        const results = await p.search(own ? '' : q, limit, timeoutMs, opts);
         return {
           outcome: {
             source: p.id,

@@ -4,7 +4,7 @@
  * No network: the tables ship with CareerMate (job-categories.data.ts).
  */
 
-import { REMEMBER_CATEGORIES, SARAMIN_CATEGORIES } from './job-categories.data.ts';
+import { JUMPIT_CATEGORIES, REMEMBER_CATEGORIES, SARAMIN_CATEGORIES, WANTED_CATEGORIES } from './job-categories.data.ts';
 
 export interface SaraminCategory {
   code: string;
@@ -18,6 +18,16 @@ export interface JobCategoryMatches {
   /** Values for search_jobs' remember_categories: "group>sub", or a whole "group". */
   remember: string[];
   saramin: SaraminCategory[];
+  /** Values for search_jobs' wanted_categories (tag_type_ids). A group code covers all its subs. */
+  wanted: WantedCategory[];
+  /** Values for search_jobs' jumpit_categories (developer roles only; Jumpit lists nothing else). */
+  jumpit: { code: string; name: string }[];
+}
+
+export interface WantedCategory {
+  code: string;
+  name: string;
+  group: string;
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/[\s·/(),&.\-]/g, '');
@@ -76,9 +86,28 @@ export function findJobCategories(query: string, limit = 20): JobCategoryMatches
       }
     }
   }
+  const wanted: (WantedCategory & { s: number })[] = [];
+  for (const [group, [groupCode, subs]] of Object.entries(WANTED_CATEGORIES)) {
+    const gs = score(group, terms);
+    if (gs) wanted.push({ code: groupCode, name: group, group, s: gs - 0.5 });
+    for (const [code, name] of subs) {
+      const s = score(name, terms);
+      if (s) wanted.push({ code, name, group, s });
+    }
+  }
+  const jumpit = JUMPIT_CATEGORIES.map(([code, name]) => ({ code, name, s: score(name, terms) }))
+    .filter((c) => c.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, limit)
+    .map(({ s: _s, ...c }) => c);
   return {
     query,
+    jumpit,
     remember: remember.sort((a, b) => b.s - a.s).slice(0, limit).map((r) => r.v),
+    wanted: wanted
+      .sort((a, b) => b.s - a.s)
+      .slice(0, limit)
+      .map(({ s: _s, ...c }) => c),
     saramin: saramin
       .sort((a, b) => b.s - a.s)
       .slice(0, limit)
@@ -109,6 +138,33 @@ const saraminIndex = () => {
 /** A cat_kewd code from the snapshot. Unknown codes are rejected rather than risk an unfiltered list. */
 export function isSaraminCategory(code: string): boolean {
   return saraminIndex().has(code);
+}
+
+let wantedCodes: Map<string, string> | undefined;
+const wantedIndex = () => {
+  if (!wantedCodes) {
+    wantedCodes = new Map();
+    for (const [group, [code, subs]] of Object.entries(WANTED_CATEGORIES)) {
+      wantedCodes.set(code, group);
+      for (const [c, n] of subs) if (!wantedCodes.has(c)) wantedCodes.set(c, n);
+    }
+  }
+  return wantedCodes;
+};
+
+/** A Wanted tag_type_ids code from the snapshot (group or sub). Unknown codes are rejected before any request. */
+export function isWantedCategory(code: string): boolean {
+  return wantedIndex().has(code);
+}
+
+/** A Jumpit jobCategory id from the snapshot. */
+export function isJumpitCategory(code: string): boolean {
+  return JUMPIT_CATEGORIES.some(([c]) => c === code);
+}
+
+/** Display name of a Wanted code ("669" -> "프론트엔드 개발자"), or undefined if unknown. */
+export function wantedCategoryName(code: string): string | undefined {
+  return wantedIndex().get(code);
 }
 
 /** Display name of a Saramin code ("322" -> "경리"), or undefined if unknown. */

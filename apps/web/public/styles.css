@@ -470,6 +470,10 @@ h1,h2,h3,h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
 .md li { margin: 0.15em 0; }
 .md hr { border: none; border-top: 1px solid var(--border); margin: 1.3em 0; }
 .md a { color: var(--accent); }
+.md-table { overflow-x: auto; margin: 0.6em 0 0.9em; }
+.md table { border-collapse: collapse; width: 100%; font-size: 0.94em; }
+.md th, .md td { border: 1px solid var(--border); padding: 0.4em 0.65em; text-align: left; vertical-align: top; }
+.md th { font-weight: 700; white-space: nowrap; }
 .md code { font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; padding: 0.1em 0.35em; border-radius: 4px; background: var(--border); }
 
 /* disclosure — native <details> for collapsing long content (예: 공고 원문) */

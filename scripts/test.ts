@@ -564,6 +564,11 @@ ok('javascript: 링크 차단(→ #)', jsLink.includes('href="#"') && !jsLink.to
 const breakout = markdownToHtml('[x](https://a.com" onmouseover="alert(1))');
 ok('링크 속성 탈출 차단', !breakout.includes('onmouseover="alert') && breakout.includes('&quot;'));
 
+// Career descriptions often carry a | 회사 | 기간 | table; it used to come out as raw pipes.
+const table = markdownToHtml('| 회사 | 기간 |\n|---|---|\n| 씽크프리 | 2023.10 ~ <b>재직</b> |');
+ok('표 렌더링(셀 이스케이프 포함)', table.includes('<th>회사</th>') && table.includes('<td>씽크프리</td>') && table.includes('&lt;b&gt;') && !table.includes('|'));
+ok('표 docx 생성', (await markdownToDocx('t', '| a | b |\n|---|---|\n| 1 | 2 |')).length > 0);
+
 const titleInj = toPrintableHtml('</title><script>alert(1)</script>', '본문');
 ok('내보내기 제목 인젝션 차단', !titleInj.includes('<script>') && !titleInj.includes('</title><script>'));
 
@@ -826,6 +831,39 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
     const badSaramin = await searchJobs('', { sources: ['saramin'], saraminCategories: ['999999'] });
     ok('사람인 분류표에 없는 코드도 요청 전에 거부', badSaramin.providers[0]?.ok === false && /unknown Saramin/.test(badSaramin.providers[0]?.error ?? ''));
 
+    // 원티드: 키워드는 제목에만 걸려 대부분 놓치므로 직군(tag_type_ids)·경력(years)을 URL로 넘긴다.
+    const { wantedUrl, findJobCategories } = await import('../packages/core/src/index.ts');
+    const wu = new URL(wantedUrl('', { categories: ['669', '873'], years: 8, limit: 100, offset: 100 }));
+    ok(
+      '원티드 URL: tag_type_ids 반복·years·offset 전달, 키워드 없으면 query 없음',
+      wu.searchParams.getAll('tag_type_ids').join() === '669,873' && wu.searchParams.get('years') === '8' && wu.searchParams.get('offset') === '100' && !wu.searchParams.has('query'),
+      wu.href,
+    );
+    ok('원티드 URL: years 없으면 -1(전체)', new URL(wantedUrl('프론트', { limit: 10, offset: 0 })).searchParams.get('years') === '-1');
+    ok(
+      'find_job_categories: 프론트엔드 → 원티드 669, 점핏 2',
+      findJobCategories('프론트엔드').wanted[0]?.code === '669' && findJobCategories('프론트엔드').jumpit[0]?.code === '2',
+      JSON.stringify(findJobCategories('프론트엔드')),
+    );
+    const wantedAsked: string[] = [];
+    (globalThis as { fetch: unknown }).fetch = async (url: string) => {
+      wantedAsked.push(url);
+      const offset = Number(new URL(url).searchParams.get('offset'));
+      const n = offset === 0 ? 100 : 92;
+      return json({
+        links: { next: offset === 0 ? '/api/v4/jobs?offset=100' : null },
+        data: Array.from({ length: n }, (_, i) => ({ id: offset + i, position: `p${offset + i}`, company: { name: `c${offset + i}` } })),
+      });
+    };
+    const wantedAll = await searchJobs('', { sources: ['wanted'], wantedCategories: ['669'], years: 8, trackSeen: false });
+    ok(
+      '원티드 직군만으로 검색: offset 100 단위로 끝까지(192건) 받고 거기서 멈춤',
+      wantedAll.results.length === 192 && wantedAsked.length === 2 && wantedAsked.every((u) => new URL(u).searchParams.get('years') === '8'),
+      JSON.stringify({ n: wantedAll.results.length, wantedAsked }),
+    );
+    const badWanted = await searchJobs('', { sources: ['wanted'], wantedCategories: ['99999999'] });
+    ok('원티드 분류표에 없는 코드는 요청 전에 거부', badWanted.providers[0]?.ok === false && /unknown Wanted/.test(badWanted.providers[0]?.error ?? ''));
+
     // 매일 보이는 상시채용은 last_seen_at이 갱신돼 지워지지 않고, 안 보인 지 120일 지난 것만 지운다.
     const { markJobsSeen, getDb } = await import('../packages/db/src/index.ts');
     markJobsSeen([{ source: 't', external_id: 'daily' }, { source: 't', external_id: 'gone' }], '2026-01-01');
@@ -835,9 +873,11 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
     ok('정리는 마지막으로 본 날 기준: 계속 보이는 공고는 첫날 유지, 120일 안 보인 것만 삭제', left.get('t:daily') === '2026-01-01' && !gone, JSON.stringify({ daily: left.get('t:daily'), gone }));
 
     setJobSearchPreferences({ remember_categories: ['재무·회계·세무>회계결산'], saramin_categories: ['322'] });
+    setJobSearchPreferences({ wanted_categories: ['669'] });
     setJobSearchPreferences({ keyword: '회계' });
     const p = getJobSearchPreferences();
-    ok('검색 조건 저장: 준 필드만 바뀌고 나머지 유지', p.keyword === '회계' && p.saramin_categories[0] === '322' && p.remember_categories.length === 1 && !!p.updated_at, JSON.stringify(p));
+    ok('검색 조건 저장: 준 필드만 바뀌고 나머지 유지', p.keyword === '회계' && p.saramin_categories[0] === '322' && p.remember_categories.length === 1 && p.wanted_categories[0] === '669' && !!p.updated_at, JSON.stringify(p));
+    setJobSearchPreferences({ wanted_categories: [] });
     const tables = (getDb().prepare(`SELECT name FROM sqlite_master WHERE type='table'`).all() as { name: string }[]).map((t) => t.name);
     ok('검색 조건·처음 본 날은 실제 테이블(백업·초기화 대상, _meta 아님)', tables.includes('job_search_preferences') && tables.includes('job_search_seen'));
 
@@ -853,26 +893,68 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
       schema.posted_since.safeParse('today').success && schema.posted_since.safeParse('2026-11-04').success && !schema.posted_since.safeParse('2026-99-99').success && !schema.posted_since.safeParse('2026-02-30').success,
     );
 
-    // 페이지 넘김: 리멤버는 per 50이 상한, 점핏은 16건 고정. 둘 다 limit만큼 이어 받는다.
+    // 페이지 넘김: 리멤버는 per 50이 상한(첫 페이지의 total_pages까지만), 점핏·사람인은 100건 단위로 짧은 페이지에서 멈춘다.
     const asked: string[] = [];
+    const bodies: string[] = [];
+    const saraminItems = (n: number, page: number) =>
+      Array.from({ length: n }, (_, i) => `<div class="item_recruit" value="${page * 1000 + i}"><div class="job_tit"><a title="s${page}-${i}"></a></div><div class="corp_name"><a>sc${page}-${i}</a></div></div>`).join('');
+    let rememberPages: number | undefined;
     (globalThis as { fetch: unknown }).fetch = async (url: string, init?: { body?: string }) => {
+      const sp = new URL(url).searchParams;
       if (url.includes('rememberapp')) {
         const { page, per } = JSON.parse(init!.body!);
         asked.push(`r${page}:${per}`);
-        return json({ data: Array.from({ length: per }, (_, i) => ({ id: page * 1000 + i, title: `t${page}-${i}`, organization: { name: `c${page}-${i}` } })) });
+        bodies.push(init!.body!);
+        return json({
+          ...(rememberPages ? { meta: { total_pages: rememberPages } } : {}),
+          data: Array.from({ length: per }, (_, i) => ({ id: page * 1000 + i, title: `t${page}-${i}`, organization: { name: `c${page}-${i}` } })),
+        });
       }
-      const page = Number(new URL(url).searchParams.get('page'));
-      asked.push(`j${page}`);
-      const n = page < 3 ? 16 : 5;
+      if (url.includes('saramin.co.kr/zf_user')) {
+        const page = Number(sp.get('recruitPage'));
+        asked.push(`s${page}:${sp.get('recruitPageCount')}:${sp.get('searchword')}`);
+        return json({ innerHTML: saraminItems(page < 3 ? Number(sp.get('recruitPageCount')) : 7, page) });
+      }
+      const page = Number(sp.get('page'));
+      const size = Number(sp.get('size'));
+      asked.push(`j${page}:${size}:${sp.getAll('jobCategory').join('+')}:${sp.get('keyword') ?? ''}`);
+      const n = page < 3 ? size : 44;
       return json({ result: { positions: Array.from({ length: n }, (_, i) => ({ id: `${page}-${i}`, companyName: `j${page}-${i}`, title: `p${page}-${i}` })) } });
     };
     const paged = await searchJobs('회계', { sources: ['remember', 'jumpit'], limit: 70, trackSeen: false });
     const count = (s: string) => paged.results.filter((x) => x.source === s).length;
     ok(
-      'limit 70: 리멤버 50+50 두 페이지에서 70건, 점핏은 짧은 페이지(5건)에서 멈춰 37건',
-      count('remember') === 70 && count('jumpit') === 37 && asked.filter((a) => a.startsWith('r')).sort().join() === 'r1:50,r2:50' && !asked.includes('j4'),
+      'limit 70: 리멤버 50+50 두 페이지에서 70건, 점핏은 size=70 한 번에 70건',
+      count('remember') === 70 && count('jumpit') === 70 && asked.filter((a) => a.startsWith('r')).sort().join() === 'r1:50,r2:50' && asked.filter((a) => a.startsWith('j')).join() === 'j1:70::회계',
       JSON.stringify({ asked, r: count('remember'), j: count('jumpit') }),
     );
+
+    // 직무 조건이 있는 사이트: 키워드 없이 그 직군 목록을 끝까지(최대 300) 받아서 경력·날짜 필터가 전부를 본다.
+    asked.length = 0;
+    rememberPages = 3;
+    const whole = await searchJobs('프론트엔드', {
+      sources: ['remember', 'jumpit', 'saramin'],
+      rememberCategories: ['SW개발>프론트엔드'],
+      jumpitCategories: ['2'],
+      saraminCategories: ['92'],
+      trackSeen: false,
+    });
+    const wc = (s: string) => whole.results.filter((x) => x.source === s).length;
+    ok(
+      '직무 조건 있으면 목록 전체: 점핏 100+100+44, 리멤버 total_pages 3까지만, 사람인 100+100+7',
+      wc('jumpit') === 244 && wc('remember') === 150 && wc('saramin') === 207 && asked.filter((a) => a.startsWith('r')).length === 3,
+      JSON.stringify({ j: wc('jumpit'), r: wc('remember'), s: wc('saramin'), asked }),
+    );
+    ok(
+      '직무 조건을 받은 사이트에는 키워드를 보내지 않음(점핏 jobCategory=2만, 리멤버 keywords [], 사람인 searchword 빈 값)',
+      asked.filter((a) => a.startsWith('j')).every((a) => a.endsWith(':2:')) &&
+        bodies.slice(-3).every((b) => JSON.parse(b).search.keywords.length === 0) &&
+        asked.filter((a) => a.startsWith('s')).every((a) => a.endsWith(':')),
+      JSON.stringify(asked),
+    );
+    const badJumpit = await searchJobs('', { sources: ['jumpit'], jumpitCategories: ['14'] });
+    ok('점핏 분류표에 없는 코드는 요청 전에 거부', badJumpit.providers[0]?.ok === false && /unknown Jumpit/.test(badJumpit.providers[0]?.error ?? ''));
+    rememberPages = undefined;
     const today50 = await searchJobs('회계', { sources: ['remember'], postedSince: '2026-01-01', trackSeen: false });
     ok('posted_since가 있으면 limit 기본값 50', today50.providers[0]?.count === 50, JSON.stringify(today50.providers));
 
