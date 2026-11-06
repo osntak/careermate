@@ -66,6 +66,7 @@ const DEMO_STR = {
     err_item_not_found: '항목을 찾을 수 없습니다.',
     err_not_found: '요청한 항목을 찾을 수 없어요.',
     err_demo_error: '데모 처리 중 오류가 발생했습니다.',
+    err_photo_demo: '데모에서는 사진을 올릴 수 없어요. 설치한 CareerMate에서 사용해 주세요.',
     err_bad_backup: 'CareerMate 백업 JSON 형식이 아닙니다.',
     err_restore_confirm: '복원을 진행하려면 확인 값이 필요합니다.',
     err_reset_confirm: 'confirm 값이 올바르지 않습니다.',
@@ -140,6 +141,7 @@ const DEMO_STR = {
     err_item_not_found: 'Item not found.',
     err_not_found: 'The requested item could not be found.',
     err_demo_error: 'An error occurred while processing the demo request.',
+    err_photo_demo: 'Photo upload is not available in the demo. Use it in your installed CareerMate.',
     err_bad_backup: 'Not a valid CareerMate backup JSON.',
     err_restore_confirm: 'A confirmation value is required to proceed with the restore.',
     err_reset_confirm: 'The confirm value is incorrect.',
@@ -246,7 +248,7 @@ function submittedAtToOccurrence(value) {
 }
 
 function documentRoute(doc) {
-  return doc.kind === 'career_description' ? `/documents/career/${doc.id}` : `/documents/docs/${doc.id}`;
+  return `/documents/${doc.kind === 'career_description' ? 'career' : doc.kind}/${doc.id}`;
 }
 
 function enrichDocumentRef(ref) {
@@ -535,6 +537,9 @@ const ROUTES = [
 
   /* profile */
   ['GET', /^\/api\/profile$/, () => ({ profile: db.profile })],
+  // Profile photo: no file storage in the demo, so uploads explain that instead of failing silently.
+  ['POST', /^\/api\/profile\/photo$/, () => ({ __status: 400, error: d('err_photo_demo') })],
+  ['DELETE', /^\/api\/profile\/photo$/, () => ({ profile: db.profile })],
   ['PUT', /^\/api\/profile$/, (_p, body) => {
     db.profile = normProfile(body, db.profile);
     logActivity('profile_updated', d('activity_profile_updated'), 'profile', 'p1');

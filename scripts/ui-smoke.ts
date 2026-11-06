@@ -48,7 +48,7 @@ page.on('pageerror', (e: any) => errors.push(`[${route}] PAGEERROR ${e.message}`
 
 const routes: [string, string][] = [
   ['home', '#/'], ['profile', '#/profile'], ['jobs', '#/jobs'], ['job-detail', `#/jobs/${job.id}`],
-  ['applications', '#/applications'], ['documents', '#/documents'], ['interview', '#/interview'], ['settings', '#/settings'],
+  ['applications', '#/applications'], ['documents', '#/documents'], ['documents-resume', '#/documents/resume'], ['documents-legacy', '#/documents/docs'], ['interview', '#/interview'], ['settings', '#/settings'],
 ];
 
 let failures = 0;

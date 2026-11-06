@@ -13,6 +13,8 @@ export default {
   'common.fmtWord': 'Word',
   'common.fmtHtml': 'HTML',
   'common.fmtMarkdown': 'Markdown',
+  'common.includePhoto': '사진 포함',
+  'common.addPhoto': '사진 추가',
 
   // 전형 일정 D-day 배지(홈 액션레인 + 공고 상세 공유). 마감 D-day(applications.dday.*)와는 별개.
   'schedule.dday.today': 'D-day',

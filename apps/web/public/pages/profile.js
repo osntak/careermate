@@ -1,10 +1,9 @@
-// Profile, first view of 내 자료 (#/profile; the career description and resume/portfolio
-// views are #/documents/career and #/documents/docs). The user's career identity, fully
-// editable. Feeds AI writing/analysis.
+// Profile (#/profile): the user's career identity, fully editable. Feeds AI writing/analysis.
+// Documents the user submits (이력서·경력기술서 등) live in 서류함, #/documents.
 import {
   el, get, post, put, del, icon, Card, Badge, Btn, IconBtn, SubmitBtn, EmptyState, Chips,
   Field, Input, Textarea, openModal, closeModal, confirmDialog,
-  toastOk, toastError, fmtDate, mount, linesToArray, csvToArray, ExportMenu, ViewSwitch,
+  toastOk, toastError, fmtDate, mount, linesToArray, csvToArray, ExportMenu,
 } from '/lib.js';
 import { t } from '/i18n.js';
 
@@ -33,15 +32,6 @@ function kv(rows) {
 
 /* ------------------------------------------------------------------ render */
 
-// 내 자료 is material about the user; each of its views starts with this switch.
-export function materialsViewSwitch(activeHref) {
-  return ViewSwitch([
-    { href: '#/profile', label: t('profile.title') },
-    { href: '#/documents/career', label: t('documents.tab.career') },
-    { href: '#/documents/docs', label: t('documents.tab.docs') },
-  ], activeHref);
-}
-
 export async function render(ctx) {
   const none = () => ({ items: [] });
   const [{ profile }, { experiences }, { projects }, { skills }, onboarding, reuseMap, unverified] = await Promise.all([
@@ -64,7 +54,7 @@ export async function render(ctx) {
     unverified: new Set(unverified.items.map((u) => `${u.entity_type}:${u.entity_id}`)),
   };
 
-  const wrap = el('div', { class: 'stack-4' }, materialsViewSwitch('#/profile'));
+  const wrap = el('div', { class: 'stack-4' });
 
   wrap.append(CompletenessCard(onboarding));
   wrap.append(BasicInfoCard(p, reload));
@@ -120,7 +110,7 @@ function CompletenessCard(o) {
     title: t('profile.completeness.title'),
     sub: t('profile.completeness.percent', { pct }),
     actions: [
-      ExportMenu('/api/export/profile'),
+      ExportMenu('/api/export/profile', { photo: true }),
     ],
     body: [
       el('div', { class: 'progress', style: { marginBottom: steps.length ? '12px' : '0' } },
@@ -162,11 +152,70 @@ function BasicInfoCard(p, reload) {
     action: Btn(t('profile.basic.empty.action'), { icon: 'edit', variant: 'primary', onClick: () => editBasic(p, reload) }),
   });
 
+  // Once filled, laid out like a resume header: the photo beside the personal details.
   return Card({
     title: t('profile.basic.title'),
     actions: hasAny ? Btn(t('profile.basic.edit'), { icon: 'edit', sm: true, variant: 'ghost', onClick: () => editBasic(p, reload) }) : null,
-    body,
+    body: hasAny ? el('div', { class: 'basic-grid' }, PhotoFrame(p, reload), el('div', { style: { minWidth: 0 } }, ...body)) : body,
   });
+}
+
+// Re-encode in the browser before upload: WebP and phone photos become JPEG (Word cannot show
+// WebP), the camera rotation is applied, EXIF such as GPS is dropped, the long side caps at 1200px.
+async function normalizePhoto(file) {
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, 1200 / Math.max(bmp.width, bmp.height));
+  const canvas = el('canvas');
+  canvas.width = Math.round(bmp.width * scale);
+  canvas.height = Math.round(bmp.height * scale);
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#fff'; // transparent PNG areas would turn black in JPEG
+  g.fillRect(0, 0, canvas.width, canvas.height);
+  g.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error())), 'image/jpeg', 0.9));
+}
+
+// The photo slot of the basic-info card: upload, replace, remove.
+function PhotoFrame(p, reload) {
+  const photo = p.photo;
+  const input = el('input', {
+    type: 'file', hidden: true, attrs: { accept: 'image/jpeg,image/png,image/webp' },
+    onChange: async () => {
+      const file = input.files?.[0];
+      input.value = '';
+      if (!file) return;
+      try {
+        if (!/^image\/(jpeg|png|webp)$/.test(file.type)) throw new Error(t('profile.photo.badType'));
+        const blob = await normalizePhoto(file).catch(() => { throw new Error(t('profile.photo.badType')); });
+        if (blob.size > 2 * 1024 * 1024) throw new Error(t('profile.photo.tooLarge'));
+        await post('/api/profile/photo', blob);
+        toastOk(t('profile.photo.saved'));
+        await reload();
+      } catch (e) { toastError(e); }
+    },
+  });
+  // The frame itself is the upload target: a blank slot until a photo is added, with
+  // "사진 추가" / "바꾸기" shown on hover.
+  const frame = el('button', {
+    type: 'button', class: `photo-frame${photo ? '' : ' photo-frame--empty'}`,
+    attrs: { 'aria-label': photo ? t('profile.photo.replace') : t('profile.photo.upload'), title: t('profile.photo.hint') },
+    onClick: () => input.click(),
+  }, photo
+    ? el('img', { attrs: { src: `/api/profile/photo?v=${encodeURIComponent(photo.updated_at)}`, alt: t('profile.photo.alt') } })
+    : null,
+  el('span', { class: 'photo-frame__overlay' }, photo ? t('profile.photo.replaceShort') : t('profile.photo.upload')));
+  const remove = async () => {
+    const ok = await confirmDialog({ title: t('profile.photo.removeTitle'), message: t('profile.photo.removeConfirm'), confirmLabel: t('profile.photo.remove'), danger: true });
+    if (!ok) return;
+    try { await del('/api/profile/photo'); toastOk(t('profile.photo.removed')); await reload(); }
+    catch (e) { toastError(e); }
+  };
+  // Whether a given export carries the photo is the export menu's "사진 포함" switch.
+  return el('div', { class: 'photo-col' },
+    input,
+    frame,
+    photo ? el('button', { type: 'button', class: 'link-btn link-btn--danger', onClick: remove }, t('profile.photo.remove')) : null,
+  );
 }
 
 function editBasic(p, reload) {

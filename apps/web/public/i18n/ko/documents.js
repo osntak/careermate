@@ -1,13 +1,10 @@
-// 자기소개서 메뉴, 그리고 내 자료의 경력기술서·이력서·포트폴리오 보기.
+// 서류함: 자기소개서·이력서·경력기술서·포트폴리오·기타 탭.
 export default {
-  // 내 자료 전환 탭 (프로필 탭 이름은 profile.title)
-  'documents.tab.career': '경력기술서',
-  'documents.tab.docs': '이력서·포트폴리오',
+  // 서류함 탭 (자기소개서 외 탭 이름은 kind.*)
+  'documents.tab.cover': '자기소개서',
 
   // search / loading / empty
-  'documents.search.cover': '자기소개서 검색',
-  'documents.search.career': '경력기술서 검색',
-  'documents.search.docs': '이력서·포트폴리오 검색',
+  'documents.search.placeholder': '{{kind}} 검색',
   'documents.search.aria': '검색',
   'documents.search.empty': '‘{{query}}’에 맞는 항목이 없어요.',
   'documents.search.clear': '필터 초기화',
@@ -15,8 +12,7 @@ export default {
 
   // create actions
   'documents.action.coverCreate': '자기소개서 추가',
-  'documents.action.careerCreate': '경력기술서 추가',
-  'documents.action.docCreate': '문서 추가',
+  'documents.action.create': '{{kind}} 추가',
 
   // cover letters tab — empty state
   'documents.cover.empty.title': '아직 자기소개서가 없어요',
@@ -24,6 +20,7 @@ export default {
 
   // cover row
   'documents.cover.versionCount': '버전 {{count}}개',
+  'documents.cover.noJob': '공고 미연결',
   'documents.cover.primary': '대표',
   'documents.cover.open': '열기',
   'documents.cover.copy': '복사',
@@ -81,15 +78,16 @@ export default {
   'documents.editVersion.cancel': '취소',
   'documents.editVersion.toggle': '수정하여 새 버전 저장',
 
-  // career descriptions tab — empty state
-  'documents.career.empty.title': '아직 경력기술서가 없어요',
-  'documents.career.empty.body': 'AI에게 경력기술서 작성을 요청하면 여기에 저장돼요.',
-  'documents.career.empty.action': '직접 추가',
-
-  // documents tab — empty state
-  'documents.docs.empty.title': '저장된 문서가 없어요',
-  'documents.docs.empty.body': '이력서·포트폴리오·기타 문서를 보관하세요.',
-  'documents.docs.empty.action': '문서 추가',
+  // kind tabs: empty state
+  'documents.kind.empty.title.resume': '아직 이력서가 없어요',
+  'documents.kind.empty.title.career_description': '아직 경력기술서가 없어요',
+  'documents.kind.empty.title.portfolio': '아직 포트폴리오가 없어요',
+  'documents.kind.empty.title.other': '아직 기타 문서가 없어요',
+  'documents.kind.empty.body.resume': '기본 이력서를 하나 넣어 두면 AI가 공고마다 이걸 바탕으로 써요.',
+  'documents.kind.empty.body.career_description': 'AI에게 경력기술서 작성을 요청하면 여기에 저장돼요.',
+  'documents.kind.empty.body.portfolio': '포트폴리오 설명이나 링크 목록을 보관하세요.',
+  'documents.kind.empty.body.other': '자격증, 추천서처럼 위에 없는 문서를 보관하세요.',
+  'documents.kind.empty.action': '직접 추가',
 
   // doc detail modal
   'documents.docDetail.updated': '수정 {{when}}',

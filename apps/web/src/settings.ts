@@ -9,7 +9,10 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import type { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
-import { getDb, getDbPath, getBackupsDir, getDataDir, getExportsDir, tx, vacuumInto } from '@careermate/db';
+import {
+  getDb, getDbPath, getBackupsDir, getDataDir, getExportsDir, tx, vacuumInto,
+  readProfilePhoto, saveProfilePhoto, removeProfilePhoto, sniffPhotoMime, PHOTO_MAX_BYTES,
+} from '@careermate/db';
 import { BUNDLED } from '@careermate/shared';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -55,6 +58,7 @@ interface ParsedBackup {
   version: number;
   current_version: number;
   tables: Record<string, BackupRow[]>;
+  photo: Buffer | null;
   counts: Record<string, number>;
   total_rows: number;
   warnings: string[];
@@ -161,6 +165,14 @@ function parseBackup(raw: unknown): ParsedBackup {
     totalRows += tables[table].length;
   }
 
+  // The profile photo is a file, not a row, so it rides next to 	ables as base64.
+  let photo: Buffer | null = null;
+  const rawPhoto = isRecord(raw.files) ? raw.files.profile_photo : undefined;
+  if (rawPhoto !== undefined) {
+    photo = isRecord(rawPhoto) && typeof rawPhoto.data === 'string' ? Buffer.from(rawPhoto.data, 'base64') : null;
+    if (!photo || photo.length > PHOTO_MAX_BYTES || !sniffPhotoMime(photo)) throw new Error('백업 파일의 프로필 사진 형식이 올바르지 않습니다.');
+  }
+
   const warnings = [...allowedTables]
     .filter((table) => !(table in rawTables))
     .map((table) => `${table} 데이터가 백업 파일에 없어 빈 값으로 가져옵니다.`);
@@ -170,6 +182,7 @@ function parseBackup(raw: unknown): ParsedBackup {
     version,
     current_version: currentVersion,
     tables,
+    photo,
     counts,
     total_rows: totalRows,
     warnings,
@@ -292,13 +305,24 @@ function linuxLauncherScript(): string {
 }
 
 /** Full machine-readable dump of every table — portable backup / GDPR-style export. */
-export function exportAll(): { exported_at: string; version: number; tables: Record<string, unknown[]> } {
+export function exportAll(): {
+  exported_at: string;
+  version: number;
+  tables: Record<string, unknown[]>;
+  files?: { profile_photo: { mime: string; data: string } };
+} {
   const db = getDb();
   const tables: Record<string, unknown[]> = {};
   for (const t of listTables(db)) {
     tables[t] = db.prepare(`SELECT * FROM ${quoteIdent(t)}`).all();
   }
-  return { exported_at: new Date().toISOString(), version: schemaVersion(db), tables };
+  const photo = readProfilePhoto();
+  return {
+    exported_at: new Date().toISOString(),
+    version: schemaVersion(db),
+    tables,
+    ...(photo ? { files: { profile_photo: { mime: photo.mime, data: Buffer.from(photo.bytes).toString('base64') } } } : {}),
+  };
 }
 
 export function previewBackupImport(raw: unknown) {
@@ -352,6 +376,10 @@ export function restoreBackup(raw: unknown): {
       throw new Error('백업 파일의 데이터 관계가 맞지 않아 가져올 수 없습니다.');
     }
   });
+
+  // The restored profile row may point at a photo file this PC does not have; the backup's own copy wins.
+  if (parsed.photo) saveProfilePhoto(parsed.photo);
+  else removeProfilePhoto();
 
   return {
     ok: true,
@@ -450,6 +478,7 @@ export function resetAll(confirm: string): { ok: boolean; backup_path?: string }
     db.exec('ROLLBACK');
     throw e;
   }
+  removeProfilePhoto(); // the photo file is user data too; the backup above holds a copy
   return { ok: true, backup_path };
 }
 

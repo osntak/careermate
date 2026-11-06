@@ -27,9 +27,13 @@ export function escapeHtml(input: string | null | undefined): string {
  * accepting it would let user content (e.g. a cover-letter body containing
  * `<img onerror=...>`) execute when the exported file is opened in a browser.
  */
-export function toPrintableHtml(title: string, bodyMarkdown: string, footer?: string): string {
+export function toPrintableHtml(title: string, bodyMarkdown: string, footer?: string, photo?: { bytes: Uint8Array; mime: string } | null): string {
   const body = markdownToHtml(bodyMarkdown);
   const safeTitle = escapeHtml(title);
+  // Embedded as a data: URI so the exported file stays one standalone document.
+  const photoTag = photo
+    ? `<img class="photo" alt="" src="data:${escapeHtml(photo.mime)};base64,${Buffer.from(photo.bytes).toString('base64')}">\n`
+    : '';
   // Printed on every page with "n / N" (CSS page-margin boxes, Chromium 131+). A quote,
   // backslash or any control char (CSS treats \f as a newline) ends the string early,
   // and `<` could close <style>, so all of them become CSS hex escapes.
@@ -95,6 +99,9 @@ export function toPrintableHtml(title: string, bodyMarkdown: string, footer?: st
   th { background: #f3f4f6; }
   code { font-family: Consolas, "D2Coding", monospace; font-size: 0.9em; background: #f3f4f6; padding: 0.1em 0.3em; border-radius: 3px; }
   hr { border: none; border-top: 1px solid var(--line); margin: 1.5em 0; }
+  .photo { float: right; width: 3cm; height: 4cm; object-fit: cover; margin: 0 0 12px 18px; border: 1px solid var(--line); }
+  /* Rules beside the photo stop at its edge instead of running under it. */
+  .photo ~ h1, .photo ~ h2, .photo ~ hr { overflow: hidden; }
   @page {
     size: A4;
     margin: 18mm 16mm;${footerCss}
@@ -126,7 +133,7 @@ export function toPrintableHtml(title: string, bodyMarkdown: string, footer?: st
 </head>
 <body>
 <main class="page">
-${body}
+${photoTag}${body}
 </main>
 </body>
 </html>

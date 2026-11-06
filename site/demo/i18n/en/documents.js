@@ -1,13 +1,10 @@
-// Cover letters menu, plus the career description and resume/portfolio views of My materials.
+// Documents: cover letter, resume, career description, portfolio and other tabs.
 export default {
-  // My materials switch (the Profile label is profile.title)
-  'documents.tab.career': 'Career description',
-  'documents.tab.docs': 'Resume & portfolio',
+  // Documents tabs (tabs other than cover letters use kind.*)
+  'documents.tab.cover': 'Cover letters',
 
   // search / loading / empty
-  'documents.search.cover': 'Search cover letters',
-  'documents.search.career': 'Search career descriptions',
-  'documents.search.docs': 'Search resumes & portfolios',
+  'documents.search.placeholder': 'Search {{kind}}',
   'documents.search.aria': 'Search',
   'documents.search.empty': "No items match '{{query}}'.",
   'documents.search.clear': 'Clear filter',
@@ -15,8 +12,7 @@ export default {
 
   // create actions
   'documents.action.coverCreate': 'Add cover letter',
-  'documents.action.careerCreate': 'Add career description',
-  'documents.action.docCreate': 'Add document',
+  'documents.action.create': 'Add {{kind}}',
 
   // cover letters tab — empty state
   'documents.cover.empty.title': 'No cover letters yet',
@@ -24,6 +20,7 @@ export default {
 
   // cover row
   'documents.cover.versionCount': { one: '{{count}} version', other: '{{count}} versions' },
+  'documents.cover.noJob': 'No posting linked',
   'documents.cover.primary': 'Primary',
   'documents.cover.open': 'Open',
   'documents.cover.copy': 'Copy',
@@ -82,14 +79,15 @@ export default {
   'documents.editVersion.toggle': 'Edit and save as new version',
 
   // career descriptions tab — empty state
-  'documents.career.empty.title': 'No career descriptions yet',
-  'documents.career.empty.body': 'Ask the AI to write a career description and it’ll be saved here.',
-  'documents.career.empty.action': 'Add manually',
-
-  // documents tab — empty state
-  'documents.docs.empty.title': 'No saved documents',
-  'documents.docs.empty.body': 'Keep your resumes, portfolios, and other documents here.',
-  'documents.docs.empty.action': 'Add document',
+  'documents.kind.empty.title.resume': 'No resume yet',
+  'documents.kind.empty.title.career_description': 'No career descriptions yet',
+  'documents.kind.empty.title.portfolio': 'No portfolio yet',
+  'documents.kind.empty.title.other': 'No other documents yet',
+  'documents.kind.empty.body.resume': 'Add one base resume and the AI builds on it for each posting.',
+  'documents.kind.empty.body.career_description': "Ask the AI to write a career description and it'll be saved here.",
+  'documents.kind.empty.body.portfolio': 'Keep portfolio notes or a list of links here.',
+  'documents.kind.empty.body.other': 'Keep certificates, references and anything not listed above.',
+  'documents.kind.empty.action': 'Add manually',
 
   // doc detail modal
   'documents.docDetail.updated': 'Updated {{when}}',

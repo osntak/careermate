@@ -1,29 +1,38 @@
-// One module, two menus. #/documents and #/documents/cover(/:id) are 자기소개서: cover
-// letters with version history. #/documents/career and #/documents/docs are views of
-// 내 자료 (career descriptions, resumes and other documents) and start with its switch.
+// 서류함: every document the user submits, one tab per kind. #/documents/cover(/:id) is
+// cover letters with version history; #/documents/<resume|career|portfolio|other>(/:id)
+// are the documents table filtered by kind. #/documents alone is cover letters.
 // XSS-safe: all DB/user text rendered via el() textContent / .doc-preview (never innerHTML).
 import {
-  el, get, post, put, del, Card, Badge, Btn, SubmitBtn, EmptyState,
-  Field, Input, Textarea, Select, openModal, confirmDialog,
+  el, get, post, put, del, Card, Badge, Btn, SubmitBtn, EmptyState, ViewSwitch,
+  Field, Input, Textarea, Select, openModal, closeModal, confirmDialog,
   toastOk, toastError, copyText, fmtRelative, mount, meta, ExportMenu, Menu, Markdown,
 } from '/lib.js';
 import { t } from '/i18n.js';
-import { materialsViewSwitch } from '/pages/profile.js';
+
+// URL tab -> documents.kind. 'docs' is the old resume+portfolio tab; its links land on 이력서.
+const TAB_KIND = { resume: 'resume', career: 'career_description', portfolio: 'portfolio', other: 'other' };
+const TABS = ['cover', 'resume', 'career', 'portfolio', 'other'];
 
 // Each view has its own URL, so the tab comes from the URL alone and #/documents is always
 // cover letters. The search query is not persisted either (it resets per visit).
 let openedDeepLink = '';
 
 export async function render(ctx) {
-  const requestedTab = ['cover', 'career', 'docs'].includes(ctx.params?.[0]) ? ctx.params[0] : null;
+  const raw = ctx.params?.[0] === 'docs' ? 'resume' : ctx.params?.[0];
+  const requestedTab = TABS.includes(raw) ? raw : null;
   const requestedId = ctx.params?.[1] || '';
   const tab = requestedTab || 'cover';
+  const kind = TAB_KIND[tab];
+  const kindName = kind ? t('kind.' + kind) : t('documents.tab.cover');
 
   const root = el('div', { class: 'stack-4' });
 
   const panel = el('div', {});
   let activeHasItems = true;
-  if (tab !== 'cover') root.append(materialsViewSwitch(`#/documents/${tab}`));
+  root.append(ViewSwitch(TABS.map((id) => ({
+    href: `#/documents/${id}`,
+    label: id === 'cover' ? t('documents.tab.cover') : t('kind.' + TAB_KIND[id]),
+  })), `#/documents/${tab}`));
   root.append(panel);
 
   let query = '';
@@ -56,11 +65,7 @@ export async function render(ctx) {
   async function renderPanel() {
     mount(panel, el('div', { class: 'muted text-sm' }, t('documents.loading')));
     try {
-      const content = tab === 'cover'
-        ? await CoverLettersTab(reload)
-        : tab === 'career'
-          ? await CareerDescriptionsTab(reload)
-          : await DocumentsTab(reload);
+      const content = tab === 'cover' ? await CoverLettersTab(reload) : await KindTab(kind, reload);
       activeHasItems = content.dataset.hasItems === 'true';
       mount(panel, content);
       setActions();
@@ -93,15 +98,14 @@ export async function render(ctx) {
       ctx.setActions([]);
       return;
     }
-    const placeholder = tab === 'cover' ? t('documents.search.cover') : tab === 'career' ? t('documents.search.career') : t('documents.search.docs');
-    const search = Input({ type: 'search', placeholder, value: query, attrs: { 'aria-label': t('documents.search.aria') } });
+    const search = Input({ type: 'search', placeholder: t('documents.search.placeholder', { kind: kindName }), value: query, attrs: { 'aria-label': t('documents.search.aria') } });
     search.classList.add('input--inline');
     searchInput = search;
     search.addEventListener('input', () => { query = search.value; applyFilter(); });
-    let createBtn;
-    if (tab === 'cover') createBtn = Btn(t('documents.action.coverCreate'), { icon: 'plus', variant: 'primary', onClick: () => openCoverCreate(reload) });
-    else if (tab === 'career') createBtn = Btn(t('documents.action.careerCreate'), { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload, 'career_description') });
-    else createBtn = Btn(t('documents.action.docCreate'), { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload) });
+    const createBtn = Btn(tab === 'cover' ? t('documents.action.coverCreate') : t('documents.action.create', { kind: kindName }), {
+      icon: 'plus', variant: 'primary',
+      onClick: () => (tab === 'cover' ? openCoverCreate(reload) : openDocCreate(reload, kind)),
+    });
     ctx.setActions([search, createBtn]);
   }
 
@@ -110,10 +114,14 @@ export async function render(ctx) {
   await renderPanel();
 }
 
-/* ============================================================ Tab A — 자기소개서 */
+/* ============================================================ 자기소개서 */
 
 async function CoverLettersTab(reload) {
-  const { cover_letters: list } = await get('/api/cover-letters');
+  const [{ cover_letters: list }, jobsRes] = await Promise.all([
+    get('/api/cover-letters'),
+    get('/api/jobs').catch(() => ({ jobs: [] })),
+  ]);
+  const jobs = new Map((jobsRes.jobs || []).map((j) => [j.id, j]));
   const wrap = el('div', { class: 'stack-3' });
   wrap.dataset.hasItems = list.length ? 'true' : 'false';
 
@@ -126,12 +134,23 @@ async function CoverLettersTab(reload) {
     }));
   }
 
-  for (const cl of list) wrap.append(CoverRow(cl, reload));
+  for (const cl of list) wrap.append(CoverRow(cl, jobs.get(cl.job_id), reload));
   return wrap;
 }
 
-function CoverRow(cl, reload) {
+// Which posting a cover letter was written for: a link back to that job, or a quiet
+// "공고 미연결" so the list says plainly that a letter is per-posting.
+function JobLink(job) {
+  if (!job) return el('span', { class: 'chip' }, t('documents.cover.noJob'));
+  return el('a', {
+    class: 'chip chip--accent', href: `#/jobs/${job.id}`,
+    onClick: (e) => { e.stopPropagation(); closeModal(); },
+  }, `${job.company} · ${job.position}`);
+}
+
+function CoverRow(cl, job, reload) {
   const metaRow = el('div', { class: 'flex gap-2 wrap', style: { marginTop: '4px' } },
+    JobLink(job),
     el('span', { class: 'chip' }, t('documents.cover.versionCount', { count: cl.version_count })),
     cl.is_primary ? Badge('accent', t('documents.cover.primary')) : null,
   );
@@ -228,13 +247,14 @@ async function openCoverDetail(id, reload) {
     toastError(err);
     return;
   }
+  const job = data.job_id ? (await get(`/api/jobs/${data.job_id}`).catch(() => null))?.job : null;
 
   openModal({
     title: data.title,
     size: 'lg',
     body: (close) => {
       const container = el('div', {});
-      const draw = (cl) => mount(container, CoverDetailBody(cl, {
+      const draw = (cl) => mount(container, CoverDetailBody(cl, job, {
         refresh: async () => {
           data = (await get(`/api/cover-letters/${id}`)).cover_letter;
           draw(data);
@@ -248,13 +268,14 @@ async function openCoverDetail(id, reload) {
   });
 }
 
-function CoverDetailBody(cl, { refresh }) {
+function CoverDetailBody(cl, job, { refresh }) {
   const versions = (cl.versions || []).slice().sort((a, b) => b.version_no - a.version_no);
   const wrap = el('div', { class: 'stack-4' });
 
   // header meta + export
   wrap.append(el('div', { class: 'flex between wrap gap-2' },
     el('div', { class: 'flex gap-2 wrap' },
+      JobLink(job),
       el('span', { class: 'chip' }, t('documents.cover.versionCount', { count: cl.version_count })),
       cl.is_primary ? Badge('accent', t('documents.cover.primary')) : null,
     ),
@@ -364,10 +385,10 @@ function EditNewVersion(cl, refresh) {
   return el('div', { class: 'stack-2' }, toggle, editor);
 }
 
-/* ============================================================ Tab B — 경력기술서 */
+/* ============================================== Kind tabs (이력서·경력기술서·포트폴리오·기타) */
 
-async function CareerDescriptionsTab(reload) {
-  const [{ documents: list }, m] = await Promise.all([get('/api/documents?kind=career_description'), meta()]);
+async function KindTab(kind, reload) {
+  const [{ documents: list }, m] = await Promise.all([get(`/api/documents?kind=${kind}`), meta()]);
   const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, t('kind.' + k.value)]));
   const wrap = el('div', { class: 'stack-3' });
   wrap.dataset.hasItems = list.length ? 'true' : 'false';
@@ -375,31 +396,9 @@ async function CareerDescriptionsTab(reload) {
   if (!list.length) {
     return mountInto(wrap, EmptyState({
       iconName: 'file',
-      title: t('documents.career.empty.title'),
-      body: t('documents.career.empty.body'),
-      action: Btn(t('documents.career.empty.action'), { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload, 'career_description') }),
-    }));
-  }
-
-  for (const doc of list) wrap.append(DocRow(doc, kindLabels, m, reload));
-  return wrap;
-}
-
-/* ============================================================ Tab C — 이력서·포트폴리오 */
-
-async function DocumentsTab(reload) {
-  const [{ documents }, m] = await Promise.all([get('/api/documents'), meta()]);
-  const list = (documents || []).filter((doc) => doc.kind !== 'career_description');
-  const kindLabels = Object.fromEntries((m.document_kinds || []).map((k) => [k.value, t('kind.' + k.value)]));
-  const wrap = el('div', { class: 'stack-3' });
-  wrap.dataset.hasItems = list.length ? 'true' : 'false';
-
-  if (!list.length) {
-    return mountInto(wrap, EmptyState({
-      iconName: 'file',
-      title: t('documents.docs.empty.title'),
-      body: t('documents.docs.empty.body'),
-      action: Btn(t('documents.docs.empty.action'), { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload) }),
+      title: t('documents.kind.empty.title.' + kind),
+      body: t('documents.kind.empty.body.' + kind),
+      action: Btn(t('documents.kind.empty.action'), { icon: 'plus', variant: 'primary', onClick: () => openDocCreate(reload, kind) }),
     }));
   }
 
@@ -453,7 +452,7 @@ async function openDocDetail(id, kindLabels, m, reload) {
     ),
     footer: (close) => [
       Btn(t('documents.docDetail.copy'), { variant: 'ghost', icon: 'copy', onClick: () => copyText(doc.content || '') }),
-      ExportMenu(`/api/export/document/${doc.id}`, { sm: false }),
+      ExportMenu(`/api/export/document/${doc.id}`, { sm: false, photo: doc.kind === 'resume' || doc.kind === 'career_description' }),
       Btn(t('documents.docDetail.delete'), { variant: 'danger', icon: 'trash', onClick: async () => {
         const ok = await confirmDialog({ title: t('documents.docDetail.deleteTitle'), message: t('documents.docDetail.deleteConfirm', { title: doc.title }), confirmLabel: t('documents.docDetail.deleteConfirmLabel'), danger: true });
         if (!ok) return;

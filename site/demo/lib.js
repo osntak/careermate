@@ -68,9 +68,11 @@ function appendChildren(node, children) {
 }
 /**
  * Render the markdown subset the exporters use (packages/exporters markdown.ts:
- * headings, bullet and numbered lists, ---, paragraphs, **bold**, [label](url)) as DOM
- * nodes. Built with el(), so user text never goes through innerHTML.
+ * headings, bullet and numbered lists, | tables |, ---, paragraphs, **bold**, [label](url))
+ * as DOM nodes. Built with el(), so user text never goes through innerHTML.
  */
+const TABLE_SEP = /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$/;
+const tableCells = (l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
 export function Markdown(src) {
   const inline = (s) => {
     const out = [];
@@ -97,6 +99,15 @@ export function Markdown(src) {
     if (!s) { flush(); i++; }
     else if (/^(-{3,}|\*{3,}|_{3,})$/.test(s)) { flush(); nodes.push(el('hr')); i++; }
     else if ((h = /^(#{1,6})\s+(.*)$/.exec(s))) { flush(); nodes.push(el('h' + h[1].length, {}, inline(h[2].trim()))); i++; }
+    else if (s.startsWith('|') && TABLE_SEP.test((lines[i + 1] ?? '').trim())) {
+      flush();
+      const head = tableCells(s); i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')) rows.push(tableCells(lines[i++]));
+      nodes.push(el('div', { class: 'md-table' }, el('table', {},
+        el('thead', {}, el('tr', {}, head.map((c) => el('th', {}, inline(c))))),
+        el('tbody', {}, rows.map((r) => el('tr', {}, r.map((c) => el('td', {}, inline(c)))))))));
+    }
     else {
       const list = /^[-*+]\s+/.test(s) ? ['ul', /^[-*+]\s+/] : /^\d+\.\s+/.test(s) ? ['ol', /^\d+\.\s+/] : null;
       if (!list) { para.push(s); i++; continue; }
@@ -166,14 +177,15 @@ const TOKEN = document.querySelector('meta[name="careermate-token"]')?.content |
 /** Call the JSON API. Throws Error(message) on non-2xx. */
 export async function api(method, path, body) {
   let res;
+  const raw = body instanceof Blob; // file upload (profile photo): send the bytes as-is
   try {
     res = await fetch(path, {
       method,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': raw ? (body.type || 'application/octet-stream') : 'application/json',
         ...(method !== 'GET' ? { 'x-careermate-token': TOKEN } : {}),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: raw ? body : body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
     // Connection failure (server stopped, machine asleep) — never surface "Failed to fetch".
@@ -324,6 +336,11 @@ export function Menu(label, items, { icon: ic = 'download', variant = 'ghost', s
     left = Math.max(8, Math.min(left, window.innerWidth - lw - 8));
     list.style.top = `${Math.round(top)}px`;
     list.style.left = `${Math.round(left)}px`;
+    // Inside a transformed ancestor (the centered .modal), fixed is relative to that
+    // ancestor, not the viewport. Shift by however far the list actually landed off.
+    const got = list.getBoundingClientRect();
+    list.style.top = `${Math.round(2 * top - got.top)}px`;
+    list.style.left = `${Math.round(2 * left - got.left)}px`;
   }
   function open() {
     if (!list.hidden) return;
@@ -352,13 +369,28 @@ export function Menu(label, items, { icon: ic = 'download', variant = 'ghost', s
  * GET export route (e.g. `/api/export/profile`); each item appends `?format=…`
  * and triggers a download. One control replaces the old docx/html/md button row.
  */
-export function ExportMenu(baseUrl, { sm = true } = {}) {
+export function ExportMenu(baseUrl, { sm = true, photo = false } = {}) {
   const sep = baseUrl.includes('?') ? '&' : '?';
-  return Menu(t('common.export'), [
-    { label: t('common.fmtWord'), hint: '.docx', onClick: () => downloadUrl(`${baseUrl}${sep}format=docx`) },
-    { label: t('common.fmtHtml'), hint: '.html', onClick: () => downloadUrl(`${baseUrl}${sep}format=html`) },
-    { label: t('common.fmtMarkdown'), hint: '.md', onClick: () => downloadUrl(`${baseUrl}${sep}format=md`) },
+  // `photo` (resume-type exports): under the formats, a "사진 포함" switch (on unless the profile
+  // turned it off) that rides along as include_photo. With no photo yet, a "사진 추가" link instead.
+  const sw = el('input', { type: 'checkbox', class: 'switch', attrs: { role: 'switch' } });
+  const row = el('label', { class: 'menu__switch', hidden: true }, el('span', {}, t('common.includePhoto')), sw);
+  const add = el('a', { class: 'menu__switch', href: '#/profile', hidden: true, onClick: () => closeModal() }, el('span', {}, t('common.addPhoto')), icon('plus'));
+  const url = (fmt) => `${baseUrl}${sep}format=${fmt}${row.hidden ? '' : `&include_photo=${sw.checked ? 1 : 0}`}`;
+  const menu = Menu(t('common.export'), [
+    { label: t('common.fmtWord'), hint: '.docx', onClick: () => downloadUrl(url('docx')) },
+    { label: t('common.fmtHtml'), hint: '.html', onClick: () => downloadUrl(url('html')) },
+    { label: t('common.fmtMarkdown'), hint: '.md', onClick: () => downloadUrl(url('md')) },
   ], { sm });
+  menu.querySelector('.menu__list').append(row, add);
+  if (photo) {
+    get('/api/profile').then(({ profile }) => {
+      if (!profile?.photo) { add.hidden = false; return; }
+      sw.checked = profile.photo_in_exports !== false;
+      row.hidden = false;
+    }).catch(() => {});
+  }
+  return menu;
 }
 /**
  * A footer button for async saves. While `action()` runs the button is disabled

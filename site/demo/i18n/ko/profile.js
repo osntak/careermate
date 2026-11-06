@@ -45,6 +45,19 @@ export default {
   'profile.basic.cancel': '취소',
   'profile.basic.save': '기본 정보 저장',
   'profile.basic.saved': '기본 정보를 저장했어요.',
+  // profile photo (top of the basic info card)
+  'profile.photo.alt': '프로필 사진',
+  'profile.photo.hint': '이력서·경력기술서를 Word나 HTML로 내보낼 때 오른쪽 위에 들어가요. JPEG·PNG·WebP, 2MB 이하.',
+  'profile.photo.upload': '사진 추가',
+  'profile.photo.replaceShort': '바꾸기',
+  'profile.photo.replace': '사진 바꾸기',
+  'profile.photo.remove': '사진 삭제',
+  'profile.photo.removeTitle': '프로필 사진 삭제',
+  'profile.photo.removeConfirm': '저장된 사진 파일을 지웁니다. 이후 내보내는 문서에는 사진이 들어가지 않아요.',
+  'profile.photo.removed': '사진을 삭제했어요.',
+  'profile.photo.saved': '사진을 저장했어요.',
+  'profile.photo.badType': 'JPEG·PNG·WebP 사진만 올릴 수 있어요.',
+  'profile.photo.tooLarge': '사진은 2MB 이하만 올릴 수 있어요.',
 
   // desired card
   'profile.desired.title': '희망 조건',

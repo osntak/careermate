@@ -10,6 +10,7 @@ export * from './settings.ts';
 export * from './provenance.ts';
 export * from './interview-retrospectives.ts';
 export * from './job-search.ts';
+export * from './photo.ts';
 export { migrate, MIGRATIONS } from './schema.ts';
 export {
   profileRepo,
