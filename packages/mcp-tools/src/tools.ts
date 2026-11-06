@@ -50,6 +50,7 @@ import {
   setVerifyStrict,
   getJobSearchPreferences,
   setJobSearchPreferences,
+  photoForExport,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -951,21 +952,23 @@ export const TOOLS: ToolDef[] = [
     name: 'export_resume',
     title: '이력서/경력기술서 내보내기',
     description:
-      '저장된 이력서·경력기술서 등 문서를 Word(.docx)·Markdown·인쇄용 HTML(브라우저에서 PDF로 저장) 파일로 내보내 데이터 폴더의 exports에 저장하고, 파일 경로를 돌려줍니다. ATS 제출처럼 Word 파일이 필요하면 format=docx를 쓰세요. 사용자가 공고에 맞춰 정리한 이력서를 먼저 add_resume로 저장한 뒤, "이력서 파일로 받고 싶어"라고 할 때 사용하세요. document_id는 get_resumes로 확인할 수 있습니다. 대시보드에서 직접 다운로드할 수도 있습니다.',
+      '저장된 이력서·경력기술서 등 문서를 Word(.docx)·Markdown·인쇄용 HTML(브라우저에서 PDF로 저장) 파일로 내보내 데이터 폴더의 exports에 저장하고, 파일 경로를 돌려줍니다. ATS 제출처럼 Word 파일이 필요하면 format=docx를 쓰세요. 사용자가 공고에 맞춰 정리한 이력서를 먼저 add_resume로 저장한 뒤, "이력서 파일로 받고 싶어"라고 할 때 사용하세요. document_id는 get_resumes로 확인할 수 있습니다. 프로필 사진은 docx·html 에만 들어가며 include_photo 로 넣거나 뺍니다. 한국 블라인드 채용 공고에 낼 문서면 include_photo=false 로 사진을 빼세요. 대시보드에서 직접 다운로드할 수도 있습니다.',
     inputSchema: {
       document_id: z.string(),
       format: z.enum(['md', 'html', 'docx']).optional().describe('기본 md'),
+      include_photo: z.boolean().optional().describe('프로필 사진 포함 여부. 생략하면 프로필의 기본 설정을 따름'),
     },
     handler: async (args) => {
       const doc = documentRepo.get(args.document_id);
       if (!doc) return fail('문서를 찾을 수 없습니다.');
       const profile = profileRepo.get();
       const format = args.format ?? 'md';
+      const photo = (doc.kind === 'resume' || doc.kind === 'career_description') && format !== 'md' ? photoForExport(args.include_photo) : null;
       const result =
         format === 'docx'
-          ? await resumeToDocx(doc, profile)
+          ? await resumeToDocx(doc, profile, photo)
           : format === 'html'
-            ? resumeToHtml(doc, profile)
+            ? resumeToHtml(doc, profile, photo)
             : resumeToMarkdown(doc, profile);
       const written = writeExport(result);
       if ('error' in written) return fail(written.error);
@@ -980,9 +983,10 @@ export const TOOLS: ToolDef[] = [
     name: 'export_profile',
     title: '프로필을 이력서로 내보내기',
     description:
-      '저장된 프로필·경력·프로젝트·보유 기술을 한 장의 이력서 형식으로 모아 Word(.docx)·Markdown·인쇄용 HTML(브라우저에서 PDF로 저장)·JSON Resume(format=json, jsonresume.org 표준) 파일로 내보내 데이터 폴더의 exports에 저장하고, 파일 경로를 돌려줍니다. ATS 제출처럼 Word 파일이 필요하면 format=docx, 다른 이력서 도구·테마와 연동할 표준 데이터가 필요하면 format=json을 쓰세요. 사용자가 "내 프로필을 이력서로 뽑아줘"처럼 구조화된 데이터 전체를 이력서로 받고 싶을 때 사용하세요. 특정 공고 맞춤 이력서는 add_resume로 정리·저장한 뒤 export_resume를 쓰세요. 대시보드에서 직접 다운로드할 수도 있습니다.',
+      '저장된 프로필·경력·프로젝트·보유 기술을 한 장의 이력서 형식으로 모아 Word(.docx)·Markdown·인쇄용 HTML(브라우저에서 PDF로 저장)·JSON Resume(format=json, jsonresume.org 표준) 파일로 내보내 데이터 폴더의 exports에 저장하고, 파일 경로를 돌려줍니다. ATS 제출처럼 Word 파일이 필요하면 format=docx, 다른 이력서 도구·테마와 연동할 표준 데이터가 필요하면 format=json을 쓰세요. 사용자가 "내 프로필을 이력서로 뽑아줘"처럼 구조화된 데이터 전체를 이력서로 받고 싶을 때 사용하세요. 특정 공고 맞춤 이력서는 add_resume로 정리·저장한 뒤 export_resume를 쓰세요. 프로필 사진은 docx·html 에만 들어가며 include_photo 로 넣거나 뺍니다. 한국 블라인드 채용 공고에 낼 문서면 include_photo=false 로 사진을 빼세요. 대시보드에서 직접 다운로드할 수도 있습니다.',
     inputSchema: {
       format: z.enum(['md', 'html', 'docx', 'json']).optional().describe('기본 md. json = JSON Resume 표준'),
+      include_photo: z.boolean().optional().describe('프로필 사진 포함 여부. 생략하면 프로필의 기본 설정을 따름'),
     },
     handler: async (args) => {
       const profile = profileRepo.get();
@@ -991,11 +995,12 @@ export const TOOLS: ToolDef[] = [
       const experiences = experienceRepo.list();
       const projects = projectRepo.list();
       const skills = skillRepo.list();
+      const photo = format === 'docx' || format === 'html' ? photoForExport(args.include_photo) : null;
       const result =
         format === 'docx'
-          ? await profileToDocx(profile, experiences, projects, skills)
+          ? await profileToDocx(profile, experiences, projects, skills, photo)
           : format === 'html'
-            ? profileToHtml(profile, experiences, projects, skills)
+            ? profileToHtml(profile, experiences, projects, skills, photo)
             : format === 'json'
               ? profileToJsonResume(profile, experiences, projects, skills)
               : profileToMarkdown(profile, experiences, projects, skills);

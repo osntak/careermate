@@ -167,8 +167,18 @@ export const ProfileInputSchema = z.object({
   certifications: z.array(CertificationSchema).max(MAX_ITEMS).optional().describe('자격증/면허'),
   language_scores: z.array(LanguageScoreSchema).max(MAX_ITEMS).optional().describe('어학 점수 (토익·오픽 등)'),
   awards: z.array(AwardSchema).max(MAX_ITEMS).optional().describe('수상/대외활동'),
+  photo_in_exports: z.boolean().optional().describe('이력서 등을 내보낼 때 프로필 사진을 기본으로 넣을지'),
 });
 export type ProfileInput = z.infer<typeof ProfileInputSchema>;
+
+/** Meta of the profile photo. The image is a file in the data dir (uploads/), never in the DB. */
+export const ProfilePhotoSchema = z.object({
+  file: z.string(),
+  mime: z.string(),
+  size: z.number(),
+  updated_at: z.string(),
+});
+export type ProfilePhoto = z.infer<typeof ProfilePhotoSchema>;
 
 export const ProfileRecordSchema = z.object({
   ...baseRecord,
@@ -187,6 +197,8 @@ export const ProfileRecordSchema = z.object({
   certifications: z.array(CertificationSchema),
   language_scores: z.array(LanguageScoreSchema),
   awards: z.array(AwardSchema),
+  photo: ProfilePhotoSchema.nullable(),
+  photo_in_exports: z.boolean(),
 });
 export type ProfileRecord = z.infer<typeof ProfileRecordSchema>;
 

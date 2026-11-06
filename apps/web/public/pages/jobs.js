@@ -347,6 +347,7 @@ async function renderDetail(ctx, jobId) {
     el('div', { class: 'grid grid--2' },
       CoverLettersCard(job.cover_letters),
       InterviewCard(job)),
+    SubmittedCard(job.timeline),
     PostingCard(job),
     CompanyResearchCard(job),
     FitCard(job.fit),
@@ -562,6 +563,21 @@ function CoverLettersCard(coverLetters) {
               t('jobs.cover.versions', { count: cl.version_count ?? 1 }),
               cl.updated_at ? ` · ${fmtDate(cl.updated_at)}` : ''))),
         icon('chevronRight', 'muted')))),
+  });
+}
+
+// What was actually sent for this posting: the latest 지원 완료 record's cover letter and
+// documents, lifted out of the timeline so it isn't one line among many.
+function SubmittedCard(timeline) {
+  const s = [...(timeline || [])].reverse().find((e) => e.payload?.submission)?.payload.submission;
+  if (!s || (!s.cover_letter && !(s.documents || []).length)) return null;
+  const when = [s.submitted_at ? fmtDate(s.submitted_at) : null, s.channel].filter(Boolean).join(' · ');
+  return Card({
+    title: t('jobs.submitted.title'),
+    sub: when || null,
+    body: el('div', { class: 'stack-2' },
+      s.cover_letter ? TimelineRef(t('jobs.timeline.coverLetter'), s.cover_letter) : null,
+      ...(s.documents || []).map((doc) => TimelineRef(t('kind.' + (doc.document_kind || 'other')), doc))),
   });
 }
 

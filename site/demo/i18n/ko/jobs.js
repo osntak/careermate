@@ -157,6 +157,7 @@ export default {
 
   // ---- timeline card ----
   'jobs.timeline.title': '타임라인',
+  'jobs.submitted.title': '제출한 서류',
   'jobs.timeline.cardSub': '{{count}}개',
   'jobs.timeline.coverLetter': '자기소개서',
   'jobs.timeline.deletedDoc': '삭제된 문서',

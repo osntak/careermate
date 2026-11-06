@@ -104,7 +104,7 @@ export class HttpError extends Error {
 export async function readJsonBody<S extends ZodTypeAny>(req: IncomingMessage, schema: S): Promise<output<S>>;
 export async function readJsonBody(req: IncomingMessage): Promise<unknown>;
 export async function readJsonBody(req: IncomingMessage, schema?: ZodTypeAny): Promise<unknown> {
-  const raw = await readBody(req);
+  const raw = (await readRawBody(req)).toString('utf8');
   if (!raw) return schema ? schema.parse({}) : {};
   let parsed: unknown;
   try {
@@ -129,20 +129,21 @@ export async function readJsonBody(req: IncomingMessage, schema?: ZodTypeAny): P
   }
 }
 
-function readBody(req: IncomingMessage): Promise<string> {
+/** Read the request body as bytes, rejecting with 413 past max (photo uploads pass a smaller cap). */
+export function readRawBody(req: IncomingMessage, max = MAX_BODY): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     let size = 0;
     const chunks: Buffer[] = [];
     req.on('data', (c: Buffer) => {
       size += c.length;
-      if (size > MAX_BODY) {
+      if (size > max) {
         reject(new HttpError(413, '요청 본문이 너무 큽니다.', 'too_large'));
         req.destroy();
         return;
       }
       chunks.push(c);
     });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
   });
 }

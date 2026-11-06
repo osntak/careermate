@@ -26,6 +26,7 @@ import {
   projectRepo,
   skillRepo,
   interviewRepo,
+  photoForExport,
 } from '@careermate/db';
 import { HttpError } from './http.ts';
 
@@ -53,23 +54,28 @@ export async function exportCoverLetter(id: string, format: ExportFormat): Promi
   return asFormat(coverLetterToMarkdown(cl, { job, profile }), format);
 }
 
-export async function exportDocument(id: string, format: ExportFormat): Promise<ExportResult> {
+/** Kinds that get the profile photo; a portfolio or misc document is not a resume page. */
+export const PHOTO_KINDS = new Set(['resume', 'career_description']);
+
+export async function exportDocument(id: string, format: ExportFormat, includePhoto?: boolean): Promise<ExportResult> {
   const doc = documentRepo.get(id);
   if (!doc) throw new HttpError(404, '문서를 찾을 수 없습니다.');
   const profile = profileRepo.get();
-  if (format === 'docx') return resumeToDocx(doc, profile);
-  if (format === 'html') return resumeToHtml(doc, profile);
+  const photo = PHOTO_KINDS.has(doc.kind) && (format === 'docx' || format === 'html') ? photoForExport(includePhoto) : null;
+  if (format === 'docx') return resumeToDocx(doc, profile, photo);
+  if (format === 'html') return resumeToHtml(doc, profile, photo);
   return asFormat(resumeToMarkdown(doc, profile), format);
 }
 
-export async function exportProfile(format: ExportFormat): Promise<ExportResult> {
+export async function exportProfile(format: ExportFormat, includePhoto?: boolean): Promise<ExportResult> {
   const profile = profileRepo.get();
   if (!profile) throw new HttpError(404, '프로필이 없습니다.');
   const experiences = experienceRepo.list();
   const projects = projectRepo.list();
   const skills = skillRepo.list();
-  if (format === 'docx') return profileToDocx(profile, experiences, projects, skills);
-  if (format === 'html') return profileToHtml(profile, experiences, projects, skills);
+  const photo = format === 'docx' || format === 'html' ? photoForExport(includePhoto) : null;
+  if (format === 'docx') return profileToDocx(profile, experiences, projects, skills, photo);
+  if (format === 'html') return profileToHtml(profile, experiences, projects, skills, photo);
   return asFormat(profileToMarkdown(profile, experiences, projects, skills), format);
 }
 

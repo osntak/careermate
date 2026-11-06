@@ -157,6 +157,7 @@ export default {
 
   // ---- timeline card ----
   'jobs.timeline.title': 'Timeline',
+  'jobs.submitted.title': 'Submitted documents',
   'jobs.timeline.cardSub': { one: '{{count}} event', other: '{{count}} events' },
   'jobs.timeline.coverLetter': 'Cover letter',
   'jobs.timeline.deletedDoc': 'Deleted document',

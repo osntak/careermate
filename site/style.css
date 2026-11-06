@@ -144,11 +144,7 @@ code { font-family: var(--mono); }
 }
 .nav__brand { display: inline-flex; align-items: center; gap: 9px; color: var(--text); font-weight: 700; }
 .nav__brand:hover { text-decoration: none; }
-.nav__logo {
-  width: 24px; height: 24px; border-radius: 6px; flex: none;
-  background: var(--accent); color: var(--text-on-accent); font-weight: 800; font-size: 13px;
-  display: grid; place-items: center;
-}
+.nav__logo { width: 26px; height: 26px; flex: none; display: inline-block; vertical-align: middle; background: url(/logo.svg) center / contain no-repeat; font-size: 0; }
 .nav__name { font-size: 15.5px; }
 .nav__links { display: flex; gap: 2px; margin-left: 12px; }
 .nav__links a {

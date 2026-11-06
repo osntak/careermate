@@ -177,14 +177,15 @@ const TOKEN = document.querySelector('meta[name="careermate-token"]')?.content |
 /** Call the JSON API. Throws Error(message) on non-2xx. */
 export async function api(method, path, body) {
   let res;
+  const raw = body instanceof Blob; // file upload (profile photo): send the bytes as-is
   try {
     res = await fetch(path, {
       method,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': raw ? (body.type || 'application/octet-stream') : 'application/json',
         ...(method !== 'GET' ? { 'x-careermate-token': TOKEN } : {}),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: raw ? body : body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
     // Connection failure (server stopped, machine asleep) — never surface "Failed to fetch".
@@ -368,13 +369,28 @@ export function Menu(label, items, { icon: ic = 'download', variant = 'ghost', s
  * GET export route (e.g. `/api/export/profile`); each item appends `?format=…`
  * and triggers a download. One control replaces the old docx/html/md button row.
  */
-export function ExportMenu(baseUrl, { sm = true } = {}) {
+export function ExportMenu(baseUrl, { sm = true, photo = false } = {}) {
   const sep = baseUrl.includes('?') ? '&' : '?';
-  return Menu(t('common.export'), [
-    { label: t('common.fmtWord'), hint: '.docx', onClick: () => downloadUrl(`${baseUrl}${sep}format=docx`) },
-    { label: t('common.fmtHtml'), hint: '.html', onClick: () => downloadUrl(`${baseUrl}${sep}format=html`) },
-    { label: t('common.fmtMarkdown'), hint: '.md', onClick: () => downloadUrl(`${baseUrl}${sep}format=md`) },
+  // `photo` (resume-type exports): under the formats, a "사진 포함" switch (on unless the profile
+  // turned it off) that rides along as include_photo. With no photo yet, a "사진 추가" link instead.
+  const sw = el('input', { type: 'checkbox', class: 'switch', attrs: { role: 'switch' } });
+  const row = el('label', { class: 'menu__switch', hidden: true }, el('span', {}, t('common.includePhoto')), sw);
+  const add = el('a', { class: 'menu__switch', href: '#/profile', hidden: true, onClick: () => closeModal() }, el('span', {}, t('common.addPhoto')), icon('plus'));
+  const url = (fmt) => `${baseUrl}${sep}format=${fmt}${row.hidden ? '' : `&include_photo=${sw.checked ? 1 : 0}`}`;
+  const menu = Menu(t('common.export'), [
+    { label: t('common.fmtWord'), hint: '.docx', onClick: () => downloadUrl(url('docx')) },
+    { label: t('common.fmtHtml'), hint: '.html', onClick: () => downloadUrl(url('html')) },
+    { label: t('common.fmtMarkdown'), hint: '.md', onClick: () => downloadUrl(url('md')) },
   ], { sm });
+  menu.querySelector('.menu__list').append(row, add);
+  if (photo) {
+    get('/api/profile').then(({ profile }) => {
+      if (!profile?.photo) { add.hidden = false; return; }
+      sw.checked = profile.photo_in_exports !== false;
+      row.hidden = false;
+    }).catch(() => {});
+  }
+  return menu;
 }
 /**
  * A footer button for async saves. While `action()` runs the button is disabled

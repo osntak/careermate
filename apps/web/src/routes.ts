@@ -40,6 +40,10 @@ import {
   activityRepo,
   timelineRepo,
   setVerifyStrict,
+  PHOTO_MAX_BYTES,
+  saveProfilePhoto,
+  readProfilePhoto,
+  removeProfilePhoto,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -63,7 +67,7 @@ import { PROMPTS } from '@careermate/prompts';
 import { WORKFLOWS } from '@careermate/workflows';
 import { cleanJobPosting, extractText } from '@careermate/parsers';
 import { z } from 'zod';
-import { Router, HttpError, readJsonBody, type Ctx } from './http.ts';
+import { Router, HttpError, readJsonBody, readRawBody, type Ctx } from './http.ts';
 import { exportCoverLetter, exportDocument, exportProfile, exportInterview, type ExportFormat } from './exports.ts';
 import { getServerInfo } from './info.ts';
 import {
@@ -87,6 +91,12 @@ function fmt(ctx: Ctx): ExportFormat {
   return (['md', 'html', 'txt', 'docx'].includes(f) ? f : 'md') as ExportFormat;
 }
 
+/** ?include_photo=1|0 is the user's explicit choice; absent means the profile default. */
+function includePhoto(ctx: Ctx): boolean | undefined {
+  const v = ctx.query.get('include_photo');
+  return v == null ? undefined : v === '1' || v === 'true';
+}
+
 function backupError(e: unknown): HttpError {
   return new HttpError(400, e instanceof Error ? e.message : '백업 파일을 처리하지 못했습니다.', 'backup_import');
 }
@@ -96,7 +106,8 @@ function isRecord(v: unknown): v is Record<string, any> {
 }
 
 function documentRoute(doc: { id: string; kind: DocumentKind }): string {
-  return doc.kind === 'career_description' ? `/documents/career/${doc.id}` : `/documents/docs/${doc.id}`;
+  // 서류함 tab per kind; career_description's tab is 'career'.
+  return `/documents/${doc.kind === 'career_description' ? 'career' : doc.kind}/${doc.id}`;
 }
 
 function enrichDocumentRef(ref: unknown) {
@@ -285,6 +296,37 @@ export function registerApiRoutes(router: Router): void {
     const input = await readJsonBody(ctx.req, ProfileInputSchema);
     return { profile: saveProfile(input) };
   });
+  // Photo upload: the raw image bytes are the body (not JSON). Same CSRF token rule as every mutation.
+  router.get('/api/profile/photo', (ctx) => {
+    const photo = readProfilePhoto();
+    if (!photo) throw new HttpError(404, '프로필 사진이 없습니다.');
+    ctx.res.writeHead(200, { 'Content-Type': photo.mime, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+    ctx.res.end(photo.bytes);
+  });
+  router.post('/api/profile/photo', async (ctx) => {
+    const tooLarge = new HttpError(413, '사진은 2MB 이하만 올릴 수 있습니다.', 'photo_too_large');
+    if (Number(ctx.req.headers['content-length'] ?? 0) > PHOTO_MAX_BYTES) {
+      // Read and drop the body first: replying mid-upload resets the connection and the
+      // client sees a network error instead of this 413. ponytail: drains up to 32MB, larger is cut.
+      await new Promise<void>((done) => {
+        let n = 0;
+        ctx.req.on('data', (c: Buffer) => { n += c.length; if (n > 32 * 1024 * 1024) ctx.req.destroy(); });
+        ctx.req.on('end', () => done());
+        ctx.req.on('close', () => done());
+      });
+      throw tooLarge;
+    }
+    const bytes = await readRawBody(ctx.req, PHOTO_MAX_BYTES).catch((e) => {
+      throw e instanceof HttpError && e.status === 413 ? tooLarge : e;
+    });
+    saveProfilePhoto(bytes);
+    activityRepo.log('profile_updated', '프로필 사진을 바꿨습니다.');
+    return { profile: profileRepo.get() };
+  });
+  router.delete('/api/profile/photo', () => {
+    removeProfilePhoto();
+    return { profile: profileRepo.get() };
+  });
 
   /* --------------------------------------------------------- experiences */
   router.get('/api/experiences', () => ({ experiences: experienceRepo.list() }));
@@ -468,8 +510,8 @@ export function registerApiRoutes(router: Router): void {
 
   /* ------------------------------------------------------------- export */
   router.get('/api/export/cover-letter/:id', async (ctx) => download(await exportCoverLetter(id(ctx), fmt(ctx))));
-  router.get('/api/export/document/:id', async (ctx) => download(await exportDocument(id(ctx), fmt(ctx))));
-  router.get('/api/export/profile', async (ctx) => download(await exportProfile(fmt(ctx))));
+  router.get('/api/export/document/:id', async (ctx) => download(await exportDocument(id(ctx), fmt(ctx), includePhoto(ctx))));
+  router.get('/api/export/profile', async (ctx) => download(await exportProfile(fmt(ctx), includePhoto(ctx))));
   router.get('/api/export/interview/:jobId', (ctx) => download(exportInterview(id(ctx, 'jobId'), fmt(ctx))));
 
   /* ----------------------------------------------------------- settings */

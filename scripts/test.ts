@@ -345,6 +345,56 @@ ok('docx: 위험 스킴(javascript:) 하이퍼링크 미생성', !rdAll.includes
 ok('docx: 정상 링크(https)는 유지', rdAll.includes('https://ex.com'));
 ok('docx: 공백 양옆 _강조_는 이탤릭 유지', rdXml.includes('<w:i') && rdXml.includes('강조'));
 
+/* 프로필 사진: 업로드 검증(형식·크기) + 내보내기 포함/미포함 */
+function binReq(method: string, p: string, body?: Uint8Array, headers: Record<string, string> = {}): Promise<{ status: number; bytes: Buffer; headers: http.IncomingHttpHeaders }> {
+  return new Promise((resolve, reject) => {
+    const r = http.request({ host: '127.0.0.1', port, path: p, method, agent: false, headers }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => resolve({ status: res.statusCode!, bytes: Buffer.concat(chunks), headers: res.headers }));
+    });
+    r.on('error', reject);
+    r.end(body);
+  });
+}
+const upload = (bytes: Uint8Array, type = 'image/png') =>
+  binReq('POST', '/api/profile/photo', bytes, { 'content-type': type, 'content-length': String(bytes.length), 'x-careermate-token': SESSION_TOKEN });
+const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+const WEBP = Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4), Buffer.from('WEBPVP8 '), Buffer.alloc(20)]);
+ok('사진: 토큰 없는 업로드 차단(CSRF)', (await binReq('POST', '/api/profile/photo', PNG_1PX, { 'content-type': 'image/png' })).status === 403);
+ok('사진: WebP 원본은 서버에서 거부(대시보드가 JPEG 로 바꿔 보냄)', (await upload(WEBP, 'image/webp')).status === 400);
+ok('사진: 이름만 png 인 텍스트 거부(매직바이트 검사)', (await upload(Buffer.from('not an image at all'), 'image/png')).status === 400);
+const bigPhoto = Buffer.concat([PNG_1PX, Buffer.alloc(2 * 1024 * 1024)]);
+ok('사진: 2MB 초과는 413', (await upload(bigPhoto)).status === 413);
+ok('사진: 거부된 업로드 뒤에도 사진 없음', (await json('GET', '/api/profile')).profile.photo === null && (await binReq('GET', '/api/profile/photo')).status === 404);
+const upRes = await upload(PNG_1PX);
+const upProfile = JSON.parse(upRes.bytes.toString('utf8')).profile;
+ok('사진: PNG 업로드 → 프로필에 메타(파일·형식) 저장, 기본 포함 켜짐',
+  upRes.status === 200 && upProfile.photo?.mime === 'image/png' && upProfile.photo?.size === PNG_1PX.length && upProfile.photo_in_exports === true,
+  upRes.bytes.toString('utf8').slice(0, 200));
+const photoGet = await binReq('GET', '/api/profile/photo');
+ok('사진: 조회는 image/png + 올린 바이트 그대로', photoGet.status === 200 && photoGet.headers['content-type'] === 'image/png' && photoGet.bytes.equals(PNG_1PX));
+const PHOTO_MARK = 'data:image/png;base64,';
+const htmlOf = async (p: string) => (await reqRaw('GET', p)).text;
+ok('사진 내보내기: 프로필 HTML include_photo=1 → 사진 포함', (await htmlOf('/api/export/profile?format=html&include_photo=1')).includes(PHOTO_MARK));
+ok('사진 내보내기: 프로필 HTML include_photo=0 → 사진 없음', !(await htmlOf('/api/export/profile?format=html&include_photo=0')).includes(PHOTO_MARK));
+ok('사진 내보내기: 파라미터 없으면 프로필 기본값(포함)', (await htmlOf(`/api/export/document/${exResumeId}?format=html`)).includes(PHOTO_MARK));
+ok('사진 내보내기: Markdown 에는 넣지 않음', !(await htmlOf('/api/export/profile?format=md&include_photo=1')).includes('data:image'));
+ok('사진 내보내기: 자기소개서에는 넣지 않음', !(await htmlOf(`/api/export/cover-letter/${cl.id}?format=html&include_photo=1`)).includes('data:image'));
+const docxMedia = async (q: string) => Object.keys(unzipSync(new Uint8Array((await binReq('GET', `/api/export/document/${exResumeId}?format=docx${q}`)).bytes))).some((k) => k.startsWith('word/media/'));
+ok('사진 내보내기: 이력서 docx include_photo=1 → word/media 에 이미지', await docxMedia('&include_photo=1'));
+ok('사진 내보내기: 이력서 docx include_photo=0 → 이미지 없음', !(await docxMedia('&include_photo=0')));
+await authed('PUT', '/api/profile', { photo_in_exports: false });
+ok('사진 내보내기: 기본 포함을 끄면 파라미터 없는 docx 에 이미지 없음', !(await docxMedia('')));
+const mcpPhoto = await tool('export_resume').handler({ document_id: exResumeId, format: 'html', include_photo: true });
+ok('MCP export_resume include_photo=true → 사진 포함(기본값보다 우선)', String((mcpPhoto.data as any).content).includes(PHOTO_MARK));
+const mcpNoPhoto = await tool('export_profile').handler({ format: 'html' });
+ok('MCP export_profile 생략 → 프로필 기본값(끔) 따라 사진 없음', !String((mcpNoPhoto.data as any).content).includes(PHOTO_MARK));
+await authed('PUT', '/api/profile', { photo_in_exports: true });
+const { imageSize } = await import('../packages/exporters/src/docx.ts');
+const jpegHead = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0, 0, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x64, 0x00, 0x50, 0, 0, 0, 0, 0]);
+ok('사진 크기 읽기: PNG 1x1 · JPEG SOF 80x100', JSON.stringify(imageSize(PNG_1PX)) === '{"width":1,"height":1}' && JSON.stringify(imageSize(jpegHead)) === '{"height":100,"width":80}');
+
 /* 홈 시간축 넛지 — 마감 임박(deadlines) + 지원 후 무응답(followups) */
 const { getHomeSummary } = await import('../packages/core/src/summary.ts');
 const dlDate = new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10);
@@ -515,9 +565,14 @@ ok(
 const backupPayload = JSON.parse((await reqRaw('GET', '/api/settings/export-all')).text);
 const preview = await json('POST', '/api/settings/import-preview', { backup: backupPayload }, { 'x-careermate-token': SESSION_TOKEN });
 ok('백업 가져오기 미리보기', preview.preview.total_rows > 0 && preview.preview.counts.jobs >= 1);
+ok('백업 내보내기: 프로필 사진도 base64 로 포함', backupPayload.files?.profile_photo?.mime === 'image/png' && Buffer.from(backupPayload.files.profile_photo.data, 'base64').equals(PNG_1PX));
 await authed('PUT', '/api/profile', { name: '임시 변경' });
+await authed('DELETE', '/api/profile/photo');
 await authed('POST', '/api/settings/restore', { backup: backupPayload, confirm: 'RESTORE' });
 ok('백업 가져오기: 현재 데이터 자동 백업 후 전체 교체', (await json('GET', '/api/profile')).profile.name === '김커리어');
+ok('백업 가져오기: 지운 프로필 사진도 복원', (await binReq('GET', '/api/profile/photo')).bytes.equals(PNG_1PX));
+const badPhotoBackup = { ...backupPayload, files: { profile_photo: { mime: 'image/png', data: Buffer.from('hello').toString('base64') } } };
+ok('백업 가져오기: 깨진 사진이 든 백업은 미리보기에서 거부', (await authed('POST', '/api/settings/import-preview', { backup: badPhotoBackup })).status === 400);
 const shortcut = (await json('POST', '/api/settings/dashboard-shortcut', { open: false }, { 'x-careermate-token': SESSION_TOKEN })).shortcut;
 ok('대시보드 바로가기 생성', fs.existsSync(shortcut.launcher_path) && fs.readFileSync(shortcut.launcher_path, 'utf8').includes('/api/health'));
 

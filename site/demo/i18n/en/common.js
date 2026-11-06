@@ -13,6 +13,8 @@ export default {
   'common.fmtWord': 'Word',
   'common.fmtHtml': 'HTML',
   'common.fmtMarkdown': 'Markdown',
+  'common.includePhoto': 'Include photo',
+  'common.addPhoto': 'Add a photo',
 
   // Hiring-schedule stage D-day badge (shared by Home action lane + job detail).
   // Separate from the deadline D-day labels (applications.dday.*).

@@ -8,19 +8,16 @@ import { t, onLangChange } from '/i18n.js';
 
 const ROUTES = [
   { id: 'home', icon: 'home', module: '/pages/home.js' },
-  // 내 자료: the profile plus the career description and resume/portfolio views of
-  // #/documents (see the documents entry below).
+  // 프로필 is facts about the user; 서류함 is every document they submit, one tab per kind.
+  // They come first: what the user fills in, then the job pipeline that uses it.
   { id: 'profile', icon: 'user', module: '/pages/profile.js' },
+  { id: 'documents', icon: 'file', module: '/pages/documents.js' },
   { id: 'search', icon: 'search', module: '/pages/search.js' },
   // 지원 관리: one nav item, two views of the same postings, #/jobs (list) and
   // #/applications (by stage). The by-stage route has no nav item of its own;
   // navAs lends it the list item's highlight and title.
   { id: 'jobs', icon: 'briefcase', module: '/pages/jobs.js', countKey: 'active_applications' },
   { id: 'applications', module: '/pages/applications.js', navAs: 'jobs' },
-  // 자기소개서 keeps its own nav item. A function navAs picks the item per URL:
-  // #/documents/career and #/documents/docs belong to 내 자료.
-  { id: 'documents', icon: 'file', module: '/pages/documents.js', countKey: 'cover_letters',
-    navAs: (params) => (['career', 'docs'].includes(params[0]) ? 'profile' : null) },
   { id: 'interview', icon: 'mic', module: '/pages/interview.js', countKey: 'interview_pending' },
   { id: 'settings', icon: 'settings', module: '/pages/settings.js' },
 ];
@@ -145,8 +142,6 @@ function initTheme() {
 }
 
 function localizeShell() {
-  const sub = document.querySelector('.sidebar__subtitle');
-  if (sub) sub.textContent = t('nav.subtitle');
   const skip = document.getElementById('skip-link');
   if (skip) skip.textContent = t('nav.skip');
   const foot = document.getElementById('foot-status');

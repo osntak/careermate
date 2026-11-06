@@ -400,6 +400,14 @@ export const MIGRATIONS: string[] = [
   `
   ALTER TABLE jobs ADD COLUMN schedule TEXT NOT NULL DEFAULT '[]';
   `,
+
+  // v12 - profile photo. The image itself is a file under the data dir (uploads/), the row only
+  // keeps its meta as JSON ({file, mime, size, updated_at}) so the DB stays small. photo_in_exports
+  // is the "include the photo when exporting" default (1 = include). Additive ALTER, idempotent.
+  `
+  ALTER TABLE profile ADD COLUMN photo TEXT;
+  ALTER TABLE profile ADD COLUMN photo_in_exports INTEGER NOT NULL DEFAULT 1;
+  `,
 ];
 
 export function migrate(db: DatabaseSync): { from: number; to: number } {

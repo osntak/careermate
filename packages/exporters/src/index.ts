@@ -28,7 +28,7 @@ import {
   slugify,
 } from './markdown.ts';
 import { escapeHtml, toPrintableHtml } from './html.ts';
-import { markdownToDocx, DOCX_MIME } from './docx.ts';
+import { markdownToDocx, DOCX_MIME, type ExportPhoto } from './docx.ts';
 
 /** The uniform shape every exporter returns. */
 export interface ExportResult {
@@ -131,7 +131,10 @@ export async function coverLetterToDocx(
 
 /* -------------------------------------------------------------------- resume */
 
-/** A stored resume/career document → Markdown. */
+/**
+ * A stored resume/career document → Markdown. Never carries the photo: a .md file can only
+ * link an image path, which breaks once the file leaves this PC.
+ */
 export function resumeToMarkdown(
   doc: DocumentRecord,
   profile?: ProfileRecord | null,
@@ -167,6 +170,7 @@ export function resumeToMarkdown(
 export function resumeToHtml(
   doc: DocumentRecord,
   profile?: ProfileRecord | null,
+  photo?: ExportPhoto | null,
 ): ExportResult {
   const md = resumeToMarkdown(doc, profile);
   return {
@@ -174,7 +178,7 @@ export function resumeToHtml(
     mimeType: HTML_MIME,
     // The saved title is an internal label ("이력서 v10 (공고명, 한 장 구성)"); <title> becomes
     // the PDF's title and the viewer tab, so it gets the same "이름 · 종류" as the footer.
-    content: toPrintableHtml(resumeFooter(doc, profile) || DOCUMENT_KIND_LABELS[doc.kind] || doc.kind, md.content, resumeFooter(doc, profile)),
+    content: toPrintableHtml(resumeFooter(doc, profile) || DOCUMENT_KIND_LABELS[doc.kind] || doc.kind, md.content, resumeFooter(doc, profile), photo),
   };
 }
 
@@ -192,10 +196,11 @@ function resumeFooter(doc: DocumentRecord, profile?: ProfileRecord | null): stri
 export async function resumeToDocx(
   doc: DocumentRecord,
   profile?: ProfileRecord | null,
+  photo?: ExportPhoto | null,
 ): Promise<ExportResult> {
   const md = resumeToMarkdown(doc, profile);
   const filename = exportName([doc.title, profile?.name], 'docx', doc.kind);
-  const bytes = await markdownToDocx(doc.title, md.content, resumeFooter(doc, profile));
+  const bytes = await markdownToDocx(doc.title, md.content, resumeFooter(doc, profile), photo);
   return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
 }
 
@@ -320,13 +325,14 @@ export function profileToHtml(
   experiences: ExperienceRecord[] = [],
   projects: ProjectRecord[] = [],
   skills: SkillRecord[] = [],
+  photo?: ExportPhoto | null,
 ): ExportResult {
   const md = profileToMarkdown(profile, experiences, projects, skills);
   const title = profile.name?.trim() || '이력서';
   return {
     filename: exportName(['프로필', profile.name], 'html', 'resume'),
     mimeType: HTML_MIME,
-    content: toPrintableHtml(title, md.content),
+    content: toPrintableHtml(title, md.content, undefined, photo),
   };
 }
 
@@ -336,11 +342,12 @@ export async function profileToDocx(
   experiences: ExperienceRecord[] = [],
   projects: ProjectRecord[] = [],
   skills: SkillRecord[] = [],
+  photo?: ExportPhoto | null,
 ): Promise<ExportResult> {
   const md = profileToMarkdown(profile, experiences, projects, skills);
   const title = profile.name?.trim() || '이력서';
   const filename = exportName(['프로필', profile.name], 'docx', 'resume');
-  const bytes = await markdownToDocx(title, md.content);
+  const bytes = await markdownToDocx(title, md.content, undefined, photo);
   return { filename, mimeType: DOCX_MIME, content: docxNote(filename), bytes };
 }
 
@@ -523,4 +530,4 @@ export {
   markdownToHtml,
   slugify,
 } from './markdown.ts';
-export { DOCX_MIME } from './docx.ts';
+export { DOCX_MIME, type ExportPhoto } from './docx.ts';

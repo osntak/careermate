@@ -45,6 +45,19 @@ export default {
   'profile.basic.cancel': 'Cancel',
   'profile.basic.save': 'Save basic info',
   'profile.basic.saved': 'Basic info saved.',
+  // profile photo (top of the basic info card)
+  'profile.photo.alt': 'Profile photo',
+  'profile.photo.hint': 'Placed top right when you export a resume or career description as Word or HTML. JPEG, PNG or WebP, up to 2MB.',
+  'profile.photo.upload': 'Add photo',
+  'profile.photo.replaceShort': 'Change',
+  'profile.photo.replace': 'Replace photo',
+  'profile.photo.remove': 'Remove photo',
+  'profile.photo.removeTitle': 'Remove profile photo',
+  'profile.photo.removeConfirm': 'The saved photo file will be deleted. Exports after this will have no photo.',
+  'profile.photo.removed': 'Photo removed.',
+  'profile.photo.saved': 'Photo saved.',
+  'profile.photo.badType': 'Only JPEG, PNG or WebP photos can be uploaded.',
+  'profile.photo.tooLarge': 'Photos must be 2MB or smaller.',
 
   // desired card
   'profile.desired.title': 'Preferences',

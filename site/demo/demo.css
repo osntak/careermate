@@ -26,11 +26,7 @@
 }
 
 .demo-bar__brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); flex: none; }
-.demo-bar__logo {
-  width: 24px; height: 24px; border-radius: 6px; flex: none;
-  background: var(--accent); color: var(--text-on-accent);
-  display: grid; place-items: center; font-weight: 800; font-size: 13px;
-}
+.demo-bar__logo { width: 26px; height: 26px; flex: none; background: url(/logo.svg) center / contain no-repeat; font-size: 0; }
 .demo-bar__name { font-weight: 700; font-size: 14px; letter-spacing: -.01em; }
 .demo-bar__badge {
   font-weight: 700; font-size: 11px; color: var(--accent);

@@ -16,6 +16,9 @@ import {
   ExternalHyperlink,
   Footer,
   HeadingLevel,
+  HorizontalPositionAlign,
+  HorizontalPositionRelativeFrom,
+  ImageRun,
   Packer,
   PageNumber,
   Paragraph,
@@ -23,6 +26,10 @@ import {
   TableCell,
   TableRow,
   TextRun,
+  TextWrappingSide,
+  TextWrappingType,
+  VerticalPositionAlign,
+  VerticalPositionRelativeFrom,
   WidthType,
 } from 'docx';
 import { TABLE_SEP, tableCells } from './markdown.ts';
@@ -95,8 +102,15 @@ function inlineRuns(text: string): (TextRun | ExternalHyperlink)[] {
 }
 
 /** Parse our Markdown dialect (blocks split on blank lines) into docx paragraphs. */
-function markdownToParagraphs(markdown: string): (Paragraph | Table)[] {
+function markdownToParagraphs(markdown: string, lead?: ImageRun): (Paragraph | Table)[] {
   const paras: (Paragraph | Table)[] = [];
+  // The floating photo is anchored in the first text paragraph so the heading wraps beside it.
+  const first = (runs: (TextRun | ExternalHyperlink | ImageRun)[]) => {
+    if (!lead) return runs;
+    const out = [lead, ...runs];
+    lead = undefined;
+    return out;
+  };
   const lines = markdown.replace(/\r\n/g, '\n').split('\n');
 
   for (let i = 0; i < lines.length; i++) {
@@ -144,7 +158,7 @@ function markdownToParagraphs(markdown: string): (Paragraph | Table)[] {
         new Paragraph({
           heading: HEADING_BY_LEVEL[level],
           spacing: { before: level === 0 ? 0 : 200, after: 80 },
-          children: inlineRuns(h[2]),
+          children: first(inlineRuns(h[2])),
         }),
       );
       continue;
@@ -155,15 +169,61 @@ function markdownToParagraphs(markdown: string): (Paragraph | Table)[] {
     const b = /^(\s*)[-*+]\s+(.*)$/.exec(line);
     if (b) {
       paras.push(
-        new Paragraph({ bullet: { level: b[1].replace(/\t/g, '  ').length >= 2 ? 1 : 0 }, spacing: { after: 40 }, children: inlineRuns(b[2]) }),
+        new Paragraph({ bullet: { level: b[1].replace(/\t/g, '  ').length >= 2 ? 1 : 0 }, spacing: { after: 40 }, children: first(inlineRuns(b[2])) }),
       );
       continue;
     }
 
-    paras.push(new Paragraph({ spacing: { after: 120 }, children: inlineRuns(line) }));
+    paras.push(new Paragraph({ spacing: { after: 120 }, children: first(inlineRuns(line)) }));
   }
 
+  if (lead) paras.unshift(new Paragraph({ children: [lead] }));
   return paras;
+}
+
+/** A profile photo for an export. Only JPEG/PNG reach here (the photo store accepts nothing else). */
+export interface ExportPhoto {
+  bytes: Uint8Array;
+  mime: string;
+}
+
+/** Pixel size from the PNG IHDR or the JPEG SOF segment; null when the header is unreadable. */
+export function imageSize(b: Uint8Array): { width: number; height: number } | null {
+  if (b[0] === 0x89 && b.length > 24) {
+    const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    return { width: v.getUint32(16), height: v.getUint32(20) };
+  }
+  let i = 2;
+  while (i + 9 < b.length) {
+    if (b[i] !== 0xff) return null;
+    const m = b[i + 1]!;
+    if (m === 0xff) { i++; continue; } // fill byte
+    // SOF0..SOF15 carry the frame size; C4 (DHT), C8 (JPG), CC (DAC) share the range but do not.
+    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) {
+      return { height: (b[i + 5]! << 8) | b[i + 6]!, width: (b[i + 7]! << 8) | b[i + 8]! };
+    }
+    i += 2 + ((b[i + 2]! << 8) | b[i + 3]!);
+  }
+  return null;
+}
+
+/** Floating photo at the top right of the first page, fit in a 3 x 4 cm resume photo box. */
+function photoRun(photo: ExportPhoto): ImageRun {
+  const box = { width: 113, height: 151 }; // 3 x 4 cm at 96 dpi
+  const size = imageSize(photo.bytes) ?? box;
+  const scale = Math.min(box.width / size.width, box.height / size.height);
+  return new ImageRun({
+    type: photo.mime === 'image/png' ? 'png' : 'jpg',
+    data: photo.bytes,
+    transformation: { width: Math.round(size.width * scale), height: Math.round(size.height * scale) },
+    altText: { name: 'photo', title: 'photo', description: 'profile photo' },
+    floating: {
+      horizontalPosition: { relative: HorizontalPositionRelativeFrom.MARGIN, align: HorizontalPositionAlign.RIGHT },
+      verticalPosition: { relative: VerticalPositionRelativeFrom.MARGIN, align: VerticalPositionAlign.TOP },
+      wrap: { type: TextWrappingType.SQUARE, side: TextWrappingSide.LEFT },
+      margins: { left: 114300, bottom: 114300 },
+    },
+  });
 }
 
 const DOCX_FONT = '맑은 고딕'; // Malgun Gothic — ships with Windows, renders Korean + Latin cleanly.
@@ -174,7 +234,7 @@ const DOCX_FONT = '맑은 고딕'; // Malgun Gothic — ships with Windows, rend
  * we don't duplicate the title here. `footer` (e.g. "이름 · 경력기술서") is
  * printed with "n / N" on every page so loose printed pages stay identifiable.
  */
-export async function markdownToDocx(_title: string, markdown: string, footer?: string): Promise<Uint8Array> {
+export async function markdownToDocx(_title: string, markdown: string, footer?: string, photo?: ExportPhoto | null): Promise<Uint8Array> {
   const doc = new Document({
     styles: {
       default: {
@@ -205,7 +265,7 @@ export async function markdownToDocx(_title: string, markdown: string, footer?: 
             ],
           }),
         },
-        children: markdownToParagraphs(markdown),
+        children: markdownToParagraphs(markdown, photo ? photoRun(photo) : undefined),
       },
     ],
   });
