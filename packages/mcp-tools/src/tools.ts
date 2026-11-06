@@ -73,6 +73,8 @@ import {
   findJobCategories,
   isRememberCategory,
   isSaraminCategory,
+  isWantedCategory,
+  isJumpitCategory,
   saveOffer,
   compareOffers,
   getOffer,
@@ -1096,7 +1098,7 @@ export const TOOLS: ToolDef[] = [
     title: '공고 검색·가져오기(키워드·직무·신규)',
     description:
       `키워드나 직무 조건으로 무인증 공개 채용 사이트(${JOB_SEARCH_SOURCES.join('·')})에서 채용 공고를 가져옵니다. 사용자가 "영업 신입 공고 찾아줘", "React 공고 가져와", "오늘 올라온 내 직무 공고 보여줘"처럼 공고를 찾아 달라고 할 때 사용하세요. 결과(회사·직무·링크·지역·경력·기술·마감·게시일)를 사용자에게 보기 좋게 보여 주고, **사용자가 관심 있다고 고른 것만** save_job_posting으로 저장하세요(전부 자동 저장하지 마세요). 저장한 공고는 이어서 get_application_context로 분석·자소서로 연결됩니다. ` +
-      `직무 조건: 모든 직군(영업·회계·디자인·의료·생산 등)에 쓸 수 있습니다. 값은 짐작하지 말고 find_job_categories로 사용자 직무에 맞는 리멤버 분류("상위>하위")와 사람인 코드를 찾아 넣으세요. keyword와 직무 조건을 모두 비우면 set_job_search_preferences로 저장해 둔 조건을 씁니다(저장된 게 없으면 먼저 저장을 제안하세요). 직무 조건만 있으면 조건을 받은 사이트(리멤버·사람인)만 검색합니다. ` +
+      `직무 조건: 모든 직군(영업·회계·디자인·의료·생산 등)에 쓸 수 있습니다. 값은 짐작하지 말고 find_job_categories로 사용자 직무에 맞는 리멤버 분류("상위>하위"), 사람인 코드, 원티드 코드, 점핏 코드(개발 직군만)를 찾아 넣으세요. 직무 조건을 받은 사이트는 keyword를 쓰지 않고 그 직무 목록 전체(사이트별 최대 300건, limit을 주면 그만큼)를 받습니다. 키워드는 제목·본문 일치라 영어 제목 공고 등을 많이 놓치기 때문입니다. keyword는 직무 조건을 받지 않은 사이트에만 쓰입니다. keyword와 직무 조건을 모두 비우면 set_job_search_preferences로 저장해 둔 조건을 씁니다(저장된 게 없으면 먼저 저장을 제안하세요). 직무 조건만 있으면 조건을 받은 사이트만 검색합니다. ` +
       `새 공고: posted_since("today" 또는 YYYY-MM-DD)를 주면 그날 이후 공고만 남깁니다. 리멤버·사람인은 사이트 게시일로, 날짜를 주지 않는 원티드·점핏은 CareerMate가 처음 본 날(first_seen_at)로 거르므로, 원티드·점핏은 처음 검색한 날엔 전부 새 공고로 보인다고 안내하세요. 여러 사이트에 함께 올라온 같은 공고는 한 줄로 합치고 나머지 링크는 also_on에 둡니다. ` +
       `참고: 외부로 보내는 것은 검색어·직무 조건뿐이고 사용자 데이터는 전송하지 않으며, 봇 차단 우회는 하지 않습니다. 로컬에는 처음 본 날짜(사이트·공고 번호·날짜)만 기록합니다. 잡코리아는 robots.txt 제약으로 포함되지 않습니다. 결과가 비어 있으면 키워드나 직무 조건을 바꾸거나 사용자에게 공고 URL/본문을 받아 save_job_posting으로 저장하세요.`,
     inputSchema: {
@@ -1105,6 +1107,8 @@ export const TOOLS: ToolDef[] = [
       limit: z.number().optional().describe('사이트별 최대 건수(기본 10, posted_since가 있으면 50, 최대 100). 오늘 공고가 limit만큼 꽉 차서 돌아오면 더 있을 수 있으니 늘려서 다시 검색'),
       remember_categories: z.array(z.string()).max(20).optional().describe('리멤버 직무(find_job_categories 결과): "상위>하위" 또는 상위만. 예: ["재무·회계·세무>회계결산"]'),
       saramin_categories: z.array(z.string().regex(/^\d+$/)).max(20).optional().describe('사람인 직무 코드(find_job_categories 결과). 예: ["322"]'),
+      wanted_categories: z.array(z.string().regex(/^\d+$/)).max(20).optional().describe('원티드 직무 코드(find_job_categories 결과). 예: ["669"](프론트엔드 개발자), 상위 ["518"](개발 전체)'),
+      jumpit_categories: z.array(z.string().regex(/^\d+$/)).max(20).optional().describe('점핏 직무 코드(find_job_categories 결과, 개발 직군만). 예: ["2"](프론트엔드 개발자)'),
       posted_since: z
         .string()
         .refine((s) => s === 'today' || isYmd(s), '"today" 또는 실제 날짜(YYYY-MM-DD)')
@@ -1116,7 +1120,7 @@ export const TOOLS: ToolDef[] = [
         .min(0)
         .max(40)
         .optional()
-        .describe('사용자 경력 연차(신입 0). 공고의 경력 범위에 이 연차가 들어가는 것만 남김. "5년차"면 5. 사용자가 말하지 않았으면 프로필 경력으로 계산해 넣되 확인. 경력 표기를 읽을 수 없는 공고는 남김'),
+        .describe('사용자 경력 연차(신입 0). 공고의 경력 범위에 이 연차가 들어가는 것만 남김(원티드는 사이트에서 바로 거름). "5년차"면 5. 사용자가 말하지 않았으면 프로필 경력으로 계산해 넣되 확인. 경력 표기를 읽을 수 없는 공고는 남김'),
     },
     // 공고를 가져오기만 한다. 처음 본 날짜 기록은 사용자 데이터가 아닌 로컬 캐시라 readOnly로 둔다.
     readOnly: true,
@@ -1124,15 +1128,17 @@ export const TOOLS: ToolDef[] = [
       let keyword = (args.keyword ?? '').trim();
       let rememberCategories = args.remember_categories ?? [];
       let saraminCategories = args.saramin_categories ?? [];
+      let wantedCategories = args.wanted_categories ?? [];
+      let jumpitCategories = args.jumpit_categories ?? [];
       let usedSaved = false;
-      if (!keyword && !rememberCategories.length && !saraminCategories.length) {
+      if (!keyword && !rememberCategories.length && !saraminCategories.length && !wantedCategories.length && !jumpitCategories.length) {
         const saved = getJobSearchPreferences();
-        if (!saved.keyword && !saved.remember_categories.length && !saved.saramin_categories.length) {
+        if (!saved.keyword && !saved.remember_categories.length && !saved.saramin_categories.length && !saved.wanted_categories.length && !saved.jumpit_categories.length) {
           return fail(
             '검색어나 직무 조건이 없고 저장된 검색 조건도 없습니다. 사용자의 희망 직무를 find_job_categories로 찾아 set_job_search_preferences로 저장하거나, keyword를 주세요.',
           );
         }
-        ({ keyword, remember_categories: rememberCategories, saramin_categories: saraminCategories } = saved);
+        ({ keyword, remember_categories: rememberCategories, saramin_categories: saraminCategories, wanted_categories: wantedCategories, jumpit_categories: jumpitCategories } = saved);
         usedSaved = true;
       }
       const today = new Date().toLocaleDateString('sv-SE');
@@ -1141,6 +1147,8 @@ export const TOOLS: ToolDef[] = [
         limit: args.limit,
         rememberCategories,
         saraminCategories,
+        wantedCategories,
+        jumpitCategories,
         postedSince: args.posted_since === 'today' ? today : args.posted_since,
         years: args.years,
         today,
@@ -1154,15 +1162,15 @@ export const TOOLS: ToolDef[] = [
       return ok(parts.join(' '), {
         ...res,
         used_saved_preferences: usedSaved,
-        conditions: { keyword, remember_categories: rememberCategories, saramin_categories: saraminCategories, years: args.years },
+        conditions: { keyword, remember_categories: rememberCategories, saramin_categories: saraminCategories, wanted_categories: wantedCategories, jumpit_categories: jumpitCategories, years: args.years },
       });
     },
   },
   {
     name: 'find_job_categories',
-    title: '직무 분류 찾기(리멤버·사람인)',
+    title: '직무 분류 찾기(리멤버·사람인·원티드·점핏)',
     description:
-      '사용자의 직무를 리멤버 직무 분류("상위>하위")와 사람인 직무 코드로 바꿔 줍니다. CareerMate에 내장된 분류표에서 찾으므로 외부 통신이 없습니다. search_jobs나 set_job_search_preferences에 직무 조건을 넣기 전에 호출하세요. 영업·회계·디자인·간호·생산관리 등 모든 직군을 다룹니다. 여러 직무는 쉼표로 구분합니다(예: "경리, 회계"). 결과는 관련도순이니, 그대로 다 넣지 말고 사용자 직무에 맞는 것만 골라 쓰세요. 같은 이름이 다른 분야에 있을 수 있으므로(예: 사람인 "프론트"는 호텔 프런트 데스크) group·kind를 보고 고르세요. 사용자가 직무를 말하지 않았으면 프로필의 희망 직무(desired_roles)를 쓰세요.',
+      '사용자의 직무를 리멤버 직무 분류("상위>하위"), 사람인 직무 코드, 원티드 직무 코드, 점핏 직무 코드(개발 직군만)로 바꿔 줍니다. CareerMate에 내장된 분류표에서 찾으므로 외부 통신이 없습니다. search_jobs나 set_job_search_preferences에 직무 조건을 넣기 전에 호출하세요. 영업·회계·디자인·간호·생산관리 등 모든 직군을 다룹니다. 여러 직무는 쉼표로 구분합니다(예: "경리, 회계"). 결과는 관련도순이니, 그대로 다 넣지 말고 사용자 직무에 맞는 것만 골라 쓰세요. 같은 이름이 다른 분야에 있을 수 있으므로(예: 사람인 "프론트"는 호텔 프런트 데스크) group·kind를 보고 고르세요. 사용자가 직무를 말하지 않았으면 프로필의 희망 직무(desired_roles)를 쓰세요.',
     inputSchema: {
       query: z.string().describe('직무 이름(쉼표로 여러 개). 예: "데이터 분석가", "경리, 회계", "간호사"'),
       limit: z.number().int().min(1).max(100).optional().describe('사이트별 최대 후보 수(기본 20)'),
@@ -1170,22 +1178,22 @@ export const TOOLS: ToolDef[] = [
     readOnly: true,
     handler: (args) => {
       const r = findJobCategories(args.query, args.limit ?? 20);
-      if (!r.remember.length && !r.saramin.length) {
+      if (!r.remember.length && !r.saramin.length && !r.wanted.length && !r.jumpit.length) {
         return ok(`'${args.query}'에 맞는 직무 분류를 찾지 못했습니다. 더 일반적인 이름(예: "개발자" 대신 "개발", "웹개발")으로 다시 찾거나 keyword 검색을 쓰세요.`, r);
       }
-      return ok(`직무 분류 후보: 리멤버 ${r.remember.length}개, 사람인 ${r.saramin.length}개. 사용자 직무에 맞는 것만 골라 쓰세요.`, r);
+      return ok(`직무 분류 후보: 리멤버 ${r.remember.length}개, 사람인 ${r.saramin.length}개, 원티드 ${r.wanted.length}개, 점핏 ${r.jumpit.length}개. 사용자 직무에 맞는 것만 골라 쓰세요.`, r);
     },
   },
   {
     name: 'get_job_search_preferences',
     title: '저장된 공고 검색 조건 보기',
     description:
-      'set_job_search_preferences로 저장해 둔 공고 검색 조건(키워드·리멤버 직무·사람인 코드)을 돌려줍니다. 사용자가 "내 검색 조건 뭐야?"라고 묻거나, 저장된 조건으로 search_jobs를 돌리기 전에 확인할 때 쓰세요.',
+      'set_job_search_preferences로 저장해 둔 공고 검색 조건(키워드·리멤버 직무·사람인 코드·원티드 코드·점핏 코드)을 돌려줍니다. 사용자가 "내 검색 조건 뭐야?"라고 묻거나, 저장된 조건으로 search_jobs를 돌리기 전에 확인할 때 쓰세요.',
     inputSchema: {},
     readOnly: true,
     handler: () => {
       const p = getJobSearchPreferences();
-      const empty = !p.keyword && !p.remember_categories.length && !p.saramin_categories.length;
+      const empty = !p.keyword && !p.remember_categories.length && !p.saramin_categories.length && !p.wanted_categories.length && !p.jumpit_categories.length;
       return ok(empty ? '저장된 공고 검색 조건이 없습니다.' : '저장된 공고 검색 조건입니다.', p);
     },
   },
@@ -1199,17 +1207,23 @@ export const TOOLS: ToolDef[] = [
       keyword: z.string().optional().describe('기본 검색어(선택). 예: "React"'),
       remember_categories: z.array(z.string()).max(20).optional().describe('리멤버 직무("상위>하위" 또는 상위만)'),
       saramin_categories: z.array(z.string().regex(/^\d+$/)).max(20).optional().describe('사람인 직무 코드'),
+      wanted_categories: z.array(z.string().regex(/^\d+$/)).max(20).optional().describe('원티드 직무 코드'),
+      jumpit_categories: z.array(z.string().regex(/^\d+$/)).max(20).optional().describe('점핏 직무 코드'),
     },
     handler: (args) => {
       const bad = [
         ...((args.remember_categories ?? []) as string[]).filter((c) => !isRememberCategory(c)),
         ...((args.saramin_categories ?? []) as string[]).filter((c) => !isSaraminCategory(c)),
+        ...((args.wanted_categories ?? []) as string[]).filter((c) => !isWantedCategory(c)),
+        ...((args.jumpit_categories ?? []) as string[]).filter((c) => !isJumpitCategory(c)),
       ];
-      if (bad.length) return fail(`리멤버·사람인 분류표에 없는 값입니다: ${bad.join(', ')}. find_job_categories로 찾은 값을 넣어 주세요.`);
+      if (bad.length) return fail(`리멤버·사람인·원티드·점핏 분류표에 없는 값입니다: ${bad.join(', ')}. find_job_categories로 찾은 값을 넣어 주세요.`);
       const p = setJobSearchPreferences({
         ...(args.keyword !== undefined ? { keyword: args.keyword.trim() } : {}),
         ...(args.remember_categories ? { remember_categories: args.remember_categories } : {}),
         ...(args.saramin_categories ? { saramin_categories: args.saramin_categories } : {}),
+        ...(args.wanted_categories ? { wanted_categories: args.wanted_categories } : {}),
+        ...(args.jumpit_categories ? { jumpit_categories: args.jumpit_categories } : {}),
       });
       return ok('공고 검색 조건을 저장했습니다. 이제 "오늘 올라온 공고 보여줘"라고 하면 이 조건으로 찾아요.', p);
     },

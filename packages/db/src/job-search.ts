@@ -25,6 +25,13 @@ function ensureTables(): void {
       updated_at TEXT NOT NULL
     );
   `);
+  // Added after the table first shipped, so older databases get the columns here.
+  const cols = getDb().prepare(`PRAGMA table_info(job_search_preferences)`).all() as { name: string }[];
+  for (const col of ['wanted_categories', 'jumpit_categories']) {
+    if (!cols.some((c) => c.name === col)) {
+      getDb().exec(`ALTER TABLE job_search_preferences ADD COLUMN ${col} TEXT NOT NULL DEFAULT '[]'`);
+    }
+  }
 }
 
 /** A posting not returned by any search for this long is forgotten (and counts as new if it reappears). */
@@ -54,6 +61,8 @@ export interface JobSearchPreferences {
   keyword: string;
   remember_categories: string[];
   saramin_categories: string[];
+  wanted_categories: string[];
+  jumpit_categories: string[];
   updated_at: string | null;
 }
 
@@ -74,6 +83,8 @@ export function getJobSearchPreferences(): JobSearchPreferences {
     keyword: typeof row?.keyword === 'string' ? row.keyword : '',
     remember_categories: parseList(row?.remember_categories ?? '[]'),
     saramin_categories: parseList(row?.saramin_categories ?? '[]'),
+    wanted_categories: parseList(row?.wanted_categories ?? '[]'),
+    jumpit_categories: parseList(row?.jumpit_categories ?? '[]'),
     updated_at: typeof row?.updated_at === 'string' ? row.updated_at : null,
   };
 }
@@ -85,12 +96,21 @@ export function setJobSearchPreferences(
   const next = { ...getJobSearchPreferences(), ...prefs, updated_at: new Date().toISOString() };
   getDb()
     .prepare(
-      `INSERT INTO job_search_preferences (id, keyword, remember_categories, saramin_categories, updated_at)
-       VALUES (1, ?, ?, ?, ?)
+      `INSERT INTO job_search_preferences (id, keyword, remember_categories, saramin_categories, wanted_categories, jumpit_categories, updated_at)
+       VALUES (1, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET keyword = excluded.keyword, remember_categories = excluded.remember_categories,
-         saramin_categories = excluded.saramin_categories, updated_at = excluded.updated_at`,
+         saramin_categories = excluded.saramin_categories, wanted_categories = excluded.wanted_categories,
+         jumpit_categories = excluded.jumpit_categories,
+         updated_at = excluded.updated_at`,
     )
-    .run(next.keyword, JSON.stringify(next.remember_categories), JSON.stringify(next.saramin_categories), next.updated_at);
+    .run(
+      next.keyword,
+      JSON.stringify(next.remember_categories),
+      JSON.stringify(next.saramin_categories),
+      JSON.stringify(next.wanted_categories),
+      JSON.stringify(next.jumpit_categories),
+      next.updated_at,
+    );
   return next;
 }
 
