@@ -45,6 +45,16 @@ import {
   saveProfilePhoto,
   readProfilePhoto,
   removeProfilePhoto,
+  exportAll,
+  createBackup,
+  resetAll,
+  listBackups,
+  previewBackupImport,
+  restoreBackup,
+  getSyncStatus,
+  runSyncNow,
+  setSyncDir,
+  changeDataDir,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -71,15 +81,7 @@ import { z } from 'zod';
 import { Router, HttpError, readJsonBody, readRawBody, type Ctx } from './http.ts';
 import { exportCoverLetter, exportDocument, exportProfile, exportInterview, type ExportFormat } from './exports.ts';
 import { getServerInfo } from './info.ts';
-import {
-  exportAll,
-  createBackup,
-  resetAll,
-  listBackups,
-  previewBackupImport,
-  restoreBackup,
-  createDashboardShortcut,
-} from './settings.ts';
+import { createDashboardShortcut, pickFolder } from './settings.ts';
 
 function id(ctx: Ctx, key = 'id'): string {
   const v = ctx.params[key];
@@ -550,7 +552,33 @@ export function registerApiRoutes(router: Router): void {
   router.get('/api/settings', () => ({
     info: getServerInfo(),
     backups: listBackups(),
+    sync: getSyncStatus(),
   }));
+  router.post('/api/settings/sync', async () => ({ sync: await runSyncNow() }));
+  router.post('/api/settings/pick-folder', async (ctx) => {
+    const { title } = await readJsonBody(ctx.req, z.object({ title: z.string().max(200) }));
+    try {
+      return { path: await pickFolder(title) };
+    } catch (e) {
+      throw new HttpError(400, e instanceof Error ? e.message : String(e), 'pick_folder_failed');
+    }
+  });
+  router.post('/api/settings/sync-dir', async (ctx) => {
+    const { path: dir } = await readJsonBody(ctx.req, z.object({ path: z.string().min(1).max(1000).nullable() }));
+    try {
+      return { sync: await setSyncDir(dir) };
+    } catch (e) {
+      throw new HttpError(400, e instanceof Error ? e.message : String(e), 'sync_dir_invalid');
+    }
+  });
+  router.post('/api/settings/data-dir', async (ctx) => {
+    const { path: dir } = await readJsonBody(ctx.req, z.object({ path: z.string().min(1).max(1000) }));
+    try {
+      return changeDataDir(dir);
+    } catch (e) {
+      throw new HttpError(400, e instanceof Error ? e.message : String(e), 'data_dir_invalid');
+    }
+  });
   router.get('/api/settings/export-all', () =>
     download({
       filename: `careermate-backup-${new Date().toISOString().slice(0, 10)}.json`,

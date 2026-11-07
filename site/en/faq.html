@@ -78,6 +78,30 @@
           "@type": "Answer",
           "text": "Yes. Ask the AI to find jobs and it gathers public postings from Wanted, Jumpit, Remember, and Saramin. No login or API key is needed, and only the search keyword and job conditions leave your PC. It works for every occupation, and only the postings you pick are saved and carried into fit analysis and cover letters."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I use CareerMate on several PCs?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Turn on External storage. In the dashboard go to Settings > External storage, pick a cloud folder such as Google Drive or a clone of a private GitHub repo, and connect the same folder on the new PC. All your personal data goes into that storage, so keep the repo private and never share the folder."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What if I edit on both PCs at the same time?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "There is no automatic merge. This PC wins, the other version is kept in backups, and Settings shows a warning."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I turn off External storage?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Press Disconnect under Settings > External storage. The folder stays as it is."
+        }
       }
     ]
   }
@@ -272,7 +296,26 @@
           <details class="acc">
             <summary>Where is my data stored?</summary>
             <div class="acc__body">
-              <p>Only on your computer, in <code>~/.careermate</code> (Windows: <code>%USERPROFILE%\.careermate</code>). See the exact path under <strong>Settings &gt; Data location</strong> in the dashboard. Nothing is sent anywhere.</p>
+              <p>Only on your computer, in <code>~/.careermate</code> (Windows: <code>%USERPROFILE%\.careermate</code>). See the exact path under <strong>Settings &gt; Data location</strong> in the dashboard. By default nothing is sent anywhere.</p>
+              <p>You can move it with <strong>Change folder</strong> on the same screen (applies after restarting the dashboard and your AI app). If you turn on <strong>External storage</strong> yourself, data also syncs to the folder you picked, but nothing goes to any CareerMate server.</p>
+            </div>
+          </details>
+          <details class="acc" id="multi-pc">
+            <summary>How do I use CareerMate on several PCs?</summary>
+            <div class="acc__body">
+              <p>Turn on External storage. In the dashboard go to Settings &gt; External storage, pick a cloud folder such as Google Drive or a clone of a private GitHub repo, and connect the same folder on the new PC. All your personal data goes into that storage, so keep the repo private and never share the folder.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>What if I edit on both PCs at the same time?</summary>
+            <div class="acc__body">
+              <p>There is no automatic merge. This PC wins, the other version is kept in backups, and Settings shows a warning.</p>
+            </div>
+          </details>
+          <details class="acc">
+            <summary>How do I turn off External storage?</summary>
+            <div class="acc__body">
+              <p>Press Disconnect under Settings &gt; External storage. The folder stays as it is.</p>
             </div>
           </details>
           <details class="acc">
@@ -290,7 +333,7 @@
 
   <footer class="foot">
     <div class="foot__brand"><span class="nav__logo" aria-hidden="true">C</span> CareerMate</div>
-    <p>A local, MCP-based career workspace. All data stays on this computer.</p>
+    <p>A local, MCP-based career workspace. By default all data stays on this computer.</p>
     <div class="foot__links"><a href="/en#top">Home</a><a href="/en#install">Install</a><a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">npm</a><a href="/en/faq">FAQ</a><a href="mailto:osntak@gmail.com">Contact</a></div>
   </footer>
 

@@ -351,6 +351,35 @@
           </details>
         </div>
 
+        <!-- ===== 외부 저장소 연결 (선택) ===== -->
+        <div class="help" id="multi-pc" style="margin-top:2.4rem">
+          <p class="q__label" style="margin-bottom:.6rem">외부 저장소 연결 <span class="hint">(선택)</span></p>
+          <p>PC 여러 대에서 같은 데이터를 쓸 때 켭니다. 연결한 폴더를 거쳐 PC끼리 동기화하며, 기본은 꺼져 있습니다.</p>
+          <div class="filenote"><strong>개인정보 주의:</strong> 연결한 저장소에 모든 개인 데이터가 들어가니 GitHub 저장소는 비공개로 두고 드라이브 폴더는 공유하지 마세요. CareerMate 서버로는 아무것도 보내지 않습니다.</div>
+
+          <details class="acc">
+            <summary>구글 드라이브 <span class="acc__hint">OneDrive·Dropbox·iCloud Drive도 같음</span></summary>
+            <div class="acc__body">
+              <ul>
+                <li><strong>첫 PC</strong>: 드라이브 안에 폴더를 만들고 대시보드 <strong>설정 &gt; 외부 저장소 연결 &gt; 폴더 연결</strong>에서 <strong>찾아보기</strong>로 고릅니다(경로를 직접 입력해도 됩니다).</li>
+                <li><strong>새 PC</strong>: CareerMate를 설치하고 같은 폴더를 연결하면 데이터가 들어옵니다.</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary>GitHub 비공개 저장소 <span class="acc__hint">git을 쓴다면</span></summary>
+            <div class="acc__body">
+              <ul>
+                <li><strong>첫 PC</strong>: 비공개 저장소를 만들어 clone하고 그 폴더를 연결합니다. pull·commit·push는 CareerMate가 내 git 로그인으로 합니다.</li>
+                <li><strong>새 PC</strong>: CareerMate를 설치하고 같은 저장소를 clone해 연결하면 데이터가 들어옵니다.</li>
+              </ul>
+            </div>
+          </details>
+
+          <p class="hint">두 PC에서 따로 고쳤으면 지금 PC의 내용이 남고, 다른 쪽은 백업에 보관되며 설정 화면에 경고가 뜹니다.<br /><strong>연결 해제</strong>를 누르면 꺼지고 폴더는 그대로 남습니다. 환경 변수 <code>CAREERMATE_SYNC_DIR</code>를 쓰면 설정보다 우선합니다(고급).</p>
+        </div>
+
         <p class="hint" style="margin-top:2rem"><a href="index.html#install">메인 페이지의 빠른 설치로 돌아가기</a></p>
       </div>
     </section>
@@ -358,7 +387,7 @@
 
   <footer class="foot">
     <div class="foot__brand"><span class="nav__logo" aria-hidden="true">C</span> CareerMate</div>
-    <p>로컬에서 동작하는 MCP 기반 커리어 관리 도구. 모든 데이터는 이 컴퓨터에만 저장됩니다.</p>
+    <p>로컬에서 동작하는 MCP 기반 커리어 관리 도구. 기본 설정에서는 모든 데이터가 이 컴퓨터에만 저장됩니다.</p>
     <div class="foot__links"><a href="index.html#top">홈</a><a href="/guides">가이드</a><a href="index.html#install">빠른 설치</a><a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">npm</a><a href="faq.html">FAQ</a><a href="mailto:osntak@gmail.com">문의</a></div>
   </footer>
 

@@ -40,6 +40,24 @@ export function saveProfilePhoto(bytes: Uint8Array): ProfilePhoto {
   return meta;
 }
 
+/**
+ * Put a restored photo file in place (or clear it) without touching the profile row,
+ * which the restore already set. Falls back to a full save when the row has no meta.
+ */
+export function restoreProfilePhotoFile(bytes: Uint8Array | null): void {
+  const mime = bytes ? sniffPhotoMime(bytes) : null;
+  for (const ext of Object.values(EXT)) if (!mime || EXT[mime] !== ext) unlinkQuiet(`profile-photo.${ext}`);
+  if (!bytes || !mime) return;
+  if (!profileRepo.get()?.photo) {
+    saveProfilePhoto(bytes);
+    return;
+  }
+  const file = `profile-photo.${EXT[mime]}`;
+  const tmp = path.join(getUploadsDir(), `${file}.tmp`);
+  fs.writeFileSync(tmp, bytes);
+  fs.renameSync(tmp, path.join(getUploadsDir(), file));
+}
+
 /** The stored photo, or null when there is none or its file went missing. */
 export function readProfilePhoto(): { bytes: Uint8Array; mime: string } | null {
   const meta = profileRepo.get()?.photo;

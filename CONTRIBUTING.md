@@ -50,7 +50,8 @@ docs/       영구 문서 (아키텍처·데이터 모델·결정·워크플로�
 1. **테스트와 타입체크가 통과해야 합니다**: `npm run typecheck && npm test && npm run test:ui`.
    깨진 상태로 푸시하지 마세요.
 2. **사용자 데이터를 외부로 보내는 코드를 추가하지 마세요.** 로컬-우선 원칙은 협상 대상이
-   아닙니다.
+   아닙니다. 유일한 예외는 사용자가 직접 연결한 외부 저장소이며, 사용자가 고른 곳에만 쓰고
+   연결하지 않았으면 동기화 코드가 아예 돌지 않아야 합니다.
 3. **입력은 zod 스키마로 검증**하고 자유 텍스트에는 길이 상한을 두세요
    (`packages/shared/src/schemas.ts` 패턴 참고).
 4. **대시보드에서 사용자 데이터를 렌더링할 때는** `lib.js`의 `el()`(textContent)와 `safeUrl()`
@@ -131,6 +132,8 @@ docs/       permanent docs (architecture, data model, decisions, workflows, MCP 
 1. **Tests and the type check must pass**: `npm run typecheck && npm test && npm run test:ui`.
    Don't push a broken tree.
 2. **Don't add code that sends user data off the machine.** Local-first is not negotiable.
+   The only exception is external storage the user connects themselves. It writes only where
+   they chose, and when nothing is connected no sync code may run.
 3. **Validate input with zod schemas** and cap free-text length (follow the pattern in
    `packages/shared/src/schemas.ts`).
 4. **When rendering user data in the dashboard**, use `el()` (textContent) and `safeUrl()`

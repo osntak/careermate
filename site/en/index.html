@@ -365,11 +365,12 @@
       <div class="privacy-card">
         <div class="privacy-card__text">
           <h2>Your data is stored on your PC</h2>
-          <p>The dashboard server binds only to <code>127.0.0.1</code> (this computer), so it can't be reached from outside.<br />CareerMate itself sends out only an update check (you can turn it off) and, when you search for jobs, the search keywords and role filters. It never sends your resume, cover letters, or applications. The analysis and writing are done by the AI app you chose, and whatever goes to that AI service falls under its own policy.</p>
+          <p>The dashboard server binds only to <code>127.0.0.1</code> (this computer), so it can't be reached from outside.<br />CareerMate itself sends out only an update check (you can turn it off) and, when you search for jobs, the search keywords and role filters. It never sends your resume, cover letters, or applications. If you connect External storage yourself, data syncs to that folder, but never to a CareerMate server. The analysis and writing are done by the AI app you chose, and whatever goes to that AI service falls under its own policy.</p>
           <ul class="privacy-card__list">
             <li><strong>Storage</strong> <code>~/.careermate/careermate.sqlite</code></li>
             <li><strong>Export</strong> cover letters and more to <code>~/.careermate/exports</code></li>
             <li><strong>Delete & manage</strong> right in the dashboard <strong>Settings</strong></li>
+            <li><strong>External storage</strong> only if you turn it on, syncs to a folder you pick (<a href="/en/start#multi-pc">how</a>)</li>
           </ul>
         </div>
       </div>
@@ -379,7 +380,7 @@
 
   <footer class="foot">
     <div class="foot__brand"><span class="nav__logo" aria-hidden="true">C</span> CareerMate</div>
-    <p>A career log you use with your AI app. Your data stays on your PC.</p>
+    <p>A career log you use with your AI app. By default your data stays on your PC.</p>
     <div class="foot__links">
       <a href="#top">Back to top</a>
       <a href="#features">Features</a>

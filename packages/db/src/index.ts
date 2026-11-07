@@ -29,3 +29,5 @@ export {
   timelineRepo,
   getEntityCounts,
 } from './repositories.ts';
+export * from './backup.ts';
+export * from './sync.ts';

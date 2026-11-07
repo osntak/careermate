@@ -53,9 +53,11 @@ CLI 클라이언트(Claude Code·Codex 등)는 파일 첨부가 안 되므로, �
 
 | 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
 | --- | --- | --- | --- | --- | --- |
-| `get_onboarding_status` | CareerMate에 어떤 정보(프로필·이력서·경력·스킬·자소서·공고)가 준비되어 있는지 확인하고 다음 단계를 제시 | 없음 | `completed`, `has_profile`/`has_resume`/`has_cover_letter`/`has_experience`/`has_skills`/`has_job`, `profile_completeness`(0~100), `next_steps[]` | AI 클라이언트 연결 직후 가장 먼저 | ✅ |
+| `get_onboarding_status` | CareerMate에 어떤 정보(프로필·이력서·경력·스킬·자소서·공고)가 준비되어 있는지 확인하고 다음 단계를 제시 | 없음 | `completed`, `has_profile`/`has_resume`/`has_cover_letter`/`has_experience`/`has_skills`/`has_job`, `profile_completeness`(0~100), `next_steps[]`, `sync`(아래 참고) | AI 클라이언트 연결 직후 가장 먼저 | ✅ |
 
 AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태를 파악한 뒤, 단계별 가이드가 필요하면 `get_workflow_guide('onboarding')`로 받으세요. 안내 흐름: 프로필 입력 → 이력서/경력·스킬 추가 → 대시보드 열기.
+
+**`sync` 필드 (외부 저장소 연결 상태).** `enabled`(연결 여부), `mode`(`'git'` 또는 `'folder'`, 꺼져 있으면 `null`), `last_sync_at`(마지막 동기화 시각), `last_error`, `warnings[]`(`{ code, message }`, 예: 두 PC에서 따로 고쳐 생긴 충돌)를 돌려줍니다. 오류나 경고가 있으면 응답 텍스트 끝에도 붙으니 사용자 언어로 풀어 전하세요. 연결하는 도구는 없습니다. 먼저 권하지 말고, 사용자가 다른 PC에서도 쓰고 싶다고 할 때만 [`INSTALL.md`](../INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기)를 안내하세요.
 
 ---
 
