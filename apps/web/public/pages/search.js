@@ -1,8 +1,7 @@
 // Find jobs (#/search): the same board search as the search_jobs MCP tool. One
-// input is the keyword for all four boards; Remember/Saramin categories are an
-// optional narrowing step (AND with the keyword) offered from that keyword and
-// dropped when the keyword changes. Optional years and "today only", saved
-// conditions, and one-click save into the jobs list.
+// keyword for all four boards (no category picker: on Remember/Saramin a category
+// replaces the keyword and matched fewer real postings), optional years and
+// "today only", saved conditions, and one-click save into the jobs list.
 import { el, get, post, put, Card, Btn, Field, Input, EmptyState, Spinner, icon, mount, clear, toastOk, toastError } from '/lib.js';
 import { t } from '/i18n.js';
 
@@ -13,92 +12,20 @@ const SOURCE_LABEL = { wanted: '원티드', jumpit: '점핏', remember: '리멤�
 export async function render(ctx) {
   ctx.setTitle(t('nav.search'));
 
-  const state = { remember: [], saramin: [], names: new Map() };
-  try {
-    const { preferences: p, saramin_names } = await get('/api/job-search/preferences');
-    state.remember = [...p.remember_categories];
-    state.saramin = [...p.saramin_categories];
-    state.keyword = p.keyword;
-    for (const [c, n] of Object.entries(saramin_names || {})) state.names.set(c, n);
-  } catch { /* first run: nothing saved */ }
-  // Chips belong to the keyword they were picked for (saved ones to the saved keyword).
-  state.chipKeyword = state.keyword || '';
+  let saved = '';
+  try { saved = (await get('/api/job-search/preferences')).preferences.keyword || ''; } catch { /* first run: nothing saved */ }
 
-  const keyword = Input({ id: 'search-keyword', placeholder: t('search.keyword.ph'), value: state.keyword || '' });
-  const years = Input({ id: 'search-years', type: 'number', min: '0', max: '40', inputMode: 'numeric', placeholder: t('search.years.ph') });
-  const today = el('input', { id: 'search-today', type: 'checkbox' });
-  const suggestBox = el('div', { class: 'stack-2' });
-  const selectedBox = el('div', { class: 'chips' });
-  const catField = Field(t('search.cat'), el('div', { class: 'stack-2' }, suggestBox, selectedBox), t('search.cat.hint'));
-  const results = el('div', {}, el('p', { class: 'muted', style: { margin: 0 } }, t('search.results.idle')));
-
-  const label = (kind, v) => (kind === 'saramin' ? state.names.get(v) || v : v.replace('>', ' > '));
-
-  function toggle(kind, v) {
-    const list = state[kind];
-    const i = list.indexOf(v);
-    if (i >= 0) list.splice(i, 1); else list.push(v);
-    paintSelected();
-    suggestBox.querySelectorAll('[data-cat]').forEach((b) => b.classList.toggle('is-selected', state[b.dataset.kind].includes(b.dataset.cat)));
-  }
-
-  function catButton(kind, value, text) {
-    const b = el('button', {
-      type: 'button',
-      class: `btn btn--sm${state[kind].includes(value) ? ' is-selected' : ''}`,
-      dataset: { cat: value, kind },
-      onClick: () => toggle(kind, value),
-    }, text);
-    return b;
-  }
-
-  function paintSelected() {
-    const items = [
-      ...state.remember.map((v) => ['remember', v]),
-      ...state.saramin.map((v) => ['saramin', v]),
-    ];
-    mount(selectedBox, ...items.map(([kind, v]) =>
-      el('button', { type: 'button', class: 'chip chip--accent', title: t('common.delete'), onClick: () => toggle(kind, v) },
-        `${site(kind)} · ${label(kind, v)} ×`)));
-    selectedBox.hidden = !items.length;
-    catField.hidden = !items.length && !suggestBox.childElementCount;
-  }
-
-  // Leftover chips from another keyword were silently ANDed into the next search
-  // (백엔드 chips + "재무" left Remember with 1 posting), so a new keyword drops them.
-  function dropStaleChips(kw) {
-    if (!kw || kw === state.chipKeyword) return;
-    state.remember = [];
-    state.saramin = [];
-    state.chipKeyword = kw;
-    clear(suggestBox);
-    paintSelected();
-  }
-
-  // Offer categories for the keyword just searched; picking one is optional narrowing.
-  async function offerCategories(kw) {
-    try {
-      const r = await get(`/api/job-search/categories?q=${encodeURIComponent(kw)}`);
-      for (const s of r.saramin) state.names.set(s.code, s.name);
-      mount(suggestBox,
-        r.remember.length ? el('div', { class: 'flex wrap gap-2' },
-          el('span', { class: 'muted text-sm' }, t('search.cat.remember')),
-          ...r.remember.slice(0, 8).map((v) => catButton('remember', v, v.replace('>', ' > ')))) : null,
-        r.saramin.length ? el('div', { class: 'flex wrap gap-2' },
-          el('span', { class: 'muted text-sm' }, t('search.cat.saramin')),
-          ...r.saramin.slice(0, 8).map((s) => catButton('saramin', s.code, s.name))) : null);
-    } catch { clear(suggestBox); } // suggestions are optional; the search itself still ran
-    paintSelected();
-  }
+  const keyword = Input({ id: 'search-keyword', placeholder: t('search.keyword.ph'), value: saved });
+  const years = Input({ id: 'search-years', inputMode: 'numeric', placeholder: t('search.years.ph') });
+  const today = el('input', { id: 'search-today', type: 'checkbox', class: 'switch', attrs: { role: 'switch' } });
+  const results = el('div', {});
+  const resultsCard = Card({ title: t('search.results.title'), body: results });
+  resultsCard.hidden = true; // shown on the first search
 
   async function savePrefs() {
-    dropStaleChips(keyword.value.trim());
     try {
-      await put('/api/job-search/preferences', {
-        keyword: keyword.value.trim(),
-        remember_categories: state.remember,
-        saramin_categories: state.saramin,
-      });
+      // Empty categories clear any saved earlier, so the AI's saved search also goes by keyword.
+      await put('/api/job-search/preferences', { keyword: keyword.value.trim(), remember_categories: [], saramin_categories: [] });
       toastOk(t('search.saved.prefs'));
     } catch (e) { toastError(e); }
   }
@@ -154,19 +81,16 @@ export async function render(ctx) {
   async function run() {
     if (busy) return;
     const kw = keyword.value.trim();
-    dropStaleChips(kw);
-    if (!kw && !state.remember.length && !state.saramin.length) { toastError(new Error(t('search.need'))); return; }
+    if (!kw) { toastError(new Error(t('search.need'))); return; }
     const y = years.value.trim();
-    if (y !== '' && !(Number.isInteger(Number(y)) && Number(y) >= 0 && Number(y) <= 40)) { toastError(new Error(t('search.years.hint'))); years.focus(); return; }
+    if (y !== '' && !(Number.isInteger(Number(y)) && Number(y) >= 0 && Number(y) <= 40)) { toastError(new Error(t('search.years.bad'))); years.focus(); return; }
     busy = true;
     runBtn.disabled = true;
+    resultsCard.hidden = false;
     mount(results, Spinner());
-    if (kw) offerCategories(kw); // runs alongside the search; renders when it returns
     try {
       const res = await post('/api/job-search', {
         keyword: kw,
-        remember_categories: state.remember,
-        saramin_categories: state.saramin,
         // A date filter drops most of a page, so ask for more then (matches the core default of 50).
         limit: today.checked ? 50 : 30,
         ...(y !== '' ? { years: Number(y) } : {}),
@@ -175,7 +99,6 @@ export async function render(ctx) {
       // Dated postings newest first; boards without a date keep their order after them.
       const list = res.results.map((r, i) => ({ ...r, i }))
         .sort((a, b) => (b.posted_at ?? '').localeCompare(a.posted_at ?? '') || a.i - b.i);
-      // A count per board makes a category that shrank one board to 1 posting visible.
       const head = el('div', { class: 'flex wrap gap-2 mb-3' },
         el('span', { class: 'badge badge--accent tnum' }, t('search.results.count', { n: list.length })),
         ...res.providers.map((p) => p.ok
@@ -203,21 +126,17 @@ export async function render(ctx) {
   keyword.addEventListener('keydown', onEnter);
   years.addEventListener('keydown', onEnter);
 
-  paintSelected();
-
   const form = Card({
     title: t('search.cond.title'),
     body: el('div', {},
-      Field(t('search.keyword'), keyword, t('search.keyword.hint')),
-      catField,
-      el('div', { class: 'grid grid--2' },
-        Field(t('search.years'), years, t('search.years.hint')),
-        Field(t('search.date'), el('label', { class: 'flex gap-2', for: 'search-today', style: { cursor: 'pointer', minHeight: '36px' } }, today, t('search.today')), t('search.today.hint'))),
-      el('div', { class: 'flex wrap gap-2' }, runBtn, Btn(t('search.save.prefs'), { icon: 'check', variant: 'ghost', onClick: savePrefs }))),
+      Field(t('search.keyword'), keyword),
+      el('div', { class: 'grid grid--2' }, Field(t('search.years'), years, t('search.years.hint'))),
+      el('div', { class: 'flex wrap gap-2 center' }, runBtn, Btn(t('search.save.prefs'), { icon: 'check', variant: 'ghost', onClick: savePrefs }),
+        el('label', { class: 'flex gap-2 center', for: 'search-today', title: t('search.today.hint'), style: { cursor: 'pointer', marginLeft: 'auto', fontSize: '13px', color: 'var(--text-secondary)' } }, t('search.today'), today))),
   });
 
   mount(ctx.view, el('div', { class: 'stack-4' },
     el('p', { class: 'muted', style: { marginTop: 0 } }, t('search.desc')),
     form,
-    Card({ title: t('search.results.title'), body: results })));
+    resultsCard));
 }

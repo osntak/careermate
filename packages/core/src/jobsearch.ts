@@ -12,7 +12,7 @@
 import { z } from 'zod';
 import { APP_VERSION } from '@careermate/shared';
 import { markJobsSeen } from '@careermate/db';
-import { isJumpitCategory, isRememberCategory, isSaraminCategory, isWantedCategory } from './job-categories.ts';
+import { isJumpitCategory, isRememberCategory, isSaraminCategory, isWantedCategory, wantedCategoryName } from './job-categories.ts';
 
 export interface JobSearchResult {
   source: string;
@@ -77,6 +77,12 @@ export interface JobSearchOptions {
 }
 
 const UA = `careermate/${APP_VERSION} (+https://careermate.life)`;
+
+/** Distinct non-empty labels, or undefined when there are none. */
+function names(list: (string | null | undefined)[] | undefined): string[] | undefined {
+  const out = [...new Set((list ?? []).map((s) => s?.trim()).filter((s): s is string => !!s))];
+  return out.length ? out : undefined;
+}
 
 function toYmd(v: unknown): string | undefined {
   if (typeof v !== 'string' || v.length < 10) return undefined;
@@ -157,6 +163,7 @@ const wantedSchema = z.object({
         .object({ location: z.string().optional(), full_location: z.string().optional() })
         .nullable()
         .optional(),
+      category_tags: z.array(z.object({ id: z.number() }).passthrough()).nullable().optional(),
     }).passthrough(),
   ).nullable(),
 }).passthrough();
@@ -183,6 +190,7 @@ const jumpitSchema = z.object({
         minCareer: z.number().nullable().optional(),
         maxCareer: z.number().nullable().optional(),
         techStacks: z.array(z.string()).optional(),
+        jobCategory: z.string().nullable().optional(),
         closedAt: z.string().nullable().optional(),
       }).passthrough(),
     ),
@@ -222,6 +230,7 @@ const wanted: Provider = {
         url: `https://www.wanted.co.kr/wd/${r.id}`,
         location: r.address?.location ?? r.address?.full_location,
         experience: annual,
+        keywords: names(r.category_tags?.map((c) => wantedCategoryName(String(c.id)))),
         deadline: toYmd(r.due_time),
         external_id: String(r.id),
       };
@@ -260,7 +269,8 @@ const jumpit: Provider = {
         : p.minCareer != null
           ? `${p.minCareer}~${p.maxCareer ?? p.minCareer}년`
           : undefined,
-      keywords: p.techStacks,
+      // jobCategory is "프론트엔드 개발자,백엔드 개발자" (highlighted like the title).
+      keywords: names([...(p.jobCategory?.replace(/<[^>]*>/g, '').split(',') ?? []), ...(p.techStacks ?? [])]),
       deadline: toYmd(p.closedAt),
       external_id: String(p.id),
     }));
@@ -282,7 +292,7 @@ const rememberSchema = z.object({
         .array(z.object({ address_level1: z.string().nullable().optional(), address_level2: z.string().nullable().optional() }).passthrough())
         .nullable()
         .optional(),
-      job_categories: z.array(z.object({ level2: z.string().nullable().optional() }).passthrough()).nullable().optional(),
+      job_categories: z.array(z.object({ level1: z.string().nullable().optional(), level2: z.string().nullable().optional() }).passthrough()).nullable().optional(),
     }).passthrough(),
   ),
 }).passthrough();
@@ -309,7 +319,9 @@ const remember: Provider = {
     }
     // Remember rejects per > 50 ("최대 요청 수를 초과"), so larger limits take more pages.
     // The first page says how many pages exist; the rest are fetched together.
-    const max = listMax(cats, limit, opts);
+    // A keyword search reads 3x the limit: Remember matches the whole posting body and partial
+    // words (간호사 -> 변호사), so matchesKeyword drops most rows and needs more to refill.
+    const max = cats.length ? listMax(cats, limit, opts) : query ? Math.min(REMEMBER_KEYWORD_MAX, limit * 3) : limit;
     const per = Math.min(max, 50);
     const page = (n: number) =>
       getJson('https://career-api.rememberapp.co.kr/job_postings/search', timeoutMs, {
@@ -317,8 +329,9 @@ const remember: Provider = {
       }).then((r) => rememberSchema.parse(r));
     const first = await page(1);
     const last = Math.min(Math.ceil(max / per), first.meta?.total_pages ?? Infinity);
-    const rest = await Promise.all(Array.from({ length: Math.max(0, last - 1) }, (_, i) => page(i + 2)));
-    return [first, ...rest].flatMap((p) => p.data).slice(0, max).map((d) => {
+    // Extra pages are a bonus: if Remember rate-limits them (HTTP 429), keep what the first page gave.
+    const rest = await Promise.all(Array.from({ length: Math.max(0, last - 1) }, (_, i) => page(i + 2).catch(() => null)));
+    return [first, ...rest].flatMap((p) => p?.data ?? []).slice(0, max).map((d) => {
       const addr = d.addresses?.[0];
       const min = d.min_experience;
       const max = d.max_experience;
@@ -330,7 +343,7 @@ const remember: Provider = {
         location: addr ? [addr.address_level1, addr.address_level2].filter(Boolean).join(' ') || undefined : undefined,
         experience:
           min != null && max != null ? `${min}~${max}년` : min != null ? `${min}년 이상` : max != null ? `~${max}년` : undefined,
-        keywords: d.job_categories?.map((c) => c.level2).filter((s): s is string => !!s),
+        keywords: names(d.job_categories?.map((c) => c.level2 ?? c.level1)),
         deadline: toYmd(d.ends_at),
         external_id: String(d.id),
         posted_at: kstYmd(d.starts_at),
@@ -437,6 +450,22 @@ const saramin: Provider = {
   },
 };
 
+/** ponytail: 3 pages of 50, raise if Remember keyword searches still come back short. */
+const REMEMBER_KEYWORD_MAX = 150;
+
+const squash = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+
+/**
+ * Whether every word of the keyword is in the posting's title or the board's own category/tag
+ * names (keywords). Boards match loosely (Remember searched the body and partial words, Jumpit
+ * returns developer jobs for 회계), so a hand check of 730 rows found the rows failing this were
+ * almost all off-role. English titles still pass through their category (Frontend Developer -> 프론트엔드).
+ */
+export function matchesKeyword(query: string, r: Pick<JobSearchResult, 'position' | 'keywords'>): boolean {
+  const hay = squash([r.position, ...(r.keywords ?? [])].join(' '));
+  return query.split(/\s+/).map(squash).filter(Boolean).every((w) => hay.includes(w));
+}
+
 const PROVIDERS: Provider[] = [wanted, jumpit, remember, saramin];
 export const JOB_SEARCH_SOURCES = PROVIDERS.map((p) => p.id);
 
@@ -470,7 +499,8 @@ export async function searchJobs(query: string, opts: JobSearchOptions = {}): Pr
         // A board given its own category gets no keyword: keyword AND category matched only titles
         // (Wanted 290 -> 66, Remember 88 -> 37 for 프론트엔드), which is what lost postings.
         const own = p.categoryOption && opts[p.categoryOption]?.length;
-        const results = await p.search(own ? '' : q, limit, timeoutMs, opts);
+        let results = await p.search(own ? '' : q, limit, timeoutMs, opts);
+        if (q && !own) results = results.filter((r) => matchesKeyword(q, r)).slice(0, limit);
         return {
           outcome: {
             source: p.id,
