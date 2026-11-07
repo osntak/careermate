@@ -20,7 +20,7 @@ const {
 const { getDataHealthReport, getExplainableFitAnalysis } = await import('../packages/core/src/index.ts');
 const { CAREERMATE_SYSTEM_PROMPT } = await import('../packages/prompts/src/system.ts');
 const { toSafeToolError } = await import('../apps/mcp/src/safe-error.ts');
-const { createBackup } = await import('../apps/web/src/settings.ts');
+const { createBackup } = await import('../packages/db/src/backup.ts');
 
 let pass = 0;
 let fail = 0;
@@ -45,7 +45,7 @@ try {
   ok('SQLite corrupt 오류를 복구 필요 메시지로 변환', toSafeToolError(new Error('SQLITE_CORRUPT')).includes('백업 복원'));
 
   const connectionSource = fs.readFileSync(new URL('../packages/db/src/connection.ts', import.meta.url), 'utf8');
-  const settingsSource = fs.readFileSync(new URL('../apps/web/src/settings.ts', import.meta.url), 'utf8');
+  const settingsSource = fs.readFileSync(new URL('../packages/db/src/backup.ts', import.meta.url), 'utf8');
   ok(
     'WAL 사용 중 메인 DB 파일만 복사하는 백업 fallback 금지',
     !connectionSource.includes('copyFileSync(getDbPath()') && !settingsSource.includes('copyFileSync(getDbPath()'),

@@ -15,6 +15,7 @@
 - 연결 직후 가장 먼저 호출합니다.
 - 결과의 `has_profile` / `has_resume` / `has_cover_letter` / `has_experience` / `has_skills` / `has_job`, `profile_completeness`(0~100), `next_steps`를 확인합니다.
 - 사용자에게 "지금까지 등록된 정보"와 "앞으로 채우면 좋은 정보"를 짧게 안내합니다. **이미 채워진 항목은 다시 묻지 마세요.**
+- `sync`에 `warnings`나 `last_error`가 있으면 사용자 언어로 짧게 알리고 대시보드 설정의 '외부 저장소 연결' 카드를 안내합니다. 연결돼 있지 않으면 언급하지 말고, 사용자가 다른 PC에서도 쓰고 싶다고 할 때만 [`INSTALL.md`](../INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기)를 근거로 설명합니다.
 - (선택) 단계별 가이드가 필요하면 `get_workflow_guide('onboarding')`로 받을 수 있습니다.
 
 ### 2. 프로필 수집 및 저장 — `save_profile`

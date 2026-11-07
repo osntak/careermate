@@ -12,13 +12,14 @@
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { getDb, getDataDir, closeDb } from '@careermate/db';
+import { getDb, getDataDir, closeDb, startSync } from '@careermate/db';
 import { TOOLS, toCallToolResult } from '@careermate/mcp-tools';
 import { APP_VERSION } from '@careermate/shared';
 import { toSafeToolError } from './safe-error.js';
 
 async function main(): Promise<void> {
   getDb();
+  await startSync(); // no-op unless CAREERMATE_SYNC_DIR is set
 
   const server = new McpServer(
     { name: 'careermate', version: APP_VERSION },

@@ -3,6 +3,8 @@
  * endpoint. Lets non-technical users *see* where their data lives, which is a
  * core privacy promise: everything is on this machine.
  */
+import os from 'node:os';
+import path from 'node:path';
 import {
   getDataDir,
   getDbPath,
@@ -10,6 +12,7 @@ import {
   getBackupsDir,
   getEntityCounts,
   getVerifyStrict,
+  readConfig,
 } from '@careermate/db';
 import { APP_VERSION } from '@careermate/shared';
 
@@ -35,5 +38,8 @@ export function getServerInfo() {
     node_version: process.version,
     counts: getEntityCounts(),
     verify_strict: getVerifyStrict(),
+    // Set by env: Settings can't change it. Picked in Settings but not restarted yet: shown as pending.
+    data_dir_locked: !!process.env.CAREERMATE_DATA_DIR?.trim(),
+    data_dir_next: readConfig().data_dir || path.join(os.homedir(), '.careermate'),
   };
 }

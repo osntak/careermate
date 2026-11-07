@@ -51,6 +51,7 @@ import {
   getJobSearchPreferences,
   setJobSearchPreferences,
   photoForExport,
+  getSyncStatus,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -330,7 +331,7 @@ export const TOOLS: ToolDef[] = [
     name: 'get_onboarding_status',
     title: '온보딩 상태 확인',
     description:
-      'CareerMate에 어떤 정보가 준비되어 있는지(프로필·이력서·경력·스킬·자소서·공고) 확인하고, 사용자가 지금 해야 할 다음 단계를 돌려줍니다. AI 클라이언트가 연결된 직후 가장 먼저 호출하세요. 프로필 완성도(0~100)도 포함됩니다.',
+      'CareerMate에 어떤 정보가 준비되어 있는지(프로필·이력서·경력·스킬·자소서·공고) 확인하고, 사용자가 지금 해야 할 다음 단계를 돌려줍니다. AI 클라이언트가 연결된 직후 가장 먼저 호출하세요. 프로필 완성도(0~100)도 포함됩니다. sync 필드는 사용자가 직접 연결한 외부 저장소의 상태·경고를 알려줍니다. 먼저 권하지 말고, 사용자가 다른 PC에서도 쓰고 싶다고 할 때만 대시보드 설정의 외부 저장소 연결을 안내하세요.',
     inputSchema: {},
     readOnly: true,
     handler: () => {
@@ -349,10 +350,23 @@ export const TOOLS: ToolDef[] = [
       if (upd.update_available) {
         text += `\n\n새 버전 v${upd.latest}이 나왔습니다(현재 v${upd.current}). 사용자가 원하면 바로 업데이트를 진행하세요. 업데이트 후에는 AI 앱 또는 MCP 연결을 재시작해야 적용됩니다.`;
       }
+      // External storage is the user's own choice (Settings or CAREERMATE_SYNC_DIR): report it, never suggest turning it on.
+      const sync = getSyncStatus();
+      const syncIssues = [sync.last_error, ...sync.warnings.map((w) => w.message)].filter(Boolean);
+      if (sync.enabled && syncIssues.length) {
+        text += `\n\n외부 저장소 확인 필요:\n${syncIssues.map((m) => `- ${m}`).join('\n')}\n(대시보드 설정의 '외부 저장소 연결'에서 볼 수 있습니다.)`;
+      }
       return ok(text, {
         ...s,
         verify_strict: strict,
         update: upd,
+        sync: {
+          enabled: sync.enabled,
+          mode: sync.mode ?? null,
+          last_sync_at: sync.last_sync_at,
+          last_error: sync.last_error,
+          warnings: sync.warnings.map((w) => ({ code: w.code, message: w.message })),
+        },
         suggested_next_action: upd.update_available
           ? {
               prompt: `새 버전 v${upd.latest}이 나왔습니다. 지금 업데이트할까요?`,

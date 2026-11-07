@@ -10,7 +10,7 @@
 - [ ] `npm run typecheck` 통과 / passes
 - [ ] `npm test` 통과 / passes
 - [ ] UI를 바꿨다면 `npm run test:ui` 통과, 라이트/다크 확인 / if UI changed, `npm run test:ui` passes and light/dark checked
-- [ ] 사용자 데이터를 외부로 보내지 않음 / no user data leaves the machine
+- [ ] 사용자 데이터를 외부로 보내지 않음(사용자가 연결한 외부 저장소 제외) / no user data leaves the machine (except external storage the user connects)
 - [ ] 관련 문서·번역(ko/en) 갱신 / docs and ko/en strings updated where relevant
 
 ## 관련 이슈 / Related issues

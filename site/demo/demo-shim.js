@@ -61,6 +61,7 @@ const DEMO_STR = {
     verify_default_mode: '기본',
     // errors
     err_job_not_found: '공고를 찾을 수 없습니다.',
+    err_demo_folder: '데모에서는 폴더를 고를 수 없습니다. 설치한 CareerMate 에서 해 보세요.',
     err_doc_not_found: '문서를 찾을 수 없습니다.',
     err_cover_not_found: '자기소개서를 찾을 수 없습니다.',
     err_item_not_found: '항목을 찾을 수 없습니다.',
@@ -136,6 +137,7 @@ const DEMO_STR = {
     verify_default_mode: 'default',
     // errors
     err_job_not_found: 'Posting not found.',
+    err_demo_folder: 'Folders cannot be picked in the demo. Try it in an installed CareerMate.',
     err_doc_not_found: 'Document not found.',
     err_cover_not_found: 'Cover letter not found.',
     err_item_not_found: 'Item not found.',
@@ -785,6 +787,7 @@ const ROUTES = [
     db.backups.unshift(b);
     return b;
   }],
+  ['POST', /^\/api\/settings\/(pick-folder|sync-dir|data-dir)$/, () => ({ __status: 400, error: d('err_demo_folder') })],
   ['POST', /^\/api\/settings\/dashboard-shortcut$/, () => ({
     shortcut: {
       shortcut_dir: d('shortcut_dir'),

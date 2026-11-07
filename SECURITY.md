@@ -5,7 +5,8 @@
 CareerMate는 **로컬 우선(local-first)** 도구입니다. 모든 커리어 데이터는 사용자 컴퓨터의
 `~/.careermate`(Windows: `%USERPROFILE%\.careermate`)에만 저장되며, 대시보드는 `127.0.0.1`
 에만 바인딩됩니다. (선택적 버전 확인을 제외하고) 어떤 사용자 데이터도 네트워크로 전송되지
-않습니다.
+않습니다. 예외는 사용자가 직접 연결한 외부 저장소뿐이며, CareerMate 서버로는 어떤 경우에도
+보내지 않습니다.
 
 ## 지원 버전
 
@@ -38,7 +39,8 @@ CareerMate는 다음을 구조적으로 보장합니다(테스트로 회귀를 �
   이스케이프한 뒤 자체 안전 태그만 재도입합니다(저장된 문서를 통한 XSS 방지).
 - **문서 읽기 한도**: `read_document`는 파일 크기·페이지 수·압축 해제 크기에 상한을 두어
   악성/거대 파일로 인한 메모리 고갈을 방지합니다.
-- **외부 업로드 없음**: 사용자 데이터는 절대 외부로 전송되지 않습니다.
+- **외부 업로드 없음**: 사용자 데이터는 외부로 전송되지 않습니다. 외부 저장소를 연결하지 않으면
+  동기화 코드가 아예 돌지 않습니다.
 
 ## 사용자가 알아야 할 점
 
@@ -46,6 +48,9 @@ CareerMate는 다음을 구조적으로 보장합니다(테스트로 회귀를 �
   필요하면 OS 수준 디스크 암호화(BitLocker/FileVault 등)를 사용하세요.
 - 대시보드 주소(`127.0.0.1:4319`)는 같은 컴퓨터의 다른 로컬 프로세스에서 접근할 수 있으므로,
   신뢰할 수 없는 사용자와 계정을 공유하는 컴퓨터에서는 주의하세요.
+- 외부 저장소를 연결하면 그곳에 **개인 데이터 전부**가 평문 JSON으로 들어갑니다. GitHub 저장소는
+  반드시 **비공개**로, Google Drive 같은 폴더는 공유하지 마세요.
+  [`INSTALL.md`](INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기) 참고.
 
 ---
 
@@ -56,7 +61,8 @@ CareerMate는 다음을 구조적으로 보장합니다(테스트로 회귀를 �
 CareerMate is a **local-first** tool. All career data is stored only under
 `~/.careermate` on your own machine (`%USERPROFILE%\.careermate` on Windows), and the
 dashboard binds only to `127.0.0.1`. Apart from an optional version check, no user data
-is ever sent over the network.
+is ever sent over the network. The one exception is external storage you connect yourself.
+Nothing is ever sent to a CareerMate server.
 
 ## Supported versions
 
@@ -92,7 +98,8 @@ CareerMate guarantees the following structurally, with regression tests pinning 
   only re-introduces its own safe tags (preventing XSS through stored documents).
 - **Document-reading limits**: `read_document` caps file size, page count, and
   decompressed size to prevent memory exhaustion from malicious or huge files.
-- **No external upload**: user data is never sent off the machine.
+- **No external upload**: user data is never sent off the machine. Unless you connect
+  external storage, no sync code runs.
 
 ## What you should know
 
@@ -101,3 +108,6 @@ CareerMate guarantees the following structurally, with regression tests pinning 
   FileVault.
 - The dashboard address (`127.0.0.1:4319`) is reachable by other local processes on the
   same machine, so be careful on computers shared with people you don't trust.
+- If you connect external storage, it holds **all your personal data** as plaintext JSON.
+  Keep a GitHub repository **private** and do not share a Google Drive (or similar) folder.
+  See [`INSTALL.md`](INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기) (Korean).

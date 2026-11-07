@@ -7,7 +7,7 @@
  */
 import { spawn } from 'node:child_process';
 import { startServer } from './server.ts';
-import { getDataDir } from '@careermate/db';
+import { getDataDir, startSync, getSyncStatus } from '@careermate/db';
 import { APP_VERSION } from './info.ts';
 
 const DEFAULT_PORT = Number(process.env.CAREERMATE_PORT ?? 4319);
@@ -29,6 +29,7 @@ function openBrowser(url: string): void {
 }
 
 async function main(): Promise<void> {
+  await startSync(); // no-op unless CAREERMATE_SYNC_DIR is set
   const { url } = await startServer(DEFAULT_PORT);
   const line = '─'.repeat(54);
   console.log(`\n┌${line}┐`);
@@ -37,7 +38,9 @@ async function main(): Promise<void> {
   console.log(`  대시보드   ${url}`);
   console.log(`  설치·안내   https://careermate.life`);
   console.log(`  데이터 위치 ${getDataDir()}`);
-  console.log(`  (모든 데이터는 이 컴퓨터에만 저장됩니다)`);
+  const sync = getSyncStatus();
+  if (sync.enabled) console.log(`  외부 저장소 ${sync.dir} (${sync.mode === 'git' ? 'git' : '폴더'})`);
+  else console.log(`  (모든 데이터는 이 컴퓨터에만 저장됩니다)`);
   console.log(`└${line}┘\n`);
   console.log(`종료하려면 Ctrl+C 를 누르세요.`);
   openBrowser(url);

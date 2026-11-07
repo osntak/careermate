@@ -4,7 +4,7 @@
 
 **한국어** · [English](#careermate-english)
 
-**평소 쓰는 AI에게 말로 커리어를 정리시키세요.** 이력서 등록·공고 분석·자기소개서·지원 현황·면접 준비를 내 컴퓨터에서 동작하는 AI 에이전트(Claude Desktop·Claude Code·Codex 등)에게 대화로 시키면, CareerMate가 그 결과를 **이 컴퓨터에만** 구조화해 보관하고 MCP로 노출합니다. CareerMate 안에 AI는 없습니다 — 생각은 당신의 AI가, 저장은 CareerMate가 합니다.
+**평소 쓰는 AI에게 말로 커리어를 정리시키세요.** 이력서 등록·공고 분석·자기소개서·지원 현황·면접 준비를 내 컴퓨터에서 동작하는 AI 에이전트(Claude Desktop·Claude Code·Codex 등)에게 대화로 시키면, CareerMate가 그 결과를 기본적으로 **이 컴퓨터에만** 구조화해 보관하고 MCP로 노출합니다. CareerMate 안에 AI는 없습니다. 생각은 당신의 AI가, 저장은 CareerMate가 합니다.
 
 ![CareerMate 대시보드 — 오퍼 비교와 지원 현황](https://raw.githubusercontent.com/osntak/careermate/main/offers-applications.jpeg)
 
@@ -13,7 +13,7 @@
 ## 핵심 철학
 
 - **MCP 우선** — 새 앱 사용법을 익힐 필요가 없습니다. 내 컴퓨터에서 동작하는 AI 에이전트(Claude Desktop·Claude Code·Codex 등 로컬 MCP 클라이언트)와 대화하면, 그 AI가 CareerMate의 로컬 MCP 도구를 호출해 당신의 커리어 DB를 읽고 씁니다.
-- **로컬 우선** — 모든 데이터는 당신의 컴퓨터에만 저장됩니다(`~/.careermate`). 저장된 개인 데이터는 외부 서버로 전송하지 않습니다 — 외부로 나가는 것은 선택적 버전 확인과 공고 검색 시 **검색 키워드·직무 조건**뿐입니다(아래 [보안 / 프라이버시](#보안--프라이버시) 참고). 대시보드 웹 서버는 `127.0.0.1`(이 컴퓨터)에만 연결됩니다.
+- **로컬 우선**: 모든 데이터는 당신의 컴퓨터에만 저장됩니다(`~/.careermate`). [외부 저장소](#외부-저장소-연결-pc-여러-대에서-쓰기)는 직접 연결할 때만 씁니다. 저장된 개인 데이터는 외부 서버로 전송하지 않습니다. 외부로 나가는 것은 선택적 버전 확인과 공고 검색 시 **검색 키워드·직무 조건**뿐입니다(아래 [보안 / 프라이버시](#보안--프라이버시) 참고). 대시보드 웹 서버는 `127.0.0.1`(이 컴퓨터)에만 연결됩니다.
 - **LLM 비내장** — CareerMate 안에는 AI가 들어 있지 않습니다. 분석·글쓰기 같은 “생각하는 일”은 **당신의 AI**가 하고, CareerMate는 데이터를 **안전하게 보관·조회**하는 역할만 합니다.
 
 > 쉽게 말해: 당신의 AI가 “두뇌”, CareerMate는 그 두뇌가 꺼내 쓰는 “커리어 서랍장”입니다.
@@ -234,6 +234,19 @@ CareerMate/
   - `CAREERMATE_DATA_DIR` — 데이터 폴더 위치 변경
   - `CAREERMATE_PORT` — 대시보드 포트 고정
   - `CAREERMATE_NO_OPEN` — 시작 시 브라우저 자동 열기 끄기
+  - `CAREERMATE_SYNC_DIR` - (선택) 외부 저장소 폴더. 대시보드 설정보다 우선합니다. 아래 [외부 저장소 연결](#외부-저장소-연결-pc-여러-대에서-쓰기) 참고
+
+---
+
+## 외부 저장소 연결 (PC 여러 대에서 쓰기)
+
+집과 회사처럼 PC 두 대에서 같은 데이터를 쓰려면 대시보드 **설정 > 외부 저장소 연결 > 폴더 연결**에서 폴더를 고르세요. Google Drive, OneDrive, Dropbox, iCloud Drive 폴더(데스크톱 앱이 파일을 옮김)나 비공개 GitHub 저장소를 clone한 폴더(CareerMate가 내 git 로그인으로 pull, commit, push)를 쓸 수 있습니다.
+
+- **주의**: 외부 저장소에는 개인 데이터 전부가 들어갑니다. GitHub 저장소는 반드시 비공개로, Drive 폴더는 공유하지 마세요.
+- 두 PC에서 따로 고치면 이 PC 데이터가 남고 다른 PC 버전은 `backups/`에 보관됩니다(자동 병합 없음).
+- 끄려면 **연결 해제**를 누릅니다. 연결하지 않으면 데이터는 이 컴퓨터에만 있습니다.
+
+자세한 순서는 [`INSTALL.md`의 "외부 저장소 연결"](INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기)을 보세요.
 
 ---
 
@@ -245,7 +258,7 @@ CareerMate/
 - **정적 파일 보호** — 경로 traversal(상위 폴더 탈출) 차단.
 - **본문 크기 제한** — 요청 본문 8MB 제한.
 - **민감 정보 비노출** — 이력서·자기소개서 본문은 로그나 에러 응답에 노출되지 않습니다.
-- **사용자 데이터 외부 전송 없음** — CareerMate는 당신의 프로필·이력서·자소서 등 **개인 데이터를 외부로 보내지 않습니다.** 모든 데이터는 당신의 컴퓨터에만 남습니다. 외부로 나가는 네트워크 호출은 (1) 선택적 버전 확인, (2) 공고 검색(공개 잡보드)뿐이며, 이때도 **보내는 것은 검색 키워드·직무 조건뿐**(개인 데이터 아님)이고 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음). 내보내기·삭제는 대시보드 **Settings**에서 직접 할 수 있습니다.
+- **사용자 데이터 외부 전송 없음**: CareerMate는 당신의 프로필·이력서·자소서 등 **개인 데이터를 외부로 보내지 않습니다.** 외부 저장소를 연결하지 않으면 모든 데이터는 당신의 컴퓨터에만 남고, 연결해도 데이터는 당신이 고른 곳으로만 갑니다. 외부로 나가는 네트워크 호출은 (1) 선택적 버전 확인, (2) 공고 검색(공개 잡보드)뿐이며, 이때도 **보내는 것은 검색 키워드·직무 조건뿐**(개인 데이터 아님)이고 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음). 내보내기·삭제는 대시보드 **Settings**에서 직접 할 수 있습니다.
 
 ---
 
@@ -286,7 +299,7 @@ MIT 라이선스 — 전문은 [`LICENSE`](LICENSE) 파일을 참고하세요.
 
 [한국어](#careermate) · **English**
 
-**Let the AI you already use manage your career — by talking to it.** Ask an AI agent running on your own computer (Claude Desktop, Claude Code, Codex, …) to register your resume, analyze postings, draft cover letters, track applications, and prep interviews; CareerMate stores the results as structured data **only on this machine** and exposes them over MCP. There is no AI inside CareerMate — your AI does the thinking, CareerMate does the storing.
+**Let the AI you already use manage your career by talking to it.** Ask an AI agent running on your own computer (Claude Desktop, Claude Code, Codex, ...) to register your resume, analyze postings, draft cover letters, track applications, and prep interviews; CareerMate stores the results as structured data, by default **only on this machine**, and exposes them over MCP. There is no AI inside CareerMate. Your AI does the thinking, CareerMate does the storing.
 
 ![CareerMate dashboard — offer comparison and application pipeline](https://raw.githubusercontent.com/osntak/careermate/main/offers-applications.jpeg)
 
@@ -295,7 +308,7 @@ MIT 라이선스 — 전문은 [`LICENSE`](LICENSE) 파일을 참고하세요.
 ## Core philosophy
 
 - **MCP-first** — No new app to learn. You talk to an AI agent running on your machine (Claude Desktop, Claude Code, Codex, and other local MCP clients), and that AI calls CareerMate's local MCP tools to read and write your career database.
-- **Local-first** — All data lives only on your computer (`~/.careermate`). Your stored personal data is never sent to external servers — the only outbound calls are the optional version check and the **search keyword and job category** during job search (see [Security / privacy](#security--privacy) below). The dashboard web server binds only to `127.0.0.1` (this machine).
+- **Local-first**: All data lives only on your computer (`~/.careermate`). [External storage](#external-storage-using-several-pcs) is used only if you connect it yourself. Your stored personal data is never sent to external servers. The only outbound calls are the optional version check and the **search keyword and job category** during job search (see [Security / privacy](#security--privacy) below). The dashboard web server binds only to `127.0.0.1` (this machine).
 - **No built-in LLM** — There is no AI inside CareerMate. The "thinking" — analysis, writing — is done by **your AI**; CareerMate only stores and serves the data safely.
 
 > In short: your AI is the "brain," and CareerMate is the "career drawer" it reaches into.
@@ -517,6 +530,19 @@ CareerMate/
   - `CAREERMATE_DATA_DIR` — change the data folder location
   - `CAREERMATE_PORT` — pin the dashboard port
   - `CAREERMATE_NO_OPEN` — disable auto-opening the browser on start
+  - `CAREERMATE_SYNC_DIR` - (optional) external storage folder; overrides the dashboard setting. See [External storage](#external-storage-using-several-pcs)
+
+---
+
+## External storage (using several PCs)
+
+To use the same data on two PCs (say, home and work), pick a folder in the dashboard under **Settings > External storage > Connect folder**. It can be a Google Drive, OneDrive, Dropbox or iCloud Drive folder (the desktop app moves the files) or a clone of a private GitHub repository (CareerMate runs pull, commit and push with your own git login).
+
+- **Warning**: external storage gets all your personal data. Keep the GitHub repository private and do not share the Drive folder.
+- If both PCs changed separately, this PC's data wins and the other PC's version is kept in `backups/` (no automatic merge).
+- To turn it off, click **Disconnect**. If you never connect one, your data stays on this computer only.
+
+Step-by-step setup is in [`INSTALL.md`, "외부 저장소 연결"](INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기) (Korean).
 
 ---
 
@@ -528,7 +554,7 @@ CareerMate/
 - **Static-file protection** — Path traversal (escaping the parent folder) is blocked.
 - **Body size limit** — Request bodies are capped at 8MB.
 - **No sensitive-data leakage** — Resume and cover-letter content is never exposed in logs or error responses.
-- **No personal-data transmission** — CareerMate never sends your personal data (profile, resumes, cover letters) anywhere; all data stays only on your computer. The only outbound network calls are (1) the optional version check and (2) job search (public job boards) — and even then only the **search keyword and job category** are sent (no personal data), to *fetch* public postings (no bot-protection bypass, no automated bulk harvesting). Export and delete are available directly in the dashboard **Settings**.
+- **No personal-data transmission**: CareerMate never sends your personal data (profile, resumes, cover letters) to any CareerMate server. Unless you connect external storage, all data stays only on your computer; if you do, it goes only where you chose. The only outbound network calls are (1) the optional version check and (2) job search (public job boards), and even then only the **search keyword and job category** are sent (no personal data), to *fetch* public postings (no bot-protection bypass, no automated bulk harvesting). Export and delete are available directly in the dashboard **Settings**.
 
 ---
 

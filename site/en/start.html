@@ -351,6 +351,35 @@
           </details>
         </div>
 
+        <!-- ===== External storage (optional) ===== -->
+        <div class="help" id="multi-pc" style="margin-top:2.4rem">
+          <p class="q__label" style="margin-bottom:.6rem">External storage <span class="hint">(optional)</span></p>
+          <p>Turn it on to use the same data on more than one PC. Your PCs sync through the connected folder. It is off by default.</p>
+          <div class="filenote"><strong>Privacy:</strong> the storage holds all your personal data, so keep the GitHub repo private and never share the Drive folder. Nothing goes to any CareerMate server.</div>
+
+          <details class="acc">
+            <summary>Google Drive <span class="acc__hint">OneDrive, Dropbox, iCloud Drive work the same</span></summary>
+            <div class="acc__body">
+              <ul>
+                <li><strong>First PC</strong>: make a folder inside Drive, then in the dashboard go to <strong>Settings &gt; External storage &gt; Connect folder</strong> and pick it with <strong>Browse</strong> (or type the path).</li>
+                <li><strong>New PC</strong>: install CareerMate and connect the same folder. Your data comes in.</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="acc">
+            <summary>Private GitHub repo <span class="acc__hint">If you use git</span></summary>
+            <div class="acc__body">
+              <ul>
+                <li><strong>First PC</strong>: create a private repo, clone it, and connect that folder. CareerMate pulls, commits and pushes with your own git login.</li>
+                <li><strong>New PC</strong>: install CareerMate, clone the same repo and connect it. Your data comes in.</li>
+              </ul>
+            </div>
+          </details>
+
+          <p class="hint">If both PCs changed separately, this PC wins, the other version is kept in backups, and Settings shows a warning.<br /><strong>Disconnect</strong> turns it off; the folder stays. The <code>CAREERMATE_SYNC_DIR</code> environment variable overrides Settings (advanced).</p>
+        </div>
+
         <p class="hint" style="margin-top:2rem"><a href="/en#install">Back to quick install on the main page</a></p>
       </div>
     </section>
@@ -358,7 +387,7 @@
 
   <footer class="foot">
     <div class="foot__brand"><span class="nav__logo" aria-hidden="true">C</span> CareerMate</div>
-    <p>A local, MCP-based career workspace. All data stays on this computer.</p>
+    <p>A local, MCP-based career workspace. By default all data stays on this computer.</p>
     <div class="foot__links"><a href="/en">Home</a><a href="/en#install">Quick install</a><a href="https://www.npmjs.com/package/careermate" rel="noopener" target="_blank">npm</a><a href="/en/faq">FAQ</a><a href="mailto:osntak@gmail.com">Contact</a></div>
   </footer>
 

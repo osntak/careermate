@@ -12,7 +12,7 @@ const countLabel = (key) => t('settings.count.' + key);
 
 export async function render(ctx) {
   ctx.setActions([]);
-  const { info, backups } = await get('/api/settings');
+  const { info, backups, sync } = await get('/api/settings');
 
   const wrap = el('div', { class: 'stack-4' },
     DataLocation(info),
@@ -22,6 +22,7 @@ export async function render(ctx) {
     VerifyMode(info),
     MyData(info.counts),
     Backup(backups, async () => { await ctx.refreshNav(); await render(ctx); }),
+    Sync(sync, async () => { await ctx.refreshNav(); await render(ctx); }),
     Support(info),
     DangerZone(ctx),
   );
@@ -30,14 +31,14 @@ export async function render(ctx) {
 }
 
 /* ----------------------------------------------------- 데이터 저장 위치 */
-function kvRow(label, value, copyable, { wrapValue = false } = {}) {
+function kvRow(label, value, copyable, { wrapValue = false, mono = true } = {}) {
   return [
     el('dt', {}, label),
     el('dd', {},
       el('div', { class: 'flex between gap-3' },
         el('span', {
           class: `${wrapValue ? 'kv__value-wrap' : 'truncate'} tnum`,
-          style: { fontFamily: 'var(--mono, ui-monospace, monospace)' },
+          style: mono ? { fontFamily: 'var(--mono, ui-monospace, monospace)' } : {},
           title: value,
         }, value || '-'),
         copyable && value
@@ -46,10 +47,56 @@ function kvRow(label, value, copyable, { wrapValue = false } = {}) {
   ];
 }
 
+// Folder picker: the dashboard server opens the OS dialog (a browser can't return real paths).
+// If that fails, or the user prefers, the path can be typed in.
+function chooseFolder({ title, current, confirmLabel, note, onConfirm }) {
+  let input;
+  openModal({
+    title,
+    intent: 'contextual',
+    body: el('div', { class: 'stack-3' },
+      note ? el('p', { class: 'muted text-sm', style: { margin: 0, lineHeight: '1.6' } }, note) : null,
+      el('div', { class: 'flex gap-2' },
+        input = Input({ value: current || '', placeholder: t('settings.folder.placeholder') }),
+        Btn(t('settings.folder.browse'), { icon: 'folder', variant: 'ghost', onClick: async () => {
+          try {
+            const { path } = await post('/api/settings/pick-folder', { title });
+            if (path) input.value = path;
+          } catch (e) {
+            toastError(e);
+          }
+        } }))),
+    footer: (close) => [
+      Btn(confirmLabel, { variant: 'primary', onClick: async () => {
+        const value = input.value.trim();
+        if (!value) return;
+        try {
+          await onConfirm(value);
+          close();
+        } catch (e) {
+          toastError(e);
+        }
+      } }),
+      Btn(t('settings.cancel'), { variant: 'ghost', onClick: close }),
+    ],
+  });
+}
+
 function DataLocation(info) {
+  const pending = !info.data_dir_locked && info.data_dir_next && info.data_dir_next !== info.data_dir;
+  const change = () => chooseFolder({
+    title: t('settings.dataLocation.changeTitle'),
+    current: info.data_dir,
+    confirmLabel: t('settings.dataLocation.changeConfirm'),
+    onConfirm: async (path) => {
+      const res = await post('/api/settings/data-dir', { path });
+      toastOk(t(res.copied ? 'settings.dataLocation.copiedToast' : 'settings.dataLocation.switchedToast'));
+      location.reload();
+    },
+  });
+
   const kv = el('dl', { class: 'kv' },
-    ...kvRow(t('settings.dataLocation.dataDir'), info.data_dir, true),
-    ...kvRow(t('settings.dataLocation.database'), info.db_path, true),
+    ...kvRow(t('settings.dataLocation.dataDir'), info.data_dir, true, { wrapValue: true }),
     ...kvRow(t('settings.dataLocation.appVersion'), info.version, false),
     ...kvRow(t('settings.dataLocation.nodeVersion'), info.node_version, false),
   );
@@ -61,9 +108,18 @@ function DataLocation(info) {
       el('div', { class: 'callout__body' },
         t('settings.dataLocation.privacyBody'))));
 
+  const restart = pending
+    ? el('div', { class: 'callout' },
+        icon('info'),
+        el('div', {},
+          el('div', { class: 'callout__title' }, t('settings.dataLocation.restartTitle')),
+          el('div', { class: 'callout__body tnum', style: { wordBreak: 'break-all' } }, info.data_dir_next)))
+    : null;
+
   return Card({
     title: t('settings.dataLocation.title'),
-    body: el('div', { class: 'stack-3' }, kv, privacy),
+    actions: info.data_dir_locked ? [] : [Btn(t('settings.dataLocation.change'), { icon: 'folder', sm: true, variant: 'ghost', onClick: change })],
+    body: el('div', { class: 'stack-3' }, kv, restart, privacy),
   });
 }
 
@@ -320,9 +376,89 @@ function Backup(backups = [], rerender) {
     actions: [
       Btn(t('settings.backup.export'), { icon: 'download', sm: true, variant: 'primary', onClick: () => downloadUrl('/api/settings/export-all') }),
       Btn(t('settings.backup.import'), { icon: 'upload', sm: true, variant: 'ghost', onClick: () => fileInput.click() }),
-      Btn(t('settings.backup.create'), { icon: 'copy', sm: true, variant: 'ghost', onClick: createBackup }),
+      Btn(t('settings.backup.create'), { icon: 'plus', sm: true, variant: 'ghost', onClick: createBackup }),
     ],
     body: el('div', { class: 'stack-3' }, fileInput, list),
+  });
+}
+
+/* ------------------------------------------------- 외부 저장소 연결 */
+// The user connects a folder here (or via CAREERMATE_SYNC_DIR, which then locks this card).
+function Sync(sync, rerender) {
+  const note = el('p', { class: 'muted text-sm', style: { margin: 0, lineHeight: '1.6' } }, t('settings.sync.help'));
+  const connect = () => chooseFolder({
+    title: t('settings.sync.pickTitle'),
+    current: sync?.dir,
+    confirmLabel: t('settings.sync.connect'),
+    note: t('settings.sync.help'),
+    onConfirm: async (path) => {
+      await post('/api/settings/sync-dir', { path });
+      toastOk(t('settings.sync.connectedToast'));
+      await rerender();
+    },
+  });
+
+  if (!sync?.enabled) {
+    return Card({
+      title: t('settings.sync.title'),
+      sub: t('settings.sync.off'),
+      actions: [Btn(t('settings.sync.connect'), { icon: 'folder', sm: true, variant: 'ghost', onClick: connect })],
+      body: note,
+    });
+  }
+
+  const notice = (title, body, paths) => el('div', { class: 'callout' },
+    icon('info'),
+    el('div', {},
+      el('div', { class: 'callout__title' }, title),
+      el('div', { class: 'callout__body' }, body),
+      ...(paths || []).map((p) => el('div', { class: 'muted text-sm tnum', style: { wordBreak: 'break-all' } }, p))));
+
+  const tOr = (key, fallback) => (t(key) === key ? fallback : t(key));
+
+  async function syncNow(e) {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      const res = await post('/api/settings/sync');
+      if (res.sync?.last_error) toastError(new Error(res.sync.last_error));
+      else toastOk(t('settings.sync.doneToast'));
+      await rerender();
+    } catch (err) {
+      toastError(err);
+      btn.disabled = false;
+    }
+  }
+
+  async function disconnect() {
+    try {
+      await post('/api/settings/sync-dir', { path: null });
+      toastOk(t('settings.sync.disconnectedToast'));
+      await rerender();
+    } catch (err) {
+      toastError(err);
+    }
+  }
+
+  const fromEnv = sync.source === 'env';
+  return Card({
+    title: t('settings.sync.title'),
+    sub: t(fromEnv ? 'settings.sync.onEnv' : 'settings.sync.on'),
+    // Only one filled (primary) button per screen: Export in the backup card already is.
+    // Same layout as the backup card: ghost icon+label buttons in the header.
+    actions: [
+      Btn(t('settings.sync.now'), { icon: 'refresh', sm: true, variant: 'ghost', onClick: syncNow }),
+      fromEnv ? null : Btn(t('settings.sync.change'), { icon: 'folder', sm: true, variant: 'ghost', onClick: connect }),
+      fromEnv ? null : Btn(t('settings.sync.disconnect'), { icon: 'x', sm: true, variant: 'ghost', onClick: disconnect }),
+    ].filter(Boolean),
+    body: el('div', { class: 'stack-3' },
+      el('dl', { class: 'kv' },
+        ...kvRow(t('settings.sync.dir'), sync.dir, true, { wrapValue: true }),
+        ...kvRow(t('settings.sync.mode'), t(sync.mode === 'git' ? 'settings.sync.modeGit' : 'settings.sync.modeFolder'), false, { mono: false }),
+        ...kvRow(t('settings.sync.last'), sync.last_sync_at ? fmtRelative(sync.last_sync_at) : t('settings.sync.never'), false, { mono: false })),
+      sync.last_error ? notice(t('settings.sync.errorTitle'), sync.last_error) : null,
+      ...(sync.warnings || []).map((w) =>
+        notice(tOr('settings.sync.warn.' + w.code, t('settings.sync.warn.other')), tOr('settings.sync.warnBody.' + w.code, w.message), w.paths))),
   });
 }
 
@@ -440,7 +576,7 @@ function Support(info) {
     sub: t('settings.support.sub'),
     body: el('div', { class: 'flex gap-2 wrap' },
       Btn(t('settings.connection.openInstall'), { icon: 'external', sm: true, variant: 'ghost', onClick: () => window.open(isDemo ? '/start.html' : '/install', '_blank') }),
-      Btn(t('settings.connection.createShortcut'), { icon: 'copy', sm: true, variant: 'ghost', onClick: () => createShortcut(isDemo) }),
+      Btn(t('settings.connection.createShortcut'), { icon: 'link', sm: true, variant: 'ghost', onClick: () => createShortcut(isDemo) }),
       el('a', { class: 'btn btn--ghost btn--sm', href: 'mailto:osntak@gmail.com' }, icon('mail'), el('span', {}, t('settings.support.email'))),
     ),
   });

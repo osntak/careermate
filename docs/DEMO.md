@@ -5,7 +5,7 @@
 - **(A) 빠른 데모** — 미리 채워진 데모 데이터로 대시보드를 1~2분 만에 둘러봅니다.
 - **(B) 처음부터 시나리오 (18단계)** — 빈 상태에서 시작해 프로필 입력 → 공고 분석 → 자기소개서 작성 → 면접 준비까지 전체 흐름을 따라갑니다.
 
-> 핵심 모델: **CareerMate 안에는 LLM이 없습니다.** 분석·작성은 당신의 AI(ChatGPT/Claude/Gemini)가 수행하고, CareerMate는 로컬 DB에 데이터를 읽고/쓰는 **MCP 도구**를 제공합니다. 모든 데이터는 로컬(`~/.careermate`)에만 저장됩니다.
+> 핵심 모델: **CareerMate 안에는 LLM이 없습니다.** 분석·작성은 당신의 AI(ChatGPT/Claude/Gemini)가 수행하고, CareerMate는 로컬 DB에 데이터를 읽고/쓰는 **MCP 도구**를 제공합니다. 외부 저장소를 연결하지 않으면 모든 데이터는 로컬(`~/.careermate`)에만 있습니다([`INSTALL.md`](../INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기) 참고).
 >
 > 관련 문서: [`INSTALL.md`](../INSTALL.md) · [`START_WORKFLOW.md`](./START_WORKFLOW.md)
 
