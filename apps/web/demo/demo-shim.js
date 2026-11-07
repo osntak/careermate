@@ -884,7 +884,9 @@ const ROUTES = [
       ...rolesOf((body.remember_categories || []).join(' ')),
       ...(body.saramin_categories || []).map((c) => ({ 84: 'backend', 92: 'frontend', 2197: 'finance' })[c]).filter(Boolean),
     ];
-    const kwRoles = body.keyword ? rolesOf(body.keyword) : catRoles;
+    // A keyword outside the three sample roles shows every sample, so the demo never comes back empty.
+    const picked = body.keyword ? rolesOf(body.keyword) : catRoles;
+    const kwRoles = picked.length ? picked : Object.keys(DEMO_ROLES);
     const results = all
       .filter((r) => kwRoles.includes(r.role))
       .filter((r) => !catRoles.length || !['remember', 'saramin'].includes(r.source) || catRoles.includes(r.role))

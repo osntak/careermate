@@ -880,9 +880,10 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
       url.includes('wanted')
         ? json({ data: [{ id: 11, position: '회계 담당자', company: { name: '(주)가나' } }] })
         : json({
+            meta: { total_pages: 1 },
             data: [
               { id: 21, title: '회계 담당자', organization: { name: '가나(주)' }, starts_at: '2026-11-04T09:00:00.000+09:00' },
-              { id: 22, title: '재무 팀장', organization: { name: '다라' }, starts_at: '2026-10-01T09:00:00.000+09:00' },
+              { id: 22, title: '재무회계 팀장', organization: { name: '다라' }, starts_at: '2026-10-01T09:00:00.000+09:00' },
             ],
           });
     const opts = { sources: ['wanted', 'remember'], today: '2026-11-04' };
@@ -981,7 +982,7 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
         bodies.push(init!.body!);
         return json({
           ...(rememberPages ? { meta: { total_pages: rememberPages } } : {}),
-          data: Array.from({ length: per }, (_, i) => ({ id: page * 1000 + i, title: `t${page}-${i}`, organization: { name: `c${page}-${i}` } })),
+          data: Array.from({ length: per }, (_, i) => ({ id: page * 1000 + i, title: `회계 t${page}-${i}`, organization: { name: `c${page}-${i}` } })),
         });
       }
       if (url.includes('saramin.co.kr/zf_user')) {
@@ -993,13 +994,13 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
       const size = Number(sp.get('size'));
       asked.push(`j${page}:${size}:${sp.getAll('jobCategory').join('+')}:${sp.get('keyword') ?? ''}`);
       const n = page < 3 ? size : 44;
-      return json({ result: { positions: Array.from({ length: n }, (_, i) => ({ id: `${page}-${i}`, companyName: `j${page}-${i}`, title: `p${page}-${i}` })) } });
+      return json({ result: { positions: Array.from({ length: n }, (_, i) => ({ id: `${page}-${i}`, companyName: `j${page}-${i}`, title: `회계 p${page}-${i}` })) } });
     };
     const paged = await searchJobs('회계', { sources: ['remember', 'jumpit'], limit: 70, trackSeen: false });
     const count = (s: string) => paged.results.filter((x) => x.source === s).length;
     ok(
-      'limit 70: 리멤버 50+50 두 페이지에서 70건, 점핏은 size=70 한 번에 70건',
-      count('remember') === 70 && count('jumpit') === 70 && asked.filter((a) => a.startsWith('r')).sort().join() === 'r1:50,r2:50' && asked.filter((a) => a.startsWith('j')).join() === 'j1:70::회계',
+      'limit 70: 리멤버는 키워드 확인으로 걸러질 몫까지 50x3페이지 읽고 70건, 점핏은 size=70 한 번에 70건',
+      count('remember') === 70 && count('jumpit') === 70 && asked.filter((a) => a.startsWith('r')).sort().join() === 'r1:50,r2:50,r3:50' && asked.filter((a) => a.startsWith('j')).join() === 'j1:70::회계',
       JSON.stringify({ asked, r: count('remember'), j: count('jumpit') }),
     );
 
@@ -1035,14 +1036,27 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
     (globalThis as { fetch: unknown }).fetch = async () =>
       json({
         data: [
-          { id: 1, title: 'a', organization: { name: 'a' }, min_experience: 3, max_experience: 10 },
-          { id: 2, title: 'b', organization: { name: 'b' }, min_experience: 8, max_experience: 20 },
-          { id: 3, title: 'c', organization: { name: 'c' }, min_experience: 1, max_experience: 4 },
-          { id: 4, title: 'd', organization: { name: 'd' } },
+          { id: 1, title: '프론트엔드 a', organization: { name: 'a' }, min_experience: 3, max_experience: 10 },
+          { id: 2, title: '프론트엔드 b', organization: { name: 'b' }, min_experience: 8, max_experience: 20 },
+          { id: 3, title: '프론트엔드 c', organization: { name: 'c' }, min_experience: 1, max_experience: 4 },
+          { id: 4, title: 'Frontend d', organization: { name: 'd' }, job_categories: [{ level1: 'SW개발', level2: '프론트엔드' }] },
+          { id: 5, title: '엔드포인트 보안 담당자', organization: { name: 'e' } },
         ],
       });
     const five = await searchJobs('프론트엔드', { sources: ['remember'], years: 5, trackSeen: false });
-    ok('years 5: 3~10년만 남고 8~20년·1~4년은 제외, 경력 표기 없는 공고는 남김', five.results.map((r) => r.position).join() === 'a,d' && five.filtered_out === 2, JSON.stringify(five.results));
+    ok(
+      'years 5: 3~10년만 남고 8~20년·1~4년은 제외, 경력 표기 없는 공고는 남김(제목에 키워드 없는 "엔드포인트"는 제외, 영어 제목은 분류로 통과)',
+      five.results.map((r) => r.position).join() === '프론트엔드 a,Frontend d' && five.filtered_out === 2,
+      JSON.stringify(five.results),
+    );
+    const { matchesKeyword } = await import('../packages/core/src/index.ts');
+    ok(
+      'matchesKeyword: 제목·분류에 모든 단어가 있어야 통과(간호사≠변호사, 띄어쓰기 무시)',
+      !matchesKeyword('간호사', { position: '사내 변호사', keywords: ['변호사', '법무'] }) &&
+        matchesKeyword('간호사', { position: '병동 3교대', keywords: ['간호사'] }) &&
+        matchesKeyword('데이터 분석', { position: '데이터분석가 채용' }) &&
+        !matchesKeyword('데이터 분석', { position: '데이터 엔지니어' }),
+    );
 
     // 대시보드 공고 찾기 API: 외부로 요청이 나가므로 검색은 CSRF 토큰이 있는 POST만 받는다.
     const call = async (m: string, p: string, b?: unknown) => JSON.parse((await authed(m, p, b)).text);
