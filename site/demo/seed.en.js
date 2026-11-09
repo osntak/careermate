@@ -173,6 +173,24 @@ export function buildSeedEn() {
         keywords: ['Java', 'Finance', 'Spring'],
         deadline: '2026-07-05', source: 'Manual entry',
       },
+      {
+        id: 'j7', created_at: '2026-06-11T09:00:00.000Z', updated_at: '2026-06-11T09:00:00.000Z',
+        company: 'Steadyworks (sample)', position: 'Backend Engineer', url: 'https://example.com/jobs/j7',
+        location: 'Remote', employment_type: 'Full-time',
+        description: 'Billing system backend. (Fictional demo company)',
+        requirements: ['Java 3+ years', 'Relational database design'],
+        keywords: ['Java', 'MySQL', 'Billing'],
+        deadline: '2026-07-10', source: 'Company site',
+      },
+      {
+        id: 'j8', created_at: '2026-06-12T09:00:00.000Z', updated_at: '2026-06-12T09:00:00.000Z',
+        company: 'Wobbly Labs (sample)', position: 'Server Engineer', url: 'https://example.com/jobs/j8',
+        location: 'Remote', employment_type: 'Full-time',
+        description: 'Commerce API server. (Fictional demo company)',
+        requirements: ['Node.js or Java', 'AWS'],
+        keywords: ['Node.js', 'AWS'],
+        deadline: '2026-07-12', source: 'Company site',
+      },
     ],
 
     // job_id → application. status drives the pipeline + board.
@@ -183,6 +201,28 @@ export function buildSeedEn() {
       { id: 'a4', created_at: '2026-05-25T10:00:00.000Z', updated_at: '2026-06-12T10:00:00.000Z', job_id: 'j4', status: 'document_passed', resume_id: 'd1', cover_letter_id: 'c2', applied_at: '2026-05-28', notes: 'Resume screened, coordinating interview schedule' },
       { id: 'a5', created_at: '2026-05-15T10:00:00.000Z', updated_at: '2026-06-02T10:00:00.000Z', job_id: 'j5', status: 'rejected', resume_id: 'd1', cover_letter_id: null, applied_at: '2026-05-18', notes: 'Rejected at resume screen' },
       { id: 'a6', created_at: '2026-06-10T10:00:00.000Z', updated_at: '2026-06-10T10:00:00.000Z', job_id: 'j6', status: 'draft', resume_id: null, cover_letter_id: null, applied_at: null, notes: null },
+      { id: 'a7', created_at: '2026-06-11T10:00:00.000Z', updated_at: '2026-06-11T10:00:00.000Z', job_id: 'j7', status: 'planned', resume_id: null, cover_letter_id: null, applied_at: null, notes: null },
+      { id: 'a8', created_at: '2026-06-12T10:00:00.000Z', updated_at: '2026-06-12T10:00:00.000Z', job_id: 'j8', status: 'draft', resume_id: null, cover_letter_id: null, applied_at: null, notes: null },
+    ],
+
+    // Company health the AI researched (fictional demo companies only).
+    companyHealth: [
+      {
+        company: 'Steadyworks (sample)', grade: 'A', checked_at: '2026-06-11', updated_at: '2026-06-11T09:00:00.000Z',
+        summary: 'Profitable three years running ($6.5M operating profit, 2025) and headcount up 12% in a year. Reviews are average.',
+        metrics: { employees: '210 (2026-05)', employees_change_1y: '+12%', hires_12m: '48', leavers_12m: '23', revenue: '$72M (2025)', operating_profit: '$6.5M (2025)', debt_ratio: '72% (2025)', rating: '3.3/5 (140 reviews)' },
+        red_flags: ['Some reviews mention late nights'],
+        green_flags: ['Profitable three years running', 'Twice as many hires as leavers'],
+        sources: [{ name: 'Annual filing 2025' }, { name: 'Payroll headcount data' }, { name: 'Employee review site' }],
+      },
+      {
+        company: 'Wobbly Labs (sample)', grade: 'C', checked_at: '2026-06-12', updated_at: '2026-06-12T09:00:00.000Z',
+        summary: 'Operating losses two years running, and twice as many people left as joined last year.',
+        metrics: { employees: '46', employees_change_1y: '-18%', hires_12m: '9', leavers_12m: '19', funding: 'Series A (2024-02)' },
+        red_flags: ['Operating losses two years running', 'Twice as many leavers as hires', 'No funding news for over two years'],
+        green_flags: [],
+        sources: [{ name: 'Payroll headcount data' }, { name: 'Funding database' }],
+      },
     ],
 
     fits: [

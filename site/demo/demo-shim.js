@@ -225,11 +225,13 @@ const ivByJob = (jobId) => db.interviews.find((i) => i.job_id === jobId) || null
 const clByJob = (jobId) => db.coverLetters.filter((c) => c.job_id === jobId);
 const timelineByJob = (jobId) => (db.timeline || []).filter((e) => e.job_id === jobId);
 
+const healthByCompany = (company) => (db.companyHealth || []).find((h) => h.company === company) || null;
+
 function jobWithMeta(job) {
   const app = appByJob(job.id);
   const fit = fitByJob(job.id);
   const status = app?.status ?? 'draft';
-  return { ...job, status, status_label: t('status.' + status), fit_score: fit?.score ?? null };
+  return { ...job, status, status_label: t('status.' + status), fit_score: fit?.score ?? null, company_grade: healthByCompany(job.company)?.grade ?? null };
 }
 
 function coverRef(cl, version = null, versionId = null) {
@@ -425,6 +427,7 @@ function jobDetail(jobId) {
   return {
     job: {
       ...jobWithMeta(job),
+      company_health: healthByCompany(job.company),
       application: appByJob(jobId),
       fit: fitByJob(jobId),
       cover_letters: clByJob(jobId),
@@ -728,7 +731,7 @@ const ROUTES = [
 
   /* applications */
   ['GET', /^\/api\/applications$/, () => ({
-    applications: db.applications.map((a) => ({ ...a, status_label: t('status.' + a.status), job: db.jobs.find((j) => j.id === a.job_id), fit_score: fitByJob(a.job_id)?.score ?? null })),
+    applications: db.applications.map((a) => ({ ...a, status_label: t('status.' + a.status), job: db.jobs.find((j) => j.id === a.job_id), fit_score: fitByJob(a.job_id)?.score ?? null, company_grade: healthByCompany(db.jobs.find((j) => j.id === a.job_id)?.company)?.grade ?? null })),
     board_order: BOARD_ORDER,
   })],
   // The seed has no offers; without this route the by-stage view fails to load.

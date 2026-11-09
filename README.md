@@ -38,6 +38,7 @@
 - **공고 검색·가져오기** - 키워드(직무·기술)나 직무 분류로 원티드·점핏·리멤버·사람인 같은 공개 채용 사이트에서 공고를 바로 가져와, 마음에 드는 것만 저장. 영업·회계·간호·생산직 등 모든 직군의 분류표가 내장돼 있어, 내 직무를 검색 조건으로 저장해 두면 "오늘 올라온 공고 보여줘" 한마디로 새 공고만 볼 수 있습니다(여러 사이트에 함께 올라온 공고는 한 줄로 합침). 키 발급·설치 없이 동작하며, 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음, 보내는 건 검색어·직무 조건뿐). 경력 연차를 말하면 그 연차가 경력 범위에 들어가는 공고만 남깁니다(5년이면 "3~10년"은 남기고 "8~20년"은 뺌). 잡코리아는 robots.txt 제약 때문에 넣지 않았습니다. 대시보드의 **공고 찾기** 화면에서도 같은 검색을 하고 클릭 한 번으로 저장할 수 있습니다.
 - **채용공고 파싱** — 붙여넣거나 가져온 공고 텍스트를 구조화해 저장.
 - **로컬 대시보드** - 프레임워크·CDN 없는 바닐라 JS로 만든 8페이지 웹 화면(다크모드 지원).
+- **회사 상태 등급** - 공고를 저장하면 AI가 공시, 국민연금 인원·입퇴사, 직원 평점, 뉴스를 조사해 회사가 탄탄한지 S(매우 좋음)~D(위험)로 매깁니다. 목록과 공고 찾기 결과에 회사 이름 옆으로 보이고, 적합도 점수와는 따로 봅니다.
 - **PC 여러 대에서 쓰기** - 내 Google Drive나 비공개 GitHub 저장소를 거쳐 같은 데이터를 씁니다. 설정에서 연결하거나 AI에게 부탁하면 됩니다. 기본은 꺼져 있고, CareerMate 서버로는 아무것도 보내지 않습니다([외부 저장소 연결](#외부-저장소-연결-pc-여러-대에서-쓰기)).
 - **데이터 내보내기/삭제** — Settings 페이지에서 직접.
 
@@ -336,6 +337,7 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 - **Job search & import** - Pull postings by keyword (role/skill) or job category straight from public job boards (Wanted, Jumpit, Remember, Saramin) and save only the ones you like. Category tables for every occupation (sales, accounting, nursing, manufacturing...) are built in: save your role as a search condition and "show me today's new postings" returns only new ones, with the same posting from several boards folded into one row. No API key or setup; it only *fetches* public postings (no bot-protection bypass, no bulk harvesting; only the search keyword and job category are sent). Give your years of experience and it keeps only postings whose experience range covers them (5 years keeps "3-10 yrs" and drops "8-20 yrs"). JobKorea is left out because of its robots.txt. The dashboard's **Find jobs** screen runs the same search and saves a posting in one click.
 - **Job-posting parsing** — Turn pasted or imported posting text into structured records.
 - **Local dashboard** - An 8-page web UI built with framework-free, CDN-free vanilla JS (dark mode supported).
+- **Company health grade** - When you save a posting, the AI checks filings, payroll headcount and turnover, employee ratings and news, then grades the company from S (very solid) to D (risky). It shows next to the company in lists and search results, separate from the fit score.
 - **Use it on several PCs** - Share the same data through your own Google Drive or a private GitHub repo. Connect it in Settings or ask your AI. Off by default; nothing goes to a CareerMate server ([External storage](#external-storage-using-several-pcs)).
 - **Export / delete your data** — Directly from the Settings page.
 

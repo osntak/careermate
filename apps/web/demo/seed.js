@@ -170,6 +170,24 @@ export function buildSeed() {
         keywords: ['Java', '금융', 'Spring'],
         deadline: '2026-07-05', source: '직접 입력',
       },
+      {
+        id: 'j7', created_at: '2026-06-11T09:00:00.000Z', updated_at: '2026-06-11T09:00:00.000Z',
+        company: '든든솔루션(예시)', position: '백엔드 개발자', url: 'https://example.com/jobs/j7',
+        location: '서울 구로구', employment_type: '정규직',
+        description: '정산 시스템 백엔드. (데모용 가상 회사)',
+        requirements: ['Java 3년+', 'RDB 설계'],
+        keywords: ['Java', 'MySQL', '정산'],
+        deadline: '2026-07-10', source: '사람인',
+      },
+      {
+        id: 'j8', created_at: '2026-06-12T09:00:00.000Z', updated_at: '2026-06-12T09:00:00.000Z',
+        company: '흔들랩스(예시)', position: '서버 개발자', url: 'https://example.com/jobs/j8',
+        location: '서울 성동구', employment_type: '정규직',
+        description: '커머스 API 서버. (데모용 가상 회사)',
+        requirements: ['Node.js 또는 Java', 'AWS'],
+        keywords: ['Node.js', 'AWS'],
+        deadline: '2026-07-12', source: '원티드',
+      },
     ],
 
     // job_id → application. status drives the pipeline + board.
@@ -180,6 +198,28 @@ export function buildSeed() {
       { id: 'a4', created_at: '2026-05-25T10:00:00.000Z', updated_at: '2026-06-12T10:00:00.000Z', job_id: 'j4', status: 'document_passed', resume_id: 'd1', cover_letter_id: 'c2', applied_at: '2026-05-28', notes: '서류 합격, 면접 일정 조율 중' },
       { id: 'a5', created_at: '2026-05-15T10:00:00.000Z', updated_at: '2026-06-02T10:00:00.000Z', job_id: 'j5', status: 'rejected', resume_id: 'd1', cover_letter_id: null, applied_at: '2026-05-18', notes: '서류 탈락' },
       { id: 'a6', created_at: '2026-06-10T10:00:00.000Z', updated_at: '2026-06-10T10:00:00.000Z', job_id: 'j6', status: 'draft', resume_id: null, cover_letter_id: null, applied_at: null, notes: null },
+      { id: 'a7', created_at: '2026-06-11T10:00:00.000Z', updated_at: '2026-06-11T10:00:00.000Z', job_id: 'j7', status: 'planned', resume_id: null, cover_letter_id: null, applied_at: null, notes: null },
+      { id: 'a8', created_at: '2026-06-12T10:00:00.000Z', updated_at: '2026-06-12T10:00:00.000Z', job_id: 'j8', status: 'draft', resume_id: null, cover_letter_id: null, applied_at: null, notes: null },
+    ],
+
+    // Company health the AI researched (fictional demo companies only).
+    companyHealth: [
+      {
+        company: '든든솔루션(예시)', grade: 'A', checked_at: '2026-06-11', updated_at: '2026-06-11T09:00:00.000Z',
+        summary: '3년 연속 흑자(영업이익 85억, 2025)이고 1년 새 인원이 12% 늘었습니다. 평점은 보통입니다.',
+        metrics: { employees: '210명 (2026-05, 국민연금)', employees_change_1y: '+12%', hires_12m: '48명', leavers_12m: '23명', revenue: '940억 (2025)', operating_profit: '85억 (2025)', debt_ratio: '72% (2025)', rating: '평점 3.3/5 (리뷰 140건)' },
+        red_flags: ['야근 관련 리뷰가 일부 있음'],
+        green_flags: ['3년 연속 흑자', '입사자가 퇴사자의 2배'],
+        sources: [{ name: 'DART 감사보고서 2025' }, { name: '국민연금 가입자 현황' }, { name: '직원 리뷰 사이트' }],
+      },
+      {
+        company: '흔들랩스(예시)', grade: 'C', checked_at: '2026-06-12', updated_at: '2026-06-12T09:00:00.000Z',
+        summary: '2년 연속 영업적자이고 최근 1년 퇴사자가 입사자의 두 배입니다.',
+        metrics: { employees: '46명', employees_change_1y: '-18%', hires_12m: '9명', leavers_12m: '19명', funding: '시리즈 A (2024-02)' },
+        red_flags: ['2년 연속 영업적자', '퇴사자가 입사자의 2배', '마지막 투자 후 2년 넘게 소식 없음'],
+        green_flags: [],
+        sources: [{ name: '국민연금 가입자 현황' }, { name: '투자 정보 사이트' }],
+      },
     ],
 
     fits: [

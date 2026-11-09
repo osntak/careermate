@@ -52,6 +52,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
       '`get_application_context`를 호출해 한 번에 프로필·대표 이력서·경력·프로젝트·스킬·기존 자기소개서·최근 지원 현황·이전 적합도 분석·같은 회사/직무 관련 기록·글쓰기 선호(preferred_tone, emphasis_points)를 가져온다. (분석 대상 공고가 이미 저장돼 있으면 job_id도 함께 전달한다.)',
       '공고 요구사항과 사용자 경력/스킬/프로젝트를 비교한다: 일치하는 강점(strengths)과 부족한 부분(gaps), 매칭 키워드(matched_keywords)와 누락 키워드(missing_keywords)를 도출하고, 종합 적합도 점수(score 0~100)와 요약(summary), 지원 전략 제안(recommendations)을 정리한다. 없는 경험을 지어내지 않는다.',
       '아직 저장되지 않은 공고라면 `save_job_posting`으로 공고를 저장하고 job_id를 확보한다.',
+      '그 회사의 회사 상태가 없거나 90일이 지났으면(`save_job_posting` 응답의 `company_health_needed`) 묻지 말고 `get_playbook(\'company-research\')`의 "회사 상태 등급" 순서로 조사해 `save_company_health`로 저장한다. 등급은 적합도 점수에 섞지 않고 결론에 한 줄로 덧붙인다.',
       '도출한 분석 결과를 `save_fit_analysis`로 저장한다(job_id, score, summary, strengths, gaps, matched_keywords, missing_keywords, recommendations).',
       '분석 결과를 사용자의 언어로 쉽게 설명한다(잘 맞는 점, 보완할 점, 추천 전략). 기술 용어는 빼고 전달한다.',
       '분석 뒤 곧장 자기소개서를 쓰지 말고, "이 공고에 맞춘 자기소개서를 써드릴까요?"라고 묻고 선택지를 제시한다: ① "네, 이 공고에 맞춘 자기소개서를 써줘" ② "아니요, 분석만 저장해줘".',
