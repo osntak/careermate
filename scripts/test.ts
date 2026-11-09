@@ -1071,6 +1071,16 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
     const { companyHealthRepo, companyKey } = await import('../packages/db/src/index.ts');
     ok('companyKey: (주)·주식회사·Corp·공백·대소문자 무시', companyKey('(주) 든든 테크') === companyKey('주식회사 든든테크') && companyKey('Kakao Corp.') === companyKey('kakao'));
     companyHealthRepo.save({ company: '(주) A', grade: 'C', summary: '2년 연속 적자', metrics: {}, red_flags: [], green_flags: [], sources: [{ name: 'DART' }] });
+    const saveTool = TOOLS.find((x) => x.name === 'save_job_posting')!;
+    const known = await saveTool.handler({ company: 'A', position: 'b', url: 'https://example.com/health-known' });
+    const unknown = await saveTool.handler({ company: '처음보는회사', position: 'b', url: 'https://example.com/health-new' });
+    ok(
+      '공고 저장: 등급 없는 회사면 AI에게 조사·저장을 지시, 최근 등급이 있으면 생략',
+      (unknown.data as { company_health_needed?: boolean }).company_health_needed === true &&
+        unknown.text.includes('save_company_health') &&
+        (known.data as { company_health_needed?: boolean }).company_health_needed === false &&
+        !known.text.includes('save_company_health'),
+    );
     const jobsWithGrade = await call('GET', '/api/jobs');
     ok('회사 상태: 공고 목록에 등급 표시', jobsWithGrade.jobs.find((j: { company: string }) => j.company === 'a')?.company_grade === 'C');
     const detail = await call('GET', `/api/jobs/${savedA.job?.id ?? savedA.id}`);

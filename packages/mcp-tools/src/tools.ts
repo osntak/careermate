@@ -177,6 +177,7 @@ function storageErrorGuide(e: StorageConnectError, url?: string): string {
 const STATUS_LIST = APPLICATION_STATUSES.map((s) => `${s}(${APPLICATION_STATUS_LABELS[s]})`).join(', ');
 const DELETE_CONFIRMATION = 'DELETE';
 const DASHBOARD_URL = 'http://127.0.0.1:4319';
+const HEALTH_STALE_DAYS = 90;
 const COMPANY_GRADE_LABELS = { S: '매우 좋음', A: '좋음', B: '보통', C: '주의', D: '위험', U: '정보 부족' } as const;
 
 /** A real calendar day in YYYY-MM-DD (rejects 2026-99-99 and 2026-02-30). */
@@ -719,14 +720,22 @@ export const TOOLS: ToolDef[] = [
     idempotent: true, // 같은 url 업서트 — 재호출 안전
     title: '채용공고 저장',
     description:
-      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요 — 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 회사 평판(평점·워라밸·문화 리스크 등)을 리서치했다면 reputation에 요약(출처·최근성 표기)을 넣으면 오퍼 판단·면접에 활용됩니다. 회사 지정 자소서 문항·글자수가 있으면 questions 배열에 구조화 저장하세요(question 필수, max_chars/min_chars/count_mode). 이후 자소서 작성 시 문항별로 validate_cover_letter(min_chars/max_chars/count_mode)로 한도를 점검합니다. 면접·인적성·발표 등 전형 일정을 받으면 schedule 배열에 구조화 저장하세요(label·date 필수, time 선택; 서류 마감은 deadline 필드). 면접초대 메일을 사용자가 붙여넣으면 날짜·시간을 추출해 저장하고, 같은 날 다른 일정과 겹치면 알려주세요. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다.',
+      '채용공고를 저장합니다(있으면 갱신). company와 position은 필수입니다. 공고 원문은 description에, 핵심 자격요건/우대사항은 requirements 배열에, 핵심 키워드는 keywords에 정리해 넣으면 이후 적합도 분석/자소서 작성에 활용됩니다. 회사를 리서치했다면 사업개요·미션은 company_overview, 회사가 강조하는 인재상은 talent_profile, 핵심가치는 core_values에 넣으세요. 한국 자소서·면접은 인재상/핵심가치 정렬이 핵심이라 저장해두면 이후 작성·면접 준비에서 그대로 끌어다 씁니다. 회사 평판(평점·워라밸·문화 리스크 등)을 리서치했다면 reputation에 요약(출처·최근성 표기)을 넣으면 오퍼 판단·면접에 활용됩니다. 회사 지정 자소서 문항·글자수가 있으면 questions 배열에 구조화 저장하세요(question 필수, max_chars/min_chars/count_mode). 이후 자소서 작성 시 문항별로 validate_cover_letter(min_chars/max_chars/count_mode)로 한도를 점검합니다. 면접·인적성·발표 등 전형 일정을 받으면 schedule 배열에 구조화 저장하세요(label·date 필수, time 선택; 서류 마감은 deadline 필드). 면접초대 메일을 사용자가 붙여넣으면 날짜·시간을 추출해 저장하고, 같은 날 다른 일정과 겹치면 알려주세요. 같은 url이면 중복 생성 없이 갱신됩니다. 저장 시 지원(application) 항목이 자동으로 생성됩니다. 저장한 뒤 그 회사의 회사 상태가 없거나 오래됐으면(응답의 company_health_needed) 묻지 말고 바로 조사해 save_company_health로 저장하세요.',
     inputSchema: JobInputSchema.shape,
     handler: (args) => {
       const { job } = saveJobPosting(args);
       const user_message = `'${job.company} · ${job.position}' 공고를 저장했어요.`;
-      return ok(user_message, {
+      // Every saved posting gets a company health grade unless one was checked recently.
+      const health = companyHealthRepo.get(job.company);
+      const stale = !health || !health.checked_at || Date.now() - Date.parse(health.checked_at) > HEALTH_STALE_DAYS * 86_400_000;
+      const text = stale
+        ? `${user_message}\n\n[AI 할 일] ${job.company}의 회사 상태가 ${health ? `${HEALTH_STALE_DAYS}일 넘게 지났습니다` : '아직 없습니다'}. 사용자에게 묻지 말고 지금 get_playbook('company-research')의 "회사 상태 등급" 순서로 조사해 save_company_health로 저장한 뒤, 등급과 이유를 한 줄로 알려 주세요. 조사할 수 없는 환경이면 U(정보 부족)로 저장하지 말고 건너뛰세요.`
+        : user_message;
+      return ok(text, {
         ...job,
         user_message,
+        company_health: health,
+        company_health_needed: stale,
         suggested_next_action: {
           prompt: '이 공고와 내 프로필을 비교해 적합도를 분석할까요?',
           next_workflow: 'analyze_job',
@@ -739,7 +748,7 @@ export const TOOLS: ToolDef[] = [
     idempotent: true, // 회사 이름 키 업서트
     title: '회사 상태 저장',
     description:
-      '회사의 재무·경영 상태를 조사해 등급(S/A/B/C/D, 정보가 모자라면 U)으로 저장합니다. 회사 단위로 저장되어 그 회사의 모든 공고, 지원 목록, 공고 찾기 결과에 같은 등급이 표시됩니다. 적합도 점수에는 섞지 않습니다. 조사는 당신(AI)이 웹 도구로 합니다: DART 전자공시(매출·영업이익·부채비율), 크레딧잡·국민연금 가입자 데이터(임직원 수, 최근 1년 입사·퇴사), 잡플래닛·블라인드(평점, 리뷰 경향), 사람인·잡코리아 기업정보(설립연도, 인원, 평균연봉), 투자 정보(혁신의숲·더브이씨), 최근 뉴스(구조조정, 임금체불, 투자 유치). 같은 직무 공고가 짧은 주기로 반복해서 올라오는지도 신호입니다. 등급 기준과 순서는 get_playbook(\'company-research\')의 "회사 상태 등급"을 따르세요. 수치는 단위와 기준 연도를 붙여 문자열로 넣고(예: "1,240억 (2024)"), 확인하지 못한 값은 비워 두세요. 지어내지 마세요. 출처(sources)는 실제로 본 곳만 넣습니다. 사용자가 공고 분석이나 회사 판단을 요청했을 때, 또는 "이 회사 괜찮아?"라고 물을 때 조사해 저장하세요.',
+      '회사의 재무·경영 상태를 조사해 등급(S/A/B/C/D, 정보가 모자라면 U)으로 저장합니다. 회사 단위로 저장되어 그 회사의 모든 공고, 지원 목록, 공고 찾기 결과에 같은 등급이 표시됩니다. 적합도 점수에는 섞지 않습니다. 조사는 당신(AI)이 웹 도구로 합니다: DART 전자공시(매출·영업이익·부채비율), 크레딧잡·국민연금 가입자 데이터(임직원 수, 최근 1년 입사·퇴사), 잡플래닛·블라인드(평점, 리뷰 경향), 사람인·잡코리아 기업정보(설립연도, 인원, 평균연봉), 투자 정보(혁신의숲·더브이씨), 최근 뉴스(구조조정, 임금체불, 투자 유치). 같은 직무 공고가 짧은 주기로 반복해서 올라오는지도 신호입니다. 등급 기준과 순서는 get_playbook(\'company-research\')의 "회사 상태 등급"을 따르세요. 수치는 단위와 기준 연도를 붙여 문자열로 넣고(예: "1,240억 (2024)"), 확인하지 못한 값은 비워 두세요. 지어내지 마세요. 출처(sources)는 실제로 본 곳만 넣습니다. 공고를 저장할 때마다(save_job_posting 응답의 company_health_needed가 true면) 묻지 말고 조사해 저장하고, 사용자가 "이 회사 괜찮아?"라고 물을 때도 저장하세요.',
     inputSchema: {
       company: z.string().min(1).describe('회사 이름(공고의 company와 같게)'),
       grade: z.enum(['S', 'A', 'B', 'C', 'D', 'U']).describe('S 매우 좋음 · A 좋음 · B 보통 · C 주의 · D 위험 · U 정보 부족'),
