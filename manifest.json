@@ -52,6 +52,7 @@
     { "name": "save_cover_letter_version", "description": "자기소개서 버전 저장" },
     { "name": "delete_cover_letter", "description": "자기소개서 삭제" },
     { "name": "save_job_posting", "description": "채용공고 저장" },
+    { "name": "save_company_health", "description": "회사 상태(재무·경영) 등급 저장" },
     { "name": "get_job_posting", "description": "채용공고 상세 조회" },
     { "name": "list_jobs", "description": "저장된 공고 목록" },
     { "name": "prescreen_job", "description": "공고 사전 프리스크린(키워드 겹침)" },

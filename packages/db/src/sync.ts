@@ -234,6 +234,11 @@ function writeSnapshot(dir: string, snap: Snapshot): void {
 }
 
 /** Restore the snapshot into the DB; returns the safety backup made first. */
+/** A table this version doesn't have (added by a newer CareerMate without a schema bump, e.g. a sidecar table). */
+function hasUnknownTables(remote: Snapshot, local: Snapshot): boolean {
+  return [...remote.files.keys()].some((rel) => rel.startsWith('tables/') && !local.files.has(rel));
+}
+
 function importSnapshot(snap: Snapshot, safetyPrefix: string): string {
   const tables: Record<string, unknown> = {};
   let photo: { mime: string; data: string } | undefined;
@@ -440,7 +445,10 @@ async function cycle(fetch: boolean): Promise<SyncStatus> {
       } else {
         warnings.push({ code: 'partial_snapshot', message: `다른 PC 데이터를 아직 다 받지 못해 이번에는 건너뜁니다 (${remote.reason}).` });
       }
-    } else if (remote.status === 'newer' || (remote.status === 'ok' && remote.snap.schema_version > local.schema_version)) {
+    } else if (
+      remote.status === 'newer' ||
+      (remote.status === 'ok' && (remote.snap.schema_version > local.schema_version || hasUnknownTables(remote.snap, local)))
+    ) {
       warnings.push({ code: 'newer_schema', message: '다른 PC가 더 새 버전의 CareerMate 로 저장했습니다. 업데이트 전까지 동기화를 멈춥니다.' });
     } else if (remote.status === 'missing') {
       // A fresh PC with nothing in it has nothing to share. Exporting it could overwrite a

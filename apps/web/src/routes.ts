@@ -55,6 +55,7 @@ import {
   runSyncNow,
   setSyncDir,
   changeDataDir,
+  companyHealthRepo,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -271,6 +272,7 @@ function jobDetail(jobId: string) {
   const timeline = buildTimeline(job);
   return {
     ...jobWithMeta(job),
+    company_health: companyHealthRepo.get(job.company),
     application,
     fit,
     cover_letters,
@@ -530,6 +532,7 @@ export function registerApiRoutes(router: Router): void {
       status_label: APPLICATION_STATUS_LABELS[a.status],
       job: jobRepo.get(a.job_id),
       fit_score: fitRepo.getByJob(a.job_id)?.score ?? null,
+      company_grade: companyHealthRepo.get(jobRepo.get(a.job_id)?.company)?.grade ?? null,
     }));
     return { applications: apps, board_order: APPLICATION_BOARD_ORDER };
   });

@@ -31,4 +31,13 @@ export default {
   'err.403': 'A permission check is needed. Please refresh the dashboard.',
   'err.500': 'Something went wrong. Please try again in a moment.',
   'err.generic': "Couldn't complete the request. Check your input and try again.",
+
+  // company health grade
+  'company.grade.S': 'Very solid',
+  'company.grade.A': 'Solid',
+  'company.grade.B': 'Average',
+  'company.grade.C': 'Caution',
+  'company.grade.D': 'Risky',
+  'company.grade.U': 'Not enough info',
+  'company.gradeTitle': 'Company health (finances, headcount, reviews)',
 };

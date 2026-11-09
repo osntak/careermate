@@ -461,6 +461,12 @@ export function Chips(items, { accent } = {}) {
   return el('div', { class: 'chips' }, ...(items || []).map((t) => el('span', { class: `chip${accent ? ' chip--accent' : ''}` }, t)));
 }
 /** Dense list row: leading slot → title + muted sub → right-aligned trailing. */
+/** Company health pill ("B 보통"). `label` is the translated word, `title` the tooltip. */
+export function GradePill(grade, label, title) {
+  if (!grade) return null;
+  return el('span', { class: `grade grade--${grade}`, title }, grade === 'U' ? null : el('b', {}, grade), label);
+}
+
 export function ListRow({ leading, title, sub, trailing, onClick } = {}) {
   return el('div', { class: `list-row${onClick ? ' is-clickable' : ''}`, activate: onClick },
     leading && el('div', { class: 'list-row__lead' }, leading),

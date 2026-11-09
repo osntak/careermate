@@ -6,7 +6,7 @@ import {
   Select, scoreClass, statusColor, mount, toast, toastOk, toastError, todayLocalISO, daysUntil,
 } from '/lib.js';
 import { t } from '/i18n.js';
-import { applicationsViewSwitch, openJobModal } from '/pages/jobs.js';
+import { applicationsViewSwitch, openJobModal, listGradePill } from '/pages/jobs.js';
 
 // deadline(YYYY-MM-DD) → "Due in 7d" / "Due today" / "Overdue" (null if absent/invalid).
 // daysUntil shares the server's local-midnight rule (core daysUntilDate).
@@ -88,7 +88,7 @@ export async function render(ctx) {
       ? el('span', { class: `app-score strong tnum ${scoreClass(app.fit_score)}` }, t('applications.row.score', { score: app.fit_score }))
       : el('span', { class: 'app-score muted tnum' }, '-');
     return ListRow({
-      title: job.company || '-',
+      title: el('span', { class: 'name-grade' }, el('span', {}, job.company || '-'), listGradePill(app.company_grade)),
       sub: subBits.join(' · '),
       trailing: [
         score,

@@ -3,7 +3,7 @@
 // cover letters, interview prep, and related history, all driven by the AI's
 // saved data with manual fallbacks throughout.
 import {
-  el, get, post, put, del, icon, navigate, Card, Badge, Btn, IconBtn, SubmitBtn,
+  el, get, post, put, del, icon, navigate, Card, Badge, Btn, IconBtn, SubmitBtn, GradePill,
   EmptyState, Chips, Field, Input, Textarea, Select, ViewSwitch,
   openModal, closeModal, confirmDialog, toastOk, toastError,
   fmtDate, scoreClass, mount, meta, linesToArray, csvToArray, daysUntil, scheduleDdayBadge,
@@ -52,7 +52,9 @@ async function renderList(ctx) {
       el('td', {},
         // Real link in the lead cell so keyboard/AT users can reach the row (a
         // role=button on <tr> would be invalid ARIA); the whole row stays mouse-clickable.
-        el('a', { class: 'cell-link strong', href: `#/jobs/${j.id}` }, j.company),
+        el('div', { class: 'name-grade' },
+          el('a', { class: 'cell-link strong', href: `#/jobs/${j.id}` }, j.company),
+          listGradePill(j.company_grade)),
         el('div', { class: 'muted text-sm' }, j.position)),
       el('td', {},
         el('div', {}, j.location || el('span', { class: 'muted' }, t('jobs.list.locationUnset'))),
@@ -460,13 +462,47 @@ function questionLimitLabel(q) {
 
 // Company research the AI saved (overview·인재상·핵심가치·평판) — rendered so the
 // user can actually SEE it in the dashboard, not just have the AI use it.
+const HEALTH_METRICS = ['employees', 'employees_change_1y', 'hires_12m', 'leavers_12m', 'revenue', 'operating_profit', 'debt_ratio', 'funding', 'avg_salary', 'rating'];
+
+export const gradePill = (grade) => GradePill(grade, t('company.grade.' + grade), t('company.gradeTitle'));
+// In list rows a grey "not enough info" next to a name reads like missing data, so lists show real grades only.
+export const listGradePill = (grade) => (grade && grade !== 'U' ? gradePill(grade) : null);
+
+// Company health the AI researched (grade + why + numbers + signals + sources).
+function HealthSection(h) {
+  const metrics = HEALTH_METRICS.filter((k) => h.metrics?.[k]);
+  const signals = (key, items) => items?.length
+    ? el('div', { class: 'mt-3' },
+        el('div', { class: 'muted text-sm mb-2' }, t(key)),
+        el('ul', { class: 'bullets' }, ...items.map((s) => el('li', {}, s))))
+    : null;
+  return el('div', {},
+    el('div', { class: 'flex gap-2', style: { flexWrap: 'wrap' } },
+      el('span', { class: 'strong' }, t('jobs.health.title')),
+      gradePill(h.grade),
+      h.checked_at ? el('span', { class: 'muted text-sm' }, t('jobs.health.checked', { date: fmtDate(h.checked_at) })) : null),
+    h.summary ? el('p', { class: 'mt-2 mb-0' }, h.summary) : null,
+    signals('jobs.health.red', h.red_flags),
+    signals('jobs.health.green', h.green_flags),
+    metrics.length
+      ? el('dl', { class: 'kv kv--health mt-3' }, ...metrics.flatMap((k) => [el('dt', {}, t('jobs.health.m.' + k)), el('dd', { class: 'tnum' }, h.metrics[k])]))
+      : null,
+    h.sources?.length
+      ? el('div', { class: 'muted text-sm mt-3' }, `${t('jobs.health.sources')}: `,
+          ...h.sources.flatMap((s, i) => [i ? ', ' : '', s.url ? el('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer' }, s.name) : s.name]))
+      : null);
+}
+
 function CompanyResearchCard(job) {
   const hasValues = job.core_values && job.core_values.length;
-  if (!job.company_overview && !job.talent_profile && !hasValues && !job.reputation) return null;
+  const health = job.company_health;
+  if (!health && !job.company_overview && !job.talent_profile && !hasValues && !job.reputation) return null;
   const field = (labelKey, value) => el('div', { class: 'mt-3' },
     el('div', { class: 'muted text-sm mb-2' }, t(labelKey)),
     el('p', { style: { margin: 0, whiteSpace: 'pre-wrap' } }, value));
   const body = [];
+  if (health) body.push(HealthSection(health));
+  if (health && (job.company_overview || job.talent_profile || hasValues || job.reputation)) body.push(el('div', { class: 'divider mt-3' }));
   if (job.company_overview) body.push(field('jobs.company.overview', job.company_overview));
   if (job.talent_profile) body.push(field('jobs.company.talent', job.talent_profile));
   if (hasValues) body.push(el('div', { class: 'mt-3' },

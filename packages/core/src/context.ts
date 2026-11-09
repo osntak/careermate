@@ -20,6 +20,7 @@ import {
   applicationRepo,
   jobRepo,
   fitRepo,
+  companyHealthRepo,
 } from '@careermate/db';
 
 export interface ApplicationContextOptions {
@@ -64,6 +65,7 @@ export function getApplicationContext(opts: ApplicationContextOptions = {}): App
     cover_letters,
     recent_applications,
     job,
+    company_health: job ? companyHealthRepo.get(job.company) : null,
     fit_analysis,
     related_history,
     writing_preferences: {

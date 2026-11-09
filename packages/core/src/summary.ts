@@ -25,6 +25,8 @@ import {
   projectRepo,
   timelineRepo,
   documentRepo,
+  companyHealthRepo,
+  type CompanyGrade,
 } from '@careermate/db';
 import { getOnboardingStatus } from './onboarding.ts';
 
@@ -32,6 +34,8 @@ export interface JobWithMeta extends JobRecord {
   status: ApplicationStatus;
   status_label: string;
   fit_score: number | null;
+  /** Company health grade (S-D, U = not enough info) if the company was researched. */
+  company_grade: CompanyGrade | null;
 }
 
 export interface HomeSummary {
@@ -137,7 +141,8 @@ export function jobWithMeta(job: JobRecord): JobWithMeta {
   const app = applicationRepo.getByJob(job.id);
   const fit = fitRepo.getByJob(job.id);
   const status = app?.status ?? 'draft';
-  return { ...job, status, status_label: APPLICATION_STATUS_LABELS[status], fit_score: fit?.score ?? null };
+  const company_grade = companyHealthRepo.get(job.company)?.grade ?? null;
+  return { ...job, status, status_label: APPLICATION_STATUS_LABELS[status], fit_score: fit?.score ?? null, company_grade };
 }
 
 export function getHomeSummary(now: Date = new Date()): HomeSummary {
