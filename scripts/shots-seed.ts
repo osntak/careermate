@@ -10,7 +10,7 @@
  *   CAREERMATE_DATA_DIR=./.shots-data npm run shots:seed
  */
 import {
-  profileRepo, experienceRepo, projectRepo, skillRepo, getDataDir, saveProfilePhoto,
+  profileRepo, experienceRepo, projectRepo, skillRepo, getDataDir, saveProfilePhoto, companyHealthRepo,
 } from '@careermate/db';
 import { readFileSync } from 'node:fs';
 import {
@@ -232,6 +232,32 @@ job({
   fit: { summary: '금융 도메인은 적합하나 글로벌 서비스 경험이 부족합니다.', strengths: ['금융/결제 도메인'], gaps: ['글로벌 서비스', 'Kotlin'], matched: ['Java', '금융'], missing: ['글로벌', 'Kotlin'] },
 });
 
+// 회사 상태 등급 예시. 위 공고는 실제 회사라 지어낸 재무 등급을 붙이지 않고, 가상 회사 두 곳에만 붙인다.
+job({
+  company: '든든솔루션(예시)', position: '백엔드 개발자', location: '서울 구로', deadline: daysFromNow(14),
+  description: '정산 시스템 백엔드. (가상 회사)', requirements: ['Java 3년+', 'RDB 설계'], keywords: ['Java', 'MySQL', '정산'],
+  status: 'planned',
+});
+job({
+  company: '흔들랩스(예시)', position: '서버 개발자', location: '서울 성동', deadline: daysFromNow(16),
+  description: '커머스 API 서버. (가상 회사)', requirements: ['Node.js 또는 Java', 'AWS'], keywords: ['Node.js', 'AWS'],
+  status: 'draft',
+});
+companyHealthRepo.save({
+  company: '든든솔루션(예시)', grade: 'A', checked_at: daysFromNow(-1),
+  summary: '3년 연속 흑자(영업이익 85억, 2025)이고 1년 새 인원이 12% 늘었습니다. 평점은 보통입니다.',
+  metrics: { employees: '210명 (국민연금)', employees_change_1y: '+12%', hires_12m: '48명', leavers_12m: '23명', revenue: '940억 (2025)', operating_profit: '85억 (2025)', debt_ratio: '72% (2025)', rating: '평점 3.3/5 (리뷰 140건)' },
+  red_flags: ['야근 관련 리뷰가 일부 있음'], green_flags: ['3년 연속 흑자', '입사자가 퇴사자의 2배'],
+  sources: [{ name: 'DART 감사보고서 2025' }, { name: '국민연금 가입자 현황' }, { name: '직원 리뷰 사이트' }],
+});
+companyHealthRepo.save({
+  company: '흔들랩스(예시)', grade: 'C', checked_at: daysFromNow(-1),
+  summary: '2년 연속 영업적자이고 최근 1년 퇴사자가 입사자의 두 배입니다.',
+  metrics: { employees: '46명', employees_change_1y: '-18%', hires_12m: '9명', leavers_12m: '19명', funding: '시리즈 A (2024-02)' },
+  red_flags: ['2년 연속 영업적자', '퇴사자가 입사자의 2배', '마지막 투자 후 2년 넘게 소식 없음'], green_flags: [],
+  sources: [{ name: '국민연금 가입자 현황' }, { name: '투자 정보 사이트' }],
+});
+
 console.log('✅ 마케팅용 데모 데이터를 생성했습니다.');
 console.log(`   위치: ${getDataDir()}`);
-console.log('   공고 6건(최종합격·면접·서류합격·지원·예정·보류) · 적합도 6 · 자기소개서 4 · 면접 준비 1 · 오퍼 1(토스, 문항·전형일정·회사 리서치 포함)');
+console.log('   공고 8건(최종합격·면접·서류합격·지원·예정·보류 + 회사 상태 예시 2) · 적합도 6 · 자기소개서 4 · 면접 준비 1 · 오퍼 1(토스, 문항·전형일정·회사 리서치 포함)');
