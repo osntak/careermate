@@ -748,6 +748,8 @@ export const ApplicationContextSchema = z.object({
   cover_letters: z.array(CoverLetterRecordSchema),
   recent_applications: z.array(ApplicationRecordSchema),
   job: JobRecordSchema.nullable(),
+  /** Researched health of the target job's company (grade S-D, U = not enough info), or null. */
+  company_health: z.unknown().nullable(),
   fit_analysis: FitAnalysisRecordSchema.nullable(),
   related_history: z
     .array(

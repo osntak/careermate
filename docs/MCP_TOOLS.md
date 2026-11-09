@@ -16,7 +16,7 @@ CareerMate는 **MCP-우선** 로컬 커리어 관리 도구입니다. 사용자�
 
 | 읽기전용(✅) 도구 | 쓰기/부수효과(✏️) 도구 |
 | --- | --- |
-| `read_document`, `read_inbox`, `get_onboarding_status`, `get_profile`, `get_resumes`, `get_experiences`, `get_projects`, `get_skills`, `get_cover_letters`, `get_job_posting`, `list_jobs`, `prescreen_job`, `search_jobs`, `find_job_categories`, `get_job_search_preferences`, `compare_offers`, `get_offer`, `get_application_context`, `list_recent_activity`, `get_followups`, `get_pipeline_stats`, `get_workflow_guide`, `get_playbook`, `get_verifier`, `validate_cover_letter`, `get_writing_style_guide`, `check_for_update` | `open_inbox`, `save_profile`, `add_resume`, `delete_resume`, `add_experience`, `delete_experience`, `add_project`, `delete_project`, `add_skill`, `delete_skill`, `save_cover_letter_version`, `delete_cover_letter`, `set_verify_mode`, `set_job_search_preferences`, `save_job_posting`, `delete_job_posting`, `save_fit_analysis`, `update_application_status`, `save_interview_prep`, `save_offer`, `export_cover_letter`, `export_resume`, `export_profile`, `open_dashboard`, `open_application`, `update_careermate`, `connect_external_storage` |
+| `read_document`, `read_inbox`, `get_onboarding_status`, `get_profile`, `get_resumes`, `get_experiences`, `get_projects`, `get_skills`, `get_cover_letters`, `get_job_posting`, `list_jobs`, `prescreen_job`, `search_jobs`, `find_job_categories`, `get_job_search_preferences`, `compare_offers`, `get_offer`, `get_application_context`, `list_recent_activity`, `get_followups`, `get_pipeline_stats`, `get_workflow_guide`, `get_playbook`, `get_verifier`, `validate_cover_letter`, `get_writing_style_guide`, `check_for_update` | `open_inbox`, `save_profile`, `add_resume`, `delete_resume`, `add_experience`, `delete_experience`, `add_project`, `delete_project`, `add_skill`, `delete_skill`, `save_cover_letter_version`, `delete_cover_letter`, `set_verify_mode`, `set_job_search_preferences`, `save_job_posting`, `save_company_health`, `delete_job_posting`, `save_fit_analysis`, `update_application_status`, `save_interview_prep`, `save_offer`, `export_cover_letter`, `export_resume`, `export_profile`, `open_dashboard`, `open_application`, `update_careermate`, `connect_external_storage` |
 
 ---
 
@@ -151,9 +151,11 @@ AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태�
 | `get_job_posting` | 공고 1건 상세 조회 | `job_id` | `{ job, fit, application, cover_letters, interview }` | 한 공고의 분석·상태·자소서·면접 자료를 한 번에 볼 때 | ✅ |
 | `list_jobs` | 저장된 모든 공고를 지원 상태·적합도 점수와 함께 목록화 | 없음 | 공고 메타 포함 배열 | 전체 공고를 훑어볼 때 | ✅ |
 | `prescreen_job` | 공고 키워드 ↔ 보유 기술 목록 **+ 대표 이력서 본문** 겹침을 결정론으로 계산(값싼 사전 필터, LLM 없음) | `job_id` | `{ job_keywords, matched[], missing[], coverage, user_skill_count, resume_matched[], combined_matched[], combined_coverage, resume_checked }` | 본격 적합도 분석 전 "깊게 볼 가치 있나" 빠르게 가늠할 때(여러 공고 우선순위). combined_coverage가 낮은데 보유 역량이면 이력서 보강 신호 | ✅ |
+| `save_company_health` | 회사 상태(재무·인원·평판) 등급 저장. 회사 단위라 그 회사의 모든 공고와 공고 찾기 결과에 같은 등급이 표시됨. 적합도 점수와는 별개 | `company`, `grade`(`S` 매우 좋음 · `A` 좋음 · `B` 보통 · `C` 주의 · `D` 위험 · `U` 정보 부족), `summary`, `metrics?`(임직원 수·1년 증감·최근 1년 입사/퇴사·매출·영업이익·부채비율·투자·평균 연봉·평점, 단위와 연도를 붙인 문자열), `red_flags?`, `green_flags?`, `sources`, `checked_at?` | 저장된 회사 상태 + `user_message` | 사용자가 회사가 괜찮은지 묻거나 공고 분석 때 원하면. 조사와 등급 기준은 `get_playbook('company-research')`의 "회사 상태 등급" | ✏️ |
 | `delete_job_posting` | 채용공고 삭제 | `job_id`, `confirm:"DELETE"` | 삭제 결과 | 사용자가 목록에서 삭제 대상을 확인한 뒤 | ✏️ |
 
 - `url`이 같으면 중복 생성 없이 갱신됩니다.
+- 회사 상태는 `get_application_context`의 `company_health`로도 돌아옵니다. 적합도 분석 결론에 한 줄로 덧붙이되 점수에는 섞지 않습니다.
 - `requirements`에는 자격요건/우대사항 핵심, `keywords`에는 핵심 키워드를 정리해 넣으면 이후 적합도 분석·자소서 작성에 활용됩니다.
 - 붙여넣은 공고 원문의 구조화(회사명/직무/마감일/키워드 추출)는 AI가 직접 수행한 뒤 `save_job_posting`으로 저장합니다.
 - `delete_job_posting`은 연결된 지원 상태·적합도 분석·면접 준비를 함께 삭제합니다. 연결된 자기소개서는 삭제하지 않고 공고 연결만 해제합니다.

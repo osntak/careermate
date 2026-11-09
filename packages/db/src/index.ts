@@ -31,3 +31,4 @@ export {
 } from './repositories.ts';
 export * from './backup.ts';
 export * from './sync.ts';
+export * from './company-health.ts';

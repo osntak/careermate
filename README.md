@@ -164,6 +164,7 @@ AI 클라이언트에 연결된 상태라면 "대시보드 열어줘"만으로�
 | 오퍼(제안) | `save_offer` · `compare_offers` · `get_offer` |
 | 핵심 컨텍스트 | **`get_application_context`** (지원에 필요한 맥락을 한 번에 모아줌) |
 | 핏 분석 | `save_fit_analysis` |
+| 회사 상태 | `save_company_health` (재무·인원·평판 등급 S~D) |
 | 지원 상태 | `update_application_status` |
 | 면접 준비 | `save_interview_prep` |
 | 글쓰기 | `get_writing_style_guide` (AI 티 안 나는 한국어 글쓰기 규칙) |
@@ -469,6 +470,7 @@ Dark mode is supported.
 | Dashboard / activity | `open_dashboard` · `open_application` · `list_recent_activity` · `get_followups` · `get_pipeline_stats` · `get_workflow_guide` |
 | Update | `check_for_update` · `update_careermate` |
 | External storage | `connect_external_storage` (only when the user asks) |
+| Company health | `save_company_health` (finances, headcount, reviews graded S to D) |
 
 On top of these tools, seven workflows are defined so the AI can guide you naturally, step by step: the six core flows (`onboarding`, `analyze_job`, `write_cover_letter`, `write_career_description`, `manage_application_status`, `prepare_interview`) plus `build_personal_brand` for LinkedIn/portfolio assets.
 

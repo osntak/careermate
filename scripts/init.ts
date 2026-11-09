@@ -406,6 +406,8 @@ const SAFE_TOOLS: readonly string[] = [
   'find_job_categories', 'get_job_search_preferences', 'set_job_search_preferences',
   // 오퍼(제안) — 로컬 저장/조회(save_fit_analysis 등과 동급), 외부 전송 없음.
   'save_offer', 'compare_offers', 'get_offer',
+  // 회사 상태 등급: 로컬 저장뿐(조사는 AI 쪽 웹 도구), 외부 전송 없음.
+  'save_company_health',
   // careermate 자신의 인박스 폴더·대시보드(127.0.0.1)만 여는 로컬 동작 + 인박스 내부 문서 읽기 → 사전허용 안전.
   'read_inbox', 'open_inbox', 'open_dashboard', 'open_application',
 ];

@@ -30,4 +30,13 @@ export default {
   'err.403': '권한 확인이 필요해요. 대시보드를 새로고침해 주세요.',
   'err.500': '일시적인 오류가 발생했어요. 잠시 후 다시 시도해 주세요.',
   'err.generic': '요청을 처리하지 못했어요. 입력을 확인하고 다시 시도해 주세요.',
+
+  // 회사 상태 등급
+  'company.grade.S': '매우 좋음',
+  'company.grade.A': '좋음',
+  'company.grade.B': '보통',
+  'company.grade.C': '주의',
+  'company.grade.D': '위험',
+  'company.grade.U': '정보 부족',
+  'company.gradeTitle': '회사 상태 (재무, 인원, 평판 기준)',
 };

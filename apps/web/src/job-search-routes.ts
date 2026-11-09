@@ -14,7 +14,7 @@ import {
   saraminCategoryName,
   JOB_SEARCH_SOURCES,
 } from '@careermate/core';
-import { getJobSearchPreferences, setJobSearchPreferences, jobRepo } from '@careermate/db';
+import { getJobSearchPreferences, setJobSearchPreferences, jobRepo, companyHealthRepo, companyKey } from '@careermate/db';
 import { Router, HttpError, readJsonBody } from './http.ts';
 
 const isYmd = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s);
@@ -100,10 +100,12 @@ export function registerJobSearchRoutes(router: Router): void {
     });
     // Mark postings already in the jobs list so the screen shows "saved" instead of a save button.
     const savedByUrl = new Map(jobRepo.list().filter((j) => j.url).map((j) => [j.url!, j.id]));
+    const grades = companyHealthRepo.gradeIndex();
     // A merged row may have been saved earlier from another board, so check its also_on links too.
     const results = res.results.map((r) => ({
       ...r,
       saved_job_id: savedByUrl.get(r.url) ?? r.also_on?.map((a) => savedByUrl.get(a.url)).find(Boolean) ?? null,
+      company_grade: grades.get(companyKey(r.company)) ?? null,
     }));
     return {
       ...res,

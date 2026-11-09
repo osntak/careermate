@@ -189,4 +189,21 @@ export default {
   'jobs.related.title': '관련 기록',
   'jobs.related.sub': '같은 회사 · 직무',
   'jobs.related.deadline': '마감 {{date}}',
+
+  // 회사 상태
+  'jobs.health.title': '회사 상태',
+  'jobs.health.checked': '{{date}} 기준',
+  'jobs.health.green': '좋은 신호',
+  'jobs.health.red': '주의 신호',
+  'jobs.health.sources': '출처',
+  'jobs.health.m.employees': '임직원 수',
+  'jobs.health.m.employees_change_1y': '인원 증감 (1년)',
+  'jobs.health.m.hires_12m': '최근 1년 입사',
+  'jobs.health.m.leavers_12m': '최근 1년 퇴사',
+  'jobs.health.m.revenue': '매출',
+  'jobs.health.m.operating_profit': '영업이익',
+  'jobs.health.m.debt_ratio': '부채비율',
+  'jobs.health.m.funding': '투자 유치',
+  'jobs.health.m.avg_salary': '평균 연봉',
+  'jobs.health.m.rating': '직원 평점',
 };

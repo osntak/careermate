@@ -189,4 +189,21 @@ export default {
   'jobs.related.title': 'Related records',
   'jobs.related.sub': 'Same company · role',
   'jobs.related.deadline': 'Due {{date}}',
+
+  // company health
+  'jobs.health.title': 'Company health',
+  'jobs.health.checked': 'As of {{date}}',
+  'jobs.health.green': 'Good signs',
+  'jobs.health.red': 'Warning signs',
+  'jobs.health.sources': 'Sources',
+  'jobs.health.m.employees': 'Employees',
+  'jobs.health.m.employees_change_1y': 'Headcount change (1y)',
+  'jobs.health.m.hires_12m': 'Hires (last 12 months)',
+  'jobs.health.m.leavers_12m': 'Leavers (last 12 months)',
+  'jobs.health.m.revenue': 'Revenue',
+  'jobs.health.m.operating_profit': 'Operating profit',
+  'jobs.health.m.debt_ratio': 'Debt ratio',
+  'jobs.health.m.funding': 'Funding',
+  'jobs.health.m.avg_salary': 'Average salary',
+  'jobs.health.m.rating': 'Employee rating',
 };

@@ -58,6 +58,7 @@ import {
   defaultCloneDir,
   StorageConnectError,
   type ConnectResult,
+  companyHealthRepo,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -176,6 +177,7 @@ function storageErrorGuide(e: StorageConnectError, url?: string): string {
 const STATUS_LIST = APPLICATION_STATUSES.map((s) => `${s}(${APPLICATION_STATUS_LABELS[s]})`).join(', ');
 const DELETE_CONFIRMATION = 'DELETE';
 const DASHBOARD_URL = 'http://127.0.0.1:4319';
+const COMPANY_GRADE_LABELS = { S: '매우 좋음', A: '좋음', B: '보통', C: '주의', D: '위험', U: '정보 부족' } as const;
 
 /** A real calendar day in YYYY-MM-DD (rejects 2026-99-99 and 2026-02-30). */
 const isYmd = (s: string) => {
@@ -730,6 +732,51 @@ export const TOOLS: ToolDef[] = [
           next_workflow: 'analyze_job',
         },
       });
+    },
+  },
+  {
+    name: 'save_company_health',
+    idempotent: true, // 회사 이름 키 업서트
+    title: '회사 상태 저장',
+    description:
+      '회사의 재무·경영 상태를 조사해 등급(S/A/B/C/D, 정보가 모자라면 U)으로 저장합니다. 회사 단위로 저장되어 그 회사의 모든 공고, 지원 목록, 공고 찾기 결과에 같은 등급이 표시됩니다. 적합도 점수에는 섞지 않습니다. 조사는 당신(AI)이 웹 도구로 합니다: DART 전자공시(매출·영업이익·부채비율), 크레딧잡·국민연금 가입자 데이터(임직원 수, 최근 1년 입사·퇴사), 잡플래닛·블라인드(평점, 리뷰 경향), 사람인·잡코리아 기업정보(설립연도, 인원, 평균연봉), 투자 정보(혁신의숲·더브이씨), 최근 뉴스(구조조정, 임금체불, 투자 유치). 같은 직무 공고가 짧은 주기로 반복해서 올라오는지도 신호입니다. 등급 기준과 순서는 get_playbook(\'company-research\')의 "회사 상태 등급"을 따르세요. 수치는 단위와 기준 연도를 붙여 문자열로 넣고(예: "1,240억 (2024)"), 확인하지 못한 값은 비워 두세요. 지어내지 마세요. 출처(sources)는 실제로 본 곳만 넣습니다. 사용자가 공고 분석이나 회사 판단을 요청했을 때, 또는 "이 회사 괜찮아?"라고 물을 때 조사해 저장하세요.',
+    inputSchema: {
+      company: z.string().min(1).describe('회사 이름(공고의 company와 같게)'),
+      grade: z.enum(['S', 'A', 'B', 'C', 'D', 'U']).describe('S 매우 좋음 · A 좋음 · B 보통 · C 주의 · D 위험 · U 정보 부족'),
+      summary: z.string().max(400).describe('왜 이 등급인지 한두 문장. 사용자가 그대로 읽습니다'),
+      metrics: z
+        .object({
+          employees: z.string().optional().describe('임직원 수, 예: "320명 (2025-10, 국민연금)"'),
+          employees_change_1y: z.string().optional().describe('1년 인원 증감, 예: "+12%"'),
+          hires_12m: z.string().optional().describe('최근 12개월 입사자 수'),
+          leavers_12m: z.string().optional().describe('최근 12개월 퇴사자 수'),
+          revenue: z.string().optional().describe('매출, 단위·연도 포함'),
+          operating_profit: z.string().optional().describe('영업이익(적자면 음수), 단위·연도 포함'),
+          debt_ratio: z.string().optional().describe('부채비율, 예: "85% (2024)"'),
+          funding: z.string().optional().describe('투자 단계·누적 투자, 예: "시리즈 B, 누적 300억"'),
+          avg_salary: z.string().optional().describe('평균 연봉과 출처'),
+          rating: z.string().optional().describe('직원 평점, 예: "잡플래닛 3.4/5 (리뷰 210건)"'),
+        })
+        .optional(),
+      red_flags: z.array(z.string()).optional().describe('위험 신호, 예: "3년 연속 영업적자", "최근 1년 퇴사자가 입사자의 2배"'),
+      green_flags: z.array(z.string()).optional().describe('좋은 신호, 예: "5년 연속 흑자", "1년 새 인원 20% 증가"'),
+      sources: z.array(z.object({ name: z.string(), url: z.string().optional() })).describe('실제로 확인한 출처'),
+      checked_at: z.string().optional().describe('확인한 날짜 YYYY-MM-DD (생략하면 오늘)'),
+    },
+    handler: (args) => {
+      const saved = companyHealthRepo.save({
+        company: args.company,
+        grade: args.grade,
+        summary: args.summary,
+        metrics: args.metrics ?? {},
+        red_flags: args.red_flags ?? [],
+        green_flags: args.green_flags ?? [],
+        sources: args.sources,
+        checked_at: args.checked_at ?? null,
+      });
+      const label = `${saved.grade === 'U' ? '정보 부족' : `${saved.grade} ${COMPANY_GRADE_LABELS[saved.grade]}`}`;
+      const user_message = `${saved.company}의 회사 상태를 '${label}'(으)로 저장했어요. ${saved.summary ?? ''}\n공고 상세와 지원 목록에 표시됩니다: ${DASHBOARD_URL}`;
+      return ok(user_message, { ...saved, user_message });
     },
   },
   {

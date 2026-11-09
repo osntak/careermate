@@ -2,7 +2,7 @@
 // keyword for all four boards (no category picker: on Remember/Saramin a category
 // replaces the keyword and matched fewer real postings), optional years and
 // "today only", saved conditions, and one-click save into the jobs list.
-import { el, get, post, put, Card, Btn, Field, Input, EmptyState, Spinner, icon, mount, clear, toastOk, toastError } from '/lib.js';
+import { el, get, post, put, Card, Btn, Field, Input, EmptyState, Spinner, icon, mount, clear, toastOk, toastError, GradePill } from '/lib.js';
 import { t } from '/i18n.js';
 
 const site = (s) => t('search.site.' + s);
@@ -57,6 +57,8 @@ export async function render(ctx) {
 
   function row(r) {
     const trail = el('div', { class: 'flex gap-2' });
+    // Company researched earlier (from a saved posting): show its health right in the results.
+    if (r.company_grade && r.company_grade !== 'U') trail.append(GradePill(r.company_grade, t('company.grade.' + r.company_grade), t('company.gradeTitle')));
     if (r.saved_job_id) trail.append(savedBadge(r.saved_job_id));
     else trail.append(Btn(t('search.save'), { icon: 'plus', sm: true, onClick: () => saveJob(r, trail) }));
     const meta = [

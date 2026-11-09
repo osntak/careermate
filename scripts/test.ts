@@ -1066,8 +1066,23 @@ section('10) 공고 검색: 처음 본 날·게시일 필터·사이트 간 중�
     ok('POST /api/job-search: 토큰 없으면 403(다른 사이트가 검색을 시키지 못함)', noToken.status === 403);
     const badPrefs = await authed('PUT', '/api/job-search/preferences', { saramin_categories: ['999999'] });
     ok('PUT /api/job-search/preferences: 분류표에 없는 코드는 400', badPrefs.status === 400, badPrefs.text);
-    await call('POST', '/api/jobs', { company: 'a', position: 'a', url: 'https://career.rememberapp.co.kr/job/posting/1' });
+    const savedA = await call('POST', '/api/jobs', { company: 'a', position: 'a', url: 'https://career.rememberapp.co.kr/job/posting/1' });
+    // Company health is per company: "(주) A" and "a" are the same company.
+    const { companyHealthRepo, companyKey } = await import('../packages/db/src/index.ts');
+    ok('companyKey: (주)·주식회사·Corp·공백·대소문자 무시', companyKey('(주) 든든 테크') === companyKey('주식회사 든든테크') && companyKey('Kakao Corp.') === companyKey('kakao'));
+    companyHealthRepo.save({ company: '(주) A', grade: 'C', summary: '2년 연속 적자', metrics: {}, red_flags: [], green_flags: [], sources: [{ name: 'DART' }] });
+    const jobsWithGrade = await call('GET', '/api/jobs');
+    ok('회사 상태: 공고 목록에 등급 표시', jobsWithGrade.jobs.find((j: { company: string }) => j.company === 'a')?.company_grade === 'C');
+    const detail = await call('GET', `/api/jobs/${savedA.job?.id ?? savedA.id}`);
+    ok('회사 상태: 공고 상세에 근거 포함', detail.job?.company_health?.summary === '2년 연속 적자', JSON.stringify(detail.job?.company_health));
+    const { getApplicationContext } = await import('../packages/core/src/index.ts');
+    ok('회사 상태: 적합도 분석용 컨텍스트에 포함', (getApplicationContext({ job_id: savedA.job?.id ?? savedA.id }).company_health as { grade?: string } | null)?.grade === 'C');
     const web = await call('POST', '/api/job-search', { keyword: '프론트엔드', sources: ['remember'], years: 5 });
+    ok(
+      '회사 상태: 공고 찾기 결과에도 같은 회사 등급',
+      web.results?.[0]?.company_grade === 'C' && web.results?.[1]?.company_grade === null,
+      JSON.stringify(web.results?.map((r: { company: string; company_grade: string | null }) => [r.company, r.company_grade])),
+    );
     ok(
       'POST /api/job-search: years 적용, 이미 저장한 공고는 saved_job_id로 표시',
       web.results?.length === 2 && !!web.results[0].saved_job_id && web.results[1].saved_job_id === null && web.filtered_out === 2,
