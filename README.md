@@ -38,6 +38,7 @@
 - **공고 검색·가져오기** - 키워드(직무·기술)나 직무 분류로 원티드·점핏·리멤버·사람인 같은 공개 채용 사이트에서 공고를 바로 가져와, 마음에 드는 것만 저장. 영업·회계·간호·생산직 등 모든 직군의 분류표가 내장돼 있어, 내 직무를 검색 조건으로 저장해 두면 "오늘 올라온 공고 보여줘" 한마디로 새 공고만 볼 수 있습니다(여러 사이트에 함께 올라온 공고는 한 줄로 합침). 키 발급·설치 없이 동작하며, 공개 공고를 *가져오기만* 합니다(봇 차단 우회·자동 대량수집 없음, 보내는 건 검색어·직무 조건뿐). 경력 연차를 말하면 그 연차가 경력 범위에 들어가는 공고만 남깁니다(5년이면 "3~10년"은 남기고 "8~20년"은 뺌). 잡코리아는 robots.txt 제약 때문에 넣지 않았습니다. 대시보드의 **공고 찾기** 화면에서도 같은 검색을 하고 클릭 한 번으로 저장할 수 있습니다.
 - **채용공고 파싱** — 붙여넣거나 가져온 공고 텍스트를 구조화해 저장.
 - **로컬 대시보드** - 프레임워크·CDN 없는 바닐라 JS로 만든 8페이지 웹 화면(다크모드 지원).
+- **PC 여러 대에서 쓰기** - 내 Google Drive나 비공개 GitHub 저장소를 거쳐 같은 데이터를 씁니다. 설정에서 연결하거나 AI에게 부탁하면 됩니다. 기본은 꺼져 있고, CareerMate 서버로는 아무것도 보내지 않습니다([외부 저장소 연결](#외부-저장소-연결-pc-여러-대에서-쓰기)).
 - **데이터 내보내기/삭제** — Settings 페이지에서 직접.
 
 > **예: 공고 검색** — "백엔드 공고 찾아줘"라고 하면 AI가 공개 사이트에서 공고를 모아 이렇게 보여주고, 고른 것만 저장합니다(직무를 저장해 뒀다면 "오늘 올라온 공고 보여줘"만으로도 됩니다):
@@ -170,6 +171,7 @@ AI 클라이언트에 연결된 상태라면 "대시보드 열어줘"만으로�
 | 저장 전 점검 | `validate_cover_letter` (자소서 저장 전 미리보기) · `set_verify_mode` (점검 엄격도 기본/엄격) |
 | 대시보드/활동 | `open_dashboard` · `open_application` · `list_recent_activity` · `get_followups` · `get_pipeline_stats` · `get_workflow_guide` |
 | 업데이트 | `check_for_update` · `update_careermate` |
+| 외부 저장소 | `connect_external_storage` (사용자가 요청할 때만) |
 
 이 도구들 위에 7종의 워크플로우가 정의되어 있어 AI가 단계별로 자연스럽게 안내합니다: 핵심 6종(`onboarding`, `analyze_job`, `write_cover_letter`, `write_career_description`, `manage_application_status`, `prepare_interview`)과 LinkedIn·포트폴리오용 `build_personal_brand`.
 
@@ -240,7 +242,7 @@ CareerMate/
 
 ## 외부 저장소 연결 (PC 여러 대에서 쓰기)
 
-집과 회사처럼 PC 두 대에서 같은 데이터를 쓰려면 대시보드 **설정 > 외부 저장소 연결 > 폴더 연결**에서 폴더를 고르세요. Google Drive, OneDrive, Dropbox, iCloud Drive 폴더(데스크톱 앱이 파일을 옮김)나 비공개 GitHub 저장소를 clone한 폴더(CareerMate가 내 git 로그인으로 pull, commit, push)를 쓸 수 있습니다.
+집과 회사처럼 PC 두 대에서 같은 데이터를 쓰려면 AI에게 "Google Drive로 연결해줘" 또는 "이 GitHub 주소로 연결해줘"라고 말하세요. 대시보드 **설정 > 외부 저장소 연결 > 폴더 연결**에서 직접 폴더를 골라도 됩니다. 다른 PC에서도 CareerMate를 업데이트하고 같은 말을 하면 됩니다. Google Drive, OneDrive, Dropbox, iCloud Drive 폴더(데스크톱 앱이 파일을 옮김)나 비공개 GitHub 저장소를 clone한 폴더(CareerMate가 내 git 로그인으로 pull, commit, push)를 쓸 수 있습니다.
 
 - **주의**: 외부 저장소에는 개인 데이터 전부가 들어갑니다. GitHub 저장소는 반드시 비공개로, Drive 폴더는 공유하지 마세요.
 - 두 PC에서 따로 고치면 이 PC 데이터가 남고 다른 PC 버전은 `backups/`에 보관됩니다(자동 병합 없음).
@@ -333,6 +335,7 @@ You can open the dashboard at any time to see your stored data. For a step-by-st
 - **Job search & import** - Pull postings by keyword (role/skill) or job category straight from public job boards (Wanted, Jumpit, Remember, Saramin) and save only the ones you like. Category tables for every occupation (sales, accounting, nursing, manufacturing...) are built in: save your role as a search condition and "show me today's new postings" returns only new ones, with the same posting from several boards folded into one row. No API key or setup; it only *fetches* public postings (no bot-protection bypass, no bulk harvesting; only the search keyword and job category are sent). Give your years of experience and it keeps only postings whose experience range covers them (5 years keeps "3-10 yrs" and drops "8-20 yrs"). JobKorea is left out because of its robots.txt. The dashboard's **Find jobs** screen runs the same search and saves a posting in one click.
 - **Job-posting parsing** — Turn pasted or imported posting text into structured records.
 - **Local dashboard** - An 8-page web UI built with framework-free, CDN-free vanilla JS (dark mode supported).
+- **Use it on several PCs** - Share the same data through your own Google Drive or a private GitHub repo. Connect it in Settings or ask your AI. Off by default; nothing goes to a CareerMate server ([External storage](#external-storage-using-several-pcs)).
 - **Export / delete your data** — Directly from the Settings page.
 
 > **Example: job search** — Ask "find backend jobs" and the AI gathers postings from public boards, presents them like this, and saves only the ones you pick (with a saved role, "show me today's new postings" is enough):
@@ -465,6 +468,7 @@ Dark mode is supported.
 | Pre-save check | `validate_cover_letter` (dry-run preview before saving) · `set_verify_mode` (check strictness: default/strict) |
 | Dashboard / activity | `open_dashboard` · `open_application` · `list_recent_activity` · `get_followups` · `get_pipeline_stats` · `get_workflow_guide` |
 | Update | `check_for_update` · `update_careermate` |
+| External storage | `connect_external_storage` (only when the user asks) |
 
 On top of these tools, seven workflows are defined so the AI can guide you naturally, step by step: the six core flows (`onboarding`, `analyze_job`, `write_cover_letter`, `write_career_description`, `manage_application_status`, `prepare_interview`) plus `build_personal_brand` for LinkedIn/portfolio assets.
 
@@ -536,7 +540,7 @@ CareerMate/
 
 ## External storage (using several PCs)
 
-To use the same data on two PCs (say, home and work), pick a folder in the dashboard under **Settings > External storage > Connect folder**. It can be a Google Drive, OneDrive, Dropbox or iCloud Drive folder (the desktop app moves the files) or a clone of a private GitHub repository (CareerMate runs pull, commit and push with your own git login).
+To use the same data on two PCs (say, home and work), tell your AI "connect to Google Drive" or "connect to this GitHub repo". You can also pick a folder in the dashboard under **Settings > External storage > Connect folder**. On the other PC, update CareerMate and say the same thing. It can be a Google Drive, OneDrive, Dropbox or iCloud Drive folder (the desktop app moves the files) or a clone of a private GitHub repository (CareerMate runs pull, commit and push with your own git login).
 
 - **Warning**: external storage gets all your personal data. Keep the GitHub repository private and do not share the Drive folder.
 - If both PCs changed separately, this PC's data wins and the other PC's version is kept in `backups/` (no automatic merge).

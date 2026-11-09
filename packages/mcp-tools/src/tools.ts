@@ -52,6 +52,12 @@ import {
   setJobSearchPreferences,
   photoForExport,
   getSyncStatus,
+  setSyncDir,
+  connectGitRepo,
+  connectGoogleDrive,
+  defaultCloneDir,
+  StorageConnectError,
+  type ConnectResult,
 } from '@careermate/db';
 import {
   getOnboardingStatus,
@@ -114,6 +120,58 @@ import { extractDocument } from '@careermate/parsers';
 import { ok, fail, type ToolDef } from './result.ts';
 import { resolveDashboardUrl, openInBrowser, openInFileManager } from './bridge.ts';
 import { getUpdateStatus, getUpdateStatusAsync, runSelfUpdate } from './update.ts';
+
+/* ------------------------------------------- external storage: user-facing guides */
+// Written for non-technical users; the AI relays them in the user's language.
+
+const STORAGE_GUIDE = `다른 PC에서도 같은 데이터를 쓰려면 '외부 저장소'를 하나 연결하면 됩니다. 편한 쪽을 고르세요.
+
+1. Google Drive (가장 쉬움)
+   이 PC에 Google Drive 데스크톱 앱이 설치되어 로그인되어 있으면 "Google Drive로 연결해줘"라고만 말하면 됩니다. 다른 PC도 같은 Google 계정으로 Drive 앱에 로그인해 두면 됩니다.
+
+2. GitHub 비공개 저장소
+   GitHub 계정이 있다면 변경 기록까지 남습니다. 저장소 주소를 알려 주세요. 아직 저장소가 없으면 만드는 방법을 안내해 드릴게요.
+
+꼭 알아 두세요
+- 이력서, 자기소개서 같은 개인정보가 모두 그곳에 저장됩니다. GitHub 저장소는 반드시 비공개(Private)로, Drive 폴더는 다른 사람과 공유하지 마세요.
+- 연결하지 않으면 지금처럼 데이터는 이 컴퓨터에만 있습니다.`;
+
+const REPO_GUIDE = `GitHub 비공개 저장소 만드는 법 (1분이면 됩니다)
+
+1. github.com 에 로그인합니다. 계정이 없으면 Sign up 으로 먼저 만듭니다.
+2. 오른쪽 위 + 버튼을 누르고 New repository 를 고릅니다.
+3. Repository name 에 careermate-data 처럼 이름을 넣습니다.
+4. 아래에서 반드시 Private 을 고릅니다. (Public 이면 누구나 내 이력서를 볼 수 있어요)
+5. 다른 칸은 그대로 두고 Create repository 를 누릅니다.
+6. 화면에 나오는 주소(https://github.com/아이디/careermate-data.git)를 복사해서 알려 주세요. 바로 연결해 드릴게요.`;
+
+const IDENTITY_GUIDE = `한 가지 더: 이 PC의 git 에 이름과 이메일이 설정되어 있지 않아 아직 GitHub 로 올리지 못하고 있어요. 터미널(Windows는 PowerShell)을 열고 아래 두 줄을 한 번만 실행해 주세요. 그다음부터는 자동으로 올라갑니다.
+git config --global user.name "내 이름"
+git config --global user.email "내 이메일"`;
+
+function storageErrorGuide(e: StorageConnectError, url?: string): string {
+  switch (e.code) {
+    case 'public_repo':
+      return '이 저장소는 누구나 볼 수 있는 공개(Public) 저장소라 연결하지 않았어요. 개인정보가 모두 올라가기 때문입니다.\n\nGitHub 에서 그 저장소를 열고 Settings > General 맨 아래 Danger Zone > Change visibility 에서 Private 으로 바꾼 뒤 다시 말해 주세요.';
+    case 'git_missing':
+      return '이 PC에 git 이 설치되어 있지 않아요.\n\n- https://git-scm.com 에서 Git 을 설치한 뒤(설치 중 선택지는 기본값 그대로) 다시 말해 주세요.\n- 설치가 번거롭다면 Google Drive 방식이 더 쉽습니다.';
+    case 'clone_failed': {
+      const notFound = /not found|does not exist|could not read|authentication|permission denied|403|401/i.test(e.message);
+      const dir = defaultCloneDir();
+      return notFound
+        ? `저장소를 가져오지 못했어요. 주소가 맞는지, 그리고 이 PC가 GitHub 에 로그인되어 있는지 확인해 주세요.\n\n로그인이 안 되어 있다면: 터미널(Windows는 PowerShell)에서 아래 명령을 한 번 직접 실행하세요. GitHub 로그인 창이 뜨면 로그인하면 되고, 끝나면 "다시 연결해줘"라고 말해 주세요.\ngit clone ${url ?? '<저장소 주소>'} "${dir}"`
+        : `저장소를 가져오지 못했어요: ${e.message}\n\n인터넷 연결을 확인한 뒤 다시 시도해 주세요.`;
+    }
+    case 'target_busy':
+      return `${defaultCloneDir()} 폴더에 이미 다른 내용이 있어서 쓸 수 없어요. 그 폴더 이름을 바꾸거나 비운 뒤 다시 말해 주세요.`;
+    case 'drive_not_found':
+      return 'Google Drive 데스크톱 앱 폴더를 찾지 못했어요.\n\n1. https://www.google.com/drive/download/ 에서 "Google Drive for desktop"을 설치합니다.\n2. 앱에서 Google 계정으로 로그인합니다.\n3. 다시 "Google Drive로 연결해줘"라고 말해 주세요.\n\n이미 설치했는데도 안 된다면, Drive 안에 만들고 싶은 폴더 경로를 알려 주셔도 됩니다.';
+    case 'env_locked':
+      return '이 PC는 CAREERMATE_SYNC_DIR 환경변수로 이미 외부 저장소가 지정되어 있어서 여기서는 바꿀 수 없어요. 바꾸려면 그 환경변수를 지우고 CareerMate 를 다시 시작하세요.';
+    case 'bad_url':
+      return '저장소 주소 형식이 아니에요. GitHub 저장소 화면의 초록색 Code 버튼을 누르면 나오는 https://github.com/... 주소를 복사해 알려 주세요.';
+  }
+}
 
 const STATUS_LIST = APPLICATION_STATUSES.map((s) => `${s}(${APPLICATION_STATUS_LABELS[s]})`).join(', ');
 const DELETE_CONFIRMATION = 'DELETE';
@@ -331,7 +389,7 @@ export const TOOLS: ToolDef[] = [
     name: 'get_onboarding_status',
     title: '온보딩 상태 확인',
     description:
-      'CareerMate에 어떤 정보가 준비되어 있는지(프로필·이력서·경력·스킬·자소서·공고) 확인하고, 사용자가 지금 해야 할 다음 단계를 돌려줍니다. AI 클라이언트가 연결된 직후 가장 먼저 호출하세요. 프로필 완성도(0~100)도 포함됩니다. sync 필드는 사용자가 직접 연결한 외부 저장소의 상태·경고를 알려줍니다. 먼저 권하지 말고, 사용자가 다른 PC에서도 쓰고 싶다고 할 때만 대시보드 설정의 외부 저장소 연결을 안내하세요.',
+      'CareerMate에 어떤 정보가 준비되어 있는지(프로필·이력서·경력·스킬·자소서·공고) 확인하고, 사용자가 지금 해야 할 다음 단계를 돌려줍니다. AI 클라이언트가 연결된 직후 가장 먼저 호출하세요. 프로필 완성도(0~100)도 포함됩니다. sync 필드는 사용자가 직접 연결한 외부 저장소의 상태·경고를 알려줍니다. 먼저 권하지 말고, 사용자가 다른 PC에서도 쓰고 싶다고 할 때만 connect_external_storage로 연결하세요.',
     inputSchema: {},
     readOnly: true,
     handler: () => {
@@ -1516,6 +1574,55 @@ export const TOOLS: ToolDef[] = [
   },
 
   /* ----------------------------------------------------------------- update */
+  {
+    name: 'connect_external_storage',
+    // git clone/ls-remote reach the user's own git host; Drive mode only touches a local folder.
+    openWorld: true,
+    title: '외부 저장소 연결',
+    description:
+      '다른 PC에서도 같은 CareerMate 데이터를 쓰도록 Google Drive 폴더나 비공개 GitHub 저장소를 연결하거나 해제합니다. 사용자가 먼저 "다른 PC에서도 쓰고 싶다/저장소 연결해줘"라고 요청했을 때만 호출하고, 묻지 않았는데 권하지 마세요. method를 생략하면 아무것도 바꾸지 않고 두 방식을 고르는 안내만 돌려줍니다. method=git이면 repo_url(비공개 저장소 주소)을 ~/CareerMate-sync 에 clone해 연결합니다(공개 저장소는 거부). 사용자에게 저장소가 없으면 method=repo_guide로 만드는 방법을 받아 안내하세요. 당신이 명령을 실행할 수 있고 gh CLI가 로그인되어 있으면 `gh repo create careermate-data --private`로 대신 만들 수 있습니다. method=google_drive는 Google Drive 데스크톱 앱 폴더 안에 CareerMate 폴더를 만들어 연결합니다. method=folder는 path 폴더를 그대로 연결, method=disconnect는 연결 해제(폴더는 남음). 응답의 user_message를 사용자 언어로 그대로 전달하세요.',
+    inputSchema: {
+      method: z
+        .enum(['guide', 'repo_guide', 'git', 'google_drive', 'folder', 'disconnect'])
+        .optional()
+        .describe('생략하면 guide(설명만). repo_guide는 GitHub 비공개 저장소 만드는 법'),
+      repo_url: z.string().max(500).optional().describe('method=git: 비공개 저장소 주소(https://github.com/아이디/저장소.git 등)'),
+      path: z.string().max(1000).optional().describe('method=folder: 연결할 폴더의 절대 경로'),
+    },
+    handler: async (args) => {
+      const method = args.method ?? 'guide';
+      const say = (user_message: string, extra: Record<string, unknown> = {}) => ok(user_message, { user_message, ...extra });
+      if (method === 'guide') return say(STORAGE_GUIDE, { status: getSyncStatus() });
+      if (method === 'repo_guide') return say(REPO_GUIDE);
+      try {
+        if (method === 'disconnect') {
+          await setSyncDir(null);
+          return say('외부 저장소 연결을 해제했어요. 폴더와 그 안의 파일은 그대로 남아 있고, 이제 데이터는 이 컴퓨터에만 저장됩니다.', { status: getSyncStatus() });
+        }
+        let res: ConnectResult;
+        if (method === 'git') {
+          if (!args.repo_url) return say('연결할 GitHub 비공개 저장소 주소를 알려 주세요. 저장소가 아직 없다면 만드는 방법을 안내해 드릴게요.');
+          res = await connectGitRepo(args.repo_url);
+        } else if (method === 'google_drive') {
+          res = await connectGoogleDrive();
+        } else {
+          if (!args.path) return say('연결할 폴더 경로를 알려 주세요.');
+          res = { status: await setSyncDir(args.path), dir: args.path, how: 'folder' };
+        }
+        const lines = [
+          `연결했어요. 이제 CareerMate 데이터가 이 폴더로 자동 저장되고 다른 PC와 주고받습니다:\n${res.dir}`,
+          '다른 PC에서도 CareerMate를 최신으로 올린 뒤 같은 방법으로 연결하면 이 데이터를 그대로 받아 옵니다.',
+          '상태는 대시보드 설정 > 외부 저장소 연결에서 볼 수 있어요.',
+        ];
+        if (res.needs_git_identity) lines.push(IDENTITY_GUIDE);
+        if (res.status.last_error) lines.push(`첫 동기화에서 문제가 있었어요: ${res.status.last_error}`);
+        return say(lines.join('\n\n'), { status: res.status, dir: res.dir, how: res.how });
+      } catch (e) {
+        if (e instanceof StorageConnectError) return say(storageErrorGuide(e, args.repo_url), { error: e.code });
+        return say(`연결하지 못했어요: ${e instanceof Error ? e.message : String(e)}`, { error: 'failed' });
+      }
+    },
+  },
   {
     name: 'check_for_update',
     // npm 레지스트리로 버전 조회가 나간다(사용자 데이터 미전송).

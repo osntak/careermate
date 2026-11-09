@@ -198,8 +198,8 @@ const tool = (name: string) => {
     TOOLS.filter(pred).map((t) => t.name).sort();
   const openWorld = names((t) => t.openWorld === true);
   ok(
-    'openWorldHint = 실제 외부 통신 3종만(check_for_update·search_jobs·update_careermate)',
-    JSON.stringify(openWorld) === JSON.stringify(['check_for_update', 'search_jobs', 'update_careermate']),
+    'openWorldHint = 실제 외부 통신 4종만(check_for_update·connect_external_storage·search_jobs·update_careermate)',
+    JSON.stringify(openWorld) === JSON.stringify(['check_for_update', 'connect_external_storage', 'search_jobs', 'update_careermate']),
   );
   const destructive = names((t) => t.destructive === true);
   ok(

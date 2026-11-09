@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync, execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const SELF = fileURLToPath(import.meta.url);
 
@@ -37,6 +37,17 @@ if (process.argv[2] === 'child') {
         out.error = (e as Error).message;
       }
     } else if (cmd === 'where') out.dataDir = db.getDataDir();
+    else if (cmd === 'gitconnect') {
+      try {
+        out.connect = await db.connectGitRepo(op.slice(cmd.length + 1));
+      } catch (e) {
+        out.error = (e as { code?: string }).code ?? (e as Error).message;
+      }
+    } else if (cmd === 'tool') {
+      const { TOOLS } = await import('../packages/mcp-tools/src/index.ts');
+      const r = await TOOLS.find((t) => t.name === 'connect_external_storage')!.handler({ method: arg });
+      out.text = r.text;
+    }
   }
   db.closeDb();
   console.log('RESULT ' + JSON.stringify(out));
@@ -61,6 +72,8 @@ interface ChildOut {
   error?: string;
   moved?: { data_dir: string; copied: boolean };
   dataDir?: string;
+  connect?: { dir: string; how: string; status: Status & { mode?: string } };
+  text?: string;
 }
 /** `dataDir` null = no CAREERMATE_DATA_DIR; `home` then stands in for the user's home folder. */
 function pc(dataDir: string | null, syncDir: string | null, ...ops: string[]): ChildOut {
@@ -125,6 +138,27 @@ try {
     const after = pc(null, null, 'where', 'read');
     ok('데이터 폴더 변경: 다시 시작하면 새 폴더와 데이터', after.dataDir === NEW && after.name === 'Mover', JSON.stringify(after));
     ok('데이터 폴더: 환경변수로 지정되면 못 바꿈', !!pc(path.join(tmp, 'locked'), null, 'movedata=' + NEW).error);
+  }
+
+  /* ---- AI tool: connect by repo URL (clones into ~/CareerMate-sync) */
+  {
+    const R2 = path.join(tmp, 'tool-remote.git');
+    execFileSync('git', ['init', '--quiet', '--bare', R2]);
+    const url = pathToFileURL(R2).href;
+    const g = pc(null, null, 'name=ToolUser', 'gitconnect=' + url);
+    const cloneDir = path.join(tmp, 'home', 'CareerMate-sync');
+    ok('저장소 주소로 연결: clone 후 git 방식으로 켜짐', g.connect?.dir === cloneDir && g.connect.status.mode === 'git' && fs.existsSync(path.join(cloneDir, 'careermate', 'meta.json')), JSON.stringify(g));
+    const pushed = Number(execFileSync('git', ['--git-dir', R2, 'rev-list', '--count', '--all'], { encoding: 'utf8' }).trim() || 0);
+    ok('저장소 주소로 연결: 바로 push 까지', pushed >= 1, String(pushed));
+    ok('같은 주소로 다시 연결하면 기존 clone 재사용', !pc(null, null, 'gitconnect=' + url).error);
+    const other = path.join(tmp, 'other.git');
+    execFileSync('git', ['init', '--quiet', '--bare', other]);
+    ok('다른 저장소인데 폴더가 이미 쓰이면 거부', pc(null, null, 'gitconnect=' + pathToFileURL(other).href).error === 'target_busy');
+    ok('주소 형식이 아니면 거부', pc(null, null, 'gitconnect=not a url').error === 'bad_url');
+    const guide = pc(null, null, 'tool=guide').text ?? '';
+    ok('안내 모드: 두 방식과 개인정보 주의를 설명', guide.includes('Google Drive') && guide.includes('GitHub') && guide.includes('비공개'), guide.slice(0, 80));
+    ok('저장소 만들기 안내: Private 선택 단계 포함', (pc(null, null, 'tool=repo_guide').text ?? '').includes('Private'));
+    pc(null, null, 'disconnect');
   }
 
   /* ---- folder mode */

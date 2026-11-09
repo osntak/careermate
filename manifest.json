@@ -81,6 +81,7 @@
     { "name": "validate_cover_letter", "description": "자기소개서 자동 점검 (저장 전 미리보기)" },
     { "name": "set_verify_mode", "description": "점검 모드 설정 (기본/엄격)" },
     { "name": "get_writing_style_guide", "description": "AI 티 안 나는 글쓰기 가이드" },
+    { "name": "connect_external_storage", "description": "외부 저장소 연결 (다른 PC와 데이터 공유)" },
     { "name": "check_for_update", "description": "업데이트 확인" },
     { "name": "update_careermate", "description": "CareerMate 업데이트" }
   ],

@@ -266,12 +266,12 @@ interface GitResult {
   stdout: string;
   stderr: string;
 }
-function git(dir: string, args: string[]): Promise<GitResult> {
+function git(dir: string, args: string[], env: NodeJS.ProcessEnv = GIT_ENV): Promise<GitResult> {
   return new Promise((resolve) => {
     execFile(
       'git',
       args,
-      { cwd: dir, timeout: GIT_TIMEOUT_MS, windowsHide: true, maxBuffer: 64 * 1024 * 1024, env: GIT_ENV },
+      { cwd: dir, timeout: GIT_TIMEOUT_MS, windowsHide: true, maxBuffer: 64 * 1024 * 1024, env },
       (err, stdout, stderr) => resolve({ ok: !err, stdout: String(stdout).trim(), stderr: String(stderr || (err ? errMsg(err) : '')).trim() }),
     );
   });
@@ -569,4 +569,103 @@ export async function startSync(): Promise<void> {
     setInterval(() => void runSyncCycle({ fetch: true }).catch(() => {}), REMOTE_INTERVAL_MS).unref();
   }
   await Promise.race([first, new Promise((r) => setTimeout(r, 15_000).unref())]);
+}
+
+/* ------------------------------------------------- connect for the AI tool */
+
+/** Machine-readable reason, so the MCP tool can answer each case with a plain-language guide. */
+export class StorageConnectError extends Error {
+  constructor(
+    public code: 'env_locked' | 'bad_url' | 'git_missing' | 'public_repo' | 'clone_failed' | 'target_busy' | 'drive_not_found',
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+export interface ConnectResult {
+  status: SyncStatus;
+  dir: string;
+  how: 'git' | 'google_drive' | 'folder';
+  /** git only: no user.name/email, so commits (and so pushes) will fail until it is set. */
+  needs_git_identity?: boolean;
+}
+
+/** Where a repo given by URL is cloned. One fixed, visible place so the user can find it. */
+export const defaultCloneDir = (): string => path.join(os.homedir(), 'CareerMate-sync');
+
+/** git@host:owner/repo or ssh://git@host/owner/repo -> https://host/owner/repo, for the anonymous check. */
+function toHttps(url: string): string | null {
+  if (/^https:\/\//.test(url)) return url;
+  const scp = url.match(/^[\w.-]+@([\w.-]+):(.+)$/);
+  if (scp) return `https://${scp[1]}/${scp[2]}`;
+  const ssh = url.match(/^ssh:\/\/(?:[\w.-]+@)?([\w.-]+)(?::\d+)?\/(.+)$/);
+  return ssh ? `https://${ssh[1]}/${ssh[2]}` : null;
+}
+
+/**
+ * True when anyone can read the repo: an anonymous read (no stored login, no prompt)
+ * succeeds. The snapshot holds every bit of personal data, so a public repo is refused.
+ */
+async function isPublicRepo(url: string): Promise<boolean> {
+  const https = toHttps(url);
+  if (!https) return false;
+  const anon = { ...GIT_ENV, GIT_ASKPASS: '', SSH_ASKPASS: '' };
+  return (await git(os.tmpdir(), ['-c', 'credential.helper=', 'ls-remote', '--heads', https], anon)).ok;
+}
+
+async function needsIdentity(dir: string): Promise<boolean> {
+  const name = await git(dir, ['config', 'user.name']);
+  const email = await git(dir, ['config', 'user.email']);
+  return !name.stdout || !email.stdout;
+}
+
+/** Clone a private repo into ~/CareerMate-sync (or reuse that clone) and connect it. */
+export async function connectGitRepo(url: string): Promise<ConnectResult> {
+  url = url.trim();
+  if (process.env.CAREERMATE_SYNC_DIR?.trim()) throw new StorageConnectError('env_locked', 'CAREERMATE_SYNC_DIR 환경변수로 이미 지정되어 있습니다.');
+  if (!/^(https:\/\/|ssh:\/\/|file:\/\/|[\w.-]+@[\w.-]+:)/.test(url)) throw new StorageConnectError('bad_url', '저장소 주소 형식이 아닙니다.');
+  if (!(await git(os.homedir(), ['--version'])).ok) throw new StorageConnectError('git_missing', 'git 이 설치되어 있지 않습니다.');
+  if (await isPublicRepo(url)) throw new StorageConnectError('public_repo', '누구나 읽을 수 있는 공개 저장소입니다.');
+
+  const dir = defaultCloneDir();
+  const used = fs.existsSync(dir) && fs.readdirSync(dir).length > 0;
+  if (used) {
+    const origin = isGit(dir) ? (await git(dir, ['config', '--get', 'remote.origin.url'])).stdout : '';
+    const same = (u: string) => u.replace(/\.git$/, '').replace(/\/$/, '').toLowerCase();
+    if (!origin || same(origin) !== same(url)) throw new StorageConnectError('target_busy', `${dir} 폴더가 이미 다른 용도로 쓰이고 있습니다.`);
+  } else {
+    const r = await git(os.homedir(), ['clone', '--quiet', url, dir]);
+    if (!r.ok) throw new StorageConnectError('clone_failed', r.stderr);
+  }
+  const status = await setSyncDir(dir);
+  return { status, dir, how: 'git', needs_git_identity: await needsIdentity(dir) };
+}
+
+/** The Google Drive for desktop root on this PC, if it is installed and signed in. */
+export function findGoogleDrive(): string | null {
+  const names = ['내 드라이브', 'My Drive'];
+  const roots: string[] = [];
+  if (process.platform === 'win32') {
+    for (const letter of 'DEFGHIJKLMNOPQRSTUVWXYZ') roots.push(`${letter}:\\`);
+  } else if (process.platform === 'darwin') {
+    const base = path.join(os.homedir(), 'Library', 'CloudStorage');
+    try {
+      for (const d of fs.readdirSync(base)) if (d.startsWith('GoogleDrive-')) roots.push(path.join(base, d));
+    } catch {
+      /* no CloudStorage folder */
+    }
+  }
+  for (const root of roots) for (const n of names) if (fs.existsSync(path.join(root, n))) return path.join(root, n);
+  return null;
+}
+
+/** Make (or reuse) a CareerMate folder inside Google Drive and connect it. */
+export async function connectGoogleDrive(): Promise<ConnectResult> {
+  if (process.env.CAREERMATE_SYNC_DIR?.trim()) throw new StorageConnectError('env_locked', 'CAREERMATE_SYNC_DIR 환경변수로 이미 지정되어 있습니다.');
+  const root = findGoogleDrive();
+  if (!root) throw new StorageConnectError('drive_not_found', 'Google Drive 데스크톱 앱 폴더를 찾지 못했습니다.');
+  const dir = path.join(root, 'CareerMate');
+  fs.mkdirSync(dir, { recursive: true });
+  return { status: await setSyncDir(dir), dir, how: 'google_drive' };
 }
