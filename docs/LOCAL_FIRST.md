@@ -15,7 +15,7 @@ These records are not uploaded to a CareerMate account or CareerMate-operated da
 
 ## External storage (the one exception)
 
-Unless the user connects external storage (dashboard **Settings > External storage**, or `CAREERMATE_SYNC_DIR`), nothing above leaves the data folder. When connected, a copy of all data goes to the Drive-style folder or private GitHub repository the user chose, never to a CareerMate server. Agents must not connect it or suggest it unprompted. Setup: [`INSTALL.md`](../INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기).
+Unless the user connects external storage (dashboard **Settings > External storage**, the `connect_external_storage` tool when the user asks the AI, or `CAREERMATE_SYNC_DIR`), nothing above leaves the data folder. When connected, a copy of all data goes to the Drive-style folder or private GitHub repository the user chose, never to a CareerMate server. Agents must not suggest it unprompted and connect it only when the user asks. Setup: [`INSTALL.md`](../INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기).
 
 ## Optional network activity
 

@@ -16,7 +16,7 @@ CareerMate는 **MCP-우선** 로컬 커리어 관리 도구입니다. 사용자�
 
 | 읽기전용(✅) 도구 | 쓰기/부수효과(✏️) 도구 |
 | --- | --- |
-| `read_document`, `read_inbox`, `get_onboarding_status`, `get_profile`, `get_resumes`, `get_experiences`, `get_projects`, `get_skills`, `get_cover_letters`, `get_job_posting`, `list_jobs`, `prescreen_job`, `search_jobs`, `find_job_categories`, `get_job_search_preferences`, `compare_offers`, `get_offer`, `get_application_context`, `list_recent_activity`, `get_followups`, `get_pipeline_stats`, `get_workflow_guide`, `get_playbook`, `get_verifier`, `validate_cover_letter`, `get_writing_style_guide`, `check_for_update` | `open_inbox`, `save_profile`, `add_resume`, `delete_resume`, `add_experience`, `delete_experience`, `add_project`, `delete_project`, `add_skill`, `delete_skill`, `save_cover_letter_version`, `delete_cover_letter`, `set_verify_mode`, `set_job_search_preferences`, `save_job_posting`, `delete_job_posting`, `save_fit_analysis`, `update_application_status`, `save_interview_prep`, `save_offer`, `export_cover_letter`, `export_resume`, `export_profile`, `open_dashboard`, `open_application`, `update_careermate` |
+| `read_document`, `read_inbox`, `get_onboarding_status`, `get_profile`, `get_resumes`, `get_experiences`, `get_projects`, `get_skills`, `get_cover_letters`, `get_job_posting`, `list_jobs`, `prescreen_job`, `search_jobs`, `find_job_categories`, `get_job_search_preferences`, `compare_offers`, `get_offer`, `get_application_context`, `list_recent_activity`, `get_followups`, `get_pipeline_stats`, `get_workflow_guide`, `get_playbook`, `get_verifier`, `validate_cover_letter`, `get_writing_style_guide`, `check_for_update` | `open_inbox`, `save_profile`, `add_resume`, `delete_resume`, `add_experience`, `delete_experience`, `add_project`, `delete_project`, `add_skill`, `delete_skill`, `save_cover_letter_version`, `delete_cover_letter`, `set_verify_mode`, `set_job_search_preferences`, `save_job_posting`, `delete_job_posting`, `save_fit_analysis`, `update_application_status`, `save_interview_prep`, `save_offer`, `export_cover_letter`, `export_resume`, `export_profile`, `open_dashboard`, `open_application`, `update_careermate`, `connect_external_storage` |
 
 ---
 
@@ -57,7 +57,7 @@ CLI 클라이언트(Claude Code·Codex 등)는 파일 첨부가 안 되므로, �
 
 AI 클라이언트가 연결되면 이 도구를 가장 먼저 호출해 상태를 파악한 뒤, 단계별 가이드가 필요하면 `get_workflow_guide('onboarding')`로 받으세요. 안내 흐름: 프로필 입력 → 이력서/경력·스킬 추가 → 대시보드 열기.
 
-**`sync` 필드 (외부 저장소 연결 상태).** `enabled`(연결 여부), `mode`(`'git'` 또는 `'folder'`, 꺼져 있으면 `null`), `last_sync_at`(마지막 동기화 시각), `last_error`, `warnings[]`(`{ code, message }`, 예: 두 PC에서 따로 고쳐 생긴 충돌)를 돌려줍니다. 오류나 경고가 있으면 응답 텍스트 끝에도 붙으니 사용자 언어로 풀어 전하세요. 연결하는 도구는 없습니다. 먼저 권하지 말고, 사용자가 다른 PC에서도 쓰고 싶다고 할 때만 [`INSTALL.md`](../INSTALL.md#외부-저장소-연결-pc-여러-대에서-쓰기)를 안내하세요.
+**`sync` 필드 (외부 저장소 연결 상태).** `enabled`(연결 여부), `mode`(`'git'` 또는 `'folder'`, 꺼져 있으면 `null`), `last_sync_at`(마지막 동기화 시각), `last_error`, `warnings[]`(`{ code, message }`, 예: 두 PC에서 따로 고쳐 생긴 충돌)를 돌려줍니다. 오류나 경고가 있으면 응답 텍스트 끝에도 붙으니 사용자 언어로 풀어 전하세요. 먼저 권하지 말고, 사용자가 연결해 달라고 할 때만 [`connect_external_storage`](#15-외부-저장소-external-storage)로 연결하세요.
 
 ---
 
@@ -324,6 +324,24 @@ CareerMate를 최신 버전으로 유지하기 위한 유지보수 도구입니�
 - 사용자가 "업데이트해줘", "CareerMate 업데이트해줘", "최신으로 올려줘"처럼 적용을 명시하면 `update_careermate`를 바로 호출합니다. 이 도구가 최신 버전 확인도 함께 하므로 별도 확인 질문은 필요 없습니다.
 - `update_careermate` 성공 후에는 적용을 위해 AI 앱(또는 MCP 연결) **재시작**이 필요합니다. 재시작 시 데이터베이스는 자동 마이그레이션되어 기존 데이터가 보존됩니다.
 - 자동 설치가 막히면(개발 모드·비표준 설치) 직접 칠 명령(`manual`)을 안내합니다.
+
+---
+
+## 15. 외부 저장소 (External Storage)
+
+PC 여러 대에서 같은 데이터를 쓰도록 Google Drive 같은 폴더나 비공개 GitHub 저장소를 연결합니다. 대시보드 **설정 > 외부 저장소 연결**과 같은 기능입니다.
+
+| 도구 | 목적 | 주요 입력 | 반환 | 언제 호출 | 읽기전용 |
+| --- | --- | --- | --- | --- | --- |
+| `connect_external_storage` | 외부 저장소 연결·해제와 안내 | `method?`(`guide` 기본 · `repo_guide` · `git` · `google_drive` · `folder` · `disconnect`), `repo_url?`(`git`), `path?`(`folder`) | `{ user_message, status?, dir?, how?, error? }` | 사용자가 "Google Drive로 연결해줘", "이 GitHub 주소로 연결해줘"처럼 요청할 때만 | ✏️ |
+
+- `guide`는 두 방식과 프라이버시를 설명만 하고 아무것도 바꾸지 않습니다. `repo_guide`는 github.com에서 비공개 저장소를 만드는 순서를 안내합니다.
+- `git`: 이 PC의 git 로그인으로 `~/CareerMate-sync`에 clone하고 연결합니다. 로그인 없이 읽히는 **공개 저장소는 거부**합니다. 그 폴더가 이미 같은 저장소의 clone이면 다시 씁니다.
+- `google_drive`: Drive 데스크톱 앱 폴더(예: `G:\내 드라이브`, `~/Library/CloudStorage/GoogleDrive-*/My Drive`)를 찾아 `CareerMate` 폴더를 만들고 연결합니다.
+- `disconnect`: 연결만 끊고 폴더는 남깁니다.
+- git 미설치, GitHub 미로그인, 공개 저장소, Drive 앱 미설치, git 사용자 이름·이메일 누락 같은 경우에도 `user_message`에 해결 안내가 담기니 사용자 언어로 전하세요.
+- 명령을 실행할 수 있고 `gh`에 로그인돼 있으면 `gh repo create careermate-data --private`로 저장소를 만들어도 됩니다. 아니면 `repo_guide`대로 안내합니다.
+- 먼저 권하지 마세요. 개인 데이터 전부가 그곳으로 갑니다. 사용자의 git 호스트와 통신하므로 openWorldHint가 켜져 있습니다.
 
 ---
 

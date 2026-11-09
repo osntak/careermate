@@ -103,7 +103,7 @@ try {
 
     // 정말로 밖으로 나가거나(임의 파일읽기·npm) 비가역(삭제)인 도구만 사전허용에서 제외 → 프롬프트 유지.
     // (아래 134줄 모듈 스코프 MUST_PROMPT와 동일하게 유지 — init.ts SENSITIVE_TOOLS 기준.)
-    const MUST_PROMPT = ['read_document', 'update_careermate', 'delete_cover_letter', 'delete_job_posting', 'delete_resume', 'delete_experience', 'delete_project', 'delete_skill'];
+    const MUST_PROMPT = ['read_document', 'update_careermate', 'connect_external_storage', 'delete_cover_letter', 'delete_job_posting', 'delete_resume', 'delete_experience', 'delete_project', 'delete_skill'];
     const leaked = MUST_PROMPT.filter((t) => allow.has(`mcp__careermate__${t}`));
     ok(`민감/파괴 도구는 사전허용 제외 (누출: ${leaked.join(', ') || '없음'})`, leaked.length === 0);
 
@@ -138,7 +138,7 @@ try {
 
 // 정말로 밖으로 나가거나(임의 파일읽기·npm) 비가역(삭제)인 도구는 모든 클라이언트에서 사전허용 제외.
 // init.ts의 SENSITIVE_TOOLS와 동일해야 한다(이 목록·위 105줄 목록 둘 다 함께 갱신할 것).
-const MUST_PROMPT = ['read_document', 'update_careermate', 'delete_cover_letter', 'delete_job_posting', 'delete_resume', 'delete_experience', 'delete_project', 'delete_skill'];
+const MUST_PROMPT = ['read_document', 'update_careermate', 'connect_external_storage', 'delete_cover_letter', 'delete_job_posting', 'delete_resume', 'delete_experience', 'delete_project', 'delete_skill'];
 
 // ── Codex: config.toml 에 도구 사전허용(default auto + SENSITIVE prompt) 이 기록되는지 ──
 console.log('\ninit Codex 사전허용');

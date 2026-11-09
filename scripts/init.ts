@@ -371,6 +371,8 @@ function writeTarget(target: ClientTarget, server: ServerEntry, allowTools: bool
  *   - read_document    : 사용자가 준 임의 절대경로 파일 읽기(careermate 밖). 인젝션 시 민감 파일 탈취
  *                        증폭 — packages/parsers의 denylist는 ~/.ssh·.env 등 일부만 막는다.
  *   - update_careermate: npm install 실행(외부 프로세스·네트워크·공급망 표면).
+ *   - connect_external_storage: 개인 데이터 전부를 사용자가 고른 Drive 폴더나 git 원격으로 내보내기 시작.
+ *                        사용자 본인이 한 번 승인하는 게 맞다.
  *   - delete_* (cover_letter/job_posting/resume/experience/project/skill) : 되돌릴 수 없는 데이터 삭제.
  *                        내부 데이터지만 비가역이라 권한 프롬프트(=사용자 본인의 확인)에 가치가 있다
  *                        (코드의 confirm='DELETE'는 모델 자가확인일 뿐, 사용자 확인이 아니다).
@@ -379,6 +381,7 @@ function writeTarget(target: ClientTarget, server: ServerEntry, allowTools: bool
 const SENSITIVE_TOOLS: readonly string[] = [
   'read_document',
   'update_careermate',
+  'connect_external_storage',
   'delete_cover_letter',
   'delete_job_posting',
   'delete_resume',
